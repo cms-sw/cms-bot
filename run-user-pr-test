@@ -1,0 +1,96 @@
+#!/bin/bash -ex
+if [ $(echo ${HOME} | grep '^/home/' | wc -l) -eq 0 ] ; then
+  if [ -d /afs/cern.ch/user ] ; then
+   export HOME="/afs/cern.ch/user/$(whoami | cut -c1)/$(whoami)"
+  fi
+fi
+if ! scram version 2>/dev/null ; then
+  source /cvmfs/cms.cern.ch/cmsset_default.sh
+fi
+cd $WORKSPACE
+export CI_UPLOAD_DIR=$WORKSPACE/upload
+mkdir $WORKSPACE/upload
+REPO_DIR=$CMS_BOT_DIR/repos/$(echo $REPOSITORY | tr '-' '_')
+REPO_SHORT_NAME=$(echo $REPOSITORY | sed 's|.*/||')
+git clone http://github.com/${REPOSITORY} userrepo
+ln -s userrepo ${REPO_SHORT_NAME}
+ERR=0
+ISSUE_TITLE=""
+if [ "X${PULL_REQUEST}" != "X" ] ; then
+  curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | \
+     grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/upload/changed-files.txt
+  cat $WORKSPACE/upload/changed-files.txt
+  cd userrepo
+  git fetch origin pull/${PULL_REQUEST}/head:CHANGES_${PULL_REQUEST}
+  git merge CHANGES_${PULL_REQUEST}
+  COMMIT=$($CMS_BOT_DIR/process-pull-request.py -c -r ${REPOSITORY} ${PULL_REQUEST})
+  $CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
+    -t JENKINS_TEST_URL \
+    -m "${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
+else
+  cd userrepo
+  if [ -f "${REPO_DIR}/check-for-valid-push" ] ; then
+    ${REPO_DIR}/check-for-valid-push || exit 0
+  fi
+  GH_COMMIT=$(git log --pretty=format:'%h' -n 1)
+  ISSUE_TITLE="[Jenkins CI] Testing commit: ${GH_COMMIT}"
+  $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "${ISSUE_TITLE}" -m "Jenkins tests started for ${GH_COMMIT} at $(date '+%Y/%m/%d %H:%M')@N@@N@Build logs are available at: ${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/console"
+fi
+voms-proxy-init --voms cms || true
+${REPO_DIR}/run-pr-tests 2>&1 | tee -a $WORKSPACE/upload/run.log  || ERR=1
+UPLOAD_DIR=$(find $WORKSPACE/upload -name '.jenkins-upload' -type f | sed 's|/.jenkins-upload$||' || true)
+UPLOAD_REF=""
+if [ "X$UPLOAD_DIR" != "X" ] ; then
+  UPLOAD_REF=$(basename $UPLOAD_DIR)
+  rm -rf $WORKSPACE/ref-upload
+  mkdir $WORKSPACE/ref-upload
+  mv $UPLOAD_DIR $WORKSPACE/ref-upload/${UPLOAD_REF}
+  mv $WORKSPACE/upload/* $WORKSPACE/ref-upload/${UPLOAD_REF}/ || true
+  rm -rf $WORKSPACE/upload
+  mv $WORKSPACE/ref-upload $WORKSPACE/upload
+fi
+source $CMS_BOT_DIR/jenkins-artifacts
+
+UPLOAD_SIZE=$(du -s -m $WORKSPACE/upload | sed 's|\s.*$||')
+RESULT_LOG="$WORKSPACE/upload/${UPLOAD_REF}/full-results.txt"
+touch ${RESULT_LOG}
+if [ $UPLOAD_SIZE -gt 2048 ] ; then
+  echo -e "-1\nTested at: ${COMMIT}\n\nUpload size exceeded the max size limit of 2048MB\n" > ${RESULT_LOG}
+else
+  if [ $ERR = 0 ] ; then
+    echo -e "+1\nTested at: ${COMMIT}\n" >> ${RESULT_LOG}
+  else
+    echo -e "-1\nTested at: ${COMMIT}\n" >> ${RESULT_LOG}
+  fi
+  UPDIR=$(grep '^ *JENKINS_UPLOAD_DIRECTORY *=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_UPLOAD_DIRECTORY *= *||;s|["]||g' || true)
+  if [ "X${UPDIR}" = "X" ] ; then
+    if [ "X${PULL_REQUEST}" != "X" ] ; then
+      UPDIR="${JOB_NAME}/PR-${PULL_REQUEST}/${BUILD_NUMBER}"
+    else
+      UPDIR="${JOB_NAME}/PUSH-${BUILD_NUMBER}"
+    fi
+  elif [ "X${UPLOAD_REF}" = "X" ] ; then
+    UPDIR="${UPDIR}/BUILD-${BUILD_NUMBER}"
+  fi
+  echo -e "Test logs are available at:\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/${UPDIR}/${UPLOAD_REF}" >> ${RESULT_LOG}
+  send_jenkins_artifacts ${WORKSPACE}/upload/ ${UPDIR}/
+fi
+
+JOB_SUMMARY_LOG="${WORKSPACE}/summary.txt"
+if [ -f ${JOB_SUMMARY_LOG} ] ; then
+  cat ${JOB_SUMMARY_LOG} >> ${RESULT_LOG}
+fi
+if [ "X${PULL_REQUEST}" != "X" ] ; then
+  $WORKSPACE/cms-bot/comment-gh-pr.py -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
+else
+  OPEN_ISSUE=$(grep '^ *OPEN_ISSUE_FOR_PUSH_TESTS *=' $REPO_DIR/repo_config.py | sed 's|^.*OPEN_ISSUE_FOR_PUSH_TESTS *=||;s| ||g' || true)
+  if [ "X${OPEN_ISSUE}" = "XTrue" ] ; then
+    $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "${ISSUE_TITLE}" -R ${RESULT_LOG}
+  else
+    NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL *=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL *= *||;s|["]||g' || true)
+    if [ "X${NOTIFY_EMAIL}" != "X" ] ; then
+      cat ${RESULT_LOG} | mail -s "[Jenkins]: $REPOSITORY tests finished" "${NOTIFY_EMAIL}"
+    fi
+  fi
+fi
+

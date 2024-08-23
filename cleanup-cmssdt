@@ -1,0 +1,128 @@
+#!/bin/sh -ex
+
+DRY_RUN=$1
+if [ "X$DRY_RUN" = "Xtrue" ] ; then
+  DRY_RUN=echo
+else
+  DRY_RUN=
+fi
+
+JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
+CVMFS_JENKINS_ARTIFACTS=/cvmfs/cms-ib.cern.ch/jenkins-artifacts
+DIRS_PROCESSED="hlt-p2-timing"
+JOBS_TO_KEEP=150
+RUNS_TO_KEEP=5
+#Keep $JOBS_TO_KEEP of these
+for dir in pull-request-integration ; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  find . -maxdepth 3 -mindepth 3 -name '.keep' -type f | sed 's|^./||;s|/.*||' | xargs -i --no-run-if-empty touch "./{}"
+  ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  for run in `ls -d *`; do
+    ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+  done
+done
+
+RUNS_TO_KEEP=1
+#Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
+for type in "" $(PYTHONPATH=${CMS_BOT_DIR} python3 -c 'from process_pr import EXTRA_RELVALS_TESTS;print(" ".join([x.upper().replace("-","_") for x in EXTRA_RELVALS_TESTS if x]))') ; do
+  dir=baseLineComparisons${type}
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  for run in `ls -d *`; do
+    ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+  done
+done
+
+JOBS_TO_KEEP=10
+for dir in material-budget-ref ; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+done
+
+#Keep the following for 8 days
+DAYS_TO_KEEP=8
+DIRS="lizard flawfinder invalid-includes cmssw-afs-eos-comparison ubsan_logs ib-run-crab"
+DIRS="${DIRS} check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests profiling igprof"
+DIRS="${DIRS} iwyu material-budget das_query build-any-ib check-unused-cmsdist-packages"
+DIRS="${DIRS} test-os-alma8 test-os-cs8 test-os-ubi8 test-os-lxplus8 test-os-rhel8 test-os-rocky8 test-os-el8 cms-containers-run-cmssw-test"
+for dir in ${DIRS}; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  find ${JENKINS_ARTIFACTS}/${dir} -mtime +${DAYS_TO_KEEP} -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+done
+
+#Keep the following for 14 days
+DAYS_TO_KEEP=14
+DIRS="run-pr-format pr-code-checks jenkins-test-code-format jenkins-test-bootstrap jenkins-test-cmssw-bootstrap"
+DIRS="${DIRS} auto-build-release auto-upload-release cleanup-auto-build build-fwlite release-run-reco-profiling"
+for dir in ${DIRS}; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  find ${JENKINS_ARTIFACTS}/${dir} -mtime +${DAYS_TO_KEEP} -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+done
+
+#Keep only 1 day data
+DAYS_TO_KEEP=1
+DIRS="cuda-compatible-runtime"
+for dir in ${DIRS}; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  find ${JENKINS_ARTIFACTS}/${dir} -mtime +${DAYS_TO_KEEP} -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+done
+
+#Cleanup dirs which are available on CVMFS
+for dir in ib-baseline-tests ; do
+  for ver in $(find ${JENKINS_ARTIFACTS}/${dir}  -maxdepth 2 -mindepth 2 -path "*/${dir}/CMSSW_*/*" -type d | sed "s|${JENKINS_ARTIFACTS}/||") ; do
+    if [ -d ${CVMFS_JENKINS_ARTIFACTS}/${ver} ] ; then
+      $DRY_RUN rm -rf ${JENKINS_ARTIFACTS}/${ver}
+      $DRY_RUN ln -s ${CVMFS_JENKINS_ARTIFACTS}/${ver} ${JENKINS_ARTIFACTS}/${ver}
+    fi
+  done
+  for l in $(ls -d ${JENKINS_ARTIFACTS}/${dir}/CMSSW_*) ; do 
+    if  [ -L $l -a ! -e $l ] ; then
+      rm -f $l
+    fi
+  done
+done
+
+NEW_DIRS=""
+for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 1 -type d | sed 's|.*/||'`; do
+  if [ "X`echo ${DIRS_PROCESSED} | grep ${dir}`" = "X" ] ; then
+    NEW_DIRS="${NEW_DIRS} ${dir}"
+  fi
+done
+
+#cleanup cms-jenkins-artifacts
+JENKINS_ARTIFACTS=/data/sdt/SDT/cms-jenkins-artifacts
+DAYS_TO_KEEP=14
+JOBS_TO_KEEP=30
+for dir in EcalLaserValidation/HLT_EcalLaserValidation  EcalLaserValidation/L1T_EcalLaserValidation  EcalLaserValidation/RECO_EcalPulseShapeValidation  EcalLaserValidation/TPG_EcalLaserValidation HcalConditionsAutomatization/ConditionsValidation ; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="cms/${DIRS_PROCESSED}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  for d in $(ls -rt | head -n -$JOBS_TO_KEEP) ; do
+    if [ $((($(date +%s)-$(date +%s -r $d))/86400)) -gt ${DAYS_TO_KEEP} ] ; then
+      rm -rf $d
+    fi
+  done
+done
+
+for dir in `find ${JENKINS_ARTIFACTS} -mindepth 2 -maxdepth 1 -type d | sed 's|.*/||'`; do
+  if [ "X`echo ${DIRS_PROCESSED} | grep cms/${dir}`" = "X" ] ; then
+    NEW_DIRS="${NEW_DIRS} cms/${dir}"
+  fi
+done
+
+if [ "X${NEW_DIRS}" != "X" ] ; then
+  echo -e "${BUILD_URL}\nNew directories: ${NEW_DIRS}" | mail -s '[CMSSDT] Found new Directories to cleanup' cms-sdt-logs@cern.ch
+fi
+
+WEB_LOG_DIR=/data/sdt/buildlogs
+find /data/sdt/buildlogs -mindepth 3 -maxdepth 3 -mtime +15  -path '*/fwlite/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+find /data/sdt/buildlogs -mindepth 5 -maxdepth 5 -mtime +15  -path '*/www/*/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'

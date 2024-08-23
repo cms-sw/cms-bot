@@ -1,0 +1,12 @@
+# This is a list that contains the workflows,steps, and
+# parameter to be reported on the webpage. When read, 
+# it will be used to generate the json file with the 
+# urls of the results on graphite.
+5_1_TTbar+TTbarFS+HARVESTFS step1_TTbar+TTbarFS+HARVESTFS AvgEventCPU
+5_1_TTbar+TTbarFS+HARVESTFS step1_TTbar+TTbarFS+HARVESTFS PeakValueRss
+202_0_TTbar+TTbarINPUT+DIGIPU1+RECOPU1+HARVEST step2_TTbar+TTbar+DIGIPU1+RECOPU1+HARVEST AvgEventCPU
+202_0_TTbar+TTbarINPUT+DIGIPU1+RECOPU1+HARVEST step2_TTbar+TTbar+DIGIPU1+RECOPU1+HARVEST PeakValueRss
+202_0_TTbar+TTbarINPUT+DIGIPU1+RECOPU1+HARVEST step3_TTbar+TTbar+DIGIPU1+RECOPU1+HARVEST AvgEventCPU
+202_0_TTbar+TTbarINPUT+DIGIPU1+RECOPU1+HARVEST step3_TTbar+TTbar+DIGIPU1+RECOPU1+HARVEST PeakValueRss
+400_0_TTbar+TTbarFSPU+HARVESTFS step1_TTbar+TTbarFSPU+HARVESTFS AvgEventCPU
+400_0_TTbar+TTbarFSPU+HARVESTFS step1_TTbar+TTbarFSPU+HARVESTFS PeakValueRss

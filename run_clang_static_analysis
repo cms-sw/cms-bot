@@ -1,0 +1,35 @@
+#!/bin/bash -x
+WORKSPACE="${WORKSPACE-$PWD}"
+export J=$(nproc)
+export LC_ALL=C
+cd $CMSSW_BASE
+rm -rf src
+ls /cvmfs/cms-ib.cern.ch
+git clone --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git  --depth 1 git@github.com:cms-sw/cmssw src
+cd src
+git checkout $CMSSW_VERSION
+rm -rf .git
+
+cp -pv Utilities/StaticAnalyzers/scripts/*  $LOCALRT/tmp
+cd $LOCALRT/tmp
+chmod +x *.py *.sh
+./run_class_dumper.sh $J
+cp -pv $LOCALRT/tmp/bloom.bin $LOCALRT/src/Utilities/StaticAnalyzers/scripts/bloom.bin
+./run_class_checker.sh $J
+
+mv $LOCALRT/llvm-analysis/* $WORKSPACE/llvm-analysis
+chmod -R a+r $WORKSPACE/llvm-analysis
+#if postprocess-scan-build.py exists then run it
+if [ -e ./postprocess-scan-build.py ] ; then
+  # keep a backup copy of index.html in case post processing get fubared
+  cp $WORKSPACE/llvm-analysis/index.html $WORKSPACE/llvm-analysis/index_full.html
+  ./postprocess-scan-build.py $WORKSPACE/llvm-analysis/index.html > $WORKSPACE/llvm-analysis/index-temp.html 2>$WORKSPACE/llvm-analysis/postprocess.log
+  mv $WORKSPACE/llvm-analysis/index-temp.html $WORKSPACE/llvm-analysis/index.html
+fi
+
+./create_statics_esd_reports.sh
+ls -ltrh
+tar cvfz dumper-checker.tgz *.txt*
+egrep '::(stream|global)::[^ ]+::(produce|analyze|filter)\(\)' modules2statics.txt | egrep -v -f statics-filter1.txt > modules2statics-filter1.txt
+mkdir $WORKSPACE/reports
+cp -pv dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt modules2statics-filter1.txt $WORKSPACE/reports || /bin/true

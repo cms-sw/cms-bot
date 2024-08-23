@@ -1,0 +1,6 @@
+#!/bin/bash
+if [ ! -e ToRun/NewToRun.txt ] ; then
+  echo "Missing file: ToRun/NewToRun.txt"
+  exit 1
+fi
+echo "OK to start test"

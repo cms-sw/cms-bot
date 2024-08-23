@@ -1,0 +1,45 @@
+{
+  "aliases": {},
+  "mappings": {
+    "cmssdt-jenkins-builds-data": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "build_duration": {
+          "type": "long"
+        },
+        "build_number": {
+          "type": "long"
+        },
+        "build_result": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "job_name": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "job_status": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "slave_node": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "url": {
+          "index": "not_analyzed",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "order": 0,
+  "settings": {
+    "index": {
+      "number_of_shards": "1"
+    }
+  },
+  "template": "cmssdt-jenkins"
+}

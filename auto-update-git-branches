@@ -1,0 +1,121 @@
+#!/bin/sh -ex
+
+has_arg() {
+  [ "X$1" = "X" ] && echo "Error: Missing command-line arg value for $2" && exit 1
+  return 0
+}
+
+parseargs() {
+  set +x
+  while [ $# -gt 0 ]; do
+    arg=$1; shift
+    case $arg in
+    -* )
+      case $arg in
+      -r | --repository ) REPO_NAME=$1 && has_arg $1 $arg && shift ;;
+      -s | --src-branch  ) SRC_BRANCH=$1 && has_arg $1 $arg && shift  ;;
+      -d | --des-branch ) DES_BRANCH=$1 && has_arg $1 $arg && shift  ;;
+      -c | --commits ) COMMITS="-c $1" && has_arg $1 $arg && shift  ;;
+      -X | --strategy ) OVERRIDE_STRATEGY=$1 && has_arg $1 $arg && shift  ;;
+      -p | --push ) PUSH_UPDATES="--push" ;;
+      -* )
+        echo -e "Usage: $0\n\t-r|--repository <repository>\n\t[-s|--src-branch <branch>]\n\t[-d|--des-branch <branch>]"
+        echo -e "\t[-c|--commits <comma-seperated-hashes>]\n\t[-X|--strategy <merge-strategy>]\n\t[-p|--push]\n\t[-h|--help]"
+        exit 0 ;;
+      esac ;;
+    * ) echo "Error: Invalid argument $arg."; exit 1;;
+    esac
+  done
+  for s in REPO_NAME#repository ; do
+    v=$(echo $s | sed 's|#.*||')
+    o=$(echo $s | sed 's|.*#||')
+    eval "vc=$(echo \$$v)"
+    err=0
+    if [ "X$vc" = "X" ] ; then 
+      echo "Error: Missing required command-line option --$o <value>"
+      err=1
+    fi
+    [ $err -eq 0 ] || exit 1
+  done
+  set -x
+}
+
+#Some helper functions
+#Return auto forward port branches.
+function getBranches()
+{
+  #If only repo is known then return space seperated list of all source branches which should be forward ported
+  #If repo and source branch are known then return space seperated list of all target branches
+  if [ "X$2" = "X" ] ; then
+    (export PYTHONPATH=$SCRIPT_PATH; echo -e "from forward_ports_map import GIT_REPO_FWPORTS as p\nif '$1' in p:\n  x=p['$1'].keys()\n  x.sort()\n  print ' '.join(x)" | python)
+  else
+    (export PYTHONPATH=$SCRIPT_PATH; echo -e "from forward_ports_map import GIT_REPO_FWPORTS as p\nif '$1' in p and '$2' in p['$1']:\n  print ' '.join(p['$1']['$2'])" | python)
+  fi
+}
+
+GIT_USER="cms-sw"
+SCRIPT_PATH="`dirname \"$0\"`"
+SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
+WORKSPACE="${WORKSPACE-$PWD}"
+HAS_ERRORS=0
+
+parseargs $@
+
+#make sure we have a full repo name i.e. git-user/git-repo
+case $REPO_NAME in 
+  */*) ;;
+  *)   REPO_NAME="${GIT_USER}/${REPO_NAME}" ;;
+esac
+repo=`echo $REPO_NAME |sed 's|.*/||'`
+echo "Working on ${REPO_NAME} ..."
+cd "$WORKSPACE"
+REF_REPO=""
+if [ -d /cvmfs/cms-ib.cern.ch/git/${REPO_NAME}.git ] ; then
+  REF_REPO="--reference /cvmfs/cms-ib.cern.ch/git/${REPO_NAME}.git"
+fi
+#Clone repo if not already done
+if [ ! -d $repo ] ; then
+  git clone $REF_REPO git@github.com:${REPO_NAME} ${repo}
+  cd $repo
+  if [ X$HOME = X ]; then
+    git config user.email 'cmsbuild@cern.ch'
+    git config user.name  'CMS Build'
+  fi
+else
+  cd $repo
+fi
+#Fetch updates from remote
+git fetch -q --force origin
+#If source branch was not provided via command-line then get it from GIT_REPO_FWPORTS and reset commits
+if [ "X$SRC_BRANCH" = "X" ] ; then
+  SRC_BRANCH=`getBranches $repo`
+  COMMITS=""
+fi
+LOG_COMMANDS="$WORKSPACE/$repo.log"
+for src in $SRC_BRANCH; do
+  echo "Forward porting branch $src"
+  if [ "X$DES_BRANCH" = "X" ] ; then DES_BRANCH=$(getBranches $repo $src) ; fi
+  for des in $DES_BRANCH; do
+    rm -f $LOG_COMMANDS
+    if [ "X$OVERRIDE_STRATEGY" != "X" ] ; then
+      merge_strategy=$OVERRIDE_STRATEGY
+    else
+      merge_strategy=$(echo $des | grep : | sed 's|^[^:]*:||')
+    fi
+    [ "X$merge_strategy" = "X" ] || merge_strategy="-X $merge_strategy"
+    des=$(echo $des | sed 's|:.*||')
+    echo ">git clone https://github.com/cms-sw/cms-bot.git cms-bot" > $LOG_COMMANDS
+    echo ">./cms-bot/$(basename $0) -r $REPO_NAME -s $src -d $des $COMMITS $merge_strategy" >> $LOG_COMMANDS
+    err=0
+    $SCRIPT_PATH/merge-git-branch -l $LOG_COMMANDS -s $src -d $des $COMMITS $merge_strategy $PUSH_UPDATES || err=1
+    if [ "X$err" = "X1" ] ; then 
+      HAS_ERRORS=1
+      if [ ! "X$PUSH_UPDATES" = "X" ] ; then
+        cat $LOG_COMMANDS
+        echo -e "${BUILD_URL}\n$(cat $LOG_COMMANDS)" | mail -s "[$(echo $repo | tr '[a-z]' '[A-Z]')] Merge Conflict: $src -> $(echo $des | sed 's|:.*||')" cms-sdt-logs@cern.ch
+      fi
+      break
+    fi
+  done
+done
+exit $HAS_ERRORS

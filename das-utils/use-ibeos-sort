@@ -1,0 +1,34 @@
+#!/bin/bash -e
+rm -f ${LOCALRT}/used-ibeos-sort
+rm -f ${LOCALRT}/ibeos_cache.txt
+
+for i in 0 1 2 3 4 ; do
+  ERR=NO
+  if ! curl -L "https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/ibeos.txt" > ${LOCALRT}/ibeos_cache.txt ; then
+    wget -O ${LOCALRT}/ibeos_cache.txt "https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/ibeos.txt" || ERR=YES
+  fi
+  if [ $ERR = "NO" ] ; then break ; fi
+  echo "Failed: to checkout cms-sw.github.io/master/das_queries/ibeos.txt ... retry"
+  rm -f ${LOCALRT}/ibeos_cache.txt
+  sleep 30
+done
+
+[ -f ${LOCALRT}/ibeos_cache.txt ] || exit 0
+echo "OK: ${LOCALRT}/ibeos_cache.txt"
+
+CMSSW_PKG_BUILD=""
+if [ ! -e ${LOCALRT}/src/Configuration/PyReleaseValidation ] ; then
+  mkdir -p ${LOCALRT}/src/Configuration/PyReleaseValidation
+  cp -r ${CMSSW_RELEASE_BASE}/src/Configuration/PyReleaseValidation/* ${LOCALRT}/src/Configuration/PyReleaseValidation/
+  CMSSW_PKG_BUILD="Configuration/PyReleaseValidation"
+fi
+if [ "X${CMSSW_PKG_BUILD}" != "X" ] ; then
+  (cd ${LOCALRT}/src && scram build ${CMSSW_PKG_BUILD} && scram build do_python_symlink)
+fi
+cd ${LOCALRT}/src/Configuration/PyReleaseValidation/python
+for pyFile in $(find ${LOCALRT}/src/Configuration/PyReleaseValidation/python -name '*.py' -type f) ; do
+  grep '| *sort  *-u' ${pyFile} >/dev/null 2>&1 || continue
+  sed -i -e "s#| *sort  *-u#| ibeos-lfn-sort -u#" ${pyFile}
+  touch ${LOCALRT}/used-ibeos-sort
+  rm -f ${pyFile}c
+done

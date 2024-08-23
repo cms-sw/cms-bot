@@ -1,0 +1,44 @@
+#!/bin/sh -ex
+
+# Parameters set by jenkins:
+# ARCHITECTURE
+# RELEASE_FORMAT
+# WORKSPACE
+mkdir -p $WORKSPACE/results
+ls /cvmfs/cms-ib.cern.ch || true
+source /cvmfs/cms.cern.ch/cmsset_default.sh
+SCRAM_ARCH=$ARCHITECTURE
+scram -a $ARCHITECTURE p $RELEASE_FORMAT
+cd $RELEASE_FORMAT/src
+eval `scram run -sh`
+export CMS_PATH="/cvmfs/cms-ib.cern.ch"
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
+mkdir -p $CMSSW_BASE/src/HLTrigger
+cp -r $CMSSW_RELEASE_BASE/src/HLTrigger/Configuration/ $CMSSW_BASE/src/HLTrigger/Configuration/
+#To avoid https://github.com/cms-sw/cmssw/issues/42988 issue
+if [  -e "HLTrigger/Configuration/scripts/hltIntegrationTests" ] ; then
+  if [ $(grep edmCheckMultithreading HLTrigger/Configuration/scripts/hltIntegrationTests | wc -l) -gt 0 ] ; then
+    if [ $(echo $RELEASE_FORMAT | cut -d_ -f2) -ge 13 ] ; then
+      sed -i -e 's|^ *edmCheckMultithreading  *hlt.py|#edmCheckMultithreading hlt.py|' HLTrigger/Configuration/scripts/hltIntegrationTests || true
+    else
+      cp $(which edmCheckMultithreading) $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
+      sed -i -e "s/| *sort  *-u *|/| grep -Ev '^(CkfTrajectoryMaker|CkfTrackCandidateMaker)$' | sort -u |/" $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading || true
+    fi
+  fi
+fi
+if [ -e "HLTrigger/Configuration/test/runIntegration.csh" ] ; then
+  let hlt_jobs=$(nproc)/2
+  sed -i -e "s| -j  *[0-9][0-9]* | -j ${hlt_jobs} |g" HLTrigger/Configuration/test/runIntegration.csh
+fi
+scram build -j $(nproc)
+which edmCheckMultithreading || true
+cd HLTrigger/Configuration/test/
+ls
+./runAll.csh IB | tee -a $WORKSPACE/results/runIB.log
+./examLogs.csh | tee -a $WORKSPACE/results/examLogs.out
+ls
+cp *.log $WORKSPACE/results
+cp *.out $WORKSPACE/results

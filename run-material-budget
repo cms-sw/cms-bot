@@ -1,0 +1,19 @@
+#!/bin/bash -ex
+
+VGEO_DIR=$CMSSW_BASE/src/Validation/Geometry
+if [ ! -e $VGEO_DIR ] ; then VGEO_DIR=$CMSSW_RELEASE_BASE/src/Validation/Geometry ; fi
+
+cmsRun ${VGEO_DIR}/python/single_neutrino_cfg.py >$LOCALRT/single_neutrino_cfg.log 2>&1
+#Remove big plugin paths
+export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':' | sed 's|:$||')
+
+cmsRun ${VGEO_DIR}/test/runP_Tracker_cfg.py >$LOCALRT/runP_Tracker_cfg.log 2>&1
+mkdir Images
+
+if [ -e ${VGEO_DIR}/test/MaterialBudget.py ] ; then
+  cp ${VGEO_DIR}/test/MaterialBudget.py .
+  python MaterialBudget.py -s -d Tracker || true
+else
+  cp ${VGEO_DIR}/test/MaterialBudget.C .
+  root -b -q 'MaterialBudget.C("Tracker")' || true
+fi

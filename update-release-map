@@ -1,0 +1,39 @@
+#!/bin/sh -ex
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+PROD_ARCH=$3
+
+if [ "X${PROD_ARCH}" = "X" ] ; then
+  PROD_ARCH=false
+  if [ "$(./get-production-arch $CMSSW_X_Y_Z | tail -1)" = "$ARCHITECTURE" ]; then PROD_ARCH=true ; fi
+fi
+
+prodarch=0
+archtype='non-production'
+if ${PROD_ARCH} ; then
+  prodarch=1
+  archtype='production'
+fi
+
+
+RELEASE_TYPE=Development
+if [ X`echo $CMSSW_X_Y_Z | grep -e '_pre[0-9][0-9]*'` = X ] ; then RELEASE_TYPE=Production ; fi
+
+if [ X`grep -e "architecture=$ARCHITECTURE;" releases.map | grep -e "label=$CMSSW_X_Y_Z;"` = X ]; then
+  if [ `grep -e "label=$CMSSW_X_Y_Z;" releases.map | sed -e's/.*type=//;s/;.*//' | grep -v -e "$RELEASE_TYPE" | sort -u | wc -l` -ge 1 ]; then
+    echo "Too many release types." && exit 1
+  fi
+  if [ "X$prodarch" = "X1" ] ; then
+    if [ `grep -e "label=$CMSSW_X_Y_Z;" releases.map | grep -e ";prodarch=1;" | wc -l` -ge 1 ]; then
+      echo "Too many production architectures for release." && exit 1
+    fi
+  fi
+  echo "architecture=$ARCHITECTURE;label=$CMSSW_X_Y_Z;type=$RELEASE_TYPE;state=Announced;prodarch=$prodarch;" >> releases.map
+  git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE ($archtype arch) as $RELEASE_TYPE release." releases.map
+  git pull --rebase
+  git push
+else
+  echo "Release already announced."
+fi
+echo 'ALL_OK'
+

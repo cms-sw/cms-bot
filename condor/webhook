@@ -1,0 +1,56 @@
+#!/bin/bash -ex
+CONDOR_USER="$(echo ${LABELS} | tr ' ' '\n' | grep '^user-' | sed 's|^user-||')"
+CONDOR_SUMBITTER_SYSTEM="lxplus.cern.ch"
+SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+CONDOR_JOB_ID=$(echo $CONDOR_JOB_ID | sed 's|\.0$||')
+NODE_NAME="grid${CONDOR_JOB_ID}"
+
+if [ "${STATUS}" = "online" -o "${STATUS}" = "reconfigure" ] ; then
+  cp ${CMS_BOT_DIR}/condor/jenkins/node.xml node.xml
+  sed -i -e "s|@LABELS@|$LABELS gridid-${CONDOR_JOB_ID}.0 schedulername-$SCHEDD_NAME|g;s|@NODE_NAME@|$NODE_NAME|g" node.xml
+  sed -i -e "s|@WORK_DIR@|$WORK_DIR|g;s|@JENKINS_HOME@|$JENKINS_HOME|g;s|@CMS_BOT_DIR@|$CMS_BOT_DIR|" node.xml
+  sed -i -e "s|@CONDOR_USER@|$CONDOR_USER|g;s|@CONDOR_SUMBITTER_SYSTEM@|$CONDOR_SUMBITTER_SYSTEM|g" node.xml
+  if [ $(echo $LABELS | grep ' nvidia ' | wc -l) -eq 0 ] ; then
+    sed -i -e 's|\-\-nv||' node.xml
+  fi
+  if [ -f ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml ] ; then
+    STATUS="reconfigure"
+  fi
+  if [ "${STATUS}" = "reconfigure" ] ; then
+    ${JENKINS_CLI_CMD} delete-node      ${NODE_NAME} || true    
+  fi
+  echo "node definition"
+  cat node.xml
+  echo "=========="
+  cat node.xml | ${JENKINS_CLI_CMD} create-node ${NODE_NAME}
+  echo "Starting Node: ${NODE_NAME}"
+  if ! ${JENKINS_CLI_CMD} connect-node ${NODE_NAME} ; then
+    sleep 60
+    ${JENKINS_CLI_CMD} connect-node ${NODE_NAME}
+  fi
+elif [ ! -f ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml ] ; then
+  echo "$NODE_NAME: Already removed"
+  echo "CONDOR_JOB_ID=${CONDOR_JOB_ID}" > shutdown.txt
+  echo "USER=${CONDOR_USER}" >> shutdown.txt
+elif [ "${STATUS}" = "offline" ] ; then
+  ${JENKINS_CLI_CMD} offline-node ${NODE_NAME} || true
+  LABELS=$(grep '^ *<label>' ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml)
+  if [ $(echo " ${LABELS} " | grep ' auto-recreate ' | wc -l) -gt 0 ] ; then
+    echo "REPLACE_NODE=${CONDOR_JOB_ID}" > create-node.txt
+    [ $(echo " ${LABELS} " | grep ' el9 ' | wc -l) -gt 0 ] && echo "REQUEST_ALMA9=true" >> create-node.txt
+    if [ $(echo " ${LABELS} " | grep ' aarch64 ' | wc -l) -gt 0 ] ; then
+      echo "REQUEST_CPUS=10" >> create-node.txt
+      echo "NODE_ARCH=aarch64" >> create-node.txt
+      echo "REQUEST_MAXRUNTIME=604800" >> create-node.txt
+    elif [ $(echo " ${LABELS} " | grep ' x86_64 ' | wc -l) -gt 0 ] ; then
+      echo "REQUEST_CPUS=16" >> create-node.txt
+      echo "NODE_ARCH=x86_64" >> create-node.txt
+    fi
+  fi
+elif [ "${STATUS}" = "shutdown" ] ; then
+  ${JENKINS_CLI_CMD} disconnect-node  ${NODE_NAME} || true
+  ${JENKINS_CLI_CMD} offline-node     ${NODE_NAME} || true
+  ${JENKINS_CLI_CMD} delete-node      ${NODE_NAME} || true
+  echo "CONDOR_JOB_ID=${CONDOR_JOB_ID}" > shutdown.txt
+  echo "USER=${CONDOR_USER}"           >> shutdown.txt
+fi

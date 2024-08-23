@@ -1,0 +1,63 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "2a9454e30606b17e52000110972998326ce9e428": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1711538467
+                }
+            },
+            "emoji": {
+                "2049242908": "+1"
+            },
+            "last_seen_sha": "2a9454e30606b17e52000110972998326ce9e428",
+            "signatures": {
+                "2049242908": "2a9454e30606b17e52000110972998326ce9e428"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2049242908,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "core-approved",
+            "fully-signed"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "core-pending",
+            "pending-signatures"
+        ]
+    },
+    {
+        "type": "create-comment",
+        "data": "This pull request is fully signed and it will be integrated in one of the next master IBs after it passes the integration tests. This pull request will now be reviewed by the release team before it's merged. @iarspider (and backports should be raised in the release meeting by the corresponding L2)"
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711538467}},\"emoji\":{\"2049242908\":\"+1\"},\"last_seen_sha\":\"2a9454e30606b17e52000110972998326ce9e428\",\"signatures\":{\"2049242908\":\"2a9454e30606b17e52000110972998326ce9e428\"}} -->"
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "2a9454e30606b17e52000110972998326ce9e428",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2049242908",
+            "description": "Comment by iarspider at 2024-04-11 09:00:53 UTC processed.",
+            "context": "bot/17/ack"
+        }
+    }
+]

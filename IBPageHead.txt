@@ -1,0 +1,43 @@
+<html> 
+<head> 
+ 
+    <link rel="stylesheet" type="text/css" href="http://cmssdt.cern.ch/SDT/html//intbld.css"> 
+ 
+    <style type="text/css">  
+    @import url(css.css);
+    td.aqua  {   color: black; font-weight:bold; background-color: #00FFFF; }
+    td.olive {   color: black; font-weight:bold; background-color: #808000; }
+    td.ok1   {   color: black; font-weight:bold; background-color: #339900; }
+    td.ok2   {   color: black; font-weight:bold; background-color: #33cc00; }
+    td.ok3   {   color: black; font-weight:bold; background-color: #33ff00; }
+    </style>  
+ 
+    <style type="text/css">  
+    .info { display: none; }
+    </style>  
+ 
+    <script type="text/javascript" src="http://cmssdt.cern.ch/SDT/html//jquery.js"></script> 
+ 
+    <script> 
+    function showHide(obj){
+        myname = obj.name;
+        $(".detail[name='"+myname+"']").toggle();
+        $(".info[name='"+myname+"']").toggle();
+    }
+    </script> 
+ 
+    <script> 
+    $(document).ready(function()
+    {
+    $("table ").css('text-align', "center");
+    // make the "summary" and "hide summary" underlined
+    $(".detail").css('text-decoration', "underline");
+    $(".info").css('text-decoration', "underline");
+    // color rows of tables alternatively for even/odd rows
+    $("tr:even").css("background-color", 'rgb(234, 235, 255)');
+    $("tr:odd").css("background-color",  'rgb(211, 214, 255)');
+    });
+    </script> 
+ 
+<TITLE>CMSSW Integration Build Info</TITLE> 
+</head><body> 

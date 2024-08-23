@@ -1,0 +1,33 @@
+#!/bin/bash -ex
+cd ${LOCALRT}
+NJOB=$(nproc)
+rm -rf src
+##################################
+#To avoid bug in buildRules introduced in CMSSW_10_1_0 and above
+if [ $(head -5 config/SCRAM/GMake/Makefile.rules | grep 'LLVM_ANALYZER' | wc -l) -eq 0 ] ; then
+  sed -i '2i$(foreach f,LLVM_ANALYZER MISSING_SYMBOL_FLAGS,$(eval $f:=$(self_EX_FLAGS_$f)))' config/SCRAM/GMake/Makefile.rules
+fi
+if [ -f config/dxr.config ] ; then
+  sed -i -e "s|nb_jobs.*|nb_jobs = ${NJOB}|" config/dxr.config
+fi
+#To avoid bug in py2-dxr toolfile: add the missing library path
+FOUND=false
+for d in ${CMSSW_RELEASE_BASE} ${CMSSW_FULL_RELEASE_BASE} ; do
+  if [ -e $d/external/${ARCHITECTURE}/lib/libtrilite.so ] ; then
+    FOUND=true
+  fi
+done
+if ! $FOUND ; then
+  export LD_LIBRARY_PATH=$(scram tool tag py2-dxr PY2_DXR_BASE)/lib:${LD_LIBRARY_PATH}
+fi
+##################################
+ls /cvmfs/cms-ib.cern.ch
+git clone -b $CMSSW_VERSION --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git https://github.com/cms-sw/cmssw src
+rm -rf src/.git
+rsync -aL --no-owner --no-group --exclude '.scram' --exclude '*.pyc' ${CMSSW_RELEASE_BASE}/cfipython/${ARCHITECTURE}/ src/cfipython/
+(find src/cfipython -name '*.pyc'       | xargs rm -rf) || true
+(find src/cfipython -name '__pycache__' | xargs rm -rf) || true
+find src/cfipython -type d -empty -delete || true
+sed -i -r 's| -v | |' config/dxr.config
+export USER_CXXFLAGS="-Wno-deprecated-copy -Wno-deprecated"
+scram b -j ${NJOB} -k dxr || true

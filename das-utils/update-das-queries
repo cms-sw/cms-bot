@@ -1,0 +1,56 @@
+#!/bin/bash -ex
+THRESHOLD_TIME=""
+[ "X$1" = "X" ] || THRESHOLD_TIME="--threshold $1"
+EXTRA_OPTS="$2"
+voms-proxy-init  -voms cms
+WORKSPACE="${WORKSPACE-$PWD}"
+JOBS=$(nproc)
+USE_DASGO=$3
+PUSH_RESULTS=$4
+DAS_CLINET=$6
+if [ "${DAS_CLINET}" != "" ] ; then
+  USE_DASGO="-c ${DAS_CLINET}"
+elif [ "$USE_DASGO" = "true" ] ; then
+  USE_DASGO="-c dasgoclient"
+else
+  USE_DASGO=""
+fi
+
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+
+cd $WORKSPACE
+if [ ! -d das_results ] ; then
+  if [ "$PUSH_RESULTS" = "true" ] ; then
+    git clone git@github.com:cms-sw/cms-sw.github.io.git das_results
+  else
+    git clone --depth 1 git@github.com:cms-sw/cms-sw.github.io.git das_results
+  fi
+fi
+
+rm -f $WORKSPACE/error
+if [ "${DEBUG}" = "true" ] ; then USE_DASGO="${USE_DASGO} --debug" ; fi
+OLD_SIZE=$(du -sm $WORKSPACE/das_results/das_queries | awk '{print $1}') || true
+$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries --query "$5" || touch $WORKSPACE/error
+let DIFF_SIZE=$(du -sm $WORKSPACE/das_results/das_queries | awk '{print $1}')-${OLD_SIZE} || true
+echo "Change in DAS cache size (MB): ${DIFF_SIZE}"
+if [ "$PUSH_RESULTS" = "true" ] ; then
+  pushd $WORKSPACE/das_results
+  git add das_queries
+  if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then
+    git commit -a -m "Updated das queries"
+    ERR=1
+    for tries in 0 1 2 3 4 ; do
+      git pull --rebase || continue
+      git push origin   || continue
+      ERR=0
+      break
+    done
+    if [ $ERR -gt 0 ] ; then touch $WORKSPACE/error ; fi
+  fi
+  popd
+fi
+if [ -e $WORKSPACE/error ] ; then
+  exit 1
+fi
+

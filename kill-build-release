@@ -1,0 +1,21 @@
+#!/bin/sh -ex
+
+# This is used when the build is aborted from the issue comments.
+# build-release creates a filed called BUILD_PID, this file 
+# contains the process id for the build.
+# When this script is excecuted, it reads the file and kills
+# the process with that process ID.
+# The file BUILD_PID must be in the workspace of the build
+
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+WORKSPACE=$3
+PID_TO_KILL=`ps -awx 2>&1  | grep docker_launcher.sh | grep $CMSSW_X_Y_Z | grep $ARCHITECTURE | awk '{print $1}'`
+
+pushd $WORKSPACE
+  if [ "X$PID_TO_KILL" = "X" ]; then
+    PID_TO_KILL=`head -n 1 BUILD_PID`
+  fi
+ echo "Killing $PID_TO_KILL, the build was aborted in the github issue." >> buildSteps.log
+ kill -9 $PID_TO_KILL
+popd

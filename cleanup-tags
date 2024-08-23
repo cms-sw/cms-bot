@@ -1,0 +1,59 @@
+#!/bin/sh -e
+
+function cleanup_git_tag ()
+{
+  local tag="$1"
+  local d=$(echo "$tag" | sed 's|.*_X||;s|/.*||;s|.*_2|2|')
+  local DEL_TAG=$(python3 -c "import os;from time import time;from datetime import datetime;print (int(datetime.strptime('$d', '%Y-%m-%d-%H%M').strftime('%s'))<(time()-(${DAYS_TO_KEEP}*86400)))")
+  if [ "${DEL_TAG}" = "True" ] ; then
+    $ECHO git push origin :$tag 
+  else
+    echo "Keeping tag $tag"
+  fi
+}
+
+#Keep only last 14 days/2 weeks of IB tags
+DAYS_TO_KEEP=14
+ECHO=
+if [ "X$DRY_RUN" = "Xtrue" ]; then ECHO=echo; fi
+
+repo="cmssw"
+echo "Working on ${repo} tags"
+rm -rf ${repo} ${repo}-tags
+git init ${repo}
+pushd ${repo}
+git remote add origin git@github.com:cms-sw/${repo}
+git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '^CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../${repo}-tags
+for tag in $(grep '^CMSSW_' ../${repo}-tags) ; do
+  cleanup_git_tag $tag
+done
+echo "Done ${repo} tags"
+popd
+rm -rf ${repo} ${repo}-tags
+
+repo="cmssw-cfipython"
+echo "Working on ${repo} tags"
+rm -rf ${repo} ${repo}-tags
+git init ${repo}
+pushd ${repo}
+git remote add origin git@github.com:cms-sw/${repo}
+git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '^CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../${repo}-tags
+for tag in $(grep '^CMSSW_' ../${repo}-tags) ; do
+  cleanup_git_tag $tag
+done
+echo "Done ${repo} tags"
+popd
+rm -rf ${repo} ${repo}-tags
+
+repo="cmsdist"
+echo "Working on ${repo} tags"
+rm -rf ${repo} ${repo}-tags
+git init ${repo}
+pushd ${repo}
+git remote add origin git@github.com:cms-sw/${repo}
+git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '/CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../${repo}-tags
+for tag in $(grep '^\(IB\|ALL\|ERR\)/' ../${repo}-tags) ; do 
+  cleanup_git_tag $tag
+done
+echo "Done ${repo} tags"
+rm -rf ${repo} ${repo}-tags

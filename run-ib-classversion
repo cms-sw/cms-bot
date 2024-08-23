@@ -1,0 +1,10 @@
+#!/bin/bash -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+cd $CMSSW_BASE
+$CMS_BOT_DIR/generate-class-version.sh --baseline
+mkdir $WORKSPACE/upload
+mv class_versions $WORKSPACE/upload
+mv class_versions.html $WORKSPACE/upload
+source $CMS_BOT_DIR/jenkins-artifacts
+send_jenkins_artifacts $WORKSPACE/upload/ class_versions/${RELEASE_FORMAT}/${ARCHITECTURE}

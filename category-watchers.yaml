@@ -1,0 +1,20 @@
+#  Map between github username and the list of cmssw categories to watch e.g. alca, db, core etc.
+# valid categories are available here http://cms-sw.github.io/categories.html
+tocheng:
+- alca
+mmusich:
+- alca
+- db
+silviodonato:
+- hlt
+PonIlya:
+- db
+yuanchao:
+- alca
+- db
+rsreds:
+- alca
+- db
+JanChyczynski:
+- db
+

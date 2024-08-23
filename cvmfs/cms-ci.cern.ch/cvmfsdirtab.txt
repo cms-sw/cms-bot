@@ -1,0 +1,5 @@
+/*
+/jenkins-artifacts/ib-baseline-tests/*
+/week*/cms-*
+/week*/cms-*/*/*/*/CMSSW_*
+/week*/cms-*/*/*/*/CMSSW_*/src

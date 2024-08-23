@@ -1,0 +1,11 @@
+# Mapping between the release queues and the usernames of the people
+# that want to be aware of the build process
+CMSSW_7_3_X:
+CMSSW_7_3_DEVEL_X:
+CMSSW_7_2_X:
+CMSSW_7_1_X:
+CMSSW_7_0_X:
+CMSSW_6_2_X_SLHC:
+CMSSW_6_2_X:
+CMSSW_5_3_X:
+

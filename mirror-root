@@ -1,0 +1,20 @@
+#!/bin/sh -ex
+WORKSPACE=${WORKSPACE-$PWD}
+cd $WORKSPACE
+git clone https://github.com/root-mirror/root
+cd root
+git remote set-url origin https://github.com/root-mirror/root
+git remote add cms-sw git@github.com:cms-sw/root.git || git remote set-url cms-sw git@github.com:cms-sw/root.git
+git fetch origin --tags
+git fetch cms-sw
+git checkout master
+
+# Process tags
+TAGS=`git tag | grep -e 'v\(5-34-[2-9][0-9]\|6-[0-9][0-9]-[0-9][0-9]\)' | grep -v -e "-rc"`
+for t in $TAGS; do
+  git show-ref -- $t | grep cms-sw/cms >/dev/null && continue
+  echo cms/$t is missing
+  git branch -D cms/$t || true
+  git branch cms/$t $t
+  git push cms-sw cms/$t:cms/$t
+done

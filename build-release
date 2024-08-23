@@ -1,0 +1,147 @@
+#!/bin/sh -ex
+
+# The release should have been already created in Github
+# CMSSW_X_Y_Z: the release to build
+# ARCHITECTURE: architecture for the build
+# ISSUE_NUMBER: the number of the issue that triggered the build
+# DRY_RUN_PARAM: parameter that to use dry-run
+# ONLY_BUILD_TOOLCONF: if True, tells me to only build cmssw-tool-conf
+source $(dirname $0)/cmsrep.sh
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+CMSSW_QUEUE=$3
+ONLY_BUILD_TOOLCONF=$4
+ISSUE_NUMBER=$5
+DRY_RUN_PARAM=$6
+CMSDIST_HASH=$7
+echo DATE=`date`
+HERE=$WORKSPACE/build
+BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
+mkdir -p $BUILD_DIR
+BUILD_NPROC=$(nproc)
+QUEUE=$CMSSW_QUEUE
+
+#Workaround to fix py3-tomlkit which fails to build it if finds .git in the working directory
+if [ -d .git ] ; then mv .git backup.git ; fi
+
+kinit -R || true
+echo $$ > $WORKSPACE/BUILD_PID
+
+if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
+  POST_ACTION='TOOL_CONF_BUILDING'
+else
+  POST_ACTION='BUILDING'
+fi
+if [ -d /cvmfs/cms.cern.ch/cmssw.git.daily ] ; then
+  export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
+fi
+git clone git@github.com:cms-sw/cmsdist.git $BUILD_DIR/CMSDIST
+pushd $BUILD_DIR/CMSDIST
+  eval $(cat $WORKSPACE/config.map | grep -v "DISABLED="| grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$QUEUE;")
+
+  # a patch release uses the same cmsdist tag as its base release
+  case $CMSSW_X_Y_Z in
+    *patch*)
+    BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9]*//g'`
+    CMSDIST_TAG=REL/$BASE_RELEASE/$ARCHITECTURE
+    BUILD_OPTS=""
+    MULTIARCH_OPTS=""
+    PATCH='-patch'
+    ;;
+    * )
+    [ ! -z "$CMSDIST_HASH" ] && CMSDIST_TAG=$CMSDIST_HASH
+    ;;
+  esac
+
+  #Create a temp branch so that we can commit the local changes and
+  #push the REL tag once release is build successfully
+  git checkout $CMSDIST_TAG
+  git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE
+  [ -f ${CMSBUILD_OPTS_FILE} ] && source ${CMSBUILD_OPTS_FILE}
+  if [ $(echo $CMSSW_X_Y_Z | grep patch | wc -l) -eq 0 ] ; then
+    [ "${BUILD_OPTS}" = "" ]     || echo "BUILD_OPTS=\"${BUILD_OPTS}\""         >> ${CMSBUILD_OPTS_FILE}
+    [ "${MULTIARCH_OPTS}" = "" ] || echo "MULTIARCH_OPTS=\"${MULTIARCH_OPTS}\"" >> ${CMSBUILD_OPTS_FILE}
+    if [ -e ${CMSBUILD_OPTS_FILE} ] ; then
+      (git add ${CMSBUILD_OPTS_FILE} ; git commit -m 'Added build options' ${CMSBUILD_OPTS_FILE}) || true
+    fi
+  fi
+popd
+
+git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOLS
+echo DATE=`date`
+BRANCH_DETAILS="CMSDIST Branch: [$CMSDIST_TAG](https://github.com/cms-sw/cmsdist/commits/$CMSDIST_TAG), PKGTOOLS Branch: [$PKGTOOLS_TAG](https://github.com/cms-sw/pkgtools/commits/$PKGTOOLS_TAG)"
+WORKER="${NODE_NAME}"
+if [ "${WORKER}" = "" ] ; then WORKER=`hostname -s` ; fi
+./report-build-release-status ${BUILD_NUMBER} $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z $POST_ACTION $DRY_RUN_PARAM -d "$BRANCH_DETAILS"
+echo DATE=`date`
+pushd $BUILD_DIR
+  # prepare cmssw.spec
+  if [ "X$ENABLE_DEBUG" = X ] && [ "X$PATCH" = X ]; then
+    perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' CMSDIST/cmssw.spec CMSDIST/cmssw-patch.spec CMSDIST/coral.spec
+    (cd CMSDIST ; git commit -m 'Coherent debug package setup.' cmssw.spec cmssw-patch.spec coral.spec || true)
+  fi
+  sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE > $WORKSPACE/prepare-cmsdist.log 2>&1
+  echo DATE=`date`
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER} --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC"
+  case `uname -s` in
+    Darwin ) MD5_CMD=md5;;
+    * )      MD5_CMD=md5sum;;
+  esac
+  if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
+    CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
+  else
+    CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
+  fi
+  if [ -f CMSDIST/fakesystem.spec ] ; then
+    PYTHONPATH= $CMSBUILD_CMD -i fake             build  fakesystem
+    PYTHONPATH= $CMSBUILD_CMD -i fake --sync-back upload fakesystem
+    rm -rf fake
+  fi
+  PYTHONPATH= $CMSBUILD_CMD --specs-only build cmssw$PATCH
+  rm -rf WEB
+  echo DATE=`date`
+  TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
+  [ -e CMSDIST/gcc-fixincludes.spec ] && TOOL_CONF_PACKAGES="gcc-fixincludes ${TOOL_CONF_PACKAGES}"
+  EXT_FAILED=false
+  PYTHONPATH= $CMSBUILD_CMD --builders 4 build $TOOL_CONF_PACKAGES || EXT_FAILED=true
+  echo DATE=`date`
+  if $EXT_FAILED ; then
+    BLD_PKGS=$(ls RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
+    if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload ${BLD_PKGS} ; fi
+    rm -rf  tmp
+    exit 1
+  fi
+  if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
+    PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload $TOOL_CONF_PACKAGES
+    echo DATE=`date`
+    PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
+    echo DATE=`date`
+    rm -rf WEB RPMS SRPMS SOURCES tmp
+  else
+    rm -rf tmp/pip*
+  fi
+
+  if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
+    echo 'I was asked to build only cmssw-tool-conf, exiting without building cmssw'
+    rm -rf tmp
+    # If it reaches here it is because there were no errors
+    echo 'ALL_OK'
+    exit 0
+  fi
+  PYTHONPATH= $CMSBUILD_CMD -j $BUILD_NPROC build cmssw$PATCH
+  echo DATE=`date`
+popd
+echo DATE=`date`
+
+pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
+  #Force delete any existing tags
+  git tag -d REL/$CMSSW_X_Y_Z/$ARCHITECTURE || true
+  git push origin :refs/tags/REL/$CMSSW_X_Y_Z/$ARCHITECTURE || true
+  git tag  REL/$CMSSW_X_Y_Z/$ARCHITECTURE
+  git push origin REL/$CMSSW_X_Y_Z/$ARCHITECTURE
+popd
+
+
+# If it reaches here it is because there were no errors
+echo 'ALL_OK'
+

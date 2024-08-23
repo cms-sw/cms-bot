@@ -1,0 +1,121 @@
+#!/bin/sh -ex
+
+has_arg() {
+  [ "X$1" = "X" ] && echo "Error: Missing command-line arg value for $2" && exit 1
+  return 0
+}
+
+parseargs() {
+  set +x
+  while [ $# -gt 0 ]; do
+    arg=$1; shift
+    case $arg in
+    -* )
+      case $arg in
+      -l | --log-file ) GIT_DIFF_LOGFILE=$1 && has_arg $1 $arg && shift ;;
+      -s | --src-branch  ) SOURCE_BRANCH=$1 && has_arg $1 $arg && shift  ;;
+      -d | --des-branch ) TARGET_BRANCH=$1 && has_arg $1 $arg && shift  ;;
+      -c | --commits ) COMMITS_LIST=$1 && has_arg $1 $arg && shift  ;;
+      -X | --strategy ) STRATEGY=$1 && has_arg $1 $arg && shift  ;;
+      -p | --push ) PUSH_UPDATES=yes ;;
+      -* )
+        echo -e "Usage: $0\n\t-l|--log-file <file>\n\t-s|--src-branch <branch>\n\t-d|--des-branch <branch>"
+        echo -e "\t[-c|--commits <comma-seperated-hashes>]\n\t[-X|--strategy <merge-strategy>]\n\t[-p|--push]\n\t[-h|--help]"
+        exit 0 ;;
+      esac ;;
+    * ) echo "Error: Invalid argument $arg."; exit 1;;
+    esac
+  done
+  for s in GIT_DIFF_LOGFILE#log-file SOURCE_BRANCH#src-branch TARGET_BRANCH#des-branch ; do
+    v=$(echo $s | sed 's|#.*||')
+    o=$(echo $s | sed 's|.*#||')
+    eval "vc=$(echo \$$v)"
+    err=0
+    if [ "X$vc" = "X" ] ; then 
+      echo "Error: Missing required command-line option --$o <value>"
+      err=1
+    fi
+    [ $err -eq 0 ] || exit 1
+  done
+  set -x
+}
+parseargs $@
+
+#clean up any previous un-commited changes
+git clean -fdx
+#checkout target branch and remove any local changes
+git checkout -q --force $TARGET_BRANCH
+git reset --hard origin/$TARGET_BRANCH
+MERGE_OPTS=""
+DEFAULT_MERGE_COMMIT_MSG="Merge $SOURCE_BRANCH into $TARGET_BRANCH."
+#Depending on the commits, use either cherry-pick or merge
+if [ "X$COMMITS_LIST" = "X" ] ; then
+  #We do not have the commits to just try to merge source branch in to target
+  [ "X$STRATEGY" = "X" ] || MERGE_OPTS="-X $STRATEGY"
+  if [ "$SOURCE_BRANCH" = "master" ] ; then
+    MERGE_OPTS="--ff $MERGE_OPTS"
+  else
+    MERGE_OPTS="--no-ff $MERGE_OPTS"
+  fi
+  git merge -m "$DEFAULT_MERGE_COMMIT_MSG" $MERGE_OPTS origin/$SOURCE_BRANCH || (git diff >> $GIT_DIFF_LOGFILE && exit 1)
+else
+  #We have the commits list, so do cherry picking by doing the following
+  #  1. Create and checkout new dummy branch based on target branch
+  #  2. Find the commit type
+  #    2.1. non-merged commits with only one parent
+  #      - cherry-pick them in new dummy branch
+  #    2.2. merged commits with more than 1 parents
+  #      - checkout targent branch
+  #      - merge dummy new branch in to target branch
+  #      - merge the new dummy branch in to the target branch
+  #      - amend the commit message
+  #      - checkout the dummy branch again and repeat step 2
+  DUMMY_BRANCH=$(whoami)-auto-forward-port-dummy-branch
+  if [ ! "X$STRATEGY" = "X" ] ; then
+    if [ ! "X$(git cherry-pick -h 2>&1 | grep 'strategy-option' | tail -1)" = "X" ] ; then
+      MERGE_OPTS="-X $STRATEGY"
+    fi
+  fi
+  #Delete dummy branch if exists
+  git branch -D $DUMMY_BRANCH || true
+  #Create and checkout dummy branch
+  git checkout -b $DUMMY_BRANCH
+  #Loop through the commits
+  for c in $(echo $COMMITS_LIST | tr ',' '\n') ; do
+    #Find out the commit type; If more than 1 parents then it is a merge commit
+    IsMergeCommit=$([ $(git rev-list --parents -n 1 $c | wc -w) -lt 3 ] || echo YES)
+    if [ "X$IsMergeCommit" = X ] ; then
+      #Non-merge commit found; cherry pick it
+      if ! git cherry-pick -x $MERGE_OPTS $c ; then
+        git diff >> $GIT_DIFF_LOGFILE
+        [ $(git diff --name-only | wc -l) -eq 0 ] || exit 1
+      fi
+    else
+      #Merge commit found
+      #checkout target brach; merge dummy branch in it; go back to dummy branch
+      git checkout -q --force $TARGET_BRANCH
+      git merge -m "$(git show --pretty=format:%s $c)" --no-ff $DUMMY_BRANCH
+      git checkout -q $DUMMY_BRANCH
+    fi
+  done
+  git checkout -q --force $TARGET_BRANCH
+  #If last commit was not a merge commit then we have new commits in dummy branch
+  if [ "X$IsMergeCommit" = X ] ; then
+    #We have new commits in dummy branch which are not yet merged in to target branch
+    git merge -m "$DEFAULT_MERGE_COMMIT_MSG" --no-ff $DUMMY_BRANCH
+  fi
+  #We are done with cherry-picking, now delete the dummy branch
+  git branch -D $DUMMY_BRANCH
+fi
+#We should be on target branch by now
+#Check if local target branch has any changes w.r.t remote target branch
+if [ "X`git diff --name-only HEAD origin/$TARGET_BRANCH | tail -1`" != "X" ]; then
+  #Finaly, push the local target branch to remote target branch
+  if [ ! "X$PUSH_UPDATES" = "X" ] ; then
+    git push origin $TARGET_BRANCH >> $GIT_DIFF_LOGFILE 2>&1
+  else
+    echo "Skipped pushing updates to remote due to env variable PUSH_UPDATES not set"
+  fi
+fi
+echo "ALL_OK $SOURCE_BRANCH $TARGET_BRANCH"
+

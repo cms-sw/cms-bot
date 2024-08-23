@@ -1,0 +1,128 @@
+#!/bin/bash -ex
+if [ "${WORKSPACE}" = "" ] ; then WORKSPACE=$(/bin/pwd); fi
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+
+cd $WORKSPACE
+
+# The pull request number is $1
+PULL_REQUESTS=$(echo $1 | sed 's/^ *//;s/ *$//')
+PULL_REQUEST="$(echo ${PULL_REQUESTS} | sed 's| .*||')"
+COMMIT=$(${CMS_BOT_DIR}/process-pull-request.py -c -r $(echo ${PULL_REQUEST} | sed 's/#.*//') $(echo ${PULL_REQUEST} | sed 's/.*#//'))
+echo "${PULL_REQUEST}=${COMMIT}" > ${WORKSPACE}/prs_commits
+source $CMS_BOT_DIR/pr_testing/_helper_functions.sh
+source $CMS_BOT_DIR/common/github_reports.sh
+
+#Search Config entry based on CMSSW branch/PR
+CMSSW_BR=""
+CMSDIST_TAG=""
+if [ "${RELEASE_FORMAT}" != "" ] ; then
+  if [ $(echo $RELEASE_FORMAT | grep '_X' | wc -l) -gt 0 ] ; then
+    CMSSW_BR="$(echo $RELEASE_FORMAT | sed 's|_X.*|_X|')"
+  else
+    CMSSW_BR="$(echo $RELEASE_FORMAT | cut -d_ -f1-3)_X"
+  fi
+  CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh "${CMSSW_BR}" "" "${ARCHITECTURE_FILTER}") || true
+else
+  GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)
+  if [ "${GITHUB_PR_TO_SEARCH}" != "" ] ; then
+    CMSSW_BR=$(get_base_branch ${GITHUB_PR_TO_SEARCH})
+    CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "${CMSSW_BR}" "" "${ARCHITECTURE_FILTER}") || true
+  fi
+  #Find config entry based on CMSDIST PR
+  if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
+    GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
+    if [ "${GITHUB_PR_TO_SEARCH}" != "" ] ; then
+      CMSDIST_TAG=$(get_base_branch "$GITHUB_PR_TO_SEARCH")
+      CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "" "${CMSDIST_TAG}" "${ARCHITECTURE_FILTER}") || true
+      if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
+        if [ "${CMSSW_BR}" != "" ] ; then
+          CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "${CMSSW_BR}" "${CMSDIST_TAG}" "${ARCHITECTURE_FILTER}") || true
+        fi
+      fi
+    fi
+  fi
+  if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
+    if [ "${CMSSW_BR}${CMSDIST_TAG}" = "" ] ; then
+      CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "" "" "${ARCHITECTURE_FILTER}") || true
+    fi
+  fi
+fi
+[ "${BUILD_VERBOSE}" = "true" ] || BUILD_VERBOSE="false"
+[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="GPU THREADING HIGH_STATS NANO"
+if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; then
+    REQUIRED_TEST=false
+    eval $CONFIG_LINE
+    ARCHITECTURE=${SCRAM_ARCH}
+    OUTPUT_FILE=properties-pr-test-${SCRAM_ARCH}.txt
+    echo PULL_REQUEST="${PULL_REQUEST}" >> $OUTPUT_FILE
+    echo PULL_REQUESTS=${PULL_REQUESTS} >> $OUTPUT_FILE
+    echo ARCHITECTURE=${SCRAM_ARCH} >> $OUTPUT_FILE
+    if [ "X$RELEASE_FORMAT" = X ] ; then
+      if [ "X$NO_IB" = "X1" ] ; then
+        RELEASE_FORMAT=$(grep label=$(echo ${RELEASE_QUEUE} | sed 's|_X||') $CMS_BOT_DIR/releases.map | grep "architecture=${SCRAM_ARCH}" | tail -1 | sed 's|.*label=||;s|;.*||')
+       else
+        RELEASE_FORMAT="${RELEASE_QUEUE}"
+      fi
+    fi
+    if [ "${DOCKER_IMGAGE}" != "" ] ; then  DOCKER_IMG="${DOCKER_IMGAGE}" ; fi
+    PR_COMMIT_STATUS="optional"
+    if ${REQUIRED_TEST} ; then PR_COMMIT_STATUS="required" ; fi
+    echo "REQUIRED_TEST=${REQUIRED_TEST}" >> $OUTPUT_FILE
+    echo "DRY_RUN=${DRY_RUN}" >> $OUTPUT_FILE
+    echo "ENABLE_BOT_TESTS=${ENABLE_BOT_TESTS}" >> $OUTPUT_FILE
+    echo "DISABLE_POISON=${DISABLE_POISON}" >> $OUTPUT_FILE
+    echo "BUILD_FULL_CMSSW=${BUILD_FULL_CMSSW}" >> $OUTPUT_FILE
+    echo "USE_IB_TAG=${USE_IB_TAG}" >> $OUTPUT_FILE
+    echo "USE_BASELINE=${USE_BASELINE}" >> $OUTPUT_FILE
+    echo "SKIP_TESTS=${SKIP_TESTS}" >> $OUTPUT_FILE
+    echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}" >> $OUTPUT_FILE
+    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" >> $OUTPUT_FILE
+    echo "DO_TESTS=${DO_TESTS}" >> $OUTPUT_FILE
+    echo "DO_SHORT_MATRIX=${DO_SHORT_MATRIX}" >> $OUTPUT_FILE
+    echo "DO_STATIC_CHECKS=${DO_STATIC_CHECKS}" >> $OUTPUT_FILE
+    echo "DO_DUPLICATE_CHECKS=${DO_DUPLICATE_CHECKS}" >> $OUTPUT_FILE
+    echo "EXTRA_RELVALS_TESTS=${EXTRA_RELVALS_TESTS}" >> $OUTPUT_FILE
+    for i in "" ${EXTRA_RELVALS_TESTS} ; do
+      [ "$i" != "" ] && i="_$i"
+      for t in EXTRA_MATRIX_ARGS MATRIX_EXTRAS EXTRA_MATRIX_COMMAND_ARGS ; do
+        eval "a=\${$t$i}"
+        if [ "$a" != "" ]  ;then
+          echo "${t}${i}=${a}" >> $OUTPUT_FILE
+        fi
+      done
+    done
+    for i in _INPUT ; do
+      for t in EXTRA_MATRIX_ARGS EXTRA_MATRIX_COMMAND_ARGS ; do
+        eval "a=\${$t$i}"
+        if [ "$a" != "" ]  ;then
+          echo "${t}${i}=${a}" >> $OUTPUT_FILE
+        fi
+      done
+    done
+    echo "WORKFLOWS_FOR_VALGRIND_TEST=${WORKFLOWS_FOR_VALGRIND_TEST}" >> $OUTPUT_FILE
+    echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $OUTPUT_FILE
+    echo "RUN_CONFIG_VIEWER=${RUN_CONFIG_VIEWER}" >> $OUTPUT_FILE
+    echo "BRANCH_NAME=${BRANCH_NAME}" >> $OUTPUT_FILE
+    echo "RUN_IGPROF=${RUN_IGPROF}" >> $OUTPUT_FILE
+    echo "CMSDIST_PR=${CMSDIST_PR}" >> $OUTPUT_FILE
+    echo "FULL_TOOLCONF=true" >> $OUTPUT_FILE
+    echo "COMPARISON_ARCH=${COMP_ARCH}" >> $OUTPUT_FILE
+    echo "DOCKER_IMG=${DOCKER_IMG}" >> $OUTPUT_FILE
+    echo "IGNORE_BOT_TESTS=${IGNORE_BOT_TESTS}" >> $OUTPUT_FILE
+    echo "EXTRA_CMSSW_PACKAGES=${EXTRA_CMSSW_PACKAGES}" >> $OUTPUT_FILE
+    echo "CONFIG_LINE=${CONFIG_LINE}" >> $OUTPUT_FILE
+    echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $OUTPUT_FILE
+    echo "PROFILING_WORKFLOWS=${PROFILING_WORKFLOWS}" >> $OUTPUT_FILE
+    echo "BUILD_VERBOSE=${BUILD_VERBOSE}" >> $OUTPUT_FILE
+    CMSSW_QUEUE="${RELEASE_QUEUE}"
+    mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'pending' -d "Tests scheduled ${RELEASE_FORMAT}/${SCRAM_ARCH}" -u 'https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/' || true
+    COMMIT_STATUS_CONTEXT="unknown/release"
+    mark_commit_status_all_prs '' 'success' -d 'All OK' || true
+else
+    COMMIT_STATUS_CONTEXT="unknown/release"
+    msg=""
+    if [ "${CMSSW_BR}" != "" ]    ; then msg=" for ${CMSSW_BR}" ;fi
+    if [ "${CMSDIST_TAG}" != "" ] ; then msg=" for cmsdist ${CMSDIST_TAG}" ;fi
+    mark_commit_status_all_prs '' 'error' -d "Unable to find CMSSW IB${msg}." || true
+fi

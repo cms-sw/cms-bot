@@ -1,0 +1,16 @@
+#!/bin/sh -ex
+
+# Runs geometry comparison tests for an IB
+WORKSPACE="${WORKSPACE-$PWD}"
+RELEASE_FORMAT=$1
+ARCHITECTURE=$2
+scram -a $ARCHITECTURE project $RELEASE_FORMAT
+pushd $RELEASE_FORMAT
+  eval `scram run -sh`
+popd
+
+$CMSSW_RELEASE_BASE/src/Validation/Geometry/test/dddvsdb/runDDDvsDBGeometryValidation.sh
+$CMSSW_RELEASE_BASE/src/Validation/Geometry/test/dddvsdb/runDDDvsDBGeometryValidation.sh auto:run2_mc GeometryExtended2015 GeometryExtended2015
+
+rm -rf $RELEASE_FORMAT
+

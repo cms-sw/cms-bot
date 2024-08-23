@@ -1,0 +1,118 @@
+#!/bin/bash -e
+echo "============================================="
+date
+echo "============================================="
+[ "$1" = "" ] && exit 1
+CLONE_DIR=$1
+mkdir -p $CLONE_DIR
+cd $CLONE_DIR
+if [ ! -d cmspkg ] ; then
+  git clone https://github.com/cms-sw/cmspkg.git
+fi
+pushd cmspkg
+  git pull --rebase
+popd
+
+mdir=$(echo $CLONE_DIR | cut -d/ -f1,2)
+df -h $mdir
+mkdir -p $CLONE_DIR/cmssw $CLONE_DIR/cmssw/repos/.obj_store/RPMS
+
+CMSREP="curl -L -s http://cmsrep.cern.ch/cmssw/repos"
+if [ "X${REPOSITORY}" = "X" ] ; then
+  echo "Starting cleanup process ..."
+  REPOSITORY=$(${CMSREP} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | grep -v tmp | sort | uniq | tr '\n' ' ')
+  echo "Found repositories: $REPOSITORY"
+  echo "Searching for obsolete repositories ...."
+  if [ "X${REPOSITORY}" != "X" ] ; then
+    if [ -d $CLONE_DIR/cmssw/repos ] ; then
+      for repo_dir in $(find $CLONE_DIR/cmssw/repos -mindepth 1 -maxdepth 1 -type d | grep -v '/\.obj_store') ; do
+        repo=$(basename $repo_dir)
+        if [ "${EXCLUDE_REPO}" != "" ] ; then
+          if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
+            if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
+              echo "Deleting excluded repository $repo"
+              rm -rf $CLONE_DIR/cmssw/repos/$repo
+            fi
+            continue
+          fi
+        fi
+        if [ $(echo "$REPOSITORY" | tr ' ' '\n' | grep "^$repo\$" | wc -l) -eq 1 ] ; then
+          ARCHS=$(${CMSREP}/${repo} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | sort | uniq)
+          for arch_dir in $(find ${repo_dir} -mindepth 1 -maxdepth 1 -type d) ; do
+            arch=$(basename ${arch_dir})
+            if [ "${arch}" = "drivers" ] ; then continue; fi
+            if [ $(echo "$ARCHS" | grep "^$arch\$" | wc -l) -eq 0 ] ; then
+              echo "  Deleting ${repo}/${arch}"
+              rm -rf ${arch_dir}
+              touch $CLONE_DIR/cmssw/repos/.obj_store/RPMS/${arch}
+            else
+              echo "  Keeping ${repo}/${arch}"
+            fi
+          done
+          continue
+        fi
+        for arch in $(find ${repo_dir} -mindepth 1 -maxdepth 1 -type d | sed 's|.*/||') ; do
+          touch $CLONE_DIR/cmssw/repos/.obj_store/RPMS/${arch}
+        done
+        echo "  Deleting ${repo}"
+        rm -rf $repo_dir
+      done
+    fi
+  fi
+  if [ "${CMSPKG_DELETE_UNUSED}" != "false" ] ; then
+    echo "Searching for obsolete RPMS in Object Store"
+    for arch_dir in $(find $CLONE_DIR/cmssw/repos/.obj_store/RPMS -mindepth 1 -maxdepth 1 -mtime -1 -type d) ; do
+      DEL_FILES=0
+      arch=$(basename ${arch_dir})
+      echo "  Checking architecture ${arch}"
+      for rpm in $(find ${arch_dir} -mindepth 3 -maxdepth 3 -name '*.rpm' -type f) ; do
+        [ $(ls -l $rpm | awk '{print $2}') -gt 1 ] && continue
+        let DEL_FILES=$DEL_FILES+1
+        echo  "    Remove($DEL_FILES): $rpm"
+        rm -f "$rpm"
+      done
+      echo "  Deleted obsolete files: ${arch}: $DEL_FILES"
+      if [ $DEL_FILES -gt 0 ] ; then
+        echo "    Cleaning up empty directories"
+        for depth in 2 1 ; do
+          for dir in $(find ${arch_dir} -mindepth ${depth} -maxdepth ${depth} -type d -empty) ; do
+            echo "    Deleting empty store: $dir"
+            rm -rf $dir
+          done
+        done
+      fi
+    done
+  fi
+fi
+
+echo "Starting backup process ...."
+TOTAL_REPOS=0
+ERR=0
+for repo in $(echo ${REPOSITORY} | tr ' ' '\n' | grep -v '^cms.week[0-9].PR_[0-9a-f]\{8\}$') ; do
+  if [ "${EXCLUDE_REPO}" != "" ] ; then
+    if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
+      if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
+        echo "Deleting excluded repository $repo"
+        rm -rf $CLONE_DIR/cmssw/repos/$repo
+      fi
+      continue
+    fi
+  fi
+  ARCHS="${ARCHITECTURE}"
+  if [ "X${ARCHS}" = "X" ] ; then
+    ARCHS=$(${CMSREP}/${repo} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | grep '^[a-z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*$' | sort)
+  fi
+  for arch in $ARCHS ; do
+    echo "Checking $repo $arch"
+    $CLONE_DIR/cmspkg/client/cmspkg.py ${CMSPKG_CLONE_OPTS} --use-dev --use-store -p $CLONE_DIR/cmssw -a $arch -r $repo -j 4 clone || ERR=1
+    let TOTAL_REPOS=$TOTAL_REPOS+1
+    echo "ERR:$ERR, Repository cloned: $TOTAL_REPOS"
+    if [ -d $CLONE_DIR/cmssw/repos/.obj_store/RPMS/${arch} ] ; then
+      touch $CLONE_DIR/cmssw/repos/.obj_store/RPMS/${arch}
+    fi
+  done
+done
+
+echo "Total Repos cloned: $TOTAL_REPOS"
+df -h $mdir
+exit $ERR

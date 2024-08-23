@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+	<head>
+	<meta charset="utf-8" />
+	<title>Merged Pull Requests</title>
+
+	<link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+	</head>
+	<body>
+		<script type='text/javascript' src="https://code.jquery.com/jquery-2.1.0.js"></script>
+		<script type='text/javascript' src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+	
+
+	<div class="container">
+		<div class="span3"></div>
+		<div class="col-md-10"  id="results"></div>
+		</div>
+		<div class="span3">
+		</div>
+
+	<script>
+        
+	$(document).ready(function () {
+
+		create_header_table = function(table){
+
+			var header = $('<thead>')
+			var h_row = $('<tr>')
+			var last_rel = $('<h2>').text('Performance Plots Summary')
+			
+			h_row.append($('<td>').append(last_rel))
+			
+			var img_cell = $('<td>')
+			img_cell.attr('class','text-center')
+
+			var img = $('<img>')
+			img.attr('src', 'http://cms.web.cern.ch/sites/cms.web.cern.ch/files/cms-logo-with-text_0_0.png')
+			img.attr('class', 'img-rounded')
+
+			h_row.append(img_cell.append(img))
+			
+			header.append(h_row)
+			table.append(header)
+
+		}
+
+		addWFRow = function(workflow,tbody){
+			var row = $('<tr>')
+			var wfNameCell = $('<td>')
+			var divNameCell = $('<div>').append($('<h4>').text(workflow.wf_name))
+			divNameCell.attr('class','alert alert-info')
+
+			wfNameCell.append(divNameCell)
+			wfNameCell.attr('colspan','2')
+			row.append(wfNameCell)
+
+			tbody.append(row)
+		}
+
+		addStepRow = function(step,tbody){
+			var row = $('<tr>')
+                        var wfNameCell = $('<td>')
+                        var divNameCell = $('<div>').text(step.step_name)
+
+                        wfNameCell.append(divNameCell)
+                        wfNameCell.attr('colspan','2')
+                        row.append(wfNameCell)
+
+                        tbody.append(row)
+
+		}
+
+		addImgsRows = function(imgs,tbody){
+			var row = $('<tr>')
+			
+			for( var i = 0 ; i < imgs.length ; i++){
+				var cell = $('<td>')
+				var imgObj = $('<img>')
+				var imgLink = $('<a>')
+				var img = imgs[i]
+				var name = img.name
+				var url = img.url
+
+				imgObj.attr('src',url)
+				imgObj.attr('alt',name)
+				imgObj.attr('height','275')
+				imgObj.attr('width','400')
+				
+				imgLink.attr('href',url)
+
+				imgLink.append(imgObj)
+				cell.append(imgLink)
+				row.append(cell)
+
+			}
+
+                        tbody.append(row)
+
+			var rowTittles = $('<tr>')
+
+			for( var i = 0 ; i < imgs.length ; i++){
+                                var cell = $('<td>')
+				var title = imgs[i].name
+
+                                cell.append($('<center>').text(title))
+                                rowTittles.append(cell)
+
+                        }
+
+
+			tbody.append(rowTittles)
+
+		}
+
+		addResultsTable = function(workflows,table){
+
+			 var tbody = $('<tbody></tbody>')
+			 
+		         for( var i = 0; i < workflows.length; i++){
+
+				wf = workflows[i]
+				console.log(wf)
+				console.log("------------")
+				addWFRow(wf,tbody)
+				var steps = wf.steps
+				for (var j =  0; j < steps.length; j++){
+					addStepRow(steps[j],tbody)
+					addImgsRows(steps[j].imgs,tbody)
+
+				}
+
+			 }
+			 table.append(tbody)
+			
+
+		}
+
+		f = function(data){
+			
+			var table = $('<table class="table"></table>')
+
+			create_header_table(table)
+			addResultsTable(data.wfs,table)
+
+			$("#results").append(table)
+
+		}
+
+  		$.getJSON( "plots_summary.json", f)
+
+
+
+	})	
+	
+	</script>
+	</body>
+</html>

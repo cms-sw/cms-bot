@@ -1,0 +1,1816 @@
+#  Map between github username and the list of packages to watch.
+# Package is a regular expression which will be automatically delimited by
+# ".*".
+bsunanda:
+  - Geometry/
+  - SimDataFormats/
+  - SimG4Core/
+  - SimG4CMS/
+  - CondCore/GeometryPlugins
+  - CondCore/HcalPlugins
+  - CondFormats/GeometryObjects
+  - CondFormats/HcalMapping
+  - CondFormats/HcalObjects
+  - CondTools/Geometry
+  - CalibCalorimetry/HcalAlgos
+  - CalibCalorimetry/HcalPlugins
+  - CalibCalorimetry/HcalTPGAlgos
+  - CalibCalorimetry/HcalTPGEventSetup
+  - CalibCalorimetry/HcalTPGIO
+  - CalibFormats/HcalObjects
+  - Calibration/HcalAlCaRecoProducers
+  - Calibration/HcalCalibAlgos
+  - Calibration/HcalConnectivity
+  - Calibration/HcalIsolatedTrackReco
+  - Calibration/IsolatedParticles
+  - DQM/HcalCommon
+  - DQM/HcalMonitorClient
+  - DQM/HcalMonitorModule
+  - DQM/HcalMonitorTasks
+  - DQM/HcalTasks
+  - DQMOffline/Hcal
+  - DataFormats/ForwardDetId
+  - DataFormats/HcalCalibObjects
+  - DataFormats/HcalDetId
+  - DataFormats/HcalDigi
+  - DataFormats/HcalIsolatedTrack
+  - DataFormats/HcalRecHit
+  - DataFormats/HGCDigi
+  - DataFormats/HGCRecHit
+  - EventFilter/HcalRawToDigi
+  - IORawData/HcalTBInputService
+  - OnlineDB/HcalCondDB
+  - RecoLocalCalo/HcalLaserReco
+  - RecoLocalCalo/HcalRecAlgos
+  - RecoLocalCalo/HcalRecProducers
+  - RecoLocalCalo/HGCalRecAlgos
+  - RecoLocalCalo/HGCalRecProducers
+  - RecoTBCalo/HcalPlotter
+  - RecoTBCalo/HcalTBObjectUnpacker
+  - RecoTBCalo/HcalTBTools
+  - SimCalorimetry/HcalSimAlgos
+  - SimCalorimetry/HcalSimProducers
+  - SimCalorimetry/HcalTestBeam
+  - SimCalorimetry/HcalTrigPrimAlgos
+  - SimCalorimetry/HcalTrigPrimProducers
+  - SimCalorimetry/HcalZeroSuppressionProducers
+  - SimCalorimetry/HGCalSimProducers
+  - TBDataFormats/HcalTBObjects
+  - Validation/HcalDigis
+  - Validation/HcalHits
+  - Validation/HcalRecHits
+  - Validation/HGCalValidation
+tracking-pog:
+- Configuration/StandardSequences
+- DPGAnalysis/SiStripTools
+- DQM/TrackingMonitor
+- DQM/TrackingMonitorClient
+- DQM/TrackingMonitorSource
+- DataFormats/Tra
+- DataFormats/VertexReco
+- Geometry/CommonTopologies
+- Geometry/Track
+- RecoLocalTracker
+- RecoPixelVertexing
+- RecoTracker
+- RecoVertex
+- SLHCUpgradeSimulations/Configuration
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/Track
+- SimDataFormats/Vertex
+- SimGeneral/TrackingAnalysis
+- SimTracker
+- TrackPropagation
+- TrackingTools
+- Validation/RecoTrack
+- Validation/RecoVertex
+- Validation/TrackerRecHits
+btv-pog:
+  - CondFormats/BTauObjects
+  - CondTools/BTau
+  - DataFormats/BTauReco
+  - DQMOffline/RecoB
+  - SimDataFormats/JetMatching
+  - HLTriggerOffline/Btag
+  - HLTrigger/btau
+  - PhysicsTools/JetExamples
+  - PhysicsTools/JetMCAlgos
+  - PhysicsTools/JetMCUtils
+  - PhysicsTools/MVAComputer
+  - PhysicsTools/MVATrainer
+  - PhysicsTools/PatAlgos
+  - PhysicsTools/PatExamples
+  - PhysicsTools/PatUtils
+  - RecoBTag
+  - RecoBTau
+  - RecoJets/JetAssociationAlgorithms
+  - RecoJets/JetAssociationProducers
+  - RecoVertex/AdaptiveVertexFinder
+  - RecoVertex/AdaptiveVertexFit
+  - SimTracker/TrackHistory
+  - Validation/RecoB
+makortel:
+  - .clang-tidy
+  - Configuration/Applications
+  - Configuration/Eras
+  - Configuration/ProcessModifiers
+  - Configuration/PyReleaseValidation
+  - Configuration/StandardSequences
+  - DataFormats/Common
+  - DataFormats/FWLite
+  - DataFormats/Math
+  - DataFormats/Provenance
+  - DataFormats/StdDictionaries
+  - DataFormats/Streamer
+  - DataFormats/TestObjects
+  - DataFormats/WrappedStdDictionaries
+  - FWCore
+  - HeterogeneousCore
+  - IgTools
+  - IOMC/RandomEngine
+  - IOPool
+  - PerfTools
+  - PhysicsTools/TensorFlow
+  - RecoTracker/MkFit
+  - SimG4Core
+  - SimGeneral/DataMixingModule
+  - SimGeneral/MixingModule
+  - SimGeneral/PreMixingModule
+GiacomoSguazzoni:
+- RecoTracker
+- RecoLocalTracker
+- TrackingTools
+- SimTracker
+- SimGeneral/TrackingAnalysis
+- RecoVertex
+- RecoPixelVertexing
+- Configuration/StandardSequences
+- Validation/RecoTrack
+- Validation/RecoVertex
+VinInn:
+- RecoTracker
+- RecoLocalTracker
+- TrackingTools
+- SimTracker
+- SimGeneral/TrackingAnalysis
+- RecoVertex
+- RecoPixelVertexing
+- Configuration/StandardSequences
+- Validation/RecoTrack
+- Validation/RecoVertex
+- DataFormats/Tra
+- DataFormats/GsfTrackReco
+- DataFormats/VertexReco
+- DataFormats/Si
+- CondFormats/Si
+- CondTools/Si
+- CondCore/Si
+- SimTracker
+- EventFilter/Si
+- Validation/TrackerRecHits
+- Geometry/Track
+- Geometry/CommonTopologies
+abbiendi:
+- Alignment/MuonAlignment
+- Alignment/MuonAlignmentAlgorithms
+- CommonTools/RecoAlgos
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoLocalMuon/CSCRecHitD
+- RecoLocalMuon/CSCSegment
+- RecoLocalMuon/Configuration
+- RecoLocalMuon/DTSegment
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- SimTracker/TrackAssociation
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+amarini:
+- DataFormats/L1THGCal
+- L1Trigger/L1THGCal
+alja:
+- Fireworks
+acimmino:
+- DQM/RPCMonitorDigi
+- DQM/RPCMonitorClient
+argiro:
+- .*[Ee][Cc][Aa][Ll]
+barvic:
+- EventFilter/CSCRawToDigi
+- DQM/CSCMonitorModule
+- DQMOffline/Muon
+- DQMServices
+batinkov:
+- DQM/Integration
+battibass:
+- CalibMuon/Configuration
+- CalibMuon/DTCalibration
+- CalibMuon/DTDigiSync
+- CondFormats/DTObjects
+- CondFormats/RecoMuonObjects
+- DataFormats/DTDigi
+- DataFormats/DTRecHit
+- DataFormats/L1DTTrackFinder
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DPGAnalysis/MuonTools
+- DQM/DTMonitorClient
+- DQM/DTMonitorModule
+- DQMOffline/CalibMuon
+- EventFilter/DTRawToDigi
+- EventFilter/L1TXRawToDigi
+- Geometry/DTGeometry
+- Geometry/DTGeometryBuilder
+- L1Trigger/DTBti
+- L1Trigger/DTSectorCollector
+- L1Trigger/DTTraco
+- MuonAnalysis/MuonAssociators
+- L1Trigger/DTTrigger
+- L1Trigger/DTTriggerServerPhi
+- L1Trigger/DTTriggerServerTheta
+- L1Trigger/DTUtilities
+- L1Trigger/L1TTwinMux
+- L1TriggerConfig/DTTPGConfig
+- L1TriggerConfig/DTTPGConfigProducers
+- RecoLocalMuon/Configuration
+- RecoLocalMuon/DTRecHit
+- RecoLocalMuon/DTSegment
+- SimDataFormats/DigiSimLinks
+- SimMuon/Configuration
+- SimMuon/DTDigitizer
+- SimMuon/Neutron
+- SimMuon/MCTruth
+- Validation/DTRecHits
+- Validation/MuonDTDigis
+CeliaFernandez:
+- Alignment/MuonAlignment
+- Alignment/MuonAlignmentAlgorithms
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+muon-reco:
+- Alignment/MuonAlignment
+- Alignment/MuonAlignmentAlgorithms
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+cericeci:
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- DQMOffline/Trigger
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoEgamma/EgammaHLTProducers
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+Fedespring:
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- DQMOffline/Trigger
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoEgamma/EgammaHLTProducers
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+bellan:
+- RecoMuon
+- RecoLocalMuon
+- MuonAnalysis
+- TrackingTools
+- DQMOffline/Muon
+cbaus:
+- GeneratorInterface/ReggeGribovPartonMCInterface
+- GeneratorInterface/HiGenCommon
+- GeneratorInterface/HydjetInterface
+- GeneratorInterface/PyquenInterface
+pixel-offline:
+- RecoLocalTracker/SiPixelClusterizer
+- RecoLocalTracker/SiPixelRecHits
+- SimTracker/SiPixelDigitizer
+- EventFilter/SiPixelRawToDigi
+- DataFormats/SiPixel
+- CalibTracker/SiPixel
+- CondCore/SiPixelPlugins
+- CondFormats/SiPixel
+- CondTools/SiPixel
+ecal-offline:
+- .*[Ee][Cc][Aa][Ll]
+- CUDADataFormats/CaloCommon
+- CalibCalorimetry/CaloMiscalibTools
+- CalibCalorimetry/CaloTPG
+- CalibFormats/CaloObjects
+- CalibFormats/CaloTPG
+- CondFormats/ESObjects
+- DataFormats/CaloRecHit
+- DQMOffline/CalibCalo
+- EventFilter/ESDigiToRaw
+- EventFilter/ESRawToDigi
+- FastSimulation/CaloGeometryTools
+- FastSimulation/CaloHitMakers
+- FastSimulation/CaloRecHitsProducer
+- FastSimulation/CalorimeterProperties
+- FastSimulation/Calorimetry
+- Geometry/CaloEventSetup
+- Geometry/CaloGeometry
+- Geometry/CaloTopology
+- IORawData/CaloPatterns
+- RecoCaloTools/MetaCollections
+- RecoCaloTools/Navigation
+- RecoCaloTools/Selectors
+- RecoLocalCalo/CaloRecCandCreator
+- RecoLocalCalo/Configuration
+- SimCalorimetry/CaloSimAlgos
+- SimCalorimetry/Configuration
+- SimDataFormats/CaloAnalysis
+- SimDataFormats/CaloHit
+- SimDataFormats/CaloTest
+- SimDataFormats/EcalTestBeam
+- SimG4CMS/Calo
+- SimGeneral/CaloAnalysis
+fabferro:
+- Alignment/CTPPS
+- CalibPPS
+- CondCore/CTPPSPlugins
+- CondFormats/CTPPSReadoutObjects
+- CondTools/CTPPS
+- DataFormats/CTPPSAlignment
+- DataFormats/CTPPSDetId
+- DataFormats/CTPPSDigi
+- DataFormats/CTPPSReco
+- DQM/CTPPS
+- EventFilter/CTPPSRawToDigi
+- Geometry/VeryForwardData
+- Geometry/VeryForwardGeometry
+- Geometry/VeryForwardGeometryBuilder
+- Geometry/VeryForwardRPTopology
+- RecoCTPPS
+forthommel:
+- EventFilter/CTPPSRawToDigi
+- GeneratorInterface/CepGenInterface
+- RecoHGCal
+- RecoPPS
+- SimPPS/DirectSimProducer
+fwyzard:
+- FWCore/ServiceRegistry
+- FWCore/Services
+- HLTrigger/HLTcore
+- HLTrigger/JSONMonitoring
+- HLTrigger/Timer
+- HLTrigger/Tools
+gbenelli:
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- CalibTracker/SiStrip
+- CalibTracker/Configuration
+- CalibTracker/RecordsSimTracker/SiStripDigitizer
+- SimTracker/Common
+- SimTracker/Configuration
+- SimTracker/Records
+ghugo83:
+- Geometry/TrackerCommonData
+gpetruc:
+- DataFormats/Candidate
+- DataFormats/PatCandidates
+- DataFormats/Track
+- DataFormats/Trajectory
+- DataFormats/NanoAOD
+- RecoLocalTracker
+- RecoTracker
+- TrackingTools
+- PhysicsTools/PatUtils
+- PhysicsTools/PatAlgos
+- PhysicsTools/NanoAOD
+hatakeyamak:
+- RecoParticleFlow
+- RecoHGCal
+- Validation/RecoParticleFlow
+- Validation/HcalDigis
+- Validation/HcalHits
+- Validation/HcalRecHits
+- Validation/CaloTowers
+- DataFormats/ParticleFlowCandidate
+- DataFormats/ParticleFlowReco
+- DataFormats/PatCandidates
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoLocalCalo/HGC
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+HuguesBrun:
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- DQMOffline/Trigger
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoEgamma/EgammaHLTProducers
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+jazzitup:
+- RecoHI
+jbsauvan:
+- DataFormats/L1THGCal
+- L1Trigger/L1THGCal
+jdamgov:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
+jhgoh:
+- Alignment/MuonAlignment
+- Alignment/MuonAlignmentAlgorithms
+- CommonTools/RecoAlgos
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- DQMOffline/Trigger
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoLocalMuon
+- RecoMuon
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon
+- SimTracker/TrackAssociation
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+- Validation/RPCRecHits
+- Validation/MuonRPCDigis
+kkrajczar:
+- Validation/RecoHI
+kurtejung:
+- RecoHI
+lecriste:
+- RecoHGCal
+- RecoLocalCalo/HGCalRecProducers
+- Validation/HGCalValidation
+lgray:
+- RecoEcal
+- RecoEgamma
+- RecoParticleFlow
+- DataFormats/ParticleFlowReco
+- DataFormats/ParticleFlowCandidate
+- DataFormats/EgammaCandidate
+- DataFormats/EgammaReco
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+- DataFormats/L1THGCal
+- L1Trigger/L1THGCal
+mandrenguyen:
+- RecoHI
+- HeavyIonsAnalysis
+- DataFormats/HeavyIonEvent
+miheejo:
+- RecoHI/HiMuonAlgos
+- RecoHI/Configuration
+mariadalfonso:
+- CalibCalorimetry/HcalAlgos
+- CondFormats/JetMETObjects
+- DataFormats/HcalRecHit
+- DataFormats/HcalDigi
+- DataFormats/HcalDetId
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- RecoLocalCalo/HcalRecProducers
+- RecoLocalCalo/HcalRecAlgos
+- SimCalorimetry/HcalSimAlgos
+- SimCalorimetry/HcalSimProducers
+- Validation/RecoJets
+- Validation/RecoMET
+mmarionncern:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoMET
+- RecoParticleFlow
+- Validation/RecoMET
+mkirsano:
+- GeneratorInterface
+mmusich:
+- .*DataFormats
+- .*L1T
+- .*HL
+- .*Trig
+- Alignment
+- CalibTracker
+- DPGAnalysis
+- DQM/Si
+- DQM/Track
+- MuonAnalysis/MomentumScaleCalibration
+- RecoLocalTracker
+- SimTracker
+namapane:
+- .*Magnetic
+nhanvtran:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
+pakhotin:
+- Alignment/MuonAlignment
+- Alignment/MuonAlignmentAlgorithms
+- Alignment/CommonAlignment
+- Alignment/CommonAlignmentAlgorithm
+- Alignment/CommonAlignmentMonitor
+- Alignment/CommonAlignmentProducer
+- Alignment/CommonAlignmentParametrization
+prolay:
+- SimTracker/SiStripDigitizer
+- SimTracker/Common
+- SimTracker/Configuration
+- SimTracker/Records
+robervalwalsh:
+- EventFilter/SiStripRawToDigi
+- CalibTracker/Configuration
+- CalibTracker/Records
+- CalibTracker/SiStrip
+- DataFormats/SiStrip
+- DPGAnalysis/SiStripTools
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- SimTracker/Common
+- SimTracker/Configuration
+- SimTracker/Records
+- SimTracker/SiStripDigitizer
+rociovilar:
+- Validation/RecoMuon
+- Validation/MuonIdentification
+- Validation/MuonIdentification
+- Validation/RecoTracks
+- RecoMuon
+- DQMOffline
+rovere:
+- HeterogeneousCore
+- CUDADataFormats
+- RecoTracker
+- RecoLocalTracker
+- TrackingTools
+- SimTracker
+- SimGeneral/TrackingAnalysis
+- RecoVertex
+- RecoPixelVertexing
+- Configuration/StandardSequences
+- Validation/RecoTrack
+- Validation/RecoVertex
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
+- RecoEgamma/EgammaPhotonProducers
+- RecoEgamma/EgammaElectronProducers
+- RecoEgamma/Configuration
+- RecoEcal/EgammaClusterProducers
+- RecoHGCal
+- RecoLocalCalo/Configuration
+- RecoLocalCalo/HGC
+- RecoParticleFlow/PFTracking
+- RecoParticleFlow/PFClusterProducer
+- DQMOffline/EGamma
+- DataFormats
+- SimDataFormats
+- SimG4CMS
+- SimG4Core
+- SimCalorimetry
+- HLTrigger/Configuration/python/HLT_75e33
+rylanC24:
+- Validation/RecoHI
+schoef:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
+tlampen:
+- Alignment/CommonAlignment
+- Alignment/CommonAlignmentAlgorithm
+- Alignment/CommonAlignmentParametrization
+- Alignment/CommonAlignmentProducer
+- Alignment/MillePedeAlignmentAlgorithm
+- Alignment/OfflineValidation
+- Alignment/ReferenceTrajectories
+- Alignment/SurveyAnalysis
+- Alignment/TrackerAlignment
+- Alignment/TwoBodyDecay
+thomreis:
+- DataFormats/L1TMuon
+- DataFormats/L1Trigger
+- EventFilter/L1TRawToDigi
+- L1Trigger/L1TCommon
+- L1Trigger/L1TMuon
+- L1Trigger/L1TNtuples
+threus:
+- DQM/SiPixel
+- DQM/SiStrip
+- DQM/Tracker
+- DQM/Tracking
+- DQM/Integration
+- DQMOffline/CalibTracker
+- DQMOffline/Configuration
+- SimTracker
+- DPGAnalysis/SiStripTools
+- CalibFormats/SiStripObjects
+- Calibration/TkAlCaRecoProducers
+- CommonTools/TrackerMap
+- CondFormats/SiStripObjects
+- DataFormats/SiStrip
+- RecoLocalTracker/
+- Validation/Tracker
+thuer:
+- GeneratorInterface/SherpaInterface
+trocino:
+- Alignment/MuonAlignment
+- Alignment/MuonAlignmentAlgorithms
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- DQMOffline/Trigger
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+valuev:
+- L1Trigger/CSCTriggerPrimitives
+venturia:
+- DPGAnalysis/SiStripTools
+- Validation/RecoVertex
+- DQM/SiStripMonitorSummary
+- DQM/SiStripMonitorClient
+- CommonTools/TrackerMap
+- Geometry/TrackerNumberingBuilder
+- Geometry/TrackerGeometryBuilder
+- Geometry/TrackerCommonData
+wddgit:
+- FWCore
+- IOPool
+- Utilities
+- IOMC/RandomEngine
+- SimDataFormats/RandomEngine
+- DataFormats/Common
+- DataFormats/FWLite
+- DataFormats/Provenance
+- DataFormats/StdDictionaries
+- DataFormats/Streamer
+- DataFormats/TestObjects
+- DataFormats/WrappedStdDictionaries
+Prasant1993:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+sameasy:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+- RecoHGCal
+- Configuration/StandardSequences
+- RecoLocalCalo/Configuration
+- RecoLocalCalo/HGC
+- RecoParticleFlow/PFClusterProducer
+- SimCalorimetry
+wmtford:
+- SimTracker/TrackerHitAssociation
+- Validation/TrackerRecHits
+- Validation/RecoTrack
+yduhm:
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+yenjie:
+- RecoHI
+yetkinyilmaz:
+- RecoHI
+- HeavyIonsAnalysis
+- DataFormats/HeavyIonEvent
+yslai:
+- RecoHI/HiJetAlgos
+- RecoJets/JetProducers
+- DataFormats/HeavyIonEvent
+dgulhan:
+- RecoTracker
+- RecoHI
+- TrackingTools
+- SimTracker
+- SimGeneral/TrackingAnalysis
+- RecoVertex
+- RecoPixelVertexing
+- Configuration/StandardSequences
+- Validation/RecoTrack
+- Validation/RecoVertex
+amagitte:
+- RecoMuon/GlobalTrackingTools
+- DataFormats/MuonReco
+Sam-Harper:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+ahinzmann:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos
+- FWCore/GuiBrowsers
+rchatter:
+- .*[Ee][Cc][Aa][Ll]
+clelange:
+- JetMETCorrections
+- RecoJets
+- PhysicsTools/NanoAODTools
+gkasieczka:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos
+- FWCore/GuiBrowsers
+rappoccio:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- Validation/RecoJets
+- DQM/Physics
+- HLTriggerOffline/B2G
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos
+matt-komm:
+- FastSimulation
+Martin-Grunewald:
+- L1Trig
+- HLTrigger/
+- EventFilter
+- Configuration
+jdolen:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
+- TopQuarkAnalysis/TopPairBSM
+- HLTriggerOffline/B2G
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos
+kreczko:
+- DataFormats/L1Trigger
+- L1Trigger/L1TNtuples
+- L1TriggerOffline
+pfs:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+vandreev11:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+sethzenz:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+cseez:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+alesaggio:
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- DataFormats/SiStrip
+- CalibTracker/SiStripChannelGain
+ptcox:
+- CalibMuon/CSCCalibration
+- CondFormats/CSCObjects
+- DataFormats/CSCDigi
+- DataFormats/CSCRecHit
+- DataFormats/MuonDetId
+- DQM/CSCMonitorModule
+- DQMOffline/Muon
+- EventFilter/CSCRawToDigi
+- RecoLocalMuon/CSCRecHitD
+- RecoLocalMuon/CSCSegment
+- RecoLocalMuon/CSCValidation
+- RecoLocalMuon/CSCEfficiency
+- Geometry/CSCGeometry
+- Geometry/CSCGeometryBuilder
+- Geometry/MuonCommonData
+- Geometry/MuonSimData
+- Geometry/MuonNumbering
+- L1Trigger/CSCTriggerPrimitives
+- SimMuon/CSCDigitizer
+- SimMuon/Neutron
+fioriNTU:
+- DQM/SiPixel
+- DQM/SiStripCommon
+- DQM/SiStripHistoricInfoClient
+- DQM/SiStripMonitor
+- DQM/Tracker
+- DQM/TrackingMonitor
+idebruyn:
+- DQM/SiPixel
+- DQM/SiStripCommon
+- DQM/SiStripHistoricInfoClient
+- DQM/SiStripMonitor
+- DQM/Tracker
+- DQM/TrackingMonitor
+gouskos:
+- DataFormats/RecoCandidate
+- DataFormats/PatCandidates
+- DataFormats/METReco
+- RecoMET/
+- JetMETCorrections/
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+calderona:
+- DQMOffline/Muon
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+sviret:
+- DataFormats/L1TrackTrigger
+- L1Trigger/TrackTrigger
+- L1Trigger/TrackFindingAM
+- SLHCUpgradeSimulations/Configuration
+felicepantaleo:
+- Configuration/StandardSequences
+- DataFormats/Math
+- FWCore/Utilities
+- IgTools
+- PerfTools
+- RecoLocalTracker
+- RecoPixelVertexing
+- RecoTracker
+- TrackingTools
+- TrackPropagation
+- Validation/RecoTrack
+- Validation/RecoVertex
+- RecoLocalCalo/HGCalRecAlgos
+- DataFormats/HGCRecHit
+- RecoLocalCalo/HGCalRecProducers
+- RecoParticleFlow/PFClusterProducer
+- RecoHGCal
+- SimG4CMS/Calo
+- SimDataFormats/Associations
+- SimDataFormats/CaloAnalysis
+mtosi:
+- DQMOffline/Trigger
+- DQM/HLTEvF
+- DQM/HLXMonitor
+- DQM/TrigXMonitor
+- DQM/TrigXMonitorClient
+- HLTriggerOffline/
+- DQM/TrackingMonitor
+- DQM/TrackingMonitorSource
+- DQM/TrackingMonitorClient
+- Validation/RecoTrack
+- Validation/RecoVertex
+- Validation/TrackerRecHits
+- Configuration/StandardSequences
+- DPGAnalysis/SiStripTools
+- Geometry/Track
+- Geometry/CommonTopologies
+- RecoLocalTracker
+- RecoPixelVertexing
+- RecoTracker
+- RecoVertex
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/Track
+- SimDataFormats/Vertex
+- SimGeneral/TrackingAnalysis
+- SimTracker
+- SLHCUpgradeSimulations/Configuration
+- TrackingTools
+- TrackPropagation
+alberto-sanchez:
+- GeneratorInterface
+seemasharmafnal:
+- CondFormats/JetMETObjects
+- CondFormats/
+- RecoParticleFlow/
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections/
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets/
+- RecoMET/
+- Validation/RecoJets
+- Validation/RecoMET
+erikbutz:
+- DQM/SiStripCommissioningAnalysis
+- DQM/SiStripCommissioningClients
+- DQM/SiStripCommissioningDbClients
+- DQM/SiStripCommissioningSources
+- DQM/SiStripCommissioningSummary
+- DQM/SiStripCommon
+- OnlineDB/SiStripConfigDb
+- OnlineDB/SiStripESSources
+- OnlineDB/SiStripO2O
+- DataFormats/SiStripCommon
+- CondFormats/SiStripObjects
+- L1Trigger/TrackFindingTMTT
+- L1Trigger/TrackFindingTracklet
+- L1Trigger/TrackTrigger
+- L1Trigger/TrackerDTC
+DryRun:
+- DQM/HcalCommon
+- DQM/HcalTasks
+jainshilpi:
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates
+  - DataFormats/EgammaReco
+edjtscott:
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+varuns23:
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates
+  - DataFormats/EgammaReco
+giovanni-mocellin:
+- L1Trigger/CSCTriggerPrimitives
+- L1Trigger/CSCCommonTrigger
+- L1Trigger/ME0Trigger
+- SimMuon/GEMDigitizer
+- SimMuon/CSCDigitizer
+- SimMuon/Configuration
+- DataFormats/CSCDigi
+- DataFormats/GEMDigi
+- CondFormats/CSCObjects
+- Geometry/GEMGeometryBuilder
+- Geometry/GEMGeometry
+echabert:
+- CalibTracker/Configuration
+- CalibTracker/Records
+- CalibTracker/SiStrip
+- DataFormats/SiStrip
+- DPGAnalysis/SiStripTools
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- SimTracker/Common
+- SimTracker/Configuration
+- SimTracker/Records
+- SimTracker/SiStripDigitizer
+jandrea:
+- DQM/SiPixel
+- DQM/SiStripCommon
+- DQM/SiStripHistoricInfoClient
+- DQM/SiStripMonitor
+- DQM/Tracker
+- DQM/TrackingMonitor
+- DPGAnalysis/SiStripTools
+grzanka:
+- Alignment/CTPPS
+- CalibPPS/ESProducers
+- CondFormats/PPSObjects
+- DQM/CTPPS
+- DataFormats/CTPPSDetId
+- DataFormats/CTPPSDigi
+- DataFormats/CTPPSReco
+- DataFormats/ProtonReco
+- EventFilter/CTPPSRawToDigi
+- Geometry/VeryForwardData
+- Geometry/VeryForwardGeometry
+- Geometry/VeryForwardGeometryBuilder
+- Geometry/VeryForwardRPTopology
+- IOMC/EventVertexGenerators
+- IOMC/ParticleGuns
+- RecoPPS/*
+- Validation/CTPPS
+hqucms:
+- PhysicsTools/MXNet
+- RecoBTag/MXNet
+- RecoBTag/FeatureTools
+adewit:
+- Alignment
+vargasa:
+- Configuration/Geometry
+- Geometry/TrackerCommonData
+- Geometry/TrackerNumberingBuilder
+- DetectorDescription/DDCMS
+- Validation/Geometry
+- SimTracker/TrackerMaterialAnalysis
+rbartek:
+- Validation/Geometry
+rishabhCMS:
+- Validation/Geometry
+jshlee:
+- CondCore/GEMPlugins
+- CondFormats/GEMObjects
+- L1Trigger/ME0Trigger
+- SimMuon/GEMDigitizer
+- DataFormats/GEMDigi
+- DataFormats/GEMRecHit
+- EventFilter/GEMRawToDigi
+- Geometry/GEMGeometryBuilder
+- Geometry/GEMGeometry
+- RecoLocalMuon/GEMRecHit
+- RecoLocalMuon/GEMSegment
+- Validation/MuonGEMDigis
+- Validation/MuonGEMHits
+- Validation/MuonGEMRecHits
+apsallid:
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
+- RecoLocalCalo/Configuration
+- RecoLocalCalo
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- DataFormats/ForwardDetId
+- RecoHGCal
+- SimTracker/TrackerMaterialAnalysis
+- SimCalorimetry/HGCalSimProducers
+- SimDataFormats
+riga:
+- PhysicsTools/TensorFlow
+- PhysicsTools/ONNXRuntime
+- PhysicsTools/MXNet
+- HeterogeneousCore/SonicCore
+- HeterogeneousCore/SonicTriton
+afiqaize:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+missirol:
+- .*DataFormats
+- .*L1T
+- .*HL
+- .*Trig
+- CommonTools
+- Configuration
+- EventFilter
+- FWCore
+- Heterogeneous
+- Reco
+- SLHCUpgradeSimulations
+- SimTracker
+- TrackingTools
+- Validation
+sobhatta:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+- RecoHGCal
+kpedro88:
+- HeterogeneousCore/SonicCore
+- HeterogeneousCore/SonicTriton
+fabiocos:
+- CondFormats/GeometryObjects
+- Configuration
+- DataFormats/DetId
+- DataFormats/ForwardDetId
+- DataFormats/FTLDigi
+- DataFormats/FTLRecHit
+- DataFormats/Math
+- DetectorDescription
+- Geometry
+- IOMC
+- Mixing
+- RecoLocalFastTime
+- RecoMTD
+- RecoVertex
+- SimDataFormats
+- SimFastTiming
+- SimG4CMS
+- SimG4Core
+- SimGeneral
+- Utilities/RelMon
+- Validation/Geometry
+- Validation/MtdValidation
+abdoulline:
+- CondCore/HcalPlugins
+- CondFormats/HcalMapping
+- CondFormats/HcalObjects
+- CalibCalorimetry/HcalAlgos
+- CalibCalorimetry/HcalPlugins
+- CalibCalorimetry/HcalTPGAlgos
+- CalibCalorimetry/HcalTPGEventSetup
+- CalibCalorimetry/HcalTPGIO
+- CalibFormats/HcalObjects
+- DQM/HcalCommon
+- DQM/HcalMonitorClient
+- DQM/HcalMonitorModule
+- DQM/HcalMonitorTasks
+- DQM/HcalTasks
+- DQMOffline/Hcal
+- DataFormats/HcalCalibObjects
+- DataFormats/HcalDetId
+- DataFormats/HcalDigi
+- DataFormats/HcalRecHit
+- EventFilter/HcalRawToDigi
+- RecoLocalCalo/HcalLaserReco
+- RecoLocalCalo/HcalRecAlgos
+- RecoLocalCalo/HcalRecProducers
+- SimCalorimetry/HcalSimAlgos
+- SimCalorimetry/HcalSimProducers
+- SimCalorimetry/HcalTrigPrimAlgos
+- SimCalorimetry/HcalTrigPrimProducers
+- SimCalorimetry/HcalZeroSuppressionProducers
+- Validation/HcalDigis
+- Validation/HcalHits
+- Validation/HcalRecHits
+- Validation/CaloTowers
+slomeo:
+- Configuration/Geometry
+- Configuration/PyReleaseValidation
+- Configuration/StandardSequences
+- DetectorDescription/DDCMS
+- Geometry/CMSCommonData
+- Geometry/CSCGeometry
+- Geometry/CSCGeometryBuilder
+- Geometry/DTGeometry
+- Geometry/DTGeometryBuilder
+- Geometry/GEMGeometry
+- Geometry/GEMGeometryBuilder
+- Geometry/MuonCommonData
+- Geometry/MuonNumbering
+- Geometry/MuonSimData
+- Geometry/RPCGeometry
+- Geometry/RPCGeometryBuilder
+- SimG4CMS/
+- SimG4Core/
+- SimGeneral/
+- SimMuon/
+JanFSchulte:
+- RecoLocalTracker
+- RecoPixelVertexing
+- RecoTracker
+- RecoVertex
+- TrackingTools
+- TrackPropagation
+- DQMOffline/Muon
+- DataFormats/L1GlobalMuonTrigger
+- DataFormats/L1GlobalMuonTrigger
+- DataFormats/L1TMuon
+- DataFormats/L1TMuonPhase2
+- DataFormats/MuonReco
+- DataFormats/MuonData
+- DataFormats/MuonDetId
+- DataFormats/MuonSeed
+- L1Trigger/CSCTrackFinder
+- L1Trigger/CSCTriggerPrimitives
+- L1Trigger/DTTrackFinder
+- L1Trigger/DTTraco
+- L1Trigger/DTTrigger
+- L1Trigger/DTTriggerPhase2
+- L1Trigger/DTTriggerServerPhi
+- L1Trigger/DTTriggerServerTheta
+- L1Trigger/DTUtilities
+- L1Trigger/GlobalMuonTrigger
+- L1Trigger/L1TGEM
+- L1Trigger/L1TMuon 
+- L1Trigger/L1TMuonBarrel
+- L1Trigger/L1TMuonEndcap
+- L1Trigger/L1TMuonOverlap
+- L1Trigger/L1TMuonOverlapPhase1
+- L1Trigger/RPCTrigger
+- MuonAnalysis
+- RecoMuon
+- SimMuon
+- Validation/MuonCSCDigis
+- Validation/MuonDTDigis
+- Validation/MuonGEMDigis
+- Validation/MuonGEMHits
+- Validation/MuonGEMRecHits
+- Validation/MuonHits
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/MuonME0Validation
+- Validation/MuonRPCDigis
+- Validation/MuonRPCGeometry
+- Validation/RPCRecHits
+- Validation/RecoMuon
+watson-ij:
+- CondCore/GEMPlugins
+- CondFormats/GEMObjects
+- L1Trigger/ME0Trigger
+- SimMuon/GEMDigitizer
+- DataFormats/GEMDigi
+- DataFormats/GEMRecHit
+- EventFilter/GEMRawToDigi
+- Geometry/GEMGeometryBuilder
+- Geometry/GEMGeometry
+- RecoLocalMuon/GEMRecHit
+- RecoLocalMuon/GEMSegment
+- RecoLocalMuon/GEMCSCSegment
+- Validation/MuonGEMDigis
+- Validation/MuonGEMHits
+- Validation/MuonGEMRecHits
+- DQM/GEM
+- Geometry/MuonCommonData
+trk-dqm:
+- DQM/SiOuterTracker
+- DQM/SiPixelCommon
+- DQM/SiPixelMonitorClient
+- DQM/SiPixelMonitorCluster
+- DQM/SiPixelMonitorDigi
+- DQM/SiPixelMonitorRawData
+- DQM/SiPixelMonitorRecHit
+- DQM/SiPixelMonitorTrack
+- DQM/SiPixelPhase1Common
+- DQM/SiPixelPhase1Config
+- DQM/SiPixelPhase1Summary
+- DQM/SiPixelPhase1Track
+- DQM/SiStripCommon
+- DQM/SiStripMonitorClient
+- DQM/SiStripMonitorCluster
+- DQM/SiStripMonitorDigi
+- DQM/SiStripMonitorHardware
+- DQM/SiStripMonitorPedestals
+- DQM/SiStripMonitorSummary
+- DQM/SiStripMonitorTrack
+- DQM/SiTrackerPhase2
+- DQM/TrackerCommon
+- DQM/TrackerMonitorTrack
+- DQM/TrackingMonitor
+- DQM/TrackingMonitorClient
+- DQM/TrackingMonitorSource
+- Validation/SiOuterTrackerV
+- Validation/SiPixelPhase1ConfigV/python
+- Validation/SiPixelPhase1DigisV
+- Validation/SiPixelPhase1HitsV
+- Validation/SiPixelPhase1RecHitsV
+- Validation/SiPixelPhase1TrackClustersV
+- Validation/SiPixelPhase1TrackingParticleV
+- Validation/SiTrackerPhase2V
+- Validation/TrackerConfiguration
+- Validation/TrackerDigis
+- Validation/TrackerHits
+- Validation/TrackerRecHits
+skinnari:
+- L1Trigger/TrackFindingTMTT
+- L1Trigger/TrackFindingTracklet
+- L1Trigger/TrackTrigger
+- L1Trigger/TrackerDTC
+ram1123:
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates
+dinyar:
+  - DataFormats/L1TMuon
+  - DataFormats/L1Scouting
+  - DataFormats/L1ScoutingRawData
+  - DataFormats/L1Trigger
+  - EventFilter/L1ScoutingRawToDigi
+  - EventFilter/L1TRawToDigi
+  - L1Trigger/L1TCommon
+  - L1Trigger/L1TMuon
+  - L1Trigger/L1TNtuples
+tau-pog:
+  - RecoTauTag/
+  - DataFormats/TauReco
+  - PhysicsTools/PatAlgos
+francescobrivio:
+- DQM/BeamMonitor
+- DQM/Integration
+- RecoVertex/BeamSpotProducer
+valsdav:
+- RecoEcal
+- RecoEgamma
+- SimCalorimetry/EcalTrigPrimAlgos
+- SimCalorimetry/EcalTrigPrimProducers
+- CalibCalorimetry/EcalTPGTools
+eyigitba:
+- DataFormats/L1TMuon
+- DataFormats/L1Trigger
+- EventFilter/L1TRawToDigi
+- L1Trigger/L1TCommon
+- L1Trigger/L1TMuon
+- L1Trigger/L1TNtuples
+- L1Trigger/L1TMuonEndCap
+- L1Trigger/CSCTriggerPrimitives
+- L1Trigger/CSCCommonTrigger
+- DataFormats/CSCDigi
+- DataFormats/GEMDigi
+youyingli:
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
+- RecoLocalCalo/Configuration
+- RecoLocalCalo
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- DataFormats/ForwardDetId
+- RecoHGCal
+- SimTracker/TrackerMaterialAnalysis
+- SimCalorimetry/HGCalSimProducers
+- SimDataFormats
+- Configuration/Skimming
+- DPGAnalysis/Skims
+a-kapoor:
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates
+  - DataFormats/EgammaReco
+SohamBhattacharya:
+- HLTrigger/Configuration/python/HLT_75e33
+VourMa:
+- HLTrigger/Configuration/python/HLT_75e33
+AnnikaStein:
+- Configuration/Eras
+- DataFormats/NanoAOD
+- DPGAnalysis/Skims
+- PhysicsTools/MXNet
+- PhysicsTools/NanoAOD
+- PhysicsTools/ONNXRuntime
+- PhysicsTools/SelectorUtils
+- RecoJets/JetProducers
+jlidrych:
+- DataFormats/SiStrip
+- CUDADataFormats/SiStripCluster
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+lenzip:
+- PhysicsTools/NanoAODTools
+martinamalberti:
+- DataFormats/ForwardDetId
+- DataFormats/FTLDigi
+- DataFormats/FTLRecHit
+- DetectorDescription
+- Geometry
+- RecoLocalFastTime
+- RecoMTD
+- RecoVertex
+- SimDataFormats
+- SimFastTiming
+- SimG4CMS
+- SimG4Core
+- SimGeneral
+- Validation/MtdValidation
+Mmiglio:
+- DataFormats/L1Scouting
+- DataFormats/L1ScoutingRawData
+- EventFilter/L1ScoutingRawToDigi
+- L1TriggerScouting/OnlineProcessing
+- L1TriggerScouting/Utilities

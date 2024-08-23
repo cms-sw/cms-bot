@@ -1,0 +1,283 @@
+#!/bin/bash -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+export JENKINS_PREFIX_STR=$(echo "${JENKINS_URL}" | sed 's|jenkins/*$||;s|.*/||')
+PULL_REQUEST=$1
+export USER_CODE_CHECKS=$2
+BUILD_NUMBER=$3
+DRY_RUN=$4
+REPOSITORY=$5
+CODE_FORMAT=$6
+CODE_CHECKS=$7
+CMSSW_TOOL_CONF=$8
+APPLY_PATCH=$9
+if [ "${APPLY_PATCH}" != "true" ] ; then APPLY_PATCH=false; fi
+MULTIPLE_FILES_CHANGES=true
+if [ "${CONTEXT_PREFIX}" = "" ] ; then CONTEXT_PREFIX="cms"; fi
+if [ "$DRY_RUN" != "true" ] ; then DRY_RUN=false ; fi
+
+source ${CMS_BOT_DIR}/common/github_reports.sh
+PR_COMMIT="$(wget -q -O- https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} | grep 'api.github.com/repos/cms-sw/cmssw/statuses/' | grep '"href"' | tail -1 | sed 's|.*/||;s|".*||')"
+$DRY_RUN || mark_commit_status_pr -r "cms-sw/cmssw" -c "${PR_COMMIT}" -C "${CONTEXT_PREFIX}/code-checks" -s "pending" -u "${BUILD_URL}" -d "Running"
+
+#disable script build rules to avoid copying newly added files in PATH
+sed -i -e '/scripts+scripts/d' $CMSSW_BASE/config/BuildFile.xml
+
+if [ "${CMSSW_TOOL_CONF}" != "" ] ; then
+  mv $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected $CMSSW_BASE/old-tools
+  cp -r ${CMSSW_TOOL_CONF}/tools/selected $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected
+  if [ -e $CMSSW_BASE/old-tools/cmssw.xml ] ; then
+    cp $CMSSW_BASE/old-tools/cmssw.xml $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected/
+  fi
+  scram setup      > /dev/null 2>&1
+  rm -rf $CMSSW_BASE/old-tools $CMSSW_BASE/config/SCRAM $CMSSW_BASE/external
+  cp -r $(scram tool tag coral CORAL_BASE)/config/SCRAM $CMSSW_BASE/config/SCRAM
+  scram b -r echo_CXX
+  eval `scram run -sh` > /dev/null 2>&1
+fi
+
+if [ "X${REPOSITORY}" = "X" ] ; then REPOSITORY="cms-sw/cmssw" ;fi
+REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
+UP_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}"
+if [ "$BUILD_NUMBER" = "" ] ; then BUILD_NUMBER=$(date +%s); fi
+NUM_PROC=$(nproc)
+if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
+cd $CMSSW_BASE
+UP_DIR="${CMSSW_BASE}/upload"
+rm -rf ${UP_DIR}
+mkdir ${UP_DIR}
+
+if python3 -c 'import yaml' ; then
+  sed -i -e 's|/usr/bin/env python$|/usr/bin/env python3|' config/SCRAM/fix-code-checks-yaml.py
+fi
+
+touch ${UP_DIR}/all-changed-files.txt
+git cms-init --upstream-only
+source $CMS_BOT_DIR/jenkins-artifacts
+pushd $CMSSW_BASE/src
+  if ! git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} >${UP_DIR}/cms-checkout-topic.log 2>&1 ; then
+    echo '-code-checks' > ${UP_DIR}/code-checks.md
+    echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md
+    echo -e '\nERROR: Unable to merge PR.' >> ${UP_DIR}/code-checks.md
+    echo -e "\nSee log ${UP_URL}/cms-checkout-topic.log" >> ${UP_DIR}/code-checks.md
+    if ! $DRY_RUN ; then
+      send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
+      ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+    fi
+    exit 0
+  fi
+  ERR=false
+  for f in $(curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq) ; do
+    [ ! -e $f ] || echo "$f" >> ${UP_DIR}/all-changed-files.txt
+  done
+  grep -v '^[^/]*/[^/]*/test/' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-checks-files.txt          || true
+  grep -v '^[^/]*/[^/]*/data/' ${UP_DIR}/code-checks-files.txt > ${UP_DIR}/filename-code-checks-files.txt || true
+  $CMS_BOT_DIR/cms-filename-checks.py ${UP_DIR}/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > ${UP_DIR}/invalid-filenames.txt || true
+  echo "Changed files:"
+  cat ${UP_DIR}/code-checks-files.txt
+  echo ""
+  scram build -r echo_CXX > ${UP_DIR}/code-checks.log 2>&1 || ERR=true
+  if $ERR ; then
+    echo '-code-checks' > ${UP_DIR}/code-checks.md
+    echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md
+    echo -e '\nERROR: Build errors found during clang-tidy run.' >> ${UP_DIR}/code-checks.md
+    echo '```' >> ${UP_DIR}/code-checks.md
+    grep 'SCRAM error: ' ${UP_DIR}/code-checks.log >> ${UP_DIR}/code-checks.md || true
+    grep 'Parse Error ' -A 1 ${UP_DIR}/code-checks.log >> ${UP_DIR}/code-checks.md || true
+    echo '```' >> ${UP_DIR}/code-checks.md
+    if ! $DRY_RUN ; then
+      send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
+      ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+    fi
+    exit 0
+  fi
+  $CMS_BOT_DIR/pr-checks/check-pr-files.py -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > ${UP_DIR}/invalid_files.txt || true
+  touch ${UP_DIR}/duplicate-data.txt
+  if [ -d ${CMSSW_RELEASE_BASE}/external/${SCRAM_ARCH}/data ] ; then
+    for f in $(cat ${UP_DIR}/all-changed-files.txt) ; do
+      if [ -f ${CMSSW_RELEASE_BASE}/external/${SCRAM_ARCH}/data/$f -a -f ${CMSSW_BASE}/src/$f ] ; then
+        echo $f >> ${UP_DIR}/duplicate-data.txt
+      fi
+    done
+  fi
+popd
+
+#If we have any non-tests changed files
+COMMIT_CHG=0
+touch ${UP_DIR}/code-checks.patch
+if $CODE_CHECKS ; then
+  if [ -s ${UP_DIR}/code-checks-files.txt ] ; then
+    ERR=false
+    scram build -k -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="${UP_DIR}/code-checks-files.txt" > ${UP_DIR}/code-checks.log 2>&1 || ERR=true
+
+    if $ERR ; then
+      echo '-code-checks' > ${UP_DIR}/code-checks.md
+      echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md
+      echo -e '\nERROR: Build errors found during clang-tidy run.' >> ${UP_DIR}/code-checks.md
+      echo '```' >> ${UP_DIR}/code-checks.md
+      grep -A 3 ': error: \|gmake: \*\*\*' ${UP_DIR}/code-checks.log | tail -24 | sed "s|$CMSSW_BASE/src/||" >> ${UP_DIR}/code-checks.md || true
+      echo '```' >> ${UP_DIR}/code-checks.md
+      if ! $DRY_RUN ; then
+        send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
+        ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+      fi
+      #exit 0
+      exit 0
+    fi
+    if [ -e ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ] ; then
+      mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${UP_DIR}/
+    fi
+    pushd $CMSSW_BASE/src
+      git diff > ${UP_DIR}/code-checks.patch
+      if [ -s ${UP_DIR}/code-checks.patch ] ; then
+        git commit -a -m 'auto applied code-checks changes'
+        let COMMIT_CHG=${COMMIT_CHG}+1
+      fi
+    popd
+  fi
+fi
+
+touch ${UP_DIR}/code-format.patch
+if $CODE_FORMAT ; then
+  if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
+    grep -v '\.inc$' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-format-files.txt || true
+    if [ -s ${UP_DIR}/code-format-files.txt ] ; then
+      scram build -k -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="${UP_DIR}/code-format-files.txt" > ${UP_DIR}/code-format.log 2>&1
+      pushd $CMSSW_BASE/src
+        git diff > ${UP_DIR}/code-format.patch
+        cat ${UP_DIR}/code-format.patch
+        if [ -s ${UP_DIR}/code-format.patch ] ; then
+          git commit -a -m 'auto applied code-formats changes'
+          let COMMIT_CHG=${COMMIT_CHG}+1
+        fi
+      popd
+    fi
+  fi
+fi
+
+echo "We will now run formatting, and then linting checks"
+
+python3 ../cms-bot/run-python-format.py --inputfile "${UP_DIR}/code-checks-files.txt" --cmsswbase "${CMSSW_BASE}/src"
+
+pushd $CMSSW_BASE/src
+  git diff > ${UP_DIR}/python-code-format.patch || true
+ popd
+
+cp "python-linting.txt" "${UP_DIR}/python-linting.txt" || true
+
+if [ ! -f "python-linting.txt" ]; then
+  echo "Error: python-linting.txt was not created."
+fi
+
+if ${MULTIPLE_FILES_CHANGES} ; then
+    ${CMS_BOT_DIR}/github_scripts/simultaneous_files_modifications_by_PRs.py ${PULL_REQUEST} > \
+       ${UP_DIR}/multiple_files_changes.txt || true
+fi
+
+RES="+code-checks"
+HOW_TO_RUN=""
+if [ ${COMMIT_CHG} -gt 0 ] ; then
+  if $APPLY_PATCH ; then
+    pushd $CMSSW_BASE/src
+      if [ ${COMMIT_CHG} -gt 1 ] ; then
+        git reset --soft HEAD~${COMMIT_CHG}
+        git commit -a -m 'auto applied code-checks/format changes'
+      fi
+      curl -s https://api.github.com/repos/${REPO_USER}/cmssw/pulls/${PULL_REQUEST}  > pr.json
+      export CMSBOT_PYTHON_CMD=$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
+      TEST_BRANCH=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('pr.json'));print(obj['head']['ref'])")
+      TEST_REPO=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('pr.json'));print(obj['head']['repo']['full_name'])")
+      if ! $DRY_RUN ; then
+        git push  git@github.com:${TEST_REPO} HEAD:${TEST_BRANCH}
+      fi
+    popd
+    exit 0
+  fi
+
+  RES="-code-checks"
+  HOW_TO_RUN="\n\nCode check has found code style and quality issues which could be resolved by applying following patch(s)"
+  if [ -s ${UP_DIR}/code-checks.patch ] ; then
+    HOW_TO_RUN="${HOW_TO_RUN}\n\n- **code-checks**:"
+    HOW_TO_RUN="${HOW_TO_RUN}\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch"
+    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl -k https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}\nYou can also run \`scram build code-checks\` to apply code checks directly"
+  fi
+
+  if [ -s ${UP_DIR}/code-format.patch ] ; then
+    HOW_TO_RUN="${HOW_TO_RUN}\n\n- **code-format**:"
+    HOW_TO_RUN="${HOW_TO_RUN}\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch"
+    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl -k https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}\nYou can also run \`scram build code-format\` to apply code format directly"
+  fi
+
+  if [ -s ${UP_DIR}/python-code-format.patch ] ; then
+    HOW_TO_RUN="${HOW_TO_RUN}\n\n- **python-code-format**:"
+    HOW_TO_RUN="${HOW_TO_RUN}\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/python-code-format.patch"
+    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl -k https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/python-code-format.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}\nYou can also run \`python3 PFA.py <file> or python3 run-python-format.py --inputfile <code-checks-files.txt> --cmsswbase <basepath>\` to apply Python code formatting directly"
+  fi
+fi
+
+
+
+MSG="\n\nLogs: $UP_URL"
+if [ -s ${UP_DIR}/invalid-filenames.txt ] ; then
+    RES="-code-checks"
+    MSG="${MSG}\n\n- Error: Found path names starting with digits: ${UP_URL}/invalid-filenames.txt"
+fi
+if [ -s ${UP_DIR}/duplicate-data.txt ] ; then
+    RES="-code-checks"
+    MSG="${MSG}\n\n- Error: Found data files available in both cmssw and cms-data. Please update these data files directly in cms-data repository: ${UP_URL}/duplicate-data.txt"
+fi
+if [ -s ${UP_DIR}/invalid_files.txt ] ; then
+    MSG="${MSG}\n\n- Found files with invalid states:\n$(cat ${UP_DIR}/invalid_files.txt | sed 's|^\(\s*\)|\1  - |')"
+fi
+
+if [ -s ${UP_DIR}/multiple_files_changes.txt ] ; then
+    MSG="${MSG}\n\n- There are other open Pull requests which might conflict with changes you have proposed:"
+    MSG="${MSG}\n$(cat ${UP_DIR}/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |')"
+fi
+
+MSG="${RES}${MSG}"
+echo -e "${MSG}${HOW_TO_RUN}" > ${UP_DIR}/code-checks.md
+if ! $DRY_RUN ; then
+  send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
+  eval `scram unset -sh`
+  ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+fi
+
+if [ -s ${UP_DIR}/python-code-format.patch ] ; then
+  echo "INFO: We're applying PEP8 formatting to CMSSW using Ruff; while Ruff found formatting errors in the PR's Python files, this non-blocking check may flag untouched lines, so feel free to contribute by applying the suggested patch." >> ${UP_DIR}/python-code-checks.md
+
+  echo -e "\n\n- **python-code-format**:" >> ${UP_DIR}/python-code-checks.md
+  echo -e "https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/python-code-format.patch" >> ${UP_DIR}/python-code-checks.md
+  echo -e "e.g. \`curl -k https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/python-code-format.patch | patch -p1\`" >> ${UP_DIR}/python-code-checks.md
+  echo -e "You can also run \`python3 run-python-format.py --inputfile <code-checks-files.txt> --cmsswbase <basepath>\` to apply Python code formatting directly" >> ${UP_DIR}/python-code-checks.md
+
+  echo -e "\n\n- **python-code-linting**:" >> ${UP_DIR}/python-code-checks.md
+  file="python-linting.txt"
+  content=$(<"$file")
+  if [ "$content" == "All checks passed!" ]; then
+    echo -e "Status: All linting checks passed!  \xF0\x9F\x98\x8A " >> ${UP_DIR}/python-code-checks.md
+  else
+    echo -e "Status: There are some linting recommendations that need your attention. \xF0\x9F\x98\xA2" >> ${UP_DIR}/python-code-checks.md
+    echo -e "https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/python-linting.txt" >> ${UP_DIR}/python-code-checks.md
+    echo -e "You can also run \`ruff check --fix\` to automatically apply fixes." >> ${UP_DIR}/python-code-checks.md
+  fi
+  if ! $DRY_RUN ; then
+    ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/python-code-checks.md
+  fi
+else
+  echo "INFO: We're applying PEP8 formatting to CMSSW using Ruff; while Ruff found formatting errors in the PR's Python files, this non-blocking check may flag untouched lines, so feel free to contribute by applying the suggested patch." >> ${UP_DIR}/python-code-checks.md
+  echo -e "\n\n- **python-code-linting**:" >> ${UP_DIR}/python-code-checks.md
+    file="python-linting.txt"
+    content=$(<"$file")
+    if [ "$content" == "All checks passed!" ]; then
+      echo -e "Status: All linting checks passed!  \xF0\x9F\x98\x8A " >> ${UP_DIR}/python-code-checks.md
+    else
+      echo -e "Status: There are some linting recommendations that need your attention. \xF0\x9F\x98\xA2" >> ${UP_DIR}/python-code-checks.md
+      echo -e "https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/python-linting.txt" >> ${UP_DIR}/python-code-checks.md
+      echo -e "You can also run \`ruff check --fix\` to automatically apply fixes." >> ${UP_DIR}/python-code-checks.md
+      ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/python-code-checks.md
+    fi
+fi

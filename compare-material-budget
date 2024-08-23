@@ -1,0 +1,38 @@
+#!/bin/bash -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+
+REF_CMSSW_VERSION=$1
+eval `scram run -sh`
+if [ "X$REF_CMSSW_VERSION" = "X" ] ; then
+  REF_CMSSW_VERSION=$(export PYTHONPATH=$CMS_BOT_DIR ; python3 -c 'from material_budget_ref import get_ref; get_ref()')
+fi
+#Remove biglib path from LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':' | sed 's|:$||')
+
+mkdir -p $LOCALRT/material-budget/comparison/Images
+cd $LOCALRT/material-budget/comparison
+
+source $CMS_BOT_DIR/jenkins-artifacts
+
+PR_TESTS=NO
+if [ -f ${REF_CMSSW_VERSION}/matbdg_Tracker.root ] ; then
+  cp ${REF_CMSSW_VERSION}/matbdg_Tracker.root `pwd`/matbdg_Tracker_new.root
+  get_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root `pwd`/matbdg_Tracker_old.root || exit 1
+  PR_TESTS=YES
+else
+  get_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root         `pwd`/matbdg_Tracker_new.root || exit 1
+  get_jenkins_artifacts material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root `pwd`/matbdg_Tracker_old.root || exit 1
+fi
+
+VGEO_DIR=$CMSSW_BASE/src/Validation/Geometry
+if [ ! -e $VGEO_DIR ] ; then VGEO_DIR=$CMSSW_RELEASE_BASE/src/Validation/Geometry ; fi
+cp ${VGEO_DIR}/test/TrackerMaterialBudgetComparison.C .
+root -l -b -q 'TrackerMaterialBudgetComparison.C("Tracker")' > compare.log 2>&1 || (cat compare.log && exit 1)
+rm -f matbdg_Tracker*.root TrackerMaterialBudgetComparison.C
+if [ "$PR_TESTS" = "NO" ] ; then
+  ln -sf ../../../../material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH} ref
+  echo ${REF_CMSSW_VERSION} > cmssw-ref-release
+  send_jenkins_artifacts `pwd`/ material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/comparison || exit 1
+fi
+

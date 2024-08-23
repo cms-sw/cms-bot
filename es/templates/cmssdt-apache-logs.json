@@ -1,0 +1,61 @@
+{
+  "aliases": {},
+  "mappings": {
+    "cmssdt-apache-*": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "agent": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "auth": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "bytes": {
+          "type": "long"
+        },
+        "clientip": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "httpversion": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "ident": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "referrer": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "request": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "response": {
+          "type": "long"
+        },
+        "time": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "verb": {
+          "index": "not_analyzed",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "order": 0,
+  "settings": {
+    "index": {
+      "number_of_shards": "1"
+    }
+  },
+  "template": "cmssdt-apachelogs"
+}

@@ -1,0 +1,61 @@
+#!/bin/sh -ex
+
+[ -f ib-weeks ] || exit 1
+source $(dirname $0)/cmsrep.sh
+WEEK_NO="nweek-${CMS_WEEK_NUM}"
+WEEK_FOUND=`grep "^$WEEK_NO\$" ib-weeks | wc -l`
+
+if [ "X$WEEK_FOUND" = "X0" ] ; then
+  rm -rf dummybuild
+  mkdir dummybuild
+  eval `cat $(dirname $0)/config.map | grep -v 'DISABLED=1' | grep 'RELEASE_BRANCH=master' | grep  'PROD_ARCH=1;'`
+  PKGS=""
+  pushd dummybuild
+    export USE_SINGULARITY=true
+    git clone -b $CMSDIST_TAG           https://github.com/cms-sw/cmsdist.git CMSDIST   || git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
+    git clone -b $PKGTOOLS_TAG          https://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone -b $PKGTOOLS_TAG             https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
+    echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
+    echo "#!/bin/bash -ex" > $WORKSPACE/run.sh
+    echo "cd $(pwd -P)" >> $WORKSPACE/run.sh
+    echo "./PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --architecture $SCRAM_ARCH --work-dir w build dummy SCRAMV1 SCRAMV2 crab" >> $WORKSPACE/run.sh
+    echo "./PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $SCRAM_ARCH --work-dir w upload dummy SCRAMV1 SCRAMV2 crab" >> $WORKSPACE/run.sh
+    chmod 0755 $WORKSPACE/run.sh
+    export DOCKER_IMG
+    $WORKSPACE/cms-bot/docker_launcher.sh $WORKSPACE/run.sh
+    PKGS=$(ls -d w/${SCRAM_ARCH}/cms/crab/*/etc w/${SCRAM_ARCH}/lcg/SCRAMV*/*/etc  | sed "s|^w/${SCRAM_ARCH}/||;s|/etc$||;s|/|+|g")
+  popd
+  rm -rf dummybuild
+  echo "$WEEK_NO" >> ib-weeks
+  git commit -m "Added new ib-week $WEEK_NO" ib-weeks
+  git pull --rebase
+  git push origin
+  oarch=$SCRAM_ARCH
+  parch=$(echo $SCRAM_ARCH | cut -d_ -f2)
+  idx=0
+  pfile="cvmfs-reset-week-0${idx}-${parch}"
+  echo "ARCHITECTURE=${SCRAM_ARCH}"        > ${pfile}
+  echo "ARCH_NAME=${parch}"               >> ${pfile}
+  echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> ${pfile}
+  echo "RELEASE_FORMAT="                  >> ${pfile}
+  echo "CMSDIST_HASH="                    >> ${pfile}
+  echo "INSTALL_PACKAGES=${PKGS}"         >> ${pfile}
+  idx=1
+  for arch in amd64 ppc64le aarch64 ; do
+    [ "$parch" != "${arch}" ] || continue
+    sarch=$(echo $oarch | sed "s|_${parch}_|_${arch}_|")
+    xreg=""
+    if [ $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "SCRAM_ARCH=${sarch};" | wc -l) -gt 0 ] ; then
+      xreg="SCRAM_ARCH=${sarch};"
+    else
+      sarch=".*_${arch}_.*"
+      if [ $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "SCRAM_ARCH=${sarch};" | wc -l) -gt 0 ] ; then
+        xreg="SCRAM_ARCH=${sarch};"
+      fi
+    fi
+    [ "${xreg}" != "" ] || continue
+    eval $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "$xreg" | head -1)
+    cp ${pfile} cvmfs-reset-week-0${idx}-${arch}
+    sed -i -e "s|ARCHITECTURE=.*|ARCHITECTURE=${SCRAM_ARCH}|;s|ARCH_NAME=.*|ARCH_NAME=${arch}|;s|INSTALL_PACKAGES=.*|INSTALL_PACKAGES=|" cvmfs-reset-week-0${idx}-${arch}
+    let idx=idx+1
+  done
+fi

@@ -1,0 +1,83 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "2a9454e30606b17e52000110972998326ce9e428": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1711538467
+                },
+                "e4d069b76c464274bf6e7d7cf9bac2153ed9a903": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1712819089
+                },
+                "79752f053efecad55dde17732259737e621a1f3f": {
+                    "time": 1712828239,
+                    "squashed": false,
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ]
+                }
+            },
+            "emoji": {
+                "2049242908": "+1"
+            },
+            "last_seen_sha": "79752f053efecad55dde17732259737e621a1f3f",
+            "signatures": {
+                "2049242908": "2a9454e30606b17e52000110972998326ce9e428"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2049242908,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "core-pending"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "core-approved"
+        ]
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-code-checks-iarspider-cmssw-cmssw-17.properties",
+            "data": {
+                "PULL_REQUEST": "17",
+                "CONTEXT_PREFIX": "cms/17",
+                "CMSSW_TOOL_CONF": "",
+                "APPLY_PATCH": "false"
+            }
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "79752f053efecad55dde17732259737e621a1f3f",
+            "state": "pending",
+            "target_url": null,
+            "description": "code-checks requested",
+            "context": "cms/17/code-checks"
+        }
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711538467},\"79752f053efecad55dde17732259737e621a1f3f\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1712828239},\"e4d069b76c464274bf6e7d7cf9bac2153ed9a903\":{\"files\":[\"DQMServices/Components/test/dqmiofilecopy.sh\"],\"squashed\":false,\"time\":1712819089}},\"emoji\":{\"2049242908\":\"+1\"},\"last_seen_sha\":\"79752f053efecad55dde17732259737e621a1f3f\",\"signatures\":{\"2049242908\":\"2a9454e30606b17e52000110972998326ce9e428\"}} -->"
+    }
+]

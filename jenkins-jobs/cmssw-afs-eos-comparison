@@ -1,0 +1,58 @@
+#!/bin/bash -ex
+source /cvmfs/cms-ib.cern.ch/latest/cmsset_default.sh
+WORK_DIR=$WORKSPACE
+DEL=false
+if [ "${BUILD_TYPE}" = "afs" ] ; then
+  WORK_DIR="/afs/cern.ch/user/c/cmsbuild/public/${JOB_NAME}"
+  DEL=true
+elif [ "${BUILD_TYPE}" = "eos" ] ; then
+  WORK_DIR="/eos/user/c/cmsbuild/${JOB_NAME}"
+  DEL=true
+fi
+if $DEL ; then
+  rm -rf ${WORK_DIR}
+  mkdir -p ${WORK_DIR}
+  cd ${WORK_DIR}
+fi
+mkdir $WORKSPACE/upload
+JSON=$WORKSPACE/upload/afs-eos-build.json
+
+echo "{" > $JSON
+
+#CMSSW DEV AREA
+let STIME=$(date +%s)
+scram -a $ARCHITECTURE p ${RELEASE_FORMAT}
+let ETIME=$(date +%s)-${STIME} || true
+echo '"scram_project":'$ETIME',' >> $JSON
+cd ${RELEASE_FORMAT}
+
+# CMSSW ENV
+let STIME=$(date +%s)
+eval `scram run -sh`
+let ETIME=$(date +%s)-${STIME} || true
+echo '"scram_env":'$ETIME',' >> $JSON
+
+# CMSSW CHECKOUT
+let STIME=$(date +%s)
+git cms-addpkg FWCore
+let ETIME=$(date +%s)-${STIME} || true
+echo '"git_checkout":'$ETIME',' >> $JSON
+
+# CMSSW Build
+let STIME=$(date +%s)
+scram build -j $(nproc)
+let ETIME=$(date +%s)-${STIME} || true
+echo '"scram_build":'$ETIME',' >> $JSON
+
+if $DEL ; then
+  cd $WORKSPACE
+  for x in 0 1 2 3 4 ; do
+   if rm -rf ${WORK_DIR} ; then break; fi
+   sleep 5
+  done
+fi
+echo '"fstype":"'${BUILD_TYPE}'",' >> $JSON
+echo '"host":"'$(hostname -s)'",' >> $JSON
+echo '"architecture":"'$ARCHITECTURE'",' >> $JSON
+echo '"release":"'$RELEASE_FORMAT'"' >> $JSON
+echo "}" >> $JSON

@@ -1,0 +1,288 @@
+#!/bin/sh -ex
+
+CMS_BOT_DIR=$(dirname $0)
+source $CMS_BOT_DIR/cmsrep.sh
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+
+echo DATE=`date`
+ARCHITECTURE=$1
+RELEASE_FORMAT=$2
+REPOSITORY=$3
+FORCE_FULL_IB_FLAG=$4
+RELEASE_LIST=$5
+PACKAGE_NAME=cmssw
+FORCE_PKGTOOLS_TAG=$6
+USE_DEV_CMSPKG=$7
+FORCE_BUILD_PATCH_RELEASE=$8
+CMSSW_TOOL_CONF_ONLY=$9
+DRY_RUN="${10}"
+FORCE_CMSDIST_TAG="${11}"
+DEBUG_EXTERNALS="${12}"
+# Workspace is usually defined by jenkins. If not running in
+# jenkins it will assume the current directory is the workspace.
+WORKSPACE="${WORKSPACE-$PWD}"
+WRKDIR=w
+
+rm -rf $WORKSPACE/../build-cache &
+cd $WORKSPACE
+rm -rf ${WRKDIR}/SPECS
+
+BUILD_JOBS=3
+BUILD_NPROC=$(nproc)
+
+case $ARCHITECTURE in
+  *_mic_*) export BUILD_ARCH=`echo $ARCHITECTURE | cut -f1,2 -d_` ;;
+  *_armv7hl_*) BUILD_JOBS=1; BUILD_NPROC=3 ;;
+esac
+
+RELEASE_NAME=`date +$RELEASE_FORMAT`
+DAY=`date +%Y-%m-%d`
+HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
+# RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/\(CMSSW_[0-9][0-9]*_[0-9][0-9]*\).*/\1_X/'`
+RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/_X.*/_X/'`
+
+# Hardcode special queues like SLHC one.
+case $RELEASE_NAME in
+  *SLHCDEV*) ;;
+  *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
+esac
+
+CMSDIST_REPO=cms-sw
+PKGTOOLS_REPO=cms-sw
+unset BUILD_PATCH_RELEASE
+eval `cat $CMS_BOT_DIR/config.map | grep -v 'DISABLED=' | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+[ "X$BUILD_PATCH_RELEASE" = "X1" ] && FORCE_BUILD_PATCH_RELEASE=true
+
+# We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
+# are both branches. See below to handle the case in which they are actually tags.
+
+[ "$FORCE_CMSDIST_TAG" != ""  ] && CMSDIST_TAG=$FORCE_CMSDIST_TAG
+[ "$FORCE_PKGTOOLS_TAG" != "" ] && PKGTOOLS_TAG=$FORCE_PKGTOOLS_TAG
+USE_DEV=""
+[ "$USE_DEV_CMSPKG" = "true" ] && USE_DEV="--use-dev"
+
+for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TAG; do
+  REPO=`echo $x | cut -f1 -d@`
+  T=`echo $x | cut -f2 -d@`
+  P=`echo $REPO | cut -f2 -d/ | tr "[:lower:]" "[:upper:]"`
+  if [ ! -d $P ]; then
+    git clone -b $T https://github.com/$REPO.git $P
+    pushd $P
+      git remote add originrw git@github.com:$REPO.git
+    popd
+  fi
+  pushd $P
+    git fetch
+    git clean -fxd ; git reset --hard HEAD
+    git checkout $T
+    git merge --ff-only origin/$T
+    eval "${P}_HASH=`git rev-parse HEAD`"
+  popd
+done
+echo DATE=`date`
+
+# If we use a tag, rather than a branch, we need to check-it out explicitly.
+# We also store the HASH of both PKGTOOLS and CMSDIST to reuse them later on.
+# ALL_PREVIOUS_RELEASES contains both IBs and fill releases and we use it
+# to eventually skip the build if the same exact IB is already available.
+# We disable the whole logic and build a full IB if FORCE_FULL_IB_FLAG is not empty.
+pushd CMSDIST
+  if [ ! "X${FORCE_FULL_IB_FLAG}" = "Xtrue" ]; then
+    PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | grep -v $RELEASE_NAME | { grep "^\(IB\|REL\)/${RELEASE_QUEUE}_[0-9][^/]*/$ARCHITECTURE" || true; }`
+    ALL_PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | grep -v $RELEASE_NAME | { grep "^ALL/${RELEASE_QUEUE}_[0-9][^/]*/$ARCHITECTURE" || true; }`
+  fi
+  # We checkout a few files from the default branch in any case.
+  curl -L -s -k https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/cmssw-ib.spec > cmssw-ib.spec
+popd
+
+CMS_TAG=""
+if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
+  case `uname -s` in
+    Darwin ) MD5_CMD=md5;;
+    * )      MD5_CMD=md5sum;;
+  esac
+  CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
+fi
+
+CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
+EX_OPTS=""
+if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
+  EX_OPTS="--force-tag"
+  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
+fi
+[ $(grep 'upload-package-store-s3' PKGTOOLS/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store-s3"
+
+## build and upload revision based packages
+REV_PKGS=""
+for p in cms-common fakesystem gcc-fixinclude SCRAMV1 SCRAMV2 ; do
+  [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
+done
+if [ "${REV_PKGS}" != "" ] ; then
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build ${REV_PKGS}
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true
+  rm -rf ${WRKDIR}
+fi
+GCC_FIXINCLUDE=""
+[ -e CMSDIST/gcc-fixincludes.spec ] && GCC_FIXINCLUDE="gcc-fixincludes"
+PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build SCRAMV1 ${GCC_FIXINCLUDE}
+# Decide if we already have a release which uses the same CMSDIST.
+pushd ${WRKDIR}
+if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
+  for previous in $PREVIOUS_RELEASES; do
+    previous=`echo $previous | cut -f2 -d/`
+    echo "Checking if we can install $previous"
+    set +e
+    CMSSW_RELEASE_BASE=`./common/cmspkg -a $ARCHITECTURE -f search cms+cmssw+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
+    set -e
+    if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
+      PACKAGE_NAME=cmssw-patch
+      perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" ../CMSDIST/cmssw-ib.spec
+      perl -p -i -e "s/%define baserelver[\s].*/%define baserelver $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
+      perl -p -i -e "s/%define baserelqueue[\s].*/%define baserelqueue $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
+      perl -p -i -e 's/CMSSW_ROOT/CMSSW_PATCH_ROOT/' ../CMSDIST/cmssw-ib.spec
+      perl -p -i -e 's/CMSSW_VERSION/CMSSW_PATCH_VERSION/' ../CMSDIST/cmssw-ib.spec
+      break
+    fi
+  done
+fi
+# This is done to decide wether or not we actually need to build a release or
+# the same CMSDIST / PKGTOOLS / CMSSW tags were used to build an IB which
+# is already available in the apt repository.
+if [ "X$PACKAGE_NAME" = Xcmssw-patch -a "X$FORCE_BUILD_PATCH_RELEASE" != "Xtrue" ]; then
+  #AVAILABLE_RELEASES=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
+  AVAILABLE_RELEASES=`./common/cmspkg -a $ARCHITECTURE search cms+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
+  for same_tag in $RELEASE_LIST; do
+    if [ "X`echo $ALL_PREVIOUS_RELEASES | grep $same_tag`" != X ] ; then
+      if [ "X`echo $AVAILABLE_RELEASES | grep $same_tag`" != "X" ] ; then
+        echo $same_tag uses the same CMSDIST, PKGTOOLS and CMSSW tag. Not building.
+        exit 0
+      fi
+    fi
+  done
+fi
+popd
+echo DATE=`date`
+
+case $ARCHITECTURE in
+ *mic*) CMSSW_RELEASE_BASE=""; PACKAGE_NAME=cmssw; CMSSW_TOOL_CONF=cmssw-mic-tool-conf ;;
+ *) CMSSW_TOOL_CONF=$PACKAGE_NAME-tool-conf ;;
+esac
+
+pushd CMSDIST
+  DEBUG_SUBPACKS="cmssw.spec coral.spec cmssw-patch.spec"
+  if [ "X$ENABLE_DEBUG" = X ]; then
+    perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
+  fi
+  if [ ! "X$PACKAGE_NAME" = Xcmssw-patch ]; then
+    CMSSW_RELEASE_BASE=$RELEASE_NAME
+  fi
+  echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > dummy.spec
+  perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" cmssw.spec
+  perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" cmssw-ib.spec
+  perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
+  if [ "${DEBUG_EXTERNALS}" != "" ] ; then
+    CMSBUILD_CMD="${CMSBUILD_CMD} --define cms_debug_packages=${DEBUG_EXTERNALS}"
+  fi
+popd
+
+PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --specs-only build $PACKAGE_NAME
+rm -rf ${WRKDIR}/WEB
+TOOL_CONF_PACKAGES="${GCC_FIXINCLUDE} `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
+echo DATE=`date`
+EXTERNAL_FAILED=false
+(PYTHONPATH=  $CMSBUILD_CMD ${EX_OPTS} build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log
+[ ! -e ${WRKDIR}/ok.txt ] && EXTERNAL_FAILED=true
+echo DATE=`date`
+rm -rf ${WRKDIR}/tmp/pip*
+if ${EXTERNAL_FAILED} ; then
+  if [ "${DRY_RUN}" != "" ] ; then exit 1 ; fi
+  BLD_PKGS=$(ls ${WRKDIR}/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
+  if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${BLD_PKGS} ; fi
+  rm -rf  ${WRKDIR}/tmp
+  if [ -d ${WRKDIR}/WEB/${ARCHITECTURE} ] ; then
+    mkdir -p ${WRKDIR}/DEPS
+    for i in `ls ${WRKDIR}/WEB/${ARCHITECTURE}`; do mv ${WRKDIR}/WEB/${ARCHITECTURE}/$i ${WRKDIR}/DEPS/$(echo $i | tr "+" " " | awk '{print $2}').json; done
+    rm -rf ${WRKDIR}/WEB
+  fi
+  exit 1
+fi
+if [ "${DRY_RUN}" = "" ] ; then
+  if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
+    PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload $TOOL_CONF_PACKAGES
+    echo DATE=`date`
+    if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
+    PYTHONPATH= $CMSBUILD_CMD --debug ${EX_OPTS} deprecate-local $TOOL_CONF_PACKAGES
+    rm -rf ${WRKDIR}/tmp ${WRKDIR}/RPMS ${WRKDIR}/SOURCES ${WRKDIR}/SRPMS
+    if [ -d ${WRKDIR}/WEB/${ARCHITECTURE} ] ; then
+      mkdir -p ${WRKDIR}/DEPS
+      for i in `ls ${WRKDIR}/WEB/${ARCHITECTURE}`; do mv ${WRKDIR}/WEB/${ARCHITECTURE}/$i ${WRKDIR}/DEPS/$(echo $i | tr "+" " " | awk '{print $2}').json; done
+      rm -rf ${WRKDIR}/WEB
+    fi
+    echo DATE=`date`
+  fi
+fi
+if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
+DEBUG_OPT=
+case $RELEASE_NAME in
+  *_DEVEL_*) DEBUG_OPT="--debug" ;;
+esac
+export SCRAM_HOOKS_DEBUG=1
+rm -f ${WRKDIR}/tmp/specCache/$PACKAGE_NAME.* ${WRKDIR}/tmp/specCache/cmssw-ib.*
+let CMSSW_NPROC=$BUILD_NPROC+1
+PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j ${CMSSW_NPROC} build ${PACKAGE_NAME} cmssw-ib
+echo DATE=`date`
+if [ "${DRY_RUN}" != "" ] ; then exit 0 ; fi
+PYTHONPATH= $CMSBUILD_CMD --sync-back upload cmssw-ib
+if [ -d ${WRKDIR}/WEB/${ARCHITECTURE} ] ; then
+  mkdir -p ${WRKDIR}/DEPS
+  for i in `ls ${WRKDIR}/WEB/${ARCHITECTURE}`; do mv -f ${WRKDIR}/WEB/${ARCHITECTURE}/$i ${WRKDIR}/DEPS/$(echo $i | tr "+" " " | awk '{print $2}').json; done
+  rm -rf ${WRKDIR}/WEB
+fi
+echo DATE=`date`
+rm -rf ${WRKDIR}/tmp
+pushd CMSDIST
+# In case we do not have errors in the full release, or in case we are forcing the
+# tagging we create an ALL tag and use IB if we discover it's a full release later on.
+# In case we have errors, we use an ERR tag in case we discover it's a full release later on.
+if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKSPACE/${WRKDIR}/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
+  GTAG="ALL/$RELEASE_NAME/$ARCHITECTURE"
+  if [ $(git tag | grep "^$GTAG$" | wc -l) -gt 0 ] ; then
+    git tag -d $GTAG
+    git push originrw :refs/tags/$GTAG
+  fi
+  git tag $GTAG $CMSDIST_HASH
+  git push originrw $GTAG || true  
+  TAG_TYPE="IB"
+else
+  TAG_TYPE="ERR"
+fi
+
+# Check if it is a full release and tag depending on wether it had ERRors or not.
+if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
+  GTAG="$TAG_TYPE/$RELEASE_NAME/$ARCHITECTURE"
+  if [ $(git tag | grep "^$GTAG$" | wc -l) -gt 0 ] ; then
+    git tag -d $GTAG
+    git push originrw :refs/tags/$GTAG
+  fi
+  git tag $GTAG $CMSDIST_HASH
+  git push originrw $GTAG || true
+fi
+popd
+
+if [ "X$DO_NOT_INSTALL" != "X" ] ; then exit 0 ; fi
+echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
+echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops
+echo PACKAGE_NAME=$PACKAGE_NAME >> $WORKSPACE/buildprops
+echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $WORKSPACE/buildprops
+echo CMSSW_RELEASE_BASE=$CMSSW_RELEASE_BASE >> $WORKSPACE/buildprops
+echo RELEASE_QUEUE=${RELEASE_QUEUE} >> $WORKSPACE/buildprops
+echo ENABLE_DEBUG=${ENABLE_DEBUG} >> $WORKSPACE/buildprops
+echo DOCKER_IMG=${DOCKER_IMG} >> $WORKSPACE/buildprops
+echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/buildprops
+
+for x in `echo $ADDITIONAL_TESTS | tr , '\n'`; do
+  echo "Creating property file $WORKSPACE/$x-properties."
+  cp $WORKSPACE/buildprops $WORKSPACE/$x-properties
+done
+
+echo DATE=`date`

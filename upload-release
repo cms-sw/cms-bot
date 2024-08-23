@@ -1,0 +1,41 @@
+#!/bin/sh -ex
+
+# This script assumes that the release is built without errors in the directory 
+# /build/cmsbuild/auto-builds/$CMSSW_X_Y_Z-$ARCHITECTURE/build
+# CMSSW_X_Y_Z: the release to upload
+# ARCHITECTURE: architecture for the upload
+# ISSUE_NUMBER: the number of the issue that triggered the upload
+# DRY_RUN_PARAM: parameter that to use dry-run
+source $WORKSPACE/cmsrep.sh
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+ISSUE_NUMBER=$3
+BUILD_NUMBER=$4
+WORKSPACE=$5
+DRY_RUN_PARAM=$6
+
+HERE=$WORKSPACE/build
+BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
+case $CMSSW_X_Y_Z in
+    *patch*) 
+      PATCH='-patch';;
+    *)
+      PATCH=''
+    ;;
+esac
+
+WORKER=`hostname -s`
+
+# the jenkins build number is the one of the job in jenkins doing the upload
+$WORKSPACE/report-build-release-status $BUILD_NUMBER $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z UPLOADING $DRY_RUN_PARAM
+pushd $BUILD_DIR
+  [ -f CMSDIST/${CMSBUILD_OPTS_FILE} ] && source CMSDIST/${CMSBUILD_OPTS_FILE}
+  PYTHONPATH= PKGTOOLS/cmsBuild $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}") --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER}  --architecture=$ARCHITECTURE --sync-back upload cmssw$PATCH
+popd
+if [ -e $WORKSPACE/TEST.DONE ] ; then
+  chmod -R +w $WORKSPACE
+  rm -rf $WORKSPACE
+else
+  touch $WORKSPACE/UPLOAD.DONE
+fi
+echo 'ALL_OK'

@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+	<head>
+	<meta charset="utf-8" />
+	<title>CMSSW Integration Builds</title>
+
+	<link href="https://netdna.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+
+	</head>
+	<body>
+		<script type='text/javascript' src="js/jquery-2.1.1.min.js"></script>
+		<script type='text/javascript' src="https://netdna.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+		<script type='text/javascript' src="js/render.js"></script>
+	
+
+	<div class="container">
+		<div class="span3">
+                  <h1 style="background-color:red;">
+                    This page has been deprecated and will be removed after 1st September 2021. Please use <a href="https://cmssdt.cern.ch/SDT/html/cmssdt-ib">this</a> to see the CMSSW IBs results.
+                  </h1>
+                </div>
+		<div class="col-md-10"  id="results"></div>
+		</div>
+		<div class="span3">
+		</div>
+
+	<script>
+        
+	$(document).ready(function () {
+		
+		enable_tabs = function(){
+
+			   //Enable tabbable tabs  
+                        $('#myTab a').click(function (e) {
+                                  e.preventDefault()
+				  console.log('tabs')
+                         })
+
+        
+                        // Javascript to enable link to tab
+                        var url = document.location.toString();
+                        if (url.match('#')) {
+                                var hash = url.split('#')[1] 
+                                var release_name = hash.substring( 0 , hash.lastIndexOf( '_' ) )
+				var lastChar = release_name.charAt( release_name.length - 1 )
+				// the url is asking for an IB
+				if ( lastChar == 'X' || lastChar == 'C' ){
+					$('#myTab a[href=#' + release_name + ']').tab('show')
+				
+				}else {
+					$('#myTab a[href=#' + hash + ']').tab('show') ;
+				}
+
+                        }
+
+                        // Change hash for page-reload
+                        $('myTab a').on('shown', function (e) {
+                                window.location.hash = e.target.hash;
+                        })
+
+		}
+
+
+		
+		paintMenu = function (structure){
+			console.log("painting menu bar")
+			menuBar = getMenuBar(structure)
+			$("#results").append(menuBar)
+
+		}
+
+		// Reads the file structre.json to know how to paint the menu and how to paint the tabs.
+                start_load = function(structure){
+
+			paintMenu(structure)
+
+			// create tab panel
+                        var tabs = $('<ul id="myTab" class="nav nav-tabs hidden"></ul>')
+
+			//create nav tabs
+			var all_releases = structure.all_release_queues;
+			var default_release = structure.default_release;
+
+			for(var i = 0; i < all_releases.length; i++){
+
+				var release_name = all_releases[i];
+                                 //add tab 
+                                var tab_title = $('<li><a href="#'+release_name+'" data-toggle="tab">'+release_name+'</a></li>')
+                                tabs.append(tab_title)
+			}
+
+			$("#results").append(tabs)
+
+			//create tab panes
+			var tabs_content = $('<div class="tab-content"></div>')
+                        tabs_content.attr("id","tabs_container")
+			for(var i = 0; i < all_releases.length; i++){
+
+				var release_name = all_releases[i];
+
+			 	// make selected page active
+			 	// if default_release not present, make first page active
+				if ( (!default_release && i == 0) || release_name === default_release ){
+
+					var tab_pane = $('<div class="tab-pane active" id="'+release_name+'"></div>')
+				}else{
+					var tab_pane = $('<div class="tab-pane" id="'+release_name+'">')
+
+				}
+
+				var rv_exceptions_link = get_rv_exceptions_link_rq( release_name )
+				tab_pane.append($("<br>"))
+				tab_pane.append( rv_exceptions_link )
+
+				// write the titles for the release queue
+				var title_rel_name=$("<h1>").text(release_name)
+				tab_pane.append(title_rel_name)
+				tab_pane.append($("<hr>"))
+				tab_pane.append($("<br>"))
+
+				// write the comparisons for the release queue, here I read a json file per release queue
+				var compFileName = "data/" + release_name + ".json"
+				
+				console.log( compFileName )
+				$.getJSON( compFileName, paintComparisons )
+
+
+				tabs_content.append(tab_pane)
+			}
+
+			$("#results").append(tabs_content)
+                
+                        enable_tabs() 
+
+                }
+
+
+  		$.getJSON( "data/structure.json", start_load)
+
+	})	
+	
+	</script>
+	</body>
+</html>

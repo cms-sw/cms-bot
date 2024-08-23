@@ -1,0 +1,21 @@
+name: test-changes
+on:
+  push:
+    paths:
+      - jenkins/parser/jobs-config.json
+  pull_request:
+    paths:
+      - jenkins/parser/jobs-config.json
+jobs:
+  configfile-sanity-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone github repo
+        uses: actions/checkout@v2
+      - name: Setup python3
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+          architecture: x64
+      - name: Checking job's configuration in parser job
+        run: PYTHONPATH=. python jenkins/parser/paser-config-unittest.py

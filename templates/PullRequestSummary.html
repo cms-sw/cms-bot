@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+  <meta charset="utf-8" />
+  <title>Tests Results</title>
+
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+  </head>
+  <body>
+    <script type='text/javascript' src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script type='text/javascript' src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script type='text/javascript' src="js/renderPRTests.js"></script>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-2"  ></div>
+        <div class="col-md-8"  id="header"></div>
+      </div>
+      <div class="row">
+        <div class="col-md-1"  ></div>
+        <div class="col-md-10"  id="results"></div>
+      </div>
+    </div>
+
+
+    <script>
+
+       $(document).ready(function () {
+
+         load_results = function( results ){
+
+           console.log( 'Results:' )
+           console.log( results ) 
+           console.log( '---' )
+           resultsDict = parseResultsIntoDict( results )
+           console.log( resultsDict )
+
+           var header = getHeader( resultsDict )
+           $( "#header" ).append( header )
+
+           
+           var table = $( '<table>' ).attr( 'class' , 'table table-striped' )
+           $( "#results" ).append( table )
+           fillResultsTable( resultsDict , table )
+
+         }
+         res = document.URL.replace("/SDT/jenkins-artifacts", "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/")
+         $.get( res, load_results , 'text' )
+       } )
+
+    </script>
+  </body>
+</html>
+
+
+      
+
+

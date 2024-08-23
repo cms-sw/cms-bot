@@ -1,0 +1,21 @@
+#!/bin/bash -ex
+ERR=0
+./steps.sh || ERR=1
+CMSSW_DIR=$(ls -d CMSSW_*)
+if [ "X${CMSSW_DIR}" = "X" ] ; then exit $ERR; fi
+mv ${CMSSW_DIR}/src ${WORKSPACE}/upload/${CMSSW_DIR}
+find ${WORKSPACE}/upload/${CMSSW_DIR} -name '*.root' -type f | xargs --no-run-if-empty rm -f
+JOB_SUMMARY_LOG="${WORKSPACE}/summary.txt"
+echo "## Differences found for various paths" > ${JOB_SUMMARY_LOG}
+for diff_file in $(find ${WORKSPACE}/upload/${CMSSW_DIR} -name '*_diff.log' -type f) ; do
+  path=$(basename $diff_file | sed 's|_diff.log$||')
+  echo "### $path" >> ${JOB_SUMMARY_LOG}
+  if [ -s ${diff_file} ]  ; then
+    echo '```' >> ${JOB_SUMMARY_LOG}
+    cat ${diff_file} >> ${JOB_SUMMARY_LOG}
+    echo '```' >> ${JOB_SUMMARY_LOG}
+  else
+    echo "  - There were no differences" >> ${JOB_SUMMARY_LOG}
+  fi
+done
+exit $ERR

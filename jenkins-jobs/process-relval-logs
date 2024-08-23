@@ -1,0 +1,107 @@
+#!/bin/bash -ex
+function process_ubsan()
+{
+  ibtag=$(echo ${dir} | sed 's/\/pyRelValPartialLogs//')
+  ibtag=`basename $ibtag`
+  ubdir="/data/sdt/SDT/jenkins-artifacts/ubsan_logs/$ibtag"
+  mkdir -p ${ubdir}
+  ublog1="${ubdir}/full_runtime_errors.log"
+  ublog2="${ubdir}/ubsan_runtime_errors.log"
+  ublog3="${ubdir}/ubsan_runtime_errors_ignored.log"
+  grep ': runtime error:' */step?.log  | grep '/CMSSW_\|log:src/' | sed 's|_.*\/\(step[1-9][0-9]*\).*.log:|/\1:|;s|:.*/CMSSW_[^/]*/|:|;s|:src/|:|' > ${ublog1}
+  for u in $(cat ${ublog1} | sed 's|^[^:]*:||;s| .*||' | sort -u) ; do
+    md5=$(echo "$u" | md5sum | sed 's| .*||')
+    c2=$(echo $md5 | cut -c1,2)
+    mkdir -p ${ubdir}/logs/${c2}/${md5}
+    grep ":$u "  ${ublog1} > ${ubdir}/logs/${c2}/${md5}/log
+    echo "<a href='logs/${c2}/${md5}/log'>" > ubsan.txt
+    echo -n "$(cat ${ubdir}/logs/${c2}/${md5}/log | wc -l) " >> ubsan.txt
+    head -1 ${ubdir}/logs/${c2}/${md5}/log | sed 's|^[^:]*:||' >> ubsan.txt
+    echo '</a><br/>' >> ubsan.txt
+    if [ $(grep "runtime error: member.*which does not point to an object of type  *'\(EDConsumerBase\|EDProducerBase\|EDFilterBase\|ProducerBase\|ProductRegistryHelper\)'" ubsan.txt | wc -l) -gt 0 ] ; then
+      cat ubsan.txt >> ${ublog3}.tmp
+    else
+      cat ubsan.txt >> ${ublog2}.tmp
+    fi
+    rm -f ubsan.txt
+  done
+  if [ -e ${ublog2}.tmp ] ; then
+    echo "<html><head></head><body>" > ${ubdir}/index.html
+    cat ${ublog2}.tmp >> ${ubdir}/index.html
+    echo "</body></html>" >> ${ubdir}/index.html
+    mv ${ublog2}.tmp ${ublog2}
+  fi
+  if [ -e ${ublog3}.tmp ] ; then
+    echo "<html><head></head><body>" > ${ubdir}/ignored.html
+    cat ${ublog3}.tmp >> ${ubdir}/ignored.html
+    echo "</body></html>" >> ${ubdir}/ignored.html
+    mv ${ublog3}.tmp ${ublog3}
+  fi
+  ln -s $ibtag $(echo ${ubdir} | sed 's|_UBSAN_X|_X|')
+}
+
+function process_dir()
+{
+  dir=$1
+  if [[ ! -e $dir/../pyRelValMatrixLogs/run/runall-report-step123-.log ]] || [[ $dir -nt $dir/../pyRelValMatrixLogs/run/runall-report-step123-.log ]] ; then
+    python3 -u ./es_relval_stats.py $dir
+    python3 -u ./process-partial-logs-relval.py $dir
+    touch $WORKSPACE/update-github-pages
+    rm -f $dir/../pyRelValMatrixLogs/run/done
+  fi
+  if [ ! -e $dir/../pyRelValMatrixLogs/run/done ] ; then
+    if [ ! -f $dir/../pyRelValMatrixLogs/run/all.done ] ; then
+      DONE_STEPS=$(ls $dir/done.* 2>/dev/null  | wc -l)
+      TOTAL_STEPS=$((ls $dir/done.*of* 2>/dev/null || echo 9999999) | tail -1 | sed 's|.*/done.[0-9][0-9]*of||')
+      if [ ${DONE_STEPS} -eq ${TOTAL_STEPS} ] ; then
+        touch $dir/../pyRelValMatrixLogs/run/all.done
+        touch $WORKSPACE/update-github-pages
+      fi
+    fi
+    TIMEOUT=`find $dir -maxdepth 0 -mindepth 0 -type d -mmin +600 | wc -l`
+    if [ -f $dir/../pyRelValMatrixLogs/run/all.pages ] || [ "X$TIMEOUT" = "X1" ] ; then
+      pushd $dir
+        rm -rf $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip
+        rm -rf */*.tar || true
+        rm -rf */*.gz || true
+        rm -rf */*.db || true
+        rm -rf */*.dat || true
+        rm -rf */*.tgz || true
+        rm -rf */millepede.* || true
+        rm -rf */*.dump || true
+        rm -rf */*.tex || true
+        rm -rf */fort.* || true
+        if [[ "$dir" == *"_UBSAN_X"* ]]; then
+          process_ubsan &
+        fi
+        find . -mindepth 2 -maxdepth 2 -type d | xargs --no-run-if-empt rm -rf
+        zip -q -1 -r $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip .
+        mv $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip $dir/../pyRelValMatrixLogs.zip
+        touch $WORKSPACE/update-github-pages
+        touch $dir/../pyRelValMatrixLogs/run/done
+        rm -f $dir/../pyRelValMatrixLogs/run/all.done
+        rm -f $dir/../pyRelValMatrixLogs/run/all.pages
+        wait
+      popd
+      mv $dir ${dir}.tmp
+      echo "All workflows completed: $dir"
+    fi
+  fi
+}
+
+
+rm -f $WORKSPACE/update-github-pages
+cd $(dirname $(dirname $0))
+for dir in `find /data/sdt/buildlogs -maxdepth 6 -mindepth 6 -name pyRelValPartialLogs -type d | sort ` ; do
+  echo "Working on $dir"
+  set +x
+  echo "Jobs running: $(jobs -p |wc -l)"
+  while [ $(jobs -p | wc -l) -ge 2 ]; do
+    sleep 30
+    echo "Jobs running: $(jobs -p |wc -l)"
+    jobs -pl
+  done
+  set -x
+  process_dir $dir &
+done
+wait

@@ -1,0 +1,15 @@
+#!/bin/sh -ex
+
+# This script assumes cleans up the build area used for the build, it deletes:
+# /build/cmsbuild/auto-builds/$CMSSW_X_Y_Z-$ARCHITECTURE/
+# CMSSW_X_Y_Z: the release that was build
+# ARCHITECTURE: architecture for the upload
+
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+BUILD_DIR=$3
+WORKSPACE="${BUILD_DIR}/auto-builds/$CMSSW_X_Y_Z-$ARCHITECTURE"
+
+rm -r $WORKSPACE
+
+echo 'ALL_OK'

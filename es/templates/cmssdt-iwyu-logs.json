@@ -1,0 +1,44 @@
+{
+  "aliases": {},
+  "mappings": {
+    "cmssdt-iwyu-stats": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "architecture": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "excludes": {
+          "type": "long"
+        },
+        "files": {
+          "type": "long"
+        },
+        "includes": {
+          "type": "long"
+        },
+        "package": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "pkg_url": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "release-tag": {
+          "index": "not_analyzed",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "order": 0,
+  "settings": {
+    "index": {
+      "number_of_shards": "2"
+    }
+  },
+  "template": "cmssdt-iwyu"
+}

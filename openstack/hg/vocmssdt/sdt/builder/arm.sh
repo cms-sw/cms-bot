@@ -1,0 +1,2 @@
+DEFAULT_FLAVOR="a1.4xlarge"
+DEFAULT_PROJECT="CMS_Miscellaneous_ARM"

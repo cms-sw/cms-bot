@@ -1,0 +1,112 @@
+#!/bin/bash -ex
+if [ "${ARTIFACTS_SERVER}" = "" ] ; then
+  cmssdt_script="$(dirname $0)/cmssdt.sh"
+  if [ ! -e "${cmssdt_script}" ] ; then
+    cmssdt_script=$(cd $(dirname ${BASH_ARGV[0]}); /bin/pwd)/cmssdt.sh
+  fi
+  source $cmssdt_script
+  ARTIFACTS_SERVER="${CMSSDT_SERVER}"
+fi
+if [ "${ARTIFACTS_USER}" = "" ] ; then
+  ARTIFACTS_USER=$(whoami)
+  case ${ARTIFACTS_USER} in
+    cmsbld|cvcmsib|cvcmsci|jenkins|cmsbot) ARTIFACTS_USER="cmsbuild" ;;
+  esac
+fi
+if [ "${ARTIFACT_BASE_DIR}" = "" ] ; then
+  JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
+if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins" ; fi
+  ARTIFACT_BASE_DIR="/data/sdt/SDT/${JENKINS_PREFIX}-artifacts"
+fi
+ARTIFACTS_MACHINE="${ARTIFACTS_USER}@${ARTIFACTS_SERVER}"
+ARTIFACT_BASE_DIR_MAIN="/data/sdt/SDT/jenkins-artifacts"
+DEFAULT_TIMEOUT=60
+SSH_OPTS="-q -o ConnectTimeout=${DEFAULT_TIMEOUT} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+if [ $(uname -n | grep "cern.ch" | wc -l) -eq 0 ]; then SSH_OPTS="-J $ARTIFACTS_USER@lxplus.cern.ch $SSH_OPTS" ; fi
+CVMFS_ARTIFACT_DIR="/cvmfs/cms-ci.cern.ch/jenkins-artifacts"
+
+function cmd_jenkins_artifacts ()
+{
+  local SRC=$1
+  local AFDIR="${ARTIFACT_BASE_DIR}"
+  if [ $(echo $SRC | sed 's|^/*||;s|/.*||' | grep '^ib-baseline-tests$' | wc -l) -eq 1 ] ; then AFDIR="${ARTIFACT_BASE_DIR_MAIN}"; fi
+  ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "cd ${AFDIR}/${SRC} ; $2"
+}
+
+function has_jenkins_artifacts ()
+{
+  local SRC=$1
+  local TYPE=$2
+  local AFDIR="${ARTIFACT_BASE_DIR}"
+  if [ $(echo $SRC | sed 's|^/*||;s|/.*||' | grep '^ib-baseline-tests$' | wc -l) -eq 1 ] ; then AFDIR="${ARTIFACT_BASE_DIR_MAIN}"; fi
+  [ "X$TYPE" = "X" ] && TYPE="-e"
+  for i in 1 2 3 4 5 6 7 8 9 ;  do
+    RES=$(timeout ${DEFAULT_TIMEOUT} ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "echo JA_RUN${i}=CONN && test ${TYPE} ${AFDIR}/${SRC} || echo JA_RUN${i}=FAIL" | grep "^JA_RUN${i}=" | wc -l)
+    if [ $RES -eq 1 ] ; then
+      echo "JA_STATUS=OK"
+      return 0
+    elif [ $RES -eq 2 ] ; then
+      echo "JA_STATUS=ERROR"
+      return 1
+    else
+      sleep 60
+    fi
+  done
+  echo "JA_STATUS=ERROR"
+  return 1
+}
+
+function send_jenkins_artifacts ()
+{
+  local SRC=$1
+  local DES=$2
+  local IS_DIR=$(test -d $SRC && echo "/")
+  local DES_DIR=$DES
+  if [ "X$IS_DIR" = "X" ] ; then DES_DIR=$(dirname $DES) ; fi
+  for i in 1 2 3 4 5 6 7 8 9 ;  do
+    ( ssh $SSH_OPTS ${ARTIFACTS_MACHINE} mkdir -p ${ARTIFACT_BASE_DIR}/${DES_DIR} && \
+      rsync ${SEND_JENKINS_ARTIFACTS_OPTS} -azl -e "ssh $SSH_OPTS" ${SRC}${IS_DIR} ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${DES_DIR}${IS_DIR} && echo "JA_STATUS=OK") && return
+    sleep 60
+  done
+  echo "JA_STATUS=ERROR"
+  return 1
+}
+
+function get_jenkins_artifacts ()
+{
+  local SRC=$1
+  local DES=$2
+  local AFDIR="${ARTIFACT_BASE_DIR}"
+  if [ $(echo $SRC | sed 's|^/*||;s|/.*||' | grep '^ib-baseline-tests$' | wc -l) -eq 1 ] ; then AFDIR="${ARTIFACT_BASE_DIR_MAIN}"; fi
+  if [ "X$3" = "X" -a -e ${CVMFS_ARTIFACT_DIR}/$SRC ] ; then
+    if [ -d ${CVMFS_ARTIFACT_DIR}/$SRC ] ; then
+      local XSRC=$(echo $SRC | sed 's|/*$||')
+      local XDES=$(echo $DES | sed 's|/*$||')
+      mkdir -p $XDES
+      if [ "${ARTIFACT_SYMLINK}" = "true" ] ; then
+        for x in $(ls -d ${CVMFS_ARTIFACT_DIR}/$XSRC/*) ; do
+          ln -sf $x $XDES/
+        done
+      else
+        rm -rf $XDES
+        ln -s ${CVMFS_ARTIFACT_DIR}/$XSRC $XDES
+      fi
+    else
+      mkdir -p $(dirname $DES)
+      cp -f ${CVMFS_ARTIFACT_DIR}/$SRC $DES
+    fi
+    echo "JA_STATUS=OK"
+    return
+  fi
+  case $SRC in
+    */) mkdir -p $DES ; DES="${DES}/";;
+    * ) mkdir -p $(dirname $DES) ;;
+  esac
+  has_jenkins_artifacts $1 || return 1
+  for i in 1 2 3 4 5 6 7 8 9 ;  do
+    rsync ${GET_JENKINS_ARTIFACTS_OPTS} -az -e "ssh $SSH_OPTS" ${ARTIFACTS_MACHINE}:${AFDIR}/${SRC} ${DES} && echo "JA_STATUS=OK" && return
+    sleep 60
+  done
+  echo "JA_STATUS=ERROR"
+  return 1
+}

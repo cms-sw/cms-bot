@@ -1,0 +1,20 @@
+#!/bin/bash -ex
+
+cd $CMSSW_BASE
+rm -rf src cfipython
+curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/${CMSSW_VERSION}.tar.gz
+tar -xzf src.tar.gz
+rm -rf src.tar.gz
+mv cmssw-${CMSSW_VERSION} src
+mkdir -p ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/
+rsync -a $CMSSW_RELEASE_BASE/cfipython/${SCRAM_ARCH}/ ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/
+find ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/ -type l | xargs --no-run-if-empty rm -f
+echo '<html><head></head><body><pre>' >  python3.html
+CMD_python=$(which python3) scram b -r -v -k -j $(nproc) CompilePython >> python3.html 2>&1
+grep -n 'Error compiling' python3.html | while IFS= read -r line; do
+  LN=$(echo "$line" | sed 's|:.*||')
+  PKG=$(echo "$line" | sed 's|[^/]*/||' | cut -d/ -f1,2 | sed 's|/||')
+  sed -i -e "${LN}s|\(.*\)|<h3 id='${PKG}'>\1</h3>|" python3.html
+done
+echo '</pre></body></html>' >> python3.html
+

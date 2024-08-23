@@ -1,0 +1,13 @@
+#!/bin/bash -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+
+eval `scram run -sh`
+mkdir $LOCALRT/run
+cd $LOCALRT/run
+
+$CMS_BOT_DIR/run-material-budget
+
+source $CMS_BOT_DIR/jenkins-artifacts
+send_jenkins_artifacts $LOCALRT/run material-budget/$CMSSW_VERSION/$SCRAM_ARCH || exit 1
+

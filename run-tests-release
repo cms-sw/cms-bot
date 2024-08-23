@@ -1,0 +1,50 @@
+#!/bin/sh -ex
+
+# This script assumes that the release has already been built without errors
+# It runs some tests on the release that has been built
+# CMSSW_X_Y_Z: the release to build
+# ARCHITECTURE: architecture for the build
+# ISSUE_NUMBER: the number of the issue that triggered the build
+# DRY_RUN_PARAM: parameter that to use dry-run
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+CMSSW_QUEUE=$3
+ONLY_BUILD_TOOLCONF=$4
+ISSUE_NUMBER=$5
+DRY_RUN_PARAM=$6
+
+HERE=$WORKSPACE/build
+BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
+TEST_DIR=$HERE/$CMSSW_X_Y_Z-tests
+
+export SCRAM_ARCH=${ARCHITECTURE}
+export LC_ALL=C
+source $BUILD_DIR/cmsset_default.sh
+mkdir -p $TEST_DIR
+pushd $TEST_DIR
+  scram -a ${ARCHITECTURE} p $CMSSW_X_Y_Z
+  pushd $TEST_DIR/$CMSSW_X_Y_Z
+    set +x ; cmsenv ; set -x
+  popd
+popd
+cp $WORKSPACE/das-utils/das_client $WORKSPACE/das-utils/das_client.py || true
+$WORKSPACE/das-utils/use-ibeos-sort
+export CMS_PATH=/cvmfs/cms-ib.cern.ch
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
+export PATH=$WORKSPACE/das-utils:$PATH
+which das_client
+mkdir $TEST_DIR/matrixTests
+pushd $TEST_DIR/matrixTests
+  NCPU=$($WORKSPACE/common/get_cpu_number.sh)
+  runTheMatrix.py -s -j $NCPU 2>&1 | tee -a $WORKSPACE/matrixTests.log
+popd
+
+# If it reaches here it is because there were no errors
+echo 'ALL_OK'
+
+
+
+

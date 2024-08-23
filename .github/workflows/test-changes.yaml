@@ -1,0 +1,36 @@
+name: test-changes 
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: [ '3.x' ]
+    name: Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYaml
+      - name: Checking python version
+        run: python -c "import sys; print(sys.version)"
+      - name: Compiling all python files
+        run: python -m compileall $(ls | grep -v cuda | grep -v v_scheduler | grep -v venv)
+      - name: Test importing CMSSW_L2/L1
+        run: python -c 'from categories import CMSSW_L2,CMSSW_ORP'
+      - name: Checking watchers
+        run: PYTHONPATH=. python tests/test_watchers.py
+      - name: Checking config map
+        run: PYTHONPATH=. python tests/test_config-map.py

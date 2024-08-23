@@ -1,0 +1,43 @@
+{
+  "aliases": {},
+  "mappings": {
+    "cmssdt-unittests": {
+      "properties": {
+        "@timestamp": {
+          "format": "yyyy-MM-dd HH:mm:ss",
+          "type": "date"
+        },
+        "architecture": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "name": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "package": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "release": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "status": {
+          "type": "long"
+        },
+        "url": {
+          "index": "not_analyzed",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "order": 0,
+  "settings": {
+    "index": {
+      "number_of_shards": "1"
+    }
+  },
+  "template": "cmssdt-ibs"
+}

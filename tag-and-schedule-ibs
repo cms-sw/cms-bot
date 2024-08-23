@@ -1,0 +1,121 @@
+#!/bin/sh -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+cd $WORKSPACE
+[ "${DEFAULT_CMS_BOT_BRANCH}" != "" ] || DEFAULT_CMS_BOT_BRANCH="master"
+
+CONFIG_MAP_PATH="$CMS_BOT_DIR/config.map"
+RELEASE_FILTER=${RELEASE_FILTER-.*}
+ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
+BUILD_PATCH=${BUILD_PATCH_FOR_NO_CHANGES-false}
+CMSSW_DEV_CYC=$(cd $CMS_BOT_DIR; python3 -c 'from releases import CMSSW_DEVEL_BRANCH; print(CMSSW_DEVEL_BRANCH)')
+if [ "${RELEASE_FILTER}" = '.*' ] ; then BUILD_CAUSE_MANUALTRIGGER="false"; fi
+
+RELEASE_QUEUES=""
+for q in `cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep -e "SCRAM_ARCH=$ARCHITECTURE_FILTER;" | grep -e "RELEASE_QUEUE=$RELEASE_FILTER;" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//'` ; do
+  if [ "X`echo " $RELEASE_QUEUES " | grep " $q " | wc -l`" = "X1" ] ; then continue; fi
+  RELEASE_QUEUES="$RELEASE_QUEUES $q"
+done
+
+if [ "X$RELEASE_QUEUES" = X ]; then
+  echo No releases found to build.
+  exit 1
+fi
+rm -rf cmssw
+ls /cvmfs/cms.cern.ch
+WEEK_DAY=`date +%w`
+DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`
+HOUR=`echo $DATE | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
+ORDER_INDEX=0
+FORCE_FULL_IB_DEFAULT="${FORCE_FULL_IB}"
+for QUEUE in $RELEASE_QUEUES; do
+  for IB_INFO in $(cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;") ;  do
+    CMS_BOT_BRANCH=${DEFAULT_CMS_BOT_BRANCH}
+    unset DEBUG_EXTERNALS
+    unset RELEASE_BRANCH
+    unset BUILD_HOUR
+    unset DOCKER_IMG
+    unset BUILD_PATCH_RELEASE
+    unset NO_IB
+    unset PROD_ARCH
+    unset BUILD_DAY
+    unset SLAVE_LABELS
+    unset SINGULARITY
+    unset PROD_ARCH
+    unset FORCE_FULL_IB
+    unset BUILD_OPTS
+    SKIP_TESTS=false
+    eval "$IB_INFO"
+    if [ "${SKIP_TESTS}" = "1" ] ; then SKIP_TESTS=true; fi
+    if [ "${FORCE_FULL_IB}" = "" ] ; then
+      FORCE_FULL_IB="${FORCE_FULL_IB_DEFAULT}"
+    elif [ "${FORCE_FULL_IB}" != "1" ] ; then
+      FORCE_FULL_IB="false"
+    else
+      FORCE_FULL_IB="true"
+    fi
+    if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
+      BUILD_PATCH_RELEASE=true
+    else
+      BUILD_PATCH_RELEASE=false
+    fi
+    if [ "${BUILD_CAUSE_MANUALTRIGGER}" != "true" ] ; then
+      if [ "X$BUILD_HOUR" != "X" ] ; then
+        if [ $(echo " $BUILD_HOUR " | tr ',' ' ' | grep " $HOUR " | wc -l) -eq 0 ] ; then continue; fi
+      fi
+      if [ "X$BUILD_DAY" != "X" ] ; then
+        if [ $(echo " $BUILD_DAY "  | tr ',' ' ' | grep " $WEEK_DAY " | wc -l) -eq 0 ] ; then continue; fi
+      fi
+    else
+      NO_IB=0
+    fi
+    if [ "X$NO_IB" = "X1" ] ; then continue ; fi
+    RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
+    RELEASE_NAME="${QUEUE}_${DATE}"
+    if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
+      RELEASE_LIST="`${CMS_BOT_DIR}/ib-create-tag.py -N ${RELEASE_NAME} -d $DAY -H $HOUR -b ${RELEASE_BRANCH} -q ${QUEUE}`"
+    else
+      RELEASE_LIST="$RELEASE_NAME"
+    fi
+
+    echo "RELEASE_NAME=$RELEASE_NAME" > $WORKSPACE/properties
+    echo "CMS_BOT_BRANCH=$CMS_BOT_BRANCH" >> $WORKSPACE/properties
+    echo "PRODUCTION_ARCH=${PROD_ARCH}" >> $WORKSPACE/properties
+    echo "DATE_FORMAT=$DATE" >> $WORKSPACE/properties
+    echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> $WORKSPACE/properties
+    echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties
+    echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties
+    echo "DOCKER_IMG=${DOCKER_IMG}"  >> $WORKSPACE/properties
+    echo "BUILD_PATCH_RELEASE=$BUILD_PATCH_RELEASE" >> $WORKSPACE/properties
+    echo "FORCE_FULL_IB=$FORCE_FULL_IB" >> $WORKSPACE/properties
+    echo "CMSSW_TOOL_CONF_ONLY=$CMSSW_TOOL_CONF_ONLY" >> $WORKSPACE/properties
+    echo "SLAVE_LABELS=$SLAVE_LABELS" >> $WORKSPACE/properties
+    echo "SKIP_TESTS=$SKIP_TESTS" >> $WORKSPACE/properties
+    echo "DEBUG_EXTERNALS=$DEBUG_EXTERNALS" >> $WORKSPACE/properties
+    echo "BUILD_OPTS=$BUILD_OPTS" >> $WORKSPACE/properties
+    if [ "X$ALWAYS_BUILD" = X ]; then
+      echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr '\n' ' '`" >> $WORKSPACE/properties
+    else
+      echo "RELEASE_LIST=" >> $WORKSPACE/properties
+    fi
+    if [ "X$SINGULARITY" = "X1" ] ; then
+      echo "USE_SINGULARITY=true" >> $WORKSPACE/properties
+    fi
+    ORDER_INDEX=`expr $ORDER_INDEX + 1`
+    BUILD_ORDER=`echo 000${ORDER_INDEX} | tail -c 4`
+    mv $WORKSPACE/properties $WORKSPACE/properties-${BUILD_ORDER}-${RELEASE_NAME}-${SCRAM_ARCH}.txt
+    case ${PROD_ARCH}-${RELEASE_NAME} in
+      1-${CMSSW_DEV_CYC}_20*-2300 ) echo "RELEASE_FORMAT=$RELEASE_NAME" > $WORKSPACE/run-cmslxr ;;
+    esac
+  done
+done
+
+ls $WORKSPACE
+
+# Delete all files after having created them so that we do not build unless
+# requested.
+if [ "X$SCHEDULE_BUILDS" = Xfalse ]; then
+  mkdir -p $WORKSPACE/not-scheduled
+  touch $WORKSPACE/properties-x.txt
+  mv $WORKSPACE/properties-*.txt $WORKSPACE/not-scheduled
+fi

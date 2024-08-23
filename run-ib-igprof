@@ -1,0 +1,90 @@
+#!/bin/sh -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+WORKFLOWS=$1
+PROFILES=$2
+EVENTS=$3
+PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
+
+# ensure that compiler include paths are added to ROOT_INCLUDE_PATH 
+for path in $(LC_ALL=C g++   -xc++ -E -v /dev/null 2>&1 | sed -n -e '/^.include/,${' -e '/^ \/.*++/p' -e '}');do ROOT_INCLUDE_PATH=$path:$ROOT_INCLUDE_PATH; done
+export ROOT_INCLUDE_PATH
+
+if [ "X$EVENTS" = "X" ] ; then EVENTS=100; fi
+for prof in ${PROFILES} ; do
+  mkdir -p $WORKSPACE/igprof/${prof}
+  cd $WORKSPACE/igprof/${prof}
+  for WORKFLOW in `echo $WORKFLOWS | sed 's|-l ||;s|,| |g;s|-i all||'`;do
+    ERR=0
+    if [[ $WORKFLOWS = *all* ]];  then
+        WF="-i all -l $WORKFLOW"
+    elif [ $(runTheMatrix.py -n | grep "^$WORKFLOW " | wc -l) -eq 0 ]; then
+      if [ $(runTheMatrix.py -w upgrade -n | grep "^$WORKFLOW " | wc -l) -eq 0 ]; then
+        echo "Workflow $WORKFLOW is not defined in this IB release"
+        continue
+      else
+        WF="-w upgrade -l $WORKFLOW"
+      fi
+    else
+      WF="-l $WORKFLOW"
+    fi
+    if [ "$prof" = "mp" ];then
+      runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --customise Validation/Performance/IgProfInfo.customise --no_exec" > ./runTheMatrix.log 2>&1
+      cd $WORKFLOW*
+      for f in $(ls *GEN_SIM.py); do
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f > ${f//.py/.log} 2>&1
+         for g in $(ls -1 IgProf*.gz);do
+           mv $g ${g/IgProf/igprofMEM_GC_step1}
+         done
+      done
+      s=1
+      for f in $(ls -1 step*.py| sort); do
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f > ${f//.py/.log} 2>&1 || ERR=1
+         s=$((++s))
+         for g in $(ls -1 IgProf*.gz);do
+           mv $g ${g/IgProf/igprofMEM_GC_step$s}
+         done
+      done
+      cd -
+    else
+      runTheMatrix.py $WF --command " -n $EVENTS --profile $prof" > ./runTheMatrix.log 2>&1 || ERR=1
+      mv runTheMatrix.log $(ls -d $WORKFLOW*)
+    fi
+  done
+  for hpwf in $PROFILING_WORKFLOWS; do
+    for s in step3 step4 step5 ; do
+      if [ $(ls -d ${hpwf}_*/${s}.root | wc -l) -eq 0 ] ; then continue ; fi
+      edmEventSize -v ${hpwf}_*/${s}.root> ${s}_sizes_${hpwf}.txt || ERR=1
+    done
+  done
+  for f in $(find . -name '*.gz' -type f) ; do
+    echo "processing file $f"
+    OUTFILE=${f//.gz/.sql3}
+    ( igprof-analyse -v -d -g -c $f --sqlite > $f.sql ) || ERR=1
+    ${CMS_BOT_DIR}/fix-igprof-sql.py $f.sql | sqlite3 "$OUTFILE" > $f.log || ERR=1
+
+
+    BASENAME=$(basename $f)
+    DIRNAME=$(dirname $f)
+    OUTFILE=${BASENAME//.gz/.txt}
+    if [ "$prof" = "pp" ]; then
+        ( igprof-analyse -v -d -g $f > "$DIRNAME/RES_CPU_${OUTFILE}" ) || ERR=1
+        if [[ $OUTFILE == "step3"*"_EndOfJob.txt"  && $WORKFLOWS != "-i all -l 13"* ]];then
+            mv $DIRNAME/RES_CPU_$OUTFILE $DIRNAME/RES_CPU_step3.txt
+            export IGREP=$DIRNAME/RES_CPU_step3.txt
+            export IGSORT=$DIRNAME/sorted_RES_CPU_step3.txt
+            awk -v module=doEvent 'BEGIN { total = 0; } { if(substr($0,0,1)=="-"){good = 0;}; if(good&&length($0)>0){print $0; total += $3;}; if(substr($0,0,1)=="["&&index($0,module)!=0) {good = 1;} } END { print "Total: "total } ' ${IGREP} | sort -n -r -k1 | awk '{ if(index($0,"Total: ")!=0){total=$0;} else{print$0;} } END { print total; }' > ${IGSORT} 2>&1 || ERR=1
+        fi
+    fi
+    if [ "$prof" = "mp" ]; then
+        ( igprof-analyse -v -d -g -r MEM_LIVE $f > "$DIRNAME/RES_MEM_${OUTFILE}" ) || ERR=1
+        OUTFILE=${BASENAME//.gz/.sql3}
+        ( igprof-analyse --sqlite -v -d -g -r MEM_LIVE $f > $f.MEM_LIVE.sql ) || ERR=1
+        ${CMS_BOT_DIR}/fix-igprof-sql.py $f.MEM_LIVE.sql | sqlite3 "$DIRNAME/MEM_LIVE_${OUTFILE}" > $DIRNAME/${OUTFILE}.MEM_LIVE.log || ERR=1
+    fi
+
+    if [ $ERR -gt 0 ] ; then
+      cat $f.log
+    fi
+  done
+done

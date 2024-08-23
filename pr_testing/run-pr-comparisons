@@ -269,7 +269,6 @@ if [ "$DRY_RUN" = "" ] ; then
   send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison${UC_TEST_FLAVOR}.txt
 fi
 
-
 DQM_PID=""
 if $DQM_COMPARISON_TEST ; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running DQM bin by bin comparison" || true

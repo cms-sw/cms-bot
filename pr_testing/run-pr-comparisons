@@ -269,6 +269,7 @@ if [ "$DRY_RUN" = "" ] ; then
   send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison${UC_TEST_FLAVOR}.txt
 fi
 
+
 DQM_PID=""
 if $DQM_COMPARISON_TEST ; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running DQM bin by bin comparison" || true
@@ -387,6 +388,21 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 fi
 echo "Jobs: $(jobs -p | wc -l)"
 jobs
+
+# --------------------------------------------------------------------------
+# maxmem-profile comparison
+# --------------------------------------------------------------------------
+for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
+  WF_DIR=`echo $WF | cut -d "/" -f1`
+  WF_NUMBER=`echo $WF | cut -d'_' -f1`
+  WF_FILE=$(basename $WF)
+  #create the output dir
+  OUTPUT_DIR=$WORKSPACE/results/maxmem-comparison/$WF_DIR
+  mkdir -p $OUTPUT_DIR
+  if [ -f $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt ] ; then
+	  diff -u $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/comparison-maxmem-profile.txt 2>/dev/null
+  fi
+done
 
 # ----------------------------------------------------------------------------
 # Alternative Comparison

@@ -2,7 +2,7 @@ import copy
 
 from categories import (
     CMSSW_L2,
-    CMSSW_ORP,
+    CMSSW_L1,
     TRIGGER_PR_TESTS,
     CMSSW_ISSUES_TRACKERS,
     PR_HOLD_MANAGERS,
@@ -135,10 +135,6 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
-REGEX_FAILURE_METADATA = re.compile(
-    r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)(?:attach\s+|)failure-metadata\s+(.+)$",
-    re.I,
-)
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
 REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 REGEX_IGNORE_FILE_COUNT = "\+file-count"
@@ -208,7 +204,7 @@ def update_CMSSW_LABELS(repo_config):
         check_dpg_pog = False
     dpg_pog = {} if not check_dpg_pog else get_dpg_pog()
     for l in CMSSW_LABELS.keys():
-        if check_dpg_pog and (not l in dpg_pog) and (not l in TYPE_COMMANDS):
+        if check_dpg_pog and (not l in dpg_pog):
             del CMSSW_LABELS[l]
         else:
             CMSSW_LABELS[l] = [
@@ -1139,7 +1135,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3]) + "_X"
             if br:
                 extra_rm = extra_rm + get_release_managers(br)
-        releaseManagers = list(set(extra_rm + CMSSW_ORP))
+        releaseManagers = list(set(extra_rm + CMSSW_L1))
     else:
         try:
             if (
@@ -1385,16 +1381,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     code_check_apply_patch = True
                 set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1")
 
-                m = REGEX_FAILURE_DATA.match(first_line)
-                if m and commenter in CMSSW_ISSUES_TRACKERS:
-                    if not has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
-                        data = m[1].strip()
-                        # b64-encode data to safely pass it as enviroment variable; replace new-lines with @
-                        data = base64.b64encode(data.encode()).decode().replace("\n", "@")
-                        with open("failure-metadata.prop", "w") as f:
-                            f.write("DATA=" + data)
-                        set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "+1", True)
-
         selected_cats = []
 
         if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
@@ -1587,17 +1573,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
-    # Check if it needs to be automatically closed.
-    if mustClose:
-        if issue.state == "open":
-            print("This pull request must be closed.")
-            if not dryRun:
-                issue.edit(state="closed")
-    elif reOpen:
-        if issue.state == "closed":
-            print("This pull request must be reopened.")
-            if not dryRun:
-                issue.edit(state="open")
 
     if issue.pull_request:
         if (
@@ -2229,6 +2204,18 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             pass
         if add_labels:
             issue.edit(labels=list(labels))
+
+    # Check if it needs to be automatically closed.
+    if mustClose:
+        if issue.state == "open":
+            print("This pull request must be closed.")
+            if not dryRunOrig:
+                issue.edit(state="closed")
+    elif reOpen:
+        if issue.state == "closed":
+            print("This pull request must be reopened.")
+            if not dryRunOrig:
+                issue.edit(state="open")
 
     if not issue.pull_request:
         issueMessage = None

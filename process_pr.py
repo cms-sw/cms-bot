@@ -1625,6 +1625,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             pr.changed_files >= TOO_MANY_FILES_WARN_THRESHOLD
             and (not warned_too_many_files)
             and (not ok_too_many_files)
+            and cmssw_repo
         ):
             if pr.changed_files < TOO_MANY_FILES_FAIL_THRESHOLD:
                 if not dryRun:
@@ -1650,7 +1651,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
             return
 
-        if pr.changed_files >= TOO_MANY_FILES_WARN_THRESHOLD and not ok_too_many_files:
+        if (
+            pr.changed_files >= TOO_MANY_FILES_WARN_THRESHOLD
+            and not ok_too_many_files
+            and cmssw_repo
+        ):
             print("Changed file count reached and not overridden, quitting")
             return
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import base64
 import copy
 import datetime
 import io
@@ -191,10 +192,18 @@ def main():
                                 if is_issue_closed(ib_date, known_failure["issue"]):
                                     issue_data = ":exclamation_mark: " + issue_data
 
-                            failure_data = json.dumps(failure_desc)
+                            if not known_failure:
+                                failure_data = (
+                                    base64.b64encode(json.dumps(failure_desc).encode())
+                                    .decode()
+                                    .replace("\n", "@")
+                                )
+                            else:
+                                failure_data = "known"
+
                             print(
                                 f"| [{error.name}]({error.url}) | {error.data[1]}x "
-                                f"{error.data[0]} | {issue_data} | failure-metadata `{failure_data}` |",
+                                f"{error.data[0]} | {issue_data} | `build`, `{failure_data}` |",
                                 file=f,
                             )
 
@@ -206,10 +215,18 @@ def main():
                                 if is_issue_closed(ib_date, known_failure["issue"]):
                                     issue_data = ":exclamation_mark: " + issue_data
 
-                            failure_desc = dict(module=error.name, index="utest")
-                            failure_data = json.dumps(failure_desc)
+                            if not known_failure:
+                                failure_desc = dict(module=error.name, index="utest")
+                                failure_data = (
+                                    base64.b64encode(json.dumps(failure_desc).encode())
+                                    .decode()
+                                    .replace("\n", "@")
+                                )
+                            else:
+                                failure_data = "known"
+
                             print(
-                                f"| [{error.name}]({error.url}) | TBD | {issue_data} | failure-metadata `{failure_data}` |",
+                                f"| [{error.name}]({error.url}) | TBD | {issue_data} | `utest`, `{failure_data}` |",
                                 file=f,
                             )
 
@@ -226,13 +243,20 @@ def main():
                                     issue_data = ":exclamation_mark: " + issue_data
 
                             desc = error.data.get("details", None) or error.data["exit_code_name"]
-                            failure_desc = copy.deepcopy(error.data)
-                            failure_desc.pop("line", None)
-                            failure_desc.pop("details", None)
-                            failure_desc["index"] = "relval"
-                            failure_data = json.dumps(failure_desc)
+                            if not known_failure:
+                                failure_desc = copy.deepcopy(error.data)
+                                failure_desc.pop("line", None)
+                                failure_desc.pop("details", None)
+                                failure_desc["index"] = "relval"
+                                failure_data = (
+                                    base64.b64encode(json.dumps(failure_desc).encode())
+                                    .decode()
+                                    .replace("\n", "@")
+                                )
+                            else:
+                                failure_data = "known"
                             print(
-                                f"| [{error.name}]({error.url}) | {desc} | {issue_data} | failure-metadata `{failure_data}` |",
+                                f"| [{error.name}]({error.url}) | {desc} | {issue_data} | `relval`, `{failure_data}` |",
                                 file=f,
                             )
 

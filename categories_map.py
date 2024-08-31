@@ -1461,6 +1461,7 @@ CMSSW_CATEGORIES = {
         "RecoVertex/LinearizationPointFinders",
         "RecoVertex/MultiVertexFit",
         "RecoVertex/NuclearInteractionProducer",
+        "RecoVertex/PixelVertexFinding",
         "RecoVertex/PrimaryVertexProducer",
         "RecoVertex/TertiaryTracksVertexFinder",
         "RecoVertex/TrimmedKalmanVertexFinder",

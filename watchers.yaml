@@ -1814,6 +1814,13 @@ Mmiglio:
 - EventFilter/L1ScoutingRawToDigi
 - L1TriggerScouting/OnlineProcessing
 - L1TriggerScouting/Utilities
+denizsun:
+- DQM/HcalCommon
+- DQM/HcalMonitorClient
+- DQM/HcalMonitorModule
+- DQM/HcalMonitorTasks
+- DQM/HcalTasks
+- DQMOffline/Hcal
 salimcerci:
 - DQM/HcalCommon
 - DQM/HcalMonitorClient

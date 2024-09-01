@@ -1821,3 +1821,10 @@ denizsun:
 - DQM/HcalMonitorTasks
 - DQM/HcalTasks
 - DQMOffline/Hcal
+salimcerci:
+- DQM/HcalCommon
+- DQM/HcalMonitorClient
+- DQM/HcalMonitorModule
+- DQM/HcalMonitorTasks
+- DQM/HcalTasks
+- DQMOffline/Hcal

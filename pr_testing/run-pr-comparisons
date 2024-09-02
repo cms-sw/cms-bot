@@ -1,9 +1,5 @@
 #!/bin/sh -ex
 
-function run_and_log_cmd(){
-  if ! $1 > $2 2>&1 ; then touch $3; fi
-}
-
 function filter_failed_comparison(){
   if [ -f $1/index.html ] ; then
     if [ $(grep 'Skipped:\|Null:\|Fail:' $1/index.html | wc -l) -gt 0 ] ; then
@@ -132,9 +128,9 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     cp $CMS_BOT_DIR/comparisons/validate.C ./
     fwfile="src/FWCore/FWLite/interface/FWLiteEnabler.h"
     if [ -e ${CMSSW_BASE}/$fwfile -o -e ${CMSSW_RELEASE_BASE}/$fwfile ] ; then
-      echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b &
+      (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b || true) &
     else
-      echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n .L validate.C+\n .qqqqqq" | root -l -b &
+      (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n .L validate.C+\n .qqqqqq" | root -l -b || true) &
     fi
   popd
 fi
@@ -143,7 +139,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   mkdir -p $WORKSPACE/validateALT_lib
   pushd $WORKSPACE/validateALT_lib
     cp $CMS_BOT_DIR/comparisons/compareValHists.C ./
-    echo -e "gROOT->SetStyle(\"Plain\");\n .L compareValHists.C+\n .qqqqqq" | root -l -b &
+    (echo -e "gROOT->SetStyle(\"Plain\");\n .L compareValHists.C+\n .qqqqqq" | root -l -b || true) &
   popd
 fi
 
@@ -156,15 +152,17 @@ get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"
 ${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 
+set +x
 for r in $(find $WORKSPACE/data/PR-${PR_NUM} -name 'step*.root' -type f | grep -v 'inDQM.root') ; do
   while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
   echo "Running edmEventSize and edmProvDump: $r"
-  edmEventSize -v $r > $r.edmEventSize &
-  edmProvDump     $r > $r.edmProvDump  &
+  (edmEventSize -v $r > $r.edmEventSize || true) &
+  (edmProvDump     $r > $r.edmProvDump  || true) &
 done
+set -x
 jobs
 wait
-${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison events >${JR_COMP_DIR}/logRootQA-events.log 2>&1 &
+(${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison events >${JR_COMP_DIR}/logRootQA-events.log 2>&1 || true) &
 jobs
 
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
@@ -274,7 +272,7 @@ fi
 DQM_PID=""
 if $DQM_COMPARISON_TEST ; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running DQM bin by bin comparison" || true
-  compareDQMOutput.py -b $WORKSPACE/data/$COMPARISON_RELEASE/ -p $WORKSPACE/data/PR-${PR_NUM} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -l "$PULL_REQUESTS" -t ${BUILD_ID} -r $COMPARISON_RELEASE -s $WORKSPACE/upload/ -j $NUM_PROC > $WORKSPACE/upload/dqmBinByBinLog.log 2>&1 &
+  (compareDQMOutput.py -b $WORKSPACE/data/$COMPARISON_RELEASE/ -p $WORKSPACE/data/PR-${PR_NUM} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -l "$PULL_REQUESTS" -t ${BUILD_ID} -r $COMPARISON_RELEASE -s $WORKSPACE/upload/ -j $NUM_PROC > $WORKSPACE/upload/dqmBinByBinLog.log 2>&1 || true) &
   sleep 5
   DQM_PID=$(pgrep -x -f '.*/compareDQMOutput.py .*' || true)
 fi
@@ -303,7 +301,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
       WF_NUMBER=`echo $WF | cut -d'_' -f1`
       wait_dqm_comp 2
-      ${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/comparisons/validateJR.py --base "$WORKSPACE/data/PR-$PR_NUM" --ref "$WORKSPACE/data/$COMPARISON_RELEASE" --wf $WF_NUMBER --procs 0 >${WF_NUMBER}.log 2>&1 &
+      (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/comparisons/validateJR.py --base "$WORKSPACE/data/PR-$PR_NUM" --ref "$WORKSPACE/data/$COMPARISON_RELEASE" --wf $WF_NUMBER --procs 0 >${WF_NUMBER}.log 2>&1 || true) &
       PID_WAIT+=" $!"
     done
   popd
@@ -322,8 +320,8 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
     wait_dqm_comp 0.5
     WF_DIR=`echo ${WF} | cut -d "/" -f1`
     echo "Running: edm::TriggerResults ${WF_DIR}"
-    ${CMS_BOT_DIR}/compareTriggerResults.py -r ${WORKSPACE}/data/${COMPARISON_RELEASE} -t ${WORKSPACE}/data/PR-${PR_NUM} \
-      -f "*/${WF_DIR}/step*.root" -o ${WORKSPACE}/upload/triggerResults > ${WORKSPACE}/upload/triggerResults/${WF_DIR}.log 2>&1 &
+    (${CMS_BOT_DIR}/compareTriggerResults.py -r ${WORKSPACE}/data/${COMPARISON_RELEASE} -t ${WORKSPACE}/data/PR-${PR_NUM} \
+      -f "*/${WF_DIR}/step*.root" -o ${WORKSPACE}/upload/triggerResults > ${WORKSPACE}/upload/triggerResults/${WF_DIR}.log 2>&1 || true) &
   done
 fi
 echo "Jobs: $(jobs -p | wc -l)"
@@ -335,7 +333,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   PID_WAIT=""
   echo "Finished with JR comparison at `date`:"
   rm -rf $JR_COMP_DIR/validate_lib
-  ${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison JR >${JR_COMP_DIR}/logRootQA-JR.log 2>&1 &
+  (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison JR >${JR_COMP_DIR}/logRootQA-JR.log 2>&1 || true) &
 fi
 
 # --------------------------------------------------------------------------
@@ -384,7 +382,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     wait_dqm_comp 0.5
     echo "Running $WORKSPACE/results/default-comparison/command-$WF_NUMBER"
-    run_and_log_cmd $WORKSPACE/results/default-comparison/command-$WF_NUMBER ${OUTPUT_DIR}/cmd.log $WORKSPACE/results/default-comparison/error-$WF_NUMBER &
+    ($WORKSPACE/results/default-comparison/command-$WF_NUMBER > ${OUTPUT_DIR}/cmd.log 2>&1 || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
   done
 fi
 echo "Jobs: $(jobs -p | wc -l)"
@@ -432,7 +430,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     chmod 755 $ALT_COMP_DIR/command-$WF_NUMBER
     wait_dqm_comp 0.2
     echo "Running $ALT_COMP_DIR/command-$WF_NUMBER"
-    LD_LIBRARY_PATH=$WORKSPACE/validateALT_lib:${LD_LIBRARY_PATH} run_and_log_cmd $ALT_COMP_DIR/command-$WF_NUMBER $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log $ALT_COMP_DIR/error-$WF_NUMBER &
+    (LD_LIBRARY_PATH=$WORKSPACE/validateALT_lib:${LD_LIBRARY_PATH} $ALT_COMP_DIR/command-$WF_NUMBER > $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || touch $ALT_COMP_DIR/error-$WF_NUMBER) &
   done
 fi
 

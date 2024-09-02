@@ -399,7 +399,7 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   OUTPUT_DIR=$WORKSPACE/results/maxmem-comparison/$WF_DIR
   mkdir -p $OUTPUT_DIR
   if [ -f $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt ] ; then
-	  diff -u $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/comparison-maxmem-profile.txt 2>/dev/null
+    diff -u $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/comparison-maxmem-profile.txt || true
   fi
 done
 

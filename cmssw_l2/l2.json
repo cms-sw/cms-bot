@@ -50,6 +50,14 @@
       "start_date": 1600214400
     }
   ],
+  "Fedespring": [
+    {
+      "category": [
+        "muon-pog"
+      ],
+      "start_date": 1725148800
+    }
+  ],
   "GurpreetSinghChahal": [
     {
       "category": [
@@ -71,6 +79,7 @@
       "category": [
         "muon-pog"
       ],
+      "end_date": 1725148800,
       "start_date": 1662422400
     }
   ],
@@ -385,6 +394,14 @@
       ],
       "end_date": 1603152000,
       "start_date": 1559952000
+    }
+  ],
+  "bonanomi": [
+    {
+      "category": [
+        "muon-pog"
+      ],
+      "start_date": 1725148800
     }
   ],
   "boudoul": [
@@ -1068,6 +1085,7 @@
       "category": [
         "muon-pog"
       ],
+      "end_date": 1725148800,
       "start_date": 1632787200
     }
   ],

@@ -391,15 +391,15 @@ jobs
 # --------------------------------------------------------------------------
 # maxmem-profile comparison
 # --------------------------------------------------------------------------
+OUTPUT_DIR=$WORKSPACE/results/maxmem-comparison
+mkdir -p $OUTPUT_DIR
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   WF_DIR=`echo $WF | cut -d "/" -f1`
   WF_NUMBER=`echo $WF | cut -d'_' -f1`
   WF_FILE=$(basename $WF)
   #create the output dir
-  OUTPUT_DIR=$WORKSPACE/results/maxmem-comparison/$WF_DIR
-  mkdir -p $OUTPUT_DIR
   if [ -f $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt ] ; then
-    diff -u $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/comparison-maxmem-profile.txt || true
+    diff -u $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/${WF_NUMBER}.txt || true
   fi
 done
 
@@ -558,6 +558,9 @@ done
 
 #nano
 [ -d $WORKSPACE/results/nano ] && mv $WORKSPACE/results/nano upload/
+
+#maxmem comparison
+[ -d $WORKSPACE/results/maxmem-comparison ] && mv $WORKSPACE/results/maxmem-comparison upload/
 
 #files
 if [ -e results/files ] ; then

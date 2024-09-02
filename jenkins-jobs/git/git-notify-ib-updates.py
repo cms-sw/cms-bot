@@ -133,12 +133,20 @@ def main():
                     if old_result and arch in old_result and error in old_result[arch]["build"]:
                         continue
 
+                    failure_desc = dict(module=error.name, type=error.data[0])
+                    known_failure = libib.get_known_failure("build", **failure_desc)
+                    if known_failure:
+                        continue
+
                     arch_report.append(
                         f"| [{error.name}]({error.url}) | {error.data[1]}x {error.data[0]} | "
                     )
 
                 for error in new_result[arch]["utest"]:
                     if old_result and arch in old_result and error in old_result[arch]["utest"]:
+                        continue
+                    known_failure = libib.get_known_failure("utest", module=error.name)
+                    if known_failure:
                         continue
 
                     arch_report.append(f"| [{error.name}]({error.url}) | TBD | ")
@@ -147,13 +155,22 @@ def main():
                     if old_result and arch in old_result and error in old_result[arch]["relval"]:
                         continue
 
-                    arch_report.append(f"| [{error.name}]({error.url}) | {error.data} | ")
+                    known_failure = libib.get_known_failure(
+                        "relval",
+                        **error.data,
+                    )
+                    if known_failure:
+                        continue
+
+                    desc = error.data.get("details", None) or error.data["exit_code_name"]
+
+                    arch_report.append(f"| [{error.name}]({error.url}) | {desc} | ")
 
                 if len(arch_report) > (max_report_lines + 1):
                     arch_report_l = len(arch_report)
                     arch_report = arch_report[:max_report_lines]
                     arch_report.append(
-                        f"| :warning: {arch_report_l-max_report_lines} error(s) more | Check IB status page | "
+                        f"| :warning: {arch_report_l - max_report_lines} error(s) more | Check IB status page | "
                     )
 
                 if arch_report:

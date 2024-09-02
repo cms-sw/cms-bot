@@ -1,16 +1,20 @@
 import datetime
 import io
-import os
-
 import json
 import logging
+import os
 import pickle
 import re
+import time
 import urllib
 import urllib.error
 import urllib.request
 from collections import namedtuple
 from enum import Enum
+
+import github
+
+import es_utils
 
 
 # Borrowed from https://github.com/cms-sw/cmssdt-web
@@ -56,6 +60,11 @@ url_root = "https://cmssdt.cern.ch/"
 exitcodes = {}
 logger = logging.Logger("libib", logging.INFO)
 date_rex = re.compile(r"(\d{4})-(\d{2})-(\d{2})-(\d{2})00")
+
+g = None
+repo_cache = {}
+issue_cache = {}
+localtz = None
 
 
 class ContentType(Enum):
@@ -326,15 +335,17 @@ def extract_relval_error(release_name, arch, rvItem):
                                 if res:
                                     if res.startswith("cling::"):
                                         res = "CLING"
-                                    if res.startswith("("):
-                                        res = "(" + re.split(r"[(<]", res, 1)[1]
                                     else:
-                                        res = re.split(r"[(<]", res, 1)[0]
+                                        if res.startswith("("):
+                                            res = "(" + re.split(r"[(<]", res, 1)[1]
+                                        else:
+                                            res = re.split(r"[(<]", res, 1)[0]
+                                        res = '`' + res + '`'
                                     return LogEntry(
                                         name=f"Relval {rvItem['id']} step {i + 1}",
                                         url=webURL_t.format(**obj),
                                         data={
-                                            "details": f"SIGSEGV in `{res}`",
+                                            "details": f"SIGSEGV in {res}",
                                             "workflow": rvItem["id"],
                                             "step": i + 1,
                                             "line": obj["lineStart"],
@@ -708,3 +719,91 @@ def get_expected_ibs(series, ib_date):
                 res.append((data["RELEASE_QUEUE"], data["SCRAM_ARCH"]))
 
     return res
+
+
+# Taken from https://stackoverflow.com/a/59673310
+def currenttz():
+    if time.daylight:
+        return datetime.timezone(datetime.timedelta(seconds=-time.altzone), time.tzname[1])
+    else:
+        return datetime.timezone(datetime.timedelta(seconds=-time.timezone), time.tzname[0])
+
+
+def search_es(index, **kwargs):
+    kwargs.pop("line", None)
+    kwargs.pop("details", None)
+    query = " AND ".join(
+        "{0}:{1}".format(k, f'\\"{v}\\"' if isinstance(v, str) else v) for k, v in kwargs.items()
+    )
+    # if kwargs.get("workflow", None) == "280.0":
+    #     print(f"Sending query: index cmssdt-{index}-failures, query {query}")
+    ret = es_utils.es_query(
+        f"cmssdt-{index}-failures", query, start_time=0, end_time=1000 * int(time.time())
+    )
+    # if kwargs.get("workflow", None) == "280.0":
+    #     print(ret)
+    #     exit(0)
+    return tuple(x["_source"] for x in ret["hits"]["hits"])
+
+
+def is_issue_closed(ib_date, issue):
+    global repo_cache
+
+    y, m, d, h = [int(x) for x in ib_date.split("-", 5)[:-1] if x]
+    h = h // 100
+
+    ib_datetime = datetime.datetime(y, m, d, h, 0, tzinfo=localtz)
+
+    if g is None:
+        return False
+
+    issue = str(issue)
+
+    if "#" in issue:
+        repo_name, issue_id = issue.split("#")
+    else:
+        repo_name = "cms-sw/cmssw"
+        issue_id = issue
+
+    if not repo_name:
+        repo_name = "cms-sw/cmssw"
+
+    if isinstance(issue_id, str):
+        issue_id = int(issue_id)
+
+    repo = repo_cache.get(repo_name, None)
+    if not repo:
+        repo = g.get_repo(repo_name)
+        repo_cache[repo_name] = repo
+
+    issue = issue_cache.get(issue_id)
+    if not issue:
+        issue = repo.get_issue(issue_id)
+        issue_cache[issue_id] = issue
+
+    if issue.closed_at:
+        closed_at = issue.closed_at.replace(tzinfo=datetime.timezone.utc).astimezone(localtz)
+    else:
+        closed_at = datetime.datetime.now(tz=localtz)
+
+    return issue.state == "closed" and (closed_at < ib_datetime)
+    # return False
+
+
+def get_known_failure(failure_type, **kwargs):
+    res = search_es(failure_type, **kwargs)
+    if res:
+        return res[0]
+    else:
+        return None
+
+def setup_github():
+    global g, localtz
+    localtz = currenttz()
+
+    if github:
+        g = github.Github(
+            login_or_token=open(os.path.expanduser("~/.github-token")).read().strip()
+        )
+    else:
+        g = None

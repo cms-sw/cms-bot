@@ -160,7 +160,7 @@ for r in $(find $WORKSPACE/data/PR-${PR_NUM} -name 'step*.root' -type f | grep -
 done
 jobs
 wait
-(${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison events >${JR_COMP_DIR}/logRootQA-events.log 2>&1 || true) &
+${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison events >${JR_COMP_DIR}/logRootQA-events.log 2>&1 &
 jobs
 
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE

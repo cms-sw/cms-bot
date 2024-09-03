@@ -6,8 +6,6 @@ import logging
 import os
 import sys
 import urllib.error
-
-from github_utils import github_api
 from urllib.error import HTTPError
 
 # noinspection PyUnresolvedReferences
@@ -15,6 +13,8 @@ import libib
 
 # noinspection PyUnresolvedReferences
 from libib import PackageInfo, ErrorInfo
+
+from github_utils import get_commit
 
 try:
     current_shifter = libib.fetch("/SDT/shifter.txt", content_type=libib.ContentType.TEXT)
@@ -25,7 +25,7 @@ except (urllib.error.URLError, urllib.error.HTTPError) as e:
     current_shifter = "all"
     exit_code = 1
 
-cache_root = os.path.join(os.getenv("JENKINS_HOME"), "workspace/cache/cms-ib-notifier")
+# cache_root = os.path.join(os.getenv("JENKINS_HOME"), "workspace/cache/cms-ib-notifier")
 
 header = f"@{current_shifter} New IB failures found, please check:"
 
@@ -36,19 +36,13 @@ table_header = """# {rel}-{ib_date} for {arch}
 max_report_lines = 19
 
 
-def get_commit_info(repo, commit):
-    return github_api(
-        uri="/repos/{}/commits/{}".format(repo, commit), method="GET", all_pages=False
-    )
-
-
 def isoparse(strDate):
     return datetime.datetime.strptime(strDate, "%Y-%m-%dT%H:%M:%SZ")
 
 
 def main():
     workspace = os.getenv("WORKSPACE", os.getcwd())
-    os.makedirs(cache_root, exist_ok=True)
+    # os.makedirs(cache_root, exist_ok=True)
 
     libib.setup_logging(logging.DEBUG)
     libib.get_exitcodes()
@@ -58,9 +52,11 @@ def main():
     commit_dates = {}
 
     changed_rels = set()
+    oldest_parent_sha = ""
+    oldest_parent_date = datetime.datetime.now().astimezone()
     for commit_id in sys.argv[1:]:
         print("Processing commit {}".format(commit_id))
-        commit_info = get_commit_info("cms-sw/cms-sw.github.io", commit_id)
+        commit_info = get_commit("cms-sw/cms-sw.github.io", commit_id)
         if "sha" not in commit_info:
             print("Invalid or missing commit-id {}".format(commit_id))
             continue
@@ -80,12 +76,23 @@ def main():
         commit_date = libib.date_fromisoformat(commit_author["date"])
         commit_dates[commit_id] = commit_date
 
+        has_changed_release = False
+
         for change in commit_info["files"]:
             if not change["filename"].startswith("_data/CMSSW"):
                 continue
             relname = change["filename"].replace("_data/", "").replace(".json", "")
             print("Release {} changed".format(relname))
             changed_rels.add(relname)
+            has_changed_release = True
+
+        if has_changed_release:
+            parent_sha = commit_info["parents"][0]["sha"]
+            parent_commit_info = get_commit("cms-sw/cms-sw.github.io", parent_sha)
+            parent_date = libib.date_fromisoformat(parent_commit_info["commit"]["author"]["date"])
+            if parent_date < oldest_parent_date:
+                oldest_parent_sha = parent_sha
+                oldest_parent_date = parent_date
 
     if len(changed_rels) == 0:
         print("No releases changed")
@@ -100,16 +107,20 @@ def main():
 
     for ib_date in ib_dates:
         for rel in changed_rels:
-            old_data_file = os.path.join(cache_root, "{}.json".format(rel))
             old_result = None
-            if os.path.exists(old_data_file):
-                print(f"Loading cached release {rel}")
-                old_data = json.load(open(old_data_file, "r"))
+            old_data = None
+            try:
+                old_data = libib.fetch(
+                    f"https://github.com/cms-sw/cms-sw.github.io/raw/{oldest_parent_sha}/data%2F{rel}.json"
+                )
+            except HTTPError as e:
+                if e.code != 404:
+                    raise
+
+            if old_data:
                 old_comparision = libib.get_ib_results(ib_date, None, old_data)
                 if old_comparision:
                     _, old_result = libib.check_ib(old_comparision)
-            else:
-                print(f"No cache for release {rel}")
 
             try:
                 new_data = libib.fetch(
@@ -201,22 +212,6 @@ def main():
     else:
         if os.path.exists(f"{workspace}/submit.sh"):
             os.unlink(f"{workspace}/submit.sh")
-
-    # Save new json files
-    for rel in changed_rels:
-        url_ = (
-            f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/_data%2F{rel}.json"
-        )
-        try:
-            data = libib.fetch(url_, libib.ContentType.TEXT)
-        except urllib.error.HTTPError as e:
-            if e.code != 404:
-                raise
-            else:
-                pass
-        else:
-            with open(os.path.join(cache_root, "{}.json".format(rel)), "w") as f:
-                f.write(data)
 
 
 if __name__ == "__main__":

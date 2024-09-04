@@ -1,7 +1,8 @@
+import base64
+import json
 import os
 
 import es_utils
-import base64
 
 
 def index_document(index, payload):

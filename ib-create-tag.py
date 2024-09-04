@@ -9,6 +9,7 @@ exec ${python_cmd} $0 ${1+"$@"}
 from __future__ import print_function
 
 import datetime
+import time
 from _py2with3compatibility import HTTPError
 from os.path import dirname, abspath
 from socket import setdefaulttimeout
@@ -29,6 +30,13 @@ from categories import CMSSW_ORP
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
+
+
+def currenttz():
+    if time.daylight:
+        return datetime.timezone(datetime.timedelta(seconds=-time.altzone), time.tzname[1])
+    else:
+        return datetime.timezone(datetime.timedelta(seconds=-time.timezone), time.tzname[0])
 
 
 if __name__ == "__main__":
@@ -64,8 +72,12 @@ if __name__ == "__main__":
     opts, args = parser.parse_args()
 
     RELEASE_NAME = opts.release_name  # "CMSSW_13_0_X_2023-02-02-1100"
-    ib_date = datetime.datetime.strptime(
-        "%s %s:%s" % (opts.date, opts.hour, opts.minute), "%Y-%m-%d %H:%M"
+    ib_date = (
+        datetime.datetime.strptime(
+            "%s %s:%s" % (opts.date, opts.hour, opts.minute), "%Y-%m-%d %H:%M"
+        )
+        .replace(tzinfo=currenttz())
+        .astimezone(datetime.timezone.utc)
     )
 
     RELEASE_BRANCH = opts.branch  # "master"

@@ -33,7 +33,7 @@ def create_memory_report(filename):
 mem_prof_pr = create_memory_report(sys.argv[1])
 mem_prof_base = create_memory_report(sys.argv[2])
 
-mem_prof={}
+mem_prof = {}
 
 mem_prof["max memory pr"] = mem_prof_pr
 mem_prof["max memory base"] = mem_prof_base

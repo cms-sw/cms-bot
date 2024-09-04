@@ -38,7 +38,7 @@ mem_prof = {}
 mem_prof["max memory pr"] = mem_prof_pr
 mem_prof["max memory base"] = mem_prof_base
 
-mem_keys=[
+mem_keys = [
     "step",
     "total memory requested",
     "max memory used",

@@ -399,7 +399,7 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   WF_FILE=$(basename $WF)
   #create the output dir
   if [ -f $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt ] ; then
-    diff -u $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/${WF_NUMBER}.txt || true
+    $CMS_BOT_DIR/comparisons/compare-maxmem.py $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/${WF_NUMBER}.txt || true
   fi
 done
 

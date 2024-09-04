@@ -31,10 +31,14 @@ def create_memory_report(filename):
 mem_prof_pr=create_memory_report(sys.argv[1])
 mem_prof_base=create_memory_report(sys.argv[2])
 
-print("max memory pr")
-print(json.dumps(mem_prof_pr))
-print("max memory ib")
-print(json.dumps(mem_prof_base))
+sys.stdout.write("max memory pr")
+sys.stdout.write("\n")
+sys.stdout.write(json.dumps(mem_prof_pr))
+sys.stdout.write("\n")
+sys.stdout.write("max memory ib")
+sys.stdout.write("\n")
+sys.stdout.write(json.dumps(mem_prof_base))
+sys.stdout.write("\n")
 mem_keys=["step", "total memory requested",  "max memory used", "presently used", "# allocations calls", "# deallocations calls"]
 mem_prof_pdiffs=[]
 for i in range(1, len(mem_prof_pr)):
@@ -50,8 +54,11 @@ for i in range(1, len(mem_prof_pr)):
             mem_prof_pdiff[key]=percent_diff
     mem_prof_pdiffs.append(mem_prof_pdiff)
 
-print("max memory percentage diffs")
-print(json.dumps(mem_prof_pdiffs))
+sys.stdout.write("max memory percentage diffs")
+sys.stdout.write("\n")
+sys.stdout.write(json.dumps(mem_prof_pdiffs))
+sys.stdout.write("\n")
+
 mem_prof_adiffs=[]
 for i in range(1, len(mem_prof_pr)): 
     step=0
@@ -64,5 +71,22 @@ for i in range(1, len(mem_prof_pr)):
             diff=mem_prof_pr[i][key]-mem_prof_base[i][key]
             mem_prof_adiff[key]=diff
     mem_prof_adiffs.append(mem_prof_adiff)
-print("max memory absolute diffs")
-print(json.dumps(mem_prof_adiffs))
+sys.stdout.write("max memory absolute diffs")
+sys.stdout.write("\n")
+sys.stdout.write(json.dumps(mem_prof_adiffs))
+sys.stdout.write("\n")
+
+THREASHOLD=1.0
+sys.stdout.write("threashold %2f%%" % THREASHOLD)
+sys.stdout.write("\n")
+
+errs=0
+for i in range(0, len(mem_prof_pdiffs)):
+    mmu=mem_prof_pdiffs[i]["max memory used"]
+    if abs(mmu) > THREASHOLD:
+        errs=errs+1
+        sys.stderr.write("step %s max memory used percentage diff %2f%% exceeds threashhold %2f%%" % (mem_prof_pdiffs[i]["step"], abs(mmu), THREASHOLD))
+        sys.stderr.write('\n')
+
+if errs > 0:
+    exit(10)

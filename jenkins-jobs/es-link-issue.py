@@ -1,12 +1,13 @@
 import base64
 import json
 import os
+import time
 
 import es_utils
 
 
 def index_document(index, payload):
-    payload["@timestamp"] = int(time() * 1000)
+    payload["@timestamp"] = int(time.time() * 1000)
     payload = json.dumps(payload)
 
     response = es_utils.send_payload(f"cmssdt-{index}-failures", index, None, payload)

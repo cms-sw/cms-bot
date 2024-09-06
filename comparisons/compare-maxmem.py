@@ -75,7 +75,7 @@ for i in range(1, len(mem_prof_pr)):
             step = mem_prof_pr[i][key]
             mem_prof_adiff[key] = step
         else:
-            mpb = mem_prod_pr[i].get(key)
+            mpb = mem_prof_pr[i].get(key)
             mpp = mem_prof_pr[i].get(key)
             if mpp and mpb:
                 diff = mpp - mpb

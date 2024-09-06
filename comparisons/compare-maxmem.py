@@ -55,9 +55,12 @@ for i in range(1, len(mem_prof_pr)):
             step = mem_prof_pr[i][key]
             mem_prof_pdiff[key] = step
         else:
-            diff = mem_prof_pr[i][key] - mem_prof_base[i][key]
-            percent_diff = diff / mem_prof_pr[i][key] * 100
-            mem_prof_pdiff[key] = percent_diff
+            mpp = mem_prof_pr[i].get(key)
+            mpb = mem_prof_base[i].get(key)
+            if mpp and mpb:
+                diff = mpp - mpb
+                percent_diff = diff / mpp * 100
+                mem_prof_pdiff[key] = percent_diff
     mem_prof_pdiffs.append(mem_prof_pdiff)
 
 mem_prof["max memory percentage diffs"] = mem_prof_pdiffs
@@ -72,8 +75,11 @@ for i in range(1, len(mem_prof_pr)):
             step = mem_prof_pr[i][key]
             mem_prof_adiff[key] = step
         else:
-            diff = mem_prof_pr[i][key] - mem_prof_base[i][key]
-            mem_prof_adiff[key] = diff
+            mpb = mem_prod_pr[i].get(key)
+            mpp = mem_prof_pr[i].get(key)
+            if mpp and mpb:
+                diff = mpp - mpb
+                mem_prof_adiff[key] = diff
     mem_prof_adiffs.append(mem_prof_adiff)
 mem_prof["max memory absolute diffs"] = mem_prof_adiffs
 

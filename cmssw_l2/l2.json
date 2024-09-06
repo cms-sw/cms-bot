@@ -2562,7 +2562,14 @@
         "ppd",
         "xpog"
       ],
+      "end_date": 1725580800,
       "start_date": 1720569600
+    },
+    {
+      "category": [
+        "ppd"
+      ],
+      "start_date": 1725580800
     }
   ],
   "vmariani": [

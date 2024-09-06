@@ -68,7 +68,7 @@ CMSSW_L2 = {
     "bsunanda": ["geometry"],
     "davidlange6": ["operations"],
     "emeschi": ["daq"],
-    "vlimant": ["ppd", "xpog"],
+    "vlimant": ["ppd"],
     "hqucms": ["xpog"],
     "ftorrresd": ["xpog"],
     "fwyzard": ["heterogeneous"],

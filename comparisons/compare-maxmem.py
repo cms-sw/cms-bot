@@ -19,14 +19,15 @@ def create_memory_report(filename):
     step = 0
     with open(filename, encoding="utf8", errors="ignore") as f:
         for block in read_blocks(f):
-            step = step + 1
-            memory_report = {}
-            memory_report["step"] = step
-            for line in block.split("\n"):
-                if line.startswith("Memory Report:"):
-                    fields = line.split(":")
-                    memory_report[fields[1].strip()] = int(fields[2].strip())
-            memory_reports.append(memory_report)
+            if not block.find("Memory Report:") == -1:
+                step = step + 1
+                memory_report = {}
+                memory_report["step"] = step
+                for line in block.split("\n"):
+                    if line.startswith("Memory Report:"):
+                        fields = line.split(":")
+                        memory_report[fields[1].strip()] = int(fields[2].strip())
+                memory_reports.append(memory_report)
     return memory_reports
 
 
@@ -47,7 +48,7 @@ mem_keys = [
     "# deallocations calls",
 ]
 mem_prof_pdiffs = []
-for i in range(1, len(mem_prof_pr)):
+for i in range(0, len(mem_prof_pr)):
     step = 0
     mem_prof_pdiff = {}
     for key in mem_keys:
@@ -67,7 +68,7 @@ mem_prof["max memory percentage diffs"] = mem_prof_pdiffs
 sys.stdout.write("\n")
 
 mem_prof_adiffs = []
-for i in range(1, len(mem_prof_pr)):
+for i in range(0, len(mem_prof_pr)):
     step = 0
     mem_prof_adiff = {}
     for key in mem_keys:

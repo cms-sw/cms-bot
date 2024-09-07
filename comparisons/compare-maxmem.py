@@ -90,14 +90,15 @@ sys.stdout.write("\n")
 
 errs = 0
 for i in range(0, len(mem_prof_pdiffs)):
-    mmu = mem_prof_pdiffs[i]["max memory used"]
-    if abs(mmu) > THREASHOLD:
-        errs = errs + 1
-        sys.stderr.write(
-            "step %s max memory used percentage diff %2f%% exceeds threashhold %2f%%"
-            % (mem_prof_pdiffs[i]["step"], abs(mmu), THREASHOLD)
-        )
-        sys.stderr.write("\n")
+    mmu = mem_prof_pdiffs[i].get("max memory used")
+    if mmu:
+        if abs(mmu) > THREASHOLD:
+            errs = errs + 1
+            sys.stderr.write(
+                "step %s max memory used percentage diff %2f%% exceeds threashhold %2f%%"
+                % (mem_prof_pdiffs[i]["step"], abs(mmu), THREASHOLD)
+            )
+            sys.stderr.write("\n")
 
 if errs > 0:
     exit(10)

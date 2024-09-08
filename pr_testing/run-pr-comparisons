@@ -391,7 +391,7 @@ jobs
 # --------------------------------------------------------------------------
 # maxmem-profile comparison
 # --------------------------------------------------------------------------
-OUTPUT_DIR=$WORKSPACE/results/maxmem-comparison
+OUTPUT_DIR=$WORKSPACE/results/maxmem-comparison${UC_TEST_FLAVOR}
 #create the output dir
 mkdir -p $OUTPUT_DIR
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
@@ -403,9 +403,9 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   fi
 done
 if grep "exceeds threshold" $OUTPUT_DIR/*.err 2>/dev/null; then
-    echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
+    echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison${UC_TEST_FLAVOR}" >> ${RESULTS_FILE}
 else
-    echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
+    echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison${UC_TEST_FLAVOR}" >> ${RESULTS_FILE}
 fi
 # ----------------------------------------------------------------------------
 # Alternative Comparison

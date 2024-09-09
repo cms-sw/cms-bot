@@ -340,7 +340,7 @@ def extract_relval_error(release_name, arch, rvItem):
                                             res = "(" + re.split(r"[(<]", res, 1)[1]
                                         else:
                                             res = re.split(r"[(<]", res, 1)[0]
-                                        res = '`' + res + '`'
+                                        res = "`" + res + "`"
                                     return LogEntry(
                                         name=f"Relval {rvItem['id']} step {i + 1}",
                                         url=webURL_t.format(**obj),
@@ -796,6 +796,7 @@ def get_known_failure(failure_type, **kwargs):
         return res[0]
     else:
         return None
+
 
 def setup_github():
     global g, localtz

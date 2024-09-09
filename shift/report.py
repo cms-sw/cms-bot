@@ -35,7 +35,7 @@ def main():
             repo, issue_no = issue_.split("#", 1)
             issue_txt = f"{repo}#{issue_no}"
 
-        return f"[{issue_txt}](https://github.com/{repo}/{issue_no})"
+        return f"[{issue_txt}](https://github.com/{repo}/issue/{issue_no})"
 
     libib.setup_github()
     # print(f"Loaded {len(exitcodes)} exit code(s)")

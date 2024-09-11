@@ -101,6 +101,7 @@ CMSSW_L2 = {
     "saumyaphor4252": ["alca", "db"],
     "perrotta": ["alca", "db"],
     "consuegs": ["alca", "db"],
+    "kpedro88": ["simulation","geometry","fastsim"],
     CMSBUILD_USER: ["tests"],
     # dpgs
     "mdelcourt": ["trk-dpg"],

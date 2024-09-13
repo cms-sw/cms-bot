@@ -1111,10 +1111,31 @@ def find_one_vtune_result(magic_command):
 def process_one_clang_analyzer(rel_name, architecture, result):
     if result != "found":
         return result
-    return {
-        "status": "passed",
-        "data": "/ib-static-analysis/%s/%s/build-logs" % (rel_name, architecture),
-    }
+    rlog_dir = "/ib-static-analysis/%s/%s/build-logs" % (rel_name, architecture)
+    result = "passed"
+    err_cnt = 0
+    try:
+        resfile = JENKINS_ARTIFACTS_DIR + rlog_dir + "/logAnalysis.pkl"
+        if exists(resfile):
+            pkgobj = open(resfile, "rb")
+            pklr = Unpickler(pkgobj)
+            # Load release info
+            data = pklr.load()
+            # Load errors types
+            data = pklr.load()
+            # Load Error/warning count
+            data = pklr.load()
+            print(data)
+            pkgobj.close()
+
+            for etype in ["compError", "compWarning"]:
+                if etype in data:
+                    err_cnt += data[etype]
+    except Exception as e:
+        print(e)
+    if err_cnt:
+        result = "error"
+    return {"status": result, "data": rlog_dir}
 
 
 def find_general_test_results(

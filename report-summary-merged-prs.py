@@ -1108,8 +1108,22 @@ def find_one_vtune_result(magic_command):
     return "inprogress"
 
 
+def process_one_clang_analyzer(rel_name, architecture, result):
+    if result != "found":
+        return result
+    return {
+        "status": "passed",
+        "data": "/ib-static-analysis/%s/%s/build-logs" % (rel_name, architecture),
+    }
+
+
 def find_general_test_results(
-    test_field, comparisons, architecture, magic_command, results_function=find_one_test_results
+    test_field,
+    comparisons,
+    architecture,
+    magic_command,
+    results_function=find_one_test_results,
+    process_result=None,
 ):
     """
     Finds for results for the test_field. Modifies `comparisons` dict in place.
@@ -1118,6 +1132,7 @@ def find_general_test_results(
     :param magic_command: string with bash command to execute
     :param test_field: field to write back the results to
     :param results_function: function how to process results
+    :param proces_result: function to process the result of results_function
     """
 
     for comp in comparisons:
@@ -1127,6 +1142,8 @@ def find_general_test_results(
             "ARCHITECTURE", architecture
         )
         comp[test_field] = results_function(command_to_execute)
+        if process_result:
+            comp[test_field] = process_result(rel_name, architecture, comp[test_field])
 
 
 def find_general_test_results_2(test_field, comparisons, magic_command):
@@ -1950,6 +1967,7 @@ if __name__ == "__main__":
                         release_queue_results["comparisons"],
                         arch,
                         MAGIC_COMMAND_FIND_CLANG_ANALYZER,
+                        process_result=process_one_clang_analyzer,
                     )
                 if "flawfinder" in tests_to_find:
                     find_general_test_results(

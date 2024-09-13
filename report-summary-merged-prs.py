@@ -1670,6 +1670,11 @@ if __name__ == "__main__":
         + JENKINS_ARTIFACTS_DIR
         + "/ib-static-analysis/RELEASE_NAME/"
     )
+    MAGIC_COMMAND_FIND_CLANG_ANALYZER = (
+        "test -d "
+        + JENKINS_ARTIFACTS_DIR
+        + "/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/build-logs"
+    )
     MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1 = (
         "test -s "
         + JENKINS_ARTIFACTS_DIR
@@ -1938,6 +1943,13 @@ if __name__ == "__main__":
                         arch,
                         MAGIC_COMMAND_FIND_CLASS_VERSIONS,
                         find_one_class_versions_result,
+                    )
+                if "clang-analyzer" in tests_to_find:
+                    find_general_test_results(
+                        "clang_analyzer",
+                        release_queue_results["comparisons"],
+                        arch,
+                        MAGIC_COMMAND_FIND_CLANG_ANALYZER,
                     )
                 if "flawfinder" in tests_to_find:
                     find_general_test_results(

@@ -1113,7 +1113,6 @@ def process_one_clang_analyzer(rel_name, architecture, result):
         return result
     rlog_dir = "/ib-static-analysis/%s/%s/build-logs" % (rel_name, architecture)
     result = "passed"
-    err_cnt = 0
     try:
         resfile = JENKINS_ARTIFACTS_DIR + rlog_dir + "/logAnalysis.pkl"
         if exists(resfile):
@@ -1128,13 +1127,12 @@ def process_one_clang_analyzer(rel_name, architecture, result):
             print(data)
             pkgobj.close()
 
-            for etype in ["compError", "compWarning"]:
-                if etype in data:
-                    err_cnt += data[etype]
+            if "compError" in data and data["compError"] > 0:
+                result = "error"
+            elif "compWarning" in data and data["compWarning"] > 0:
+                result = "warning"
     except Exception as e:
         print(e)
-    if err_cnt:
-        result = "error"
     return {"status": result, "data": rlog_dir}
 
 

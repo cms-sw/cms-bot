@@ -120,7 +120,7 @@ def run_das_client(
     if run_non_json:
         non_json_cmd = das_cmd.replace(" --format=json ", " ")
         print("  Running: ", sha, non_json_cmd)
-        err, out = run_cmd(das_cmd)
+        err, out = run_cmd(non_json_cmd)
         if err:
             print("  DAS ERROR:", sha, out)
             return False

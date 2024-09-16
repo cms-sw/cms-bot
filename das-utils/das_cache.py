@@ -65,13 +65,17 @@ def run_das_client(
     fields = ofields[:]
     field_filter = ""
     field = fields[-1]
-    if not "grep " in query:
+    run_non_json = False
+    if not "|" in query:
         if field in ["file", "site", "dataset"]:
             field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)
     else:
-        fields = [
-            f for f in query.split("grep ")[-1].split("|")[0].replace(" ", "").split(",") if f
-        ]
+        if "grep" in query:
+            fields = [
+                f for f in query.split("grep ")[-1].split("|")[0].replace(" ", "").split(",") if f
+            ]
+        else:
+            run_non_json = True
     top_fields = [f.split(".")[0] for f in fields]
     retry_str = ""
     if "das_client" in dasclient:
@@ -111,59 +115,69 @@ def run_das_client(
     ):
         print("Failed: %s %s\n  %s" % (sha, query, out))
         return False
-    all_ok = True
-    for fx in top_fields:
-        fn = field_map[fx]
-        for item in jdata["data"]:
-            try:
-                if (
-                    (not fx in item)
-                    or (not item[fx])
-                    or (not fn in item[fx][0])
-                    or (item[fx][0][fn] is None)
-                ):
-                    all_ok = False
-            except Exception as e:
-                with open(efile, "w") as ofile:
-                    ofile.write("Wrong DAS result format for %s,%s\n" % (fn, fx))
-                    ofile.write(json.dumps(item))
-                    ofile.write("\n%s\n" % e)
-                    return False
-    if not all_ok:
-        # if 'site=T2_CH_CERN' in query:
-        #  run_cmd("rm -f %s" % efile)
-        #  query = query.replace("site=T2_CH_CERN","").strip()
-        #  lmt = 0
-        #  if "file" in fields: lmt = 100
-        #  print("Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query))
-        #  return run_das_client(outfile, query, override, dasclient, options, threshold, retry, limit=lmt)
-        print("  DAS WRONG Results:", fields, sha, out)
-        return False
-    run_cmd("rm -f %s" % efile)
     results = []
     xresults = []
-    for item in jdata["data"]:
-        if ("file" in top_fields) and str(item["file"][0][field_map["file"]]) in ignore_lfn:
-            continue
-        res = []
-        res_ok = True
-        for f in fields:
-            fitems = f.split(".")
-            fname = fitems[0]
-            fvalue = field_map[fname]
-            fdata = item[fname][0][fvalue] if (len(fitems) == 1) else item[fname][0][fitems[1]]
-            res.append(str(fdata).replace(" ", ""))
-            if (f == "file.nevents") and len(res) > 1:
-                res[-1] = "  %s" % res[-1]
-                if fdata < 900:
-                    res_ok = False
-        res = " ".join(res)
-        if res_ok:
-            if not res in results:
-                results.append(res)
-        else:
-            if not res in xresults:
-                xresults.append(res)
+    if run_non_json:
+        non_json_cmd = das_cmd.replace(" --format=json ", " ")
+        print("  Running: ", sha, non_json_cmd)
+        err, out = run_cmd(das_cmd)
+        if err:
+            print("  DAS ERROR:", sha, out)
+            return False
+        for line in out.split("\n"):
+            results.append(line)
+    else:
+        all_ok = True
+        for fx in top_fields:
+            fn = field_map[fx]
+            for item in jdata["data"]:
+                try:
+                    if (
+                        (not fx in item)
+                        or (not item[fx])
+                        or (not fn in item[fx][0])
+                        or (item[fx][0][fn] is None)
+                    ):
+                        all_ok = False
+                except Exception as e:
+                    with open(efile, "w") as ofile:
+                        ofile.write("Wrong DAS result format for %s,%s\n" % (fn, fx))
+                        ofile.write(json.dumps(item))
+                        ofile.write("\n%s\n" % e)
+                        return False
+        if not all_ok:
+            # if 'site=T2_CH_CERN' in query:
+            #  run_cmd("rm -f %s" % efile)
+            #  query = query.replace("site=T2_CH_CERN","").strip()
+            #  lmt = 0
+            #  if "file" in fields: lmt = 100
+            #  print("Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query))
+            #  return run_das_client(outfile, query, override, dasclient, options, threshold, retry, limit=lmt)
+            print("  DAS WRONG Results:", fields, sha, out)
+            return False
+        run_cmd("rm -f %s" % efile)
+        for item in jdata["data"]:
+            if ("file" in top_fields) and str(item["file"][0][field_map["file"]]) in ignore_lfn:
+                continue
+            res = []
+            res_ok = True
+            for f in fields:
+                fitems = f.split(".")
+                fname = fitems[0]
+                fvalue = field_map[fname]
+                fdata = item[fname][0][fvalue] if (len(fitems) == 1) else item[fname][0][fitems[1]]
+                res.append(str(fdata).replace(" ", ""))
+                if (f == "file.nevents") and len(res) > 1:
+                    res[-1] = "  %s" % res[-1]
+                    if fdata < 900:
+                        res_ok = False
+            res = " ".join(res)
+            if res_ok:
+                if not res in results:
+                    results.append(res)
+            else:
+                if not res in xresults:
+                    xresults.append(res)
     total_results = results + xresults
     print("  Results:", sha, len(total_results))
     if (len(total_results) == 0) and ("site=T2_CH_CERN" in query):

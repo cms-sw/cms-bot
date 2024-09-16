@@ -1397,6 +1397,14 @@
       ],
       "end_date": 1630454400,
       "start_date": 1581638400
+    },
+    {
+      "category": [
+        "simulation",
+        "geometry",
+        "fastsim"
+      ],
+      "start_date": 1726012800
     }
   ],
   "kshcheli": [
@@ -2131,6 +2139,7 @@
       "category": [
         "fastsim"
       ],
+      "end_date": 1726444800,
       "start_date": 1563062400
     }
   ],

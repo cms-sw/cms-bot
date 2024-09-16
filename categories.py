@@ -90,7 +90,6 @@ CMSSW_L2 = {
     "tjavaid": ["dqm"],
     "nothingface0": ["dqm"],
     "antoniovagnerini": ["dqm"],
-    "sbein": ["fastsim"],
     "smorovic": ["daq"],
     "smuzaffar": ["core"],
     "srimanob": ["upgrade"],

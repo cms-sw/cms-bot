@@ -43,7 +43,7 @@ elif [ "${STATUS}" = "offline" ] ; then
       echo "NODE_ARCH=aarch64" >> create-node.txt
       echo "REQUEST_MAXRUNTIME=604800" >> create-node.txt
     elif [ $(echo " ${LABELS} " | grep ' x86_64 ' | wc -l) -gt 0 ] ; then
-      echo "REQUEST_CPUS=16" >> create-node.txt
+      echo "REQUEST_CPUS=8" >> create-node.txt
       echo "NODE_ARCH=x86_64" >> create-node.txt
     fi
   fi

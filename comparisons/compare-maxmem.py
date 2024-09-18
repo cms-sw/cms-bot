@@ -11,7 +11,7 @@ def create_memory_report_dict(filename):
         for line in f:
             if line.startswith("step"):
                 step_key = line.strip()
-                memory_reports[step_key]=dict()
+                memory_reports[step_key] = dict()
                 memory_reports[step_key]["step"] = step_key
             else:
                 if line.startswith("Memory Report:"):
@@ -29,11 +29,15 @@ mem_prof_pdiffs_dicts = dict(dict())
 for k in mem_prof_pr_dicts.keys():
     mem_prof_pdiffs_dict = dict()
     mem_prof_pr_subdict = mem_prof_pr_dicts[k]
-    for j,v in mem_prof_pr_subdict.items():
+    for j, v in mem_prof_pr_subdict.items():
         if j == "step":
             mem_prof_pdiffs_dict[j] = v
         else:
-            mem_prof_pdiffs_dict[j] = 100 * (mem_prof_pr_dicts[k][j] - mem_prof_base_dicts[k][j])/mem_prof_base_dicts[k][j]
+            mem_prof_pdiffs_dict[j] = (
+                100
+                * (mem_prof_pr_dicts[k][j] - mem_prof_base_dicts[k][j])
+                / mem_prof_base_dicts[k][j]
+            )
     mem_prof_pdiffs_dicts[k] = mem_prof_pdiffs_dict
 
 mem_prof = {}
@@ -43,7 +47,9 @@ mem_prof["max memory base"] = mem_prof_base_dicts
 mem_prof["max memory pdiffs"] = mem_prof_pdiffs_dicts
 THRESHOLD = 1.0
 mem_prof["threshold"] = THRESHOLD
-mem_prof["workflow"] = sys.argv[1].split("/")[-1].replace("maxmem_profile_","").replace(".txt","")
+mem_prof["workflow"] = (
+    sys.argv[1].split("/")[-1].replace("maxmem_profile_","").replace(".txt","")
+)
 sys.stdout.write(json.dumps(mem_prof))
 sys.stdout.write("\n")
 
@@ -55,7 +61,7 @@ for k in sorted(mem_prof_pdiffs_dicts.keys()):
             errs = errs + 1
             sys.stderr.write(
                 "%s max memory used percentage diff %2f%% exceeds threshold %2f%%"
-                % ( k, abs(mmu), THRESHOLD )
+                % (k, abs(mmu), THRESHOLD)
             )
             sys.stderr.write("\n")
 

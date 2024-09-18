@@ -48,7 +48,7 @@ mem_prof["max memory pdiffs"] = mem_prof_pdiffs_dicts
 THRESHOLD = 1.0
 mem_prof["threshold"] = THRESHOLD
 mem_prof["workflow"] = (
-    sys.argv[1].split("/")[-1].replace("maxmem_profile_", "").replace(".txt","")
+    sys.argv[1].split("/")[-1].replace("maxmem_profile_", "").replace(".txt", "")
 )
 sys.stdout.write(json.dumps(mem_prof))
 sys.stdout.write("\n")

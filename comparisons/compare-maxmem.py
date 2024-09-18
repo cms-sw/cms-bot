@@ -4,100 +4,58 @@ import json
 from collections import defaultdict
 
 
-def read_blocks(file):
-    block = ""
-    for line in file:
-        if line.startswith("step") and len(block) > 0:
-            yield block
-        else:
-            block += line
-    yield block
-
-
-def create_memory_report(filename):
-    memory_reports = list()
-    step = 0
+def create_memory_report_dict(filename):
+    memory_reports = dict(dict())
     with open(filename, encoding="utf8", errors="ignore") as f:
-        for block in read_blocks(f):
-            if not block.find("Memory Report:") == -1:
-                step = step + 1
-                memory_report = {}
-                memory_report["step"] = step
-                for line in block.split("\n"):
-                    if line.startswith("Memory Report:"):
-                        fields = line.split(":")
-                        memory_report[fields[1].strip()] = int(fields[2].strip())
-                memory_reports.append(memory_report)
+        step_key = "key"
+        for line in f:
+            if line.startswith("step"):
+                step_key = line.strip()
+                memory_reports[step_key]=dict()
+                memory_reports[step_key]["step"] = step_key
+            else:
+                if line.startswith("Memory Report:"):
+                    fields = line.split(":")
+                    memory_reports[step_key][fields[1].strip()] = int(fields[2].strip())
     return memory_reports
 
 
-mem_prof_pr = create_memory_report(sys.argv[1])
-mem_prof_base = create_memory_report(sys.argv[2])
+mem_prof_pr_dicts = create_memory_report_dict(sys.argv[1])
+
+mem_prof_base_dicts = create_memory_report_dict(sys.argv[2])
+
+mem_prof_pdiffs_dicts = dict(dict())
+
+for k in mem_prof_pr_dicts.keys():
+    mem_prof_pdiffs_dict = dict()
+    mem_prof_pr_subdict = mem_prof_pr_dicts[k]
+    for j,v in mem_prof_pr_subdict.items():
+        if j == "step":
+            mem_prof_pdiffs_dict[j] = v
+        else:
+            mem_prof_pdiffs_dict[j] = 100 * (mem_prof_pr_dicts[k][j] - mem_prof_base_dicts[k][j])/mem_prof_base_dicts[k][j]
+    mem_prof_pdiffs_dicts[k] = mem_prof_pdiffs_dict
 
 mem_prof = {}
 
-mem_prof["max memory pr"] = mem_prof_pr
-mem_prof["max memory base"] = mem_prof_base
-
-mem_keys = [
-    "step",
-    "total memory requested",
-    "max memory used",
-    "presently used",
-    "# allocations calls",
-    "# deallocations calls",
-]
-mem_prof_pdiffs = []
-for i in range(0, len(mem_prof_pr)):
-    step = 0
-    mem_prof_pdiff = {}
-    for key in mem_keys:
-        if key == "step":
-            step = mem_prof_pr[i][key]
-            mem_prof_pdiff[key] = step
-        else:
-            mpp = mem_prof_pr[i].get(key)
-            mpb = mem_prof_base[i].get(key)
-            if mpp and mpb:
-                diff = mpp - mpb
-                percent_diff = diff / mpp * 100
-                mem_prof_pdiff[key] = percent_diff
-    mem_prof_pdiffs.append(mem_prof_pdiff)
-
-mem_prof["max memory percentage diffs"] = mem_prof_pdiffs
-sys.stdout.write("\n")
-
-mem_prof_adiffs = []
-for i in range(0, len(mem_prof_pr)):
-    step = 0
-    mem_prof_adiff = {}
-    for key in mem_keys:
-        if key == "step":
-            step = mem_prof_pr[i][key]
-            mem_prof_adiff[key] = step
-        else:
-            mpb = mem_prof_base[i].get(key)
-            mpp = mem_prof_pr[i].get(key)
-            if mpp and mpb:
-                diff = mpp - mpb
-                mem_prof_adiff[key] = diff
-    mem_prof_adiffs.append(mem_prof_adiff)
-mem_prof["max memory absolute diffs"] = mem_prof_adiffs
-
-THREASHOLD = 1.0
-mem_prof["threashold"] = THREASHOLD
+mem_prof["max memory pr"] = mem_prof_pr_dicts
+mem_prof["max memory base"] = mem_prof_base_dicts
+mem_prof["max memory pdiffs"] = mem_prof_pdiffs_dicts
+THRESHOLD = 1.0
+mem_prof["threshold"] = THRESHOLD
+mem_prof["workflow"] = sys.argv[1].split("/")[-1].replace("maxmem_profile_","").replace(".txt","")
 sys.stdout.write(json.dumps(mem_prof))
 sys.stdout.write("\n")
 
 errs = 0
-for i in range(0, len(mem_prof_pdiffs)):
-    mmu = mem_prof_pdiffs[i].get("max memory used")
+for k in sorted(mem_prof_pdiffs_dicts.keys()):
+    mmu = mem_prof_pdiffs_dicts[k].get("max memory used")
     if mmu:
-        if abs(mmu) > THREASHOLD:
+        if abs(mmu) > THRESHOLD:
             errs = errs + 1
             sys.stderr.write(
-                "step %s max memory used percentage diff %2f%% exceeds threashhold %2f%%"
-                % (mem_prof_pdiffs[i]["step"], abs(mmu), THREASHOLD)
+                "%s max memory used percentage diff %2f%% exceeds threshold %2f%%"
+                % ( k, abs(mmu), THRESHOLD )
             )
             sys.stderr.write("\n")
 

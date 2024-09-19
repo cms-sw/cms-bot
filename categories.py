@@ -94,6 +94,7 @@ CMSSW_L2 = {
     "smuzaffar": ["core"],
     "srimanob": ["upgrade"],
     "subirsarkar": ["upgrade"],
+    "Moanwar": ["upgrade"],
     "ssekmen": ["fastsim"],
     "francescobrivio": ["db"],
     "tvami": ["analysis"],

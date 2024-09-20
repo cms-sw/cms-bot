@@ -654,6 +654,7 @@
       "category": [
         "tau-pog"
       ],
+      "end_date": 1726790400,
       "start_date": 1701648000
     }
   ],
@@ -1607,6 +1608,14 @@
         "mtd-dpg"
       ],
       "start_date": 1718150400
+    }
+  ],
+  "mbluj": [
+    {
+      "category": [
+        "tau-pog"
+      ],
+      "start_date": 1726790400
     }
   ],
   "mdelcourt": [

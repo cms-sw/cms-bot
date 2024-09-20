@@ -347,6 +347,15 @@
       "start_date": 1479254400
     }
   ],
+  "atpathak": [
+    {
+      "category": [
+        "alca",
+        "db"
+      ],
+      "start_date": 1726790400
+    }
+  ],
   "battibass": [
     {
       "category": [
@@ -2139,6 +2148,7 @@
         "alca",
         "db"
       ],
+      "end_date": 1726790400,
       "start_date": 1659052800
     }
   ],

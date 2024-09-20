@@ -98,7 +98,7 @@ CMSSW_L2 = {
     "ssekmen": ["fastsim"],
     "francescobrivio": ["db"],
     "tvami": ["analysis"],
-    "saumyaphor4252": ["alca", "db"],
+    "atpathak": ["alca", "db"],
     "perrotta": ["alca", "db"],
     "consuegs": ["alca", "db"],
     "kpedro88": ["simulation", "geometry", "fastsim"],

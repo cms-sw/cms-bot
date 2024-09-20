@@ -150,7 +150,7 @@ CMSSW_L2 = {
     "michael-pitt": ["proton-pog"],
     "kshcheli": ["proton-pog"],
     "cardinia": ["tau-pog"],
-    "danielwinterbottom": ["tau-pog"],
+    "mbluj": ["tau-pog"],
     "kskovpen": ["pdmv", "tracking-pog"],
     "mmasciov": ["tracking-pog"],
     # PPD

@@ -24,7 +24,7 @@ function usage()
   echo "  -s|--src <src-file> : Source/local file"
   echo "  [-e|--exists] : cehck if src-file exists in S3, default is upload src to des"
   echo "  [-d|--des <des>] #Default=<src-file>"
-  echo "  [-s|--servcie <service>] #Default: s3"
+  echo "  [-s|--service <service>] #Default: s3"
   echo "  [-D|--domain <domain>]   #Default: cern.ch"
   echo "  [-b|--bucket <bucket>]   #Default: cmsrep"
   echo "  [-r|--region <region>]   #Default: us"
@@ -81,7 +81,7 @@ while [[ $# -gt 0 ]] ; do
     -d|--des)       DES_FILE="$1"; shift ;;
     -a|--acl)       ACL="$1"; shift ;;
     -m|--mime)      MIME="$1"; shift ;;
-    -r|--region)    RIGION="$1"; shift ;;
+    -r|--region)    REGION="$1"; shift ;;
     -b|--bucket)    BUCKET="$1"; shift ;;
     -s|--service)   SERVICE="$1"; shift ;;
     -D|--domain)    DOMAIN="$1"; shift ;;

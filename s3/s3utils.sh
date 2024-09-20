@@ -22,7 +22,7 @@ Usage: $0 <upload|copy|move|delete|exists|touch> [-d des-file] [-S server] [-b b
   -s src-file Source/local file
   -d des-obj  Destination file/Object name, default is <src-file>
   -S server   AWS host/server, default: s3.cern.ch
-  -b bucket   S3 bucke name, default: cmsrep
+  -b bucket   S3 bucket name, default: cmsrep
   -a acl      ACL, default: public-read
   -m mime     Mime-type, default: guess from the source file extension.
   -c credentials File with aws_secret_access_key and aws_access_key_id, default is ~/.aws/credentials

@@ -398,10 +398,21 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   WF_DIR=`echo $WF | cut -d "/" -f1`
   WF_NUMBER=`echo $WF | cut -d'_' -f1`
   WF_FILE=$(basename $WF)
-  if [ -f $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt ] ; then
-    $CMS_BOT_DIR/comparisons/compare-maxmem.py $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/${WF_NUMBER}.txt 2> $OUTPUT_DIR/${WF_NUMBER}.err || true
+  if [ -f $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt  ] ; then
+    if [ -f $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt ];then
+        $CMS_BOT_DIR/comparisons/compare-maxmem.py $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/${WF_NUMBER}.json 2> $OUTPUT_DIR/${WF_NUMBER}.err || true
+    fi
+    if [ -f $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_FILE}.txt ] ; then
+        $CMS_BOT_DIR/comparisons/compare-maxmem.py $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_FILE}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_NUMBER}.txt > $OUTPUT_DIR/${WF_NUMBER}.json 2> $OUTPUT_DIR/${WF_NUMBER}.err || true
+    fi
+  fi
+  if [ -f $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_FILE}.txt  ] ; then
+    if [ -f $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_FILE}.txt ];then
+        $CMS_BOT_DIR/comparisons/compare-maxmem.py $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/maxmem_profile_${WF_FILE}.txt $WORKSPACE/data/$COMPARISON_RELEASE/$WF_DIR/maxmem_profile_${WF_FILE}.txt > $OUTPUT_DIR/${WF_NUMBER}.json 2> $OUTPUT_DIR/${WF_NUMBER}.err || true
+    fi
   fi
 done
+$CMS_BOT_DIR/comparisons/compare-maxmem-summary.py -i $OUTPUT_DIR -f '*.json' -F html -o $OUTPUT_DIR/index.html -u $JENKINS_ARTIFACTS_URL/$PR_BASELINE_DIR || true
 if grep "exceeds threshold" $OUTPUT_DIR/*.err 2>/dev/null; then
     echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
 else

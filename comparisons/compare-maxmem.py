@@ -50,7 +50,7 @@ ERROR_THRESHOLD = 10.0
 mem_prof["threshold"] = WARN_THRESHOLD
 mem_prof["error_threshold"] = ERROR_THRESHOLD
 mem_prof["workflow"] = (
-    sys.argv[1].split("/")[-1].replace("maxmem_profile_", "").replace(".txt", "")
+    sys.argv[1].split("/")[-2]
 )
 sys.stdout.write(json.dumps(mem_prof))
 sys.stdout.write("\n")

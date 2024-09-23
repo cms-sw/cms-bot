@@ -387,10 +387,10 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 fi
 echo "Jobs: $(jobs -p | wc -l)"
 jobs
-wait
 # --------------------------------------------------------------------------
 # maxmem-profile comparison
 # --------------------------------------------------------------------------
+echo "Started maxmem-profile comparison at `date`"
 OUTPUT_DIR=$WORKSPACE/results/maxmem-comparison
 #create the output dir
 mkdir -p $OUTPUT_DIR

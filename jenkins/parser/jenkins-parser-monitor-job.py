@@ -107,7 +107,7 @@ with open(
    <body>\n\
       <h1>Jenkins Parser Monitoring</h1>\n\
       <p>The table below displays the activity of the <a href="https://cmssdt.cern.ch/jenkins/job/jenkins-test-parser/">Jenkins Parser job</a>.</p>\n\
-      <p>Red entries correspond to failed jobs where the Jenkins Parser has not taken any action. Please, take the appropiate action in those cases. White entries correspond to jobs retried by the Parser because a known Error Message was found in the log.</p>\n\
+      <p>Red entries correspond to failed jobs where the Jenkins Parser has not taken any action. Please, take the appropriate action in those cases. White entries correspond to jobs retried by the Parser because a known Error Message was found in the log.</p>\n\
       <input type="text" id="SearchBar" onkeyup="myFunction()" placeholder="Filter by job name ..." title="Type job name">\n\
       <table id="Table" class="Table">\n\
          <tr class="header">\n\
@@ -208,7 +208,7 @@ with open(
       <p> </p>\n\
       <h1>Jenkins Blacklist</h1>\n\
       <p>The table below displays the blacklisted nodes in our Jenkins infrastructure. There is a <a href="https://cmssdt.cern.ch/jenkins/job/nodes-sanity-check/">sanity job</a> that checks if CernVM-FS repositories are accessible and if singularity can start a container on the nodes. If not, the node is blacklisted and displayed in the table below.</p>\n\
-      <p>If the table entry is red, please take the appropiate action (open a SNOW ticket, run the start_cvmfs.sh script on aarch64 machines, etc) and re-run the sanity job to take the node out of the blacklist. In any case, the sanity job automatically runs every 30 min.</p>\n\
+      <p>If the table entry is red, please take the appropriate action (open a SNOW ticket, run the start_cvmfs.sh script on aarch64 machines, etc) and re-run the sanity job to take the node out of the blacklist. In any case, the sanity job automatically runs every 30 min.</p>\n\
       <p> </p>\n\
       <table id="Offline" class="Table">\n\
          <tr class="header">\n\

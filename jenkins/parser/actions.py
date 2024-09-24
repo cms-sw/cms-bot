@@ -126,7 +126,7 @@ def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):
         + job_to_retry
         + " "
         + build_to_retry
-        + " 'Node\ marked\ as\ offline\ and\ job\ retried.\ Please,\ take\ the\ appropiate\ action\ and\ relaunch\ the\ node.\ Also,\ make\ sure\ that\ the\ job\ is\ running\ fine\ now.\ It\ might\ be\ queueing.'"
+        + " 'Node\ marked\ as\ offline\ and\ job\ retried.\ Please,\ take\ the\ appropriate\ action\ and\ relaunch\ the\ node.\ Also,\ make\ sure\ that\ the\ job\ is\ running\ fine\ now.\ It\ might\ be\ queueing.'"
     )
     print(update_label)
     os.system(update_label)
@@ -167,7 +167,7 @@ def notify_nodeoff(node_name, regex, job_to_retry, build_to_retry, job_url, node
         + job_to_retry
         + " build number "
         + build_to_retry
-        + ".\nPlease, take the appropiate action.\n\nFailed job: "
+        + ".\nPlease, take the appropriate action.\n\nFailed job: "
         + job_url
         + "\n\nDisconnected node: "
         + node_url
@@ -190,7 +190,7 @@ def notify_nodereconnect(
         + job_to_retry
         + " build number "
         + build_to_retry
-        + ".\nPlease, take the appropiate action.\n\nFailed job: "
+        + ".\nPlease, take the appropriate action.\n\nFailed job: "
         + job_url
         + "\n\nAffected node: "
         + node_url
@@ -211,7 +211,7 @@ def notify_pendingbuild(display_name, build_to_retry, job_to_retry, duration, jo
         + job_to_retry
         + " has been running for an unexpected amount of time.\nTotal running time: "
         + str(duration)
-        + ".\nPlease, take the appropiate action.\n\nPending job: "
+        + ".\nPlease, take the appropriate action.\n\nPending job: "
         + job_url
         + "\n\nParser job: "
         + parser_url
@@ -265,7 +265,7 @@ def notify_noaction(display_name, job_to_retry, build_to_retry, job_url):
         + job_to_retry
         + ","
         + display_name
-        + ".\nNo action has been taken by parser job. Please, take the appropiate action.\n\nFailed job: "
+        + ".\nNo action has been taken by parser job. Please, take the appropriate action.\n\nFailed job: "
         + job_url
     )
     email_subject = "Build failed in Jenkins: " + job_to_retry + " " + display_name

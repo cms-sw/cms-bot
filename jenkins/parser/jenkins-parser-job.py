@@ -13,7 +13,7 @@ import actions
 
 
 def process_build(build, job_dir, job_to_retry, error_list, retry_object, retry_delay):
-    """Process finished build. If failed, check for known erros. If succeed, check if it is a retried build to update its description."""
+    """Process finished build. If failed, check for known errors. If succeed, check if it is a retried build to update its description."""
     if helpers.grep(
         functools.reduce(os.path.join, [job_dir, build, "build.xml"]),
         "<result>FAILURE",
@@ -30,7 +30,7 @@ def process_build(build, job_dir, job_to_retry, error_list, retry_object, retry_
 def check_and_trigger_action(
     build_to_retry, job_dir, job_to_retry, error_list_action, retry_object, retry_delay
 ):
-    """Check build logs and trigger the appropiate action if a known error is found."""
+    """Check build logs and trigger the appropriate action if a known error is found."""
     build_dir_path = os.path.join(job_dir, build_to_retry)
     log_file_path = os.path.join(build_dir_path, "log")
     envvars_file_path = os.path.join(build_dir_path, "injectedEnvVars.txt")
@@ -158,7 +158,7 @@ def check_and_trigger_action(
             html_file_path,
             job_to_retry,
             build_to_retry,
-            "No error found. Please, take the appropiate action",
+            "No error found. Please, take the appropriate action",
             job_url,
             "[ No action taken ]",
             "NoAction",

@@ -118,7 +118,7 @@ function notify_failure {
     node_off_list=$@
     job_description="This job runs a sanity check for /afs, /cvmfs repositories and singularity."
     node_info="Jenkins nodes ${node_off_list[@]} have been marked offline since they where connected to host ${node}."
-    error_msg="Node ${node} has been blacklisted by ${job_url}/console. Please, take the appropiate action. ${node_info} ${job_description}"
+    error_msg="Node ${node} has been blacklisted by ${job_url}/console. Please, take the appropriate action. ${node_info} ${job_description}"
     echo $error_msg | mail -s "Node ${node} has been blacklisted" $email
 }
 
@@ -180,7 +180,7 @@ function lxplus_offline_cleanup {
             echo "No offline nodes found ... Skipping cleanup!"
             break
         fi
-        echo "Offline file found for $node_name ... Cleannig up, if needed."
+        echo "Offline file found for $node_name ... Cleaning up, if needed."
         node_info=$(curl -H "OIDC_CLAIM_CERN_UPN: cmssdt" "${LOCAL_JENKINS_URL}/computer/$node_name/api/json?pretty=true")
         node_tempoffline=$(echo $node_info | grep '"temporarilyOffline" : true' | wc -l)
         if [ $node_tempoffline -eq 0 ]; then $(rm -rf $file) && continue; fi # External action has been taken

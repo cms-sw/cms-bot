@@ -145,7 +145,7 @@ retry_label = (
 )
 
 nodeoff_label = (
-    "Node'\ 'marked'\ 'as'\ 'offline'\ 'and'\ 'job'\ 'retried.'\ 'Please,'\ 'take'\ 'the'\ 'appropiate'\ 'action'\ 'and'\ 'relaunch'\ 'the'\ 'node.'\ 'Also,'\ 'make'\ 'sure'\ 'that'\ 'the'\ 'job'\ 'is'\ 'running'\ 'fine'\ 'now.'\ 'Job'\ 'has'\ 'been'\ 'retried'\ '"
+    "Node'\ 'marked'\ 'as'\ 'offline'\ 'and'\ 'job'\ 'retried.'\ 'Please,'\ 'take'\ 'the'\ 'appropriate'\ 'action'\ 'and'\ 'relaunch'\ 'the'\ 'node.'\ 'Also,'\ 'make'\ 'sure'\ 'that'\ 'the'\ 'job'\ 'is'\ 'running'\ 'fine'\ 'now.'\ 'Job'\ 'has'\ 'been'\ 'retried'\ '"
     + str(retry_counter_update)
     + "'\ '"
     + times

@@ -9,7 +9,7 @@ from os import stat as tstat
 from time import time
 
 CMSSDT_ES_QUERY = "https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
-ES_SERVER = "https://es-cmssdt1.cern.ch/es"
+ES_SERVER = "https://os-cmssdt1.cern.ch/es"
 ES_NEW_SERVER = ES_SERVER
 ES_PASSWD = None
 

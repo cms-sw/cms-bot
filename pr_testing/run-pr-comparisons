@@ -303,7 +303,7 @@ for maxmem in $(find $WORKSPACE/data/PR-${PR_NUM} -follow -name 'maxmem_profile_
   fi
   WF_NUMBER=$(echo ${maxmem} | sed 's|_.*||')
   $CMS_BOT_DIR/comparisons/compare-maxmem.py $WORKSPACE/data/PR-${PR_NUM}/${maxmem} \
-    $WORKSPACE/data/$COMPARISON_RELEASE/${maxmem} $OUTPUT_DIR/${WF_NUMBER}.json 2> $OUTPUT_DIR/${WF_NUMBER}.err || true
+    $WORKSPACE/data/$COMPARISON_RELEASE/${maxmem} > $OUTPUT_DIR/${WF_NUMBER}.json 2> $OUTPUT_DIR/${WF_NUMBER}.err || true
 done
 $CMS_BOT_DIR/comparisons/compare-maxmem-summary.py -i $OUTPUT_DIR -f '*.json' -F html -o $OUTPUT_DIR/index.html -u $JENKINS_ARTIFACTS_URL/$PR_BASELINE_DIR || true
 if grep "exceeds threshold" $OUTPUT_DIR/*.err 2>/dev/null; then

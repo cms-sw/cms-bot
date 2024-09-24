@@ -2189,6 +2189,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             for signature in new_assign_cats
             if signature in l2_categories
         ]
+        new_l2s = sorted(set(new_l2s), key=lambda s: s.lower())
         if not dryRun:
             issue.create_comment(
                 "New categories assigned: "

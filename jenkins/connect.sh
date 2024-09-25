@@ -1,4 +1,5 @@
 #!/bin/sh -ex
+if [ "$1" = "" ] ; then exec $0 "${NODE_NAME}"; fi
 TARGET=$1 ; shift
 if [ "$1" != "${NODE_NAME}" ] ; then exec $0 "${TARGET}" "${NODE_NAME}" "$@"; fi
 opts="$0 +${TARGET} +${NODE_NAME} +"

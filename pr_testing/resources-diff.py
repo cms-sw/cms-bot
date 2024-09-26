@@ -2,10 +2,10 @@
 
 import sys
 import json
+import os
 
 
 def diff_from(metrics, data, dest):
-    dest["events"] -= data["events"]
     for metric in metrics:
         dest[metric] -= data[metric]
 
@@ -43,6 +43,6 @@ for arg in sys.argv[2:]:
         else:
             datamap[key] = module
             output["modules"].append(datamap[key])
-
-json.dump(output, sys.stdout, indent=2)
-sys.stdout.write("\n")
+dumpfile = os.path.dirname(sys.argv[1]) + "/diff-" + os.path.basename(sys.argv[1])
+with open(dumpfile, "w") as f:
+    json.dump(output, f, indent=2)

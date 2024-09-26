@@ -98,7 +98,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f ${f}.ib
     $CMS_BOT_DIR/pr_testing/resources-diff.py $f ${f}.ib > ${PROFILING_WORKFLOW}/${BASENAME}-diff.json 2>$f.log || true
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*') ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json') ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true

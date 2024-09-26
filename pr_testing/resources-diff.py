@@ -7,6 +7,12 @@ import os
 
 def diff_from(metrics, data, dest):
     for metric in metrics:
+        dmetric = dest[metric] - data[metric]
+        pdmetric = 0.0
+        if not dest[metric] == 0.0:
+            pdmetric = 100 * dmetric / dest[metric]
+        pdkey = "%s-pdiff" % metric
+        dest[pdkey] = pdmetric
         dest[metric] -= data[metric]
 
 

@@ -141,8 +141,8 @@ def compare_maxmem_summary(**kwargs):
             if summaryFormat == "html":
                 summaryLine += [
                     cellString
-                    + "%0.2f<br/>" % max_mem_pr
                     + "%0.2f<br/>" % max_mem_base
+                    + "%0.2f<br/>" % max_mem_pr
                     + "%0.3f" % max_mem_pdiff
                     + "%</td>"
                 ]
@@ -166,7 +166,7 @@ def compare_maxmem_summary(**kwargs):
             + '%</td></tr><tr><td bgcolor="red">'
             + "error threshold %0.2f" % error_threshold
             + "%</td></tr>",
-            "<tr><td>max memory used:<BR>&lt;pull request (MB)&gt;<BR>&lt;baseline (MB)&gt;<BR>&lt;100* (PR - baseline)/baseline&gt;</tr>",
+            "<tr><td>max memory used:<BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt;100* (PR - baseline)/baseline&gt;</tr>",
         ]
         summaryLines += ["</table></body></html>"]
     if summaryFormat == "txt":

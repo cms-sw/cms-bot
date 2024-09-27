@@ -94,10 +94,9 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}/profiling/$d/$BASENAME $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
     AMP="&"
     echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f ${f}.ib
-    $CMS_BOT_DIR/pr_testing/resources-diff.py $f ${f}.ib >$f.log || true
-    ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}/profiling/$d/diff-${BASENAME} $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
-    echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/diff-${BASENAME//.json}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME
+    $CMS_BOT_DIR/pr_testing/resources-diff.py $f $CMSSW_VERSION-$BASENAME >$f.log || true
+    ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}/profiling/$d/$CMSSW_VERSION-${BASENAME} $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
   done
   ls -l $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
   for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json') ; do

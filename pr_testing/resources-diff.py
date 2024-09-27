@@ -44,17 +44,17 @@ for arg in sys.argv[2:]:
     results = {}
     results["resources"] = []
     for resource in input["resources"]:
-        for k,v in resource.items():
+        for k, v in resource.items():
             dkey = "%s_diff" % k
             pdkey = "%s_pdiff" % k
             results["resources"].append({dkey: "%s diff" % v})
-            results["resources"].append({pdkey:"%s percentage diff" % v})
+            results["resources"].append({pdkey: "%s percentage diff" % v})
     results["total"] = {}
     results["total"]["label"] = input["total"]["label"]
     results["total"]["events"] = input["total"]["events"]
     results["total"]["type"] = input["total"]["type"]
     results["modules"] = []
-    diff_from(metrics, input["total"], output["total"] , results["total"])
+    diff_from(metrics, input["total"], output["total"], results["total"])
 
     for module in input["modules"]:
         key = module["type"] + "|" + module["label"]

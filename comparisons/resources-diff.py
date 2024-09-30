@@ -80,8 +80,9 @@ for module in input["modules"]:
 
 datamap3 = {module["type"] + "|" + module["label"]: module for module in results["modules"]}
 
-threshold = 0.01
-error_threshold = 0.10
+threshold = 1.
+error_threshold = 10.
+
 
 summaryLines = []
 summaryLines += [
@@ -109,11 +110,21 @@ summaryLines += [
     + '<td align="center">events</td>'
     + "</tr>",
 ]
+
+
 for key in sorted(datamap3.keys()):
     if not key == "|":
         module1 = datamap[key]
         module2 = datamap2[key]
         module3 = datamap3[key]
+        cellString = '<td align="right" '
+        color = ""
+        if abs(module3["time_thread_pdiff"]) > threshold:
+            color = 'bgcolor="orange"'
+        if abs(module3["time_thread_pdiff"]) > error_threshold:
+            color = 'bgcolor="red"'
+        cellString += color
+        cellString += ">"
         summaryLines += [
             "<tr>"
             + "<td>%s</td>" % module3["type"]
@@ -123,7 +134,7 @@ for key in sorted(datamap3.keys()):
             + '<td align="right">%0.2f%%</td>' % module3["time_real_pdiff"]
             + '<td align="right">%0.4f<br>%0.4f<br>%0.4f</td>'
             % (module1["time_thread"], module2["time_thread"], module3["time_thread_diff"])
-            + '<td align="right">%0.2f%%</td>' % module3["time_thread_pdiff"]
+            + cellString + '%0.2f%%</td>' % module3["time_thread_pdiff"]
             + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (module1["mem_alloc"], module2["mem_alloc"], module3["mem_alloc_diff"])
             + '<td align="right">%0.2f%%</td>' % module3["mem_alloc_pdiff"]

@@ -34,7 +34,7 @@ for ((i=1; i<=$#; i++)); do
 done
 
 ORIG_DAS_CLIENT=""
-for DAS_CLIENT in $(echo $PATH | tr ':' '\n' | sed "s|\$|/${CMD_NAME}|") ; do
+for DAS_CLIENT in $(echo $PATH | tr ':' '\n' | grep -E -v '/CMSSW_[^/]*/(bin|src)' | sed "s|\$|/${CMD_NAME}|") ; do
  [ -e ${DAS_CLIENT} ] || continue
  if [ $(head -2 ${DAS_CLIENT} | grep -a 'CMSSDT_DAS_CLIENT_SIGN' | wc -l) -eq 0 ] ; then ORIG_DAS_CLIENT=${DAS_CLIENT}; break; fi
 done

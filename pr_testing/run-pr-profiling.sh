@@ -34,8 +34,8 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_VERSION || true
-#  $WORKSPACE/profiling/Gen_tool/runall_mem_GC.sh $CMSSW_VERSION || true
-#  $WORKSPACE/profiling/Gen_tool/runall_mem_JE.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/runall_mem_GC.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/runall_mem_JE.sh $CMSSW_VERSION || true
   if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Error: failed to run profiling"
     echo "<li>$PROFILING_WORKFLOW: No such directory</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
@@ -44,8 +44,8 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   fi
   pushd $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW
   $WORKSPACE/profiling/Gen_tool/profile_igpp.sh $CMSSW_VERSION || true
-#  $WORKSPACE/profiling/Gen_tool/profile_igmp.sh $CMSSW_VERSION || true
-#  $WORKSPACE/profiling/Gen_tool/profile_mem_jemalloc.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/profile_igmp.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/profile_mem_jemalloc.sh $CMSSW_VERSION || true
   echo "<li><a href=\"$PROFILING_WORKFLOW/\">$PROFILING_WORKFLOW/</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/RES_CPU_step3.txt  ${CMSSW_VERSION}_RES_CPU_step3.txt || true
   $WORKSPACE/profiling/Gen_tool/compare_cpu_txt.py --old ${CMSSW_VERSION}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare_$PROFILING_WORKFLOW.txt || true

@@ -490,7 +490,12 @@ class LogFileAnalyzer(object):
             },
             {
                 str(
-                    "^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/lib\1\\." + shLib
+                    "^gmake: \\*\\*\\* .*?/src/"
+                    + subsys
+                    + "/"
+                    + pkg
+                    + "/bin/(.*?)/lib\1\\."
+                    + shLib
                 ): ["linkError", "for shared library %s in bin"]
             },
             {
@@ -505,7 +510,12 @@ class LogFileAnalyzer(object):
             },
             {
                 str(
-                    "^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/.*?\\." + shLib
+                    "^gmake: \\*\\*\\* .*?/src/"
+                    + subsys
+                    + "/"
+                    + pkg
+                    + "/test/(.*?)/.*?\\."
+                    + shLib
                 ): ["linkError", "for shared library %s in test"]
             },
             {
@@ -521,7 +531,9 @@ class LogFileAnalyzer(object):
                 ]
             },
             {
-                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)\\." + shLib): [
+                str(
+                    "^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)\\." + shLib
+                ): [
                     "linkError",
                     "for shared library %s in test",
                 ]
@@ -539,7 +551,9 @@ class LogFileAnalyzer(object):
                 ]
             },
             {
-                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/plugins/(.*?)/.*?\\.o"): [
+                str(
+                    "^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/plugins/(.*?)/.*?\\.o"
+                ): [
                     "compError",
                     "for plugin %s in plugins",
                 ]
@@ -567,7 +581,9 @@ class LogFileAnalyzer(object):
             {str("^TypeError: .*"): ["pythonError", "type error in module"]},
             {str("^ValueError: .*"): ["pythonError", "value error in module"]},
             {
-                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/data/download\\.url"): [
+                str(
+                    "^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/data/download\\.url"
+                ): [
                     "dwnlError",
                     "for file in data/download.url in test",
                 ]
@@ -591,7 +607,9 @@ class LogFileAnalyzer(object):
             },
             {
                 str(
-                    "^ *(/.*?/" + self.release + "/|)src/.*?\\([0-9]+\\)\\: warning #[0-9]+-[A-Z]: "
+                    "^ *(/.*?/"
+                    + self.release
+                    + "/|)src/.*?\\([0-9]+\\)\\: warning #[0-9]+-[A-Z]: "
                 ): [
                     "compWarning",
                     "for file in release",
@@ -653,7 +671,9 @@ class LogFileAnalyzer(object):
         ]
 
         miscErrRe = re.compile("^gmake: \\*\\*\\* (.*)$")
-        genericLinkErrRe = re.compile("^gmake: \\*\\*\\* \\[tmp/.*?/lib.*?" + shLib + "\\] Error 1")
+        genericLinkErrRe = re.compile(
+            "^gmake: \\*\\*\\* \\[tmp/.*?/lib.*?" + shLib + "\\] Error 1"
+        )
 
         if "_gcc46" in os.environ["SCRAM_ARCH"]:
             errorInf.append(

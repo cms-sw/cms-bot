@@ -127,7 +127,8 @@ def doCmd(cmd, dryRun=False, inDir=None, debug=True):
 
 def getIBReleaseInfo(rel):
     m = re.match(
-        "^CMSSW_(\\d+_\\d+(_[A-Z][A-Za-z0-9]+|))_X(_[A-Z]+|)_(\\d\\d\\d\\d-\\d\\d-\\d\\d-(\\d\\d)\\d\\d)", rel
+        "^CMSSW_(\\d+_\\d+(_[A-Z][A-Za-z0-9]+|))_X(_[A-Z]+|)_(\\d\\d\\d\\d-\\d\\d-\\d\\d-(\\d\\d)\\d\\d)",
+        rel,
     )
     if not m:
         return ("", "", "")

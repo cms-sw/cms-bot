@@ -1227,11 +1227,14 @@ def find_check_hlt_p2_timing(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp["compared_tags"].split("-->")[1]
         print("Looking for {0} results for {1}.".format("hlt p2 timing", rel_name))
-        comp["hlt-p2-timing"] = find_and_check_result(
-            rel_name, architecture, CHECK_HLT_TIMING_PATH, "/bin/true"
+        status = find_and_check_result(
+            rel_name, architecture, CHECK_HLT_TIMING_PATH, "grep -h -c 'failed' {0}"
         )
-        if comp["hlt-p2-timing"] == "passed":
+        if status == "passed":
             comp["hlt-p2-timing"] = {"status": "passed", "arch": architecture}
+        else:
+            comp["hlt-p2-timing"] = status
+    return
 
 
 def find_check_crab(comparisons, architecture):
@@ -1771,7 +1774,7 @@ if __name__ == "__main__":
     )
     CHECK_HLT_TIMING_PATH = (
         JENKINS_ARTIFACTS_DIR
-        + "/hlt-p2-timing/RELEASE_NAME/ARCHITECTURE/Phase2Timing_resources.json"
+        + "/hlt-p2-timing/RELEASE_NAME/ARCHITECTURE/status.txt"
     )
     CHECK_CRAB_PATH = JENKINS_ARTIFACTS_DIR + "/ib-run-crab/RELEASE_NAME/*"
     MAGIC_COMMAND_FIND_DQM_TESTS = (

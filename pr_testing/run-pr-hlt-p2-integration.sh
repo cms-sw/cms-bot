@@ -16,7 +16,7 @@ rm -rf $WORKSPACE/rundir/__pycache__
 
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-  timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests 2>&1 | tee -a ${WORKSPACE}/hlt-p2-integration.log
+  timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) 2>&1 | tee -a ${WORKSPACE}/hlt-p2-integration.log
 popd
 
 # Upload results

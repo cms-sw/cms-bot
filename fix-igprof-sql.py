@@ -8,7 +8,9 @@ unknown = 0
 
 def fix_file(line):
     global unknown
-    m = re.match('^(\s*INSERT\s+INTO\s+files\s+VALUES\s+\((\d+),\s*["])([^"]*)(["].*$)', line)
+    m = re.match(
+        '^(\\s*INSERT\\s+INTO\\s+files\\s+VALUES\\s+\\((\\d+),\\s*["])([^"]*)(["].*$)', line
+    )
     if m:
         xf = m.group(3)
         if xf:

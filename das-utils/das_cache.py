@@ -198,7 +198,7 @@ def run_das_client(
         write_json(xfile + ".tmp", jdata)
         if exists(xfile):
             e, o = run_cmd(
-                "diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\(\.[0-9]*\|\)$'"
+                r"diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\(\.[0-9]*\|\)$'"
                 % (xfile, xfile)
             )
             if o:

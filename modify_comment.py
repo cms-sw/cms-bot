@@ -71,8 +71,8 @@ if __name__ == "__main__":
     from process_pr import modify_comment, find_last_comment
     from process_pr import TRIGERING_TESTS_MSG, TRIGERING_STYLE_TEST_MSG
 
-    valid_types["JENKINS_TEST_URL"] = ["^\s*" + TRIGERING_TESTS_MSG + ".*$", None]
-    valid_types["JENKINS_STYLE_URL"] = ["^\s*" + TRIGERING_STYLE_TEST_MSG + ".*$", None]
+    valid_types["JENKINS_TEST_URL"] = ["^\\s*" + TRIGERING_TESTS_MSG + ".*$", None]
+    valid_types["JENKINS_STYLE_URL"] = ["^\\s*" + TRIGERING_STYLE_TEST_MSG + ".*$", None]
     gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
     issue = gh.get_repo(opts.repository).get_issue(int(args[0]))
     last_comment = find_last_comment(

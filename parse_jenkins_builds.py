@@ -225,7 +225,7 @@ print("[INFO] Checking status of running/finished builds ...")
 all_local = []
 path = "/build/builds"
 document = "builds-data"
-rematch = re.compile(".*/\d+$")
+rematch = re.compile(r".*/\d+$")
 for root, dirs, files in os.walk(path):
     if rematch.match(root):
         logFile = root + "/build.xml"

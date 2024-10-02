@@ -24,7 +24,7 @@ def check_python_require(py_str, condition):
                 req.pop()
                 regex = True
             if regex:
-                req_str = "^" + ".".join(req) + "\..+$"
+                req_str = "^" + ".".join(req) + r"\..+$"
                 if op == "==":
                     if not re.match(req_str, py_str):
                         return False
@@ -86,7 +86,7 @@ def read_requirements(cmsdist):
                     if exists(exfile):
                         with open(exfile) as xref:
                             for xline in xref.readlines():
-                                m = re.match("^%define\s+pip_name\s+([^\s]+)\s*$", xline.strip())
+                                m = re.match(r"^%define\s+pip_name\s+([^\s]+)\s*$", xline.strip())
                                 if m:
                                     req_data[-1]["data"]["pip_name"] = m.group(1)
                                     break
@@ -108,7 +108,7 @@ def check_updates(req_data):
         if xline == "":
             continue
         if xline.startswith("#"):
-            m = re.match("#NO_AUTO_UPDATE:((\d+):|).*", xline)
+            m = re.match(r"#NO_AUTO_UPDATE:((\d+):|).*", xline)
             if m:
                 try:
                     ignore_count = int(m.group(2))
@@ -189,7 +189,7 @@ def check_updates(req_data):
                             print(m)
             if ov == v:
                 continue
-            m = re.match("^\s*%s\s*==\s*%s(\s*;.+|)$" % (p, ov), data["line"])
+            m = re.match(r"^\s*%s\s*==\s*%s(\s*;.+|)$" % (p, ov), data["line"])
             try:
                 data["line"] = "%s==%s%s" % (p, v, m.group(1))
                 print("NEW:", p, ov, v)

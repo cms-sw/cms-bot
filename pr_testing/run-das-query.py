@@ -30,7 +30,9 @@ err = 0
 if e:
     err = 1
 if os.getenv("MATRIX_EXTRAS", ""):
-    e, o = run_cmd("grep -E '^[1-9][0-9]*(\.[0-9]*|)_' runall-report-step123-.log | sed 's|_.*||'")
+    e, o = run_cmd(
+        "grep -E '^[1-9][0-9]*(\\.[0-9]*|)_' runall-report-step123-.log | sed 's|_.*||'"
+    )
     all_wfs = [wf for wf in o.split("\n") if wf]
     print("All WFS:", all_wfs)
     new_wfs = []

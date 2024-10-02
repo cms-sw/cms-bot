@@ -123,7 +123,7 @@ class TestSequenceFunctions(unittest.TestCase):
                 "control_type": ResultTypeEnum.ISSUE,
             },
             {
-                "str_to_match": '===== Test "([^\s]+)" ====',
+                "str_to_match": '===== Test "([^\\s]+)" ====',
                 "name": "{0}",
                 "control_type": ResultTypeEnum.TEST,
             },

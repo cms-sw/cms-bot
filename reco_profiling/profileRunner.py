@@ -423,7 +423,7 @@ def writeProfilingScript(wfdir, runscript, cmdlist):
 
         # ensure that compiler include paths are added to ROOT_INCLUDE_PATH
         fi.write(
-            "for path in $(LC_ALL=C g++   -xc++ -E -v /dev/null 2>&1 | sed -n -e '/^.include/,${' -e '/^ \/.*++/p' -e '}');do ROOT_INCLUDE_PATH=$path:$ROOT_INCLUDE_PATH; done"
+            r"for path in $(LC_ALL=C g++   -xc++ -E -v /dev/null 2>&1 | sed -n -e '/^.include/,${' -e '/^ \/.*++/p' -e '}');do ROOT_INCLUDE_PATH=$path:$ROOT_INCLUDE_PATH; done"
         )
         fi.write("\n")
 

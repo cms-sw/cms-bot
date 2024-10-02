@@ -51,7 +51,7 @@ def getCommonFiles(d1, d2, pattern):
 
 
 def getWorkflow(f):
-    m = re.search("/\d+\.\d+_", f)
+    m = re.search("/\\d+\\.\\d+_", f)
     if not m:
         return "(none)"
     return m.group().replace("/", "").replace("_", "")
@@ -73,10 +73,12 @@ def filteredLines(f):
     retval = {}
     for l in openfile(f):
         # look for and remove timestamps
-        l = re.sub("20\d\d-\d\d-\d\d \d\d:\d\d:\d\d(\.\d+|)", "DATETIME", l)
-        l = re.sub("\d\d-(\d\d|[A-ZA-z]{3})-20\d\d \d\d:\d\d:\d\d(\.\d+|)", "DATETIME", l)
+        l = re.sub("20\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d(\\.\\d+|)", "DATETIME", l)
+        l = re.sub(
+            "\\d\\d-(\\d\\d|[A-ZA-z]{3})-20\\d\\d \\d\\d:\\d\\d:\\d\\d(\\.\\d+|)", "DATETIME", l
+        )
         if "Begin processing the" in l:
-            l = re.sub(" on stream \d", " on stream N", l)
+            l = re.sub(" on stream \\d", " on stream N", l)
         sl = l.strip()
         skip = False
         for data in Log_Lines_Filter:
@@ -217,7 +219,7 @@ def checkDQMSize(r1, r2, diff, wfs):
         ]
     )
     lines = output.splitlines()
-    total = re.search("-?\d+\.\d+", lines[-1])
+    total = re.search("-?\\d+\\.\\d+", lines[-1])
     if not total:
         print("Weird output", r1)
         print(output)
@@ -227,7 +229,7 @@ def checkDQMSize(r1, r2, diff, wfs):
     print(lines, diff)
     maxdiff = 10
     for line in lines:
-        if re.match("\s*-?\d+.*", line):  # normal output line
+        if re.match("\\s*-?\\d+.*", line):  # normal output line
             if line not in diff:
                 if len(diff) == maxdiff:
                     diff.append(" ... <truncated>")

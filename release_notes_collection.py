@@ -8,10 +8,10 @@ from os.path import expanduser, join, exists
 from hashlib import md5
 import time
 
-RX_RELEASE = re.compile("CMSSW_(\d+)_(\d+)_(\d+)(_pre[0-9]+)*(_cand[0-9]+)*(_patch[0-9]+)*")
-RX_AUTHOR = re.compile("(.*)(@[a-zA-Z-_0-9]+)")
-RX_COMPARE = re.compile("(https://github.*compare.*\.\.\..*)")
-RX_COMMIT = re.compile("^-\s+(:arrow_right:\s*|)([^/]+\/[^/]+|)\#(\d{0,5})( from.*)")
+RX_RELEASE = re.compile(r"CMSSW_(\d+)_(\d+)_(\d+)(_pre[0-9]+)*(_cand[0-9]+)*(_patch[0-9]+)*")
+RX_AUTHOR = re.compile(r"(.*)(@[a-zA-Z-_0-9]+)")
+RX_COMPARE = re.compile(r"(https://github.*compare.*\.\.\..*)")
+RX_COMMIT = re.compile(r"^-\s+(:arrow_right:\s*|)([^/]+\/[^/]+|)\#(\d{0,5})( from.*)")
 
 Release = namedtuple(
     "Release", ["major", "minor", "subminor", "pre", "cand", "patch", "published_at"]

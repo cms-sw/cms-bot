@@ -200,7 +200,7 @@ def get_test_log(logfile):
     try:
         logfile = join(getenv("WORKSPACE"), logfile)
         try:
-            logmsg = "\n\nTests results:\n" + getoutput("grep 'ERROR\| tests passed' " + logfile)
+            logmsg = "\n\nTests results:\n" + getoutput("grep 'ERROR\\| tests passed' " + logfile)
         except:
             logmsg = "\n\nUnable to read tests log: No such file " + logfile
     except:

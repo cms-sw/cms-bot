@@ -20,7 +20,7 @@ from github_utils import get_releases
 
 get_gh_token(token_file=argv[1])
 backup_store = argv[2]
-comment_imgs_regexp = re.compile("^(.*?)\!\[[^\]]+\]\(([^\)]+)\)(.*)$")
+comment_imgs_regexp = re.compile(r"^(.*?)\!\[[^\]]+\]\(([^\)]+)\)(.*)$")
 if not exists(backup_store):
     print("Backup store not exists.")
     exit(1)

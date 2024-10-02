@@ -16,7 +16,7 @@ from collections import defaultdict
 from os import environ
 import subprocess
 
-RX_Project = re.compile(".+/job/(.+)/(\d+)/")
+RX_Project = re.compile(r".+/job/(.+)/(\d+)/")
 RX_Queue_why = re.compile("^Waiting for next available executor.*\u2018(.*)\u2019")
 RX_Queue_nolabel = re.compile("^There are no nodes with the label.*\u2018(.*)\u2019")
 JENKINS_URL = environ["LOCAL_JENKINS_URL"]

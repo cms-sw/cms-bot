@@ -14,7 +14,7 @@ parents = defaultdict(list)
 
 # global parameters
 jenkins_home = "https://cmssdt.cern.ch/jenkins/"
-split_pat = "\*"  # to match bullet list in markdown
+split_pat = r"\*"  # to match bullet list in markdown
 
 # markdown_output_dir = '/tmp/jenkins_reports/'
 markdown_output_dir_name = "jenkins_reports"

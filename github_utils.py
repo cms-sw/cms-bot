@@ -131,7 +131,7 @@ def api_rate_limits(gh, msg=True, when_slow=False, prefix=""):
 
 def get_ported_PRs(repo, src_branch, des_branch):
     done_prs_id = {}
-    prRe = re.compile("Automatically ported from " + src_branch + " #(\d+)\s+.*", re.MULTILINE)
+    prRe = re.compile("Automatically ported from " + src_branch + " #(\\d+)\\s+.*", re.MULTILINE)
     for pr in repo.get_pulls(base=des_branch):
         body = pr.body.encode("ascii", "ignore")
         if sys.version_info[0] == 3:
@@ -199,7 +199,7 @@ def port_pr(repo, pr_num, des_branch, dryRun=False):
     new_commit = None
     new_commits = {}
     for line in out.split("\n"):
-        m = re.match("^commit\s+([0-9a-f]+)$", line)
+        m = re.match("^commit\\s+([0-9a-f]+)$", line)
         if m:
             print("New commit:", m.group(1), last_commit)
             if last_commit:
@@ -207,7 +207,7 @@ def port_pr(repo, pr_num, des_branch, dryRun=False):
             new_commit = m.group(1)
             new_commits[new_commit] = None
             continue
-        m = re.match("^\s*\(cherry\s+picked\s+from\s+commit\s([0-9a-f]+)\)$", line)
+        m = re.match("^\\s*\\(cherry\\s+picked\\s+from\\s+commit\\s([0-9a-f]+)\\)$", line)
         if m:
             print("found commit", m.group(1))
             last_commit = m.group(1)

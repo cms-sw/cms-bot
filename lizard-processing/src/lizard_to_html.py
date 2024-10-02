@@ -65,13 +65,13 @@ h2 = "<h2 {klass}>{0}\n</h2>\n"
 
 # regex
 regex_dashes = "^(-|=)*$"
-regex_td = "^[ ]*[\d *]+.*\..+$"
+regex_td = "^[ ]*[\\d *]+.*\\..+$"
 # regex_th = '^[^\d\W]+$'
 regex_th = ".*(NLOC)"
 regex_th_total = "^Total nloc"
 regex_H1_warnings = " *^!+.*!+ *$"
-regex_H1_no_warnings = "^No thresholds exceeded \("
-regex_H1_files = "^\d+ file analyzed"
+regex_H1_no_warnings = "^No thresholds exceeded \\("
+regex_H1_files = "^\\d+ file analyzed"
 regex_split = "[ ]{2,}|[ ]*$]"
 regex_split_td = "[ ]{1,}|[ ]*$]"
 regex_line_to_url = "[a-zA-Z]"

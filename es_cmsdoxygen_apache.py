@@ -36,7 +36,7 @@ def process(line, count):
     payload["@timestamp"] = int(tsec * 1000)
     if len(items) > 10:
         payload["referrer"] = items[10][1:-1]
-    if len(items) > 11 and re.match('^"[0-9]+(\.[0-9]+)+"$', items[11]):
+    if len(items) > 11 and re.match(r'^"[0-9]+(\.[0-9]+)+"$', items[11]):
         payload["ip"] = items[11][1:-1]
         if len(items) > 12:
             agent = " ".join(items[12:]).replace('"', "")

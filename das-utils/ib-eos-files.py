@@ -162,7 +162,7 @@ def eos_size(eos_file):
     err, out = run_cmd(
         "%s ls -l %s | awk '{print $5}'" % (eos_cmd, eos_file), debug=True, exit_on_error=False
     )
-    if err or not re.match("^\d+$", out):
+    if err or not re.match(r"^\d+$", out):
         return -1
     return int(out)
 
@@ -182,11 +182,11 @@ def check_dead_transfers(threads, info, progress_check=600, init_transfer_wait=6
             info[lfn][1] = pcheck
             mtime = getmtime(info[lfn][3])
             err, out = run_cmd(
-                "grep '\[ *[1-9][0-9]*\%%\]' %s | tail -1" % info[lfn][3],
+                r"grep '\[ *[1-9][0-9]*\%%\]' %s | tail -1" % info[lfn][3],
                 debug=False,
                 exit_on_error=False,
             )
-            out = re.sub("^.*\[", "", re.sub("\].*$", "", out.split("\n")[-1].split("\r")[-1]))
+            out = re.sub(r"^.*\[", "", re.sub(r"\].*$", "", out.split("\n")[-1].split("\r")[-1]))
             if mtime != info[lfn][2]:
                 info[lfn][2] = mtime
                 print("  In progress: %s %s" % (lfn, out))

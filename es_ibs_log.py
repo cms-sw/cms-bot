@@ -55,7 +55,7 @@ def process_unittest_log(logFile):
             "control_type": ResultTypeEnum.ISSUE,
         },
         {
-            "str_to_match": '===== Test "([^\s]+)" ====',
+            "str_to_match": r'===== Test "([^\s]+)" ====',
             "name": "{0}",
             "control_type": ResultTypeEnum.TEST,
         },

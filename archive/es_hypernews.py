@@ -21,7 +21,7 @@ if len(sys.argv) == 1:
     cmd_to_get_logs = cmd_to_get_logs + " | tail -2"
     prev_hour = datetime.now() - timedelta(hours=1)
     filter_search = (
-        " | grep '" + prev_hour.strftime("^\[%a %b %d %H:[0-5][0-9]:[0-5][0-9] %Y\] ") + "'"
+        " | grep '" + prev_hour.strftime(r"^\[%a %b %d %H:[0-5][0-9]:[0-5][0-9] %Y\] ") + "'"
     )
 
 err, out = run_cmd(cmd_to_get_logs)
@@ -29,7 +29,7 @@ if err:
     print(out)
     sys.exit(1)
 ReTime = re.compile(
-    "^\[[A-Za-z]{3} ([A-Za-z]{3} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4})] \[[^]]+] \[client (.+)]\s(.+)"
+    r"^\[[A-Za-z]{3} ([A-Za-z]{3} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4})] \[[^]]+] \[client (.+)]\s(.+)"
 )
 for log in out.split("\n"):
     find_cmd = "grep '%s' %s %s" % (search_for, log, filter_search)

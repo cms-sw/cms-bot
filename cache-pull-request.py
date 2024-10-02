@@ -62,7 +62,7 @@ def process(repo, prId, prCache):
                 else:
                     data["merge_commit_sha"] = ""
     data["release-notes"] = []
-    REGEX_RN = re.compile("^release(-| )note(s|)\s*:\s*", re.I)
+    REGEX_RN = re.compile(r"^release(-| )note(s|)\s*:\s*", re.I)
     if issue.body:
         msg = issue.body.encode("ascii", "ignore").decode().strip()
         if REGEX_RN.match(msg):

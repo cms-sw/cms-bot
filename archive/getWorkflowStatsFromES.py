@@ -42,7 +42,7 @@ def filterElasticSearchResult(ES_result=None, list_of_fields=None):
 
     for element in ES_result:
         source_object = element["_source"]
-        if source_object["exit_code"] is not 0:
+        if source_object["exit_code"] != 0:
             continue
 
         stamp = source_object["@timestamp"]
@@ -107,7 +107,7 @@ def compareMetrics(firstObject=None, secondObject=None, workflow=None, stepnum=N
                         second_metric = secondObject[stamp][wf][step][field]
 
                         if field.startswith("rss"):
-                            if second_metric is 0:
+                            if second_metric == 0:
                                 continue  # sometimes the result is zero even when the exit_code is non 0
                             # difference = 100 - ( float( float(first_metric) / float(second_metric) ) * 100 )
                             difference = int((first_metric - second_metric) / 1048576)
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         if hist.startswith("rss"):
             histo.GetXaxis().SetTitle("Difference in MB")
             # print 'title set for', hist
-        if hist is "time":
+        if hist == "time":
             histo.GetXaxis().SetTitle("Difference in seconds")
         if hist.startswith("cpu"):
             histo.GetXaxis().SetTitle("Difference in cpu time")

@@ -54,7 +54,7 @@ def process_pr(gh, repo, issue, dryRun):
         if commenter == "cmsbuild":
             if not cmdType:
                 continue
-            if match("^Command\s+" + cmdType + "\s+acknowledged.$", first_line):
+            if match(r"^Command\s+" + cmdType + r"\s+acknowledged.$", first_line):
                 print("Acknowledged ", cmdType)
                 cmdType = None
             continue

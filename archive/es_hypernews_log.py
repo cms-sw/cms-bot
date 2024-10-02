@@ -26,8 +26,8 @@ def map_int_val(pair):
 
 
 # get relevant info
-match_hn = re.compile(".*\|\/.*emails")
-match_tmp = re.compile(".*\|\/.*Time\(s\)")
+match_hn = re.compile(r".*\|\/.*emails")
+match_tmp = re.compile(r".*\|\/.*Time\(s\)")
 temp_fails = []
 egrps = []
 payload = {}

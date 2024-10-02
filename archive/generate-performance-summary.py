@@ -85,7 +85,7 @@ def sendMetrics(metrics, server, port):
 def calculateFileSizeMetrics(release, architecture, timestamp, fullRelease, args):
     timestamp = time.mktime(timestamp)
     cmd = format(
-        "find %(base)s/vol*/%(architecture)s/cms/cmssw*/%(fullRelease)s/lib/%(architecture)s -name '*.so' -exec wc -c {} \; | sed -e 's|/.*/||;s|[.]so||'",
+        r"find %(base)s/vol*/%(architecture)s/cms/cmssw*/%(fullRelease)s/lib/%(architecture)s -name '*.so' -exec wc -c {} \; | sed -e 's|/.*/||;s|[.]so||'",
         base=IB_BASE_DIR,
         releasePath=releasePath,
         fullRelease=fullRelease,

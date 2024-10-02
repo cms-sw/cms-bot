@@ -441,121 +441,121 @@ class LogFileAnalyzer(object):
             {str("^.*? cannot find -l(.*?)$"): ["linkError", 'missing library "%s"']},
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    "^gmake: \\*\\*\\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
                     + "/src/"
                     + subsys
                     + pkg
-                    + "/classes_rflx\.cpp"
+                    + "/classes_rflx\\.cpp"
                 ): ["dictError", "for package dictionary"]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    "^gmake: \\*\\*\\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
                     + "/src/"
                     + subsys
                     + pkg
-                    + "/.*?\."
+                    + "/.*?\\."
                     + shLib
                 ): ["linkError", "for package library"]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    "^gmake: \\*\\*\\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
                     + "/src/"
                     + subsys
                     + pkg
-                    + "/.*?\.o"
+                    + "/.*?\\.o"
                 ): ["compError", "for package library"]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/.*?\.o"): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/.*?\\.o"): [
                     "compError",
                     "for executable %s",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/\1"): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/\1"): [
                     "linkError",
                     "for executable %s",
                 ]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/lib\1\." + shLib
+                    "^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/lib\1\\." + shLib
                 ): ["linkError", "for shared library %s in bin"]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    "^gmake: \\*\\*\\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
-                    + "/test/stubs/lib(.*?)\."
+                    + "/test/stubs/lib(.*?)\\."
                     + shLib
                 ): ["linkError", "for shared library %s in test/stubs"]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/.*?\." + shLib
+                    "^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/.*?\\." + shLib
                 ): ["linkError", "for shared library %s in test"]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/stubs/.*?\.o"): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/stubs/.*?\\.o"): [
                     "compError",
                     "for library in test/stubs",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/.*?\.o"): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/.*?\\.o"): [
                     "compError",
                     "for executable %s in test",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)\." + shLib): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)\\." + shLib): [
                     "linkError",
                     "for shared library %s in test",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)\.o"): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)\\.o"): [
                     "compError",
                     "for executable %s in test",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/\1"): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/\1"): [
                     "linkError",
                     "for executable %s in test",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/plugins/(.*?)/.*?\.o"): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/plugins/(.*?)/.*?\\.o"): [
                     "compError",
                     "for plugin %s in plugins",
                 ]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    "^gmake: \\*\\*\\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
-                    + "/plugins/(.*?)/lib.*?\."
+                    + "/plugins/(.*?)/lib.*?\\."
                     + shLib
                 ): ["linkError", "for plugin library %s in plugins"]
             },
             {
-                str("^ *\*\*\* Break \*\*\* illegal instruction"): [
+                str("^ *\\*\\*\\* Break \\*\\*\\* illegal instruction"): [
                     "compError",
                     "Break illegal instruction",
                 ]
@@ -567,7 +567,7 @@ class LogFileAnalyzer(object):
             {str("^TypeError: .*"): ["pythonError", "type error in module"]},
             {str("^ValueError: .*"): ["pythonError", "value error in module"]},
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/data/download\.url"): [
+                str("^gmake: \\*\\*\\* .*?/src/" + subsys + "/" + pkg + "/test/data/download\\.url"): [
                     "dwnlError",
                     "for file in data/download.url in test",
                 ]
@@ -580,18 +580,18 @@ class LogFileAnalyzer(object):
                     + subsys
                     + "/"
                     + pkg
-                    + ".*?\:\d*\: warning: "
+                    + ".*?\\:\\d*\\: warning: "
                 ): ["compWarning", "for file in package"]
             },
             {
-                str("^ *(/.*?/" + self.release + "/|)src/.*?\:\d+\: warning: "): [
+                str("^ *(/.*?/" + self.release + "/|)src/.*?\\:\\d+\\: warning: "): [
                     "compWarning",
                     "for file in release",
                 ]
             },
             {
                 str(
-                    "^ *(/.*?/" + self.release + "/|)src/.*?\([0-9]+\)\: warning #[0-9]+-[A-Z]: "
+                    "^ *(/.*?/" + self.release + "/|)src/.*?\\([0-9]+\\)\\: warning #[0-9]+-[A-Z]: "
                 ): [
                     "compWarning",
                     "for file in release",
@@ -606,25 +606,25 @@ class LogFileAnalyzer(object):
                     + subsys
                     + "/"
                     + pkg
-                    + ".*?\:\d+\: error: "
+                    + ".*?\\:\\d+\\: error: "
                 ): ["compError", "for file in package"]
             },
             {
-                str("^ *(/.*?/" + self.release + "/|)src/.*?\:\d+\: error: "): [
+                str("^ *(/.*?/" + self.release + "/|)src/.*?\\:\\d+\\: error: "): [
                     "compError",
                     "for file in release",
                 ]
             },
-            {str("^.*?\:\d+\: error: "): ["compError", "for file in externals"]},
+            {str("^.*?\\:\\d+\\: error: "): ["compError", "for file in externals"]},
             {
                 str(
                     "^ *tmp/.*?/src/"
                     + subsys
                     + "/"
                     + pkg
-                    + "/src/(.*?)/lib.*?\."
+                    + "/src/(.*?)/lib.*?\\."
                     + shLib
-                    + "\: undefined reference to .*"
+                    + "\\: undefined reference to .*"
                 ): ["linkError", "for package library %s "]
             },
             {
@@ -633,9 +633,9 @@ class LogFileAnalyzer(object):
                     + subsys
                     + "/"
                     + pkg
-                    + "/plugins/(.*?)/lib.*?\."
+                    + "/plugins/(.*?)/lib.*?\\."
                     + shLib
-                    + "\: undefined reference to .*"
+                    + "\\: undefined reference to .*"
                 ): ["linkError", "for plugin library %s in plugins"]
             },
             {
@@ -652,16 +652,16 @@ class LogFileAnalyzer(object):
             },
         ]
 
-        miscErrRe = re.compile("^gmake: \*\*\* (.*)$")
-        genericLinkErrRe = re.compile("^gmake: \*\*\* \[tmp/.*?/lib.*?" + shLib + "\] Error 1")
+        miscErrRe = re.compile("^gmake: \\*\\*\\* (.*)$")
+        genericLinkErrRe = re.compile("^gmake: \\*\\*\\* \\[tmp/.*?/lib.*?" + shLib + "\\] Error 1")
 
         if "_gcc46" in os.environ["SCRAM_ARCH"]:
             errorInf.append(
-                {str("^.*?:\d+\: warning\: "): ["compWarning", "from external in package"]}
+                {str("^.*?:\\d+\\: warning\\: "): ["compWarning", "from external in package"]}
             )
         else:
             errorInf.append(
-                {str("^.*?:\d+\: warning\: "): ["ignoreWarning", "from external in package"]}
+                {str("^.*?:\\d+\\: warning\\: "): ["ignoreWarning", "from external in package"]}
             )
             errorInf.append(
                 {str("^.*?ERROR:Private Header:"): ["compError", "Private header usage."]}

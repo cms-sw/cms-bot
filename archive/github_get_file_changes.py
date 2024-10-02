@@ -67,7 +67,7 @@ def get_changed_filenames_by_pr(old_prs_dict, pr_list):
 
 def get_git_mt(path, filename):
     status, rez = run_cmd('cd %s; git log -1 --format="%%ad" --date=unix -- %s' % (path, filename))
-    if status is not 0:
+    if status != 0:
         print("ERROR, " + rez)
         sys.exit(1)  # todo throws an exception
     return rez

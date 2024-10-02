@@ -139,7 +139,7 @@ def GetMatrixOptions(release, arch, dasfile=None):
         cmd = cmd.replace(m.group(1), val)
         m = re.search("(@([a-zA-Z_]+)@)", cmd)
 
-    return re.sub("\s+", " ", cmd)
+    return re.sub("\\s+", " ", cmd)
 
 
 def GetWFThreads(args):

@@ -18,11 +18,11 @@ CMSDIST_PERMISSIONS = {
 }
 
 VALID_COMMENTS = {
-    "^(please(\s*,|)\s+|)merge$": "merge",
-    "^(please(\s*,|)\s+|)close$": "close",
-    "^(please(\s*,|)\s+|)(re|)open$": "open",
+    "^(please(\\s*,|)\\s+|)merge$": "merge",
+    "^(please(\\s*,|)\\s+|)close$": "close",
+    "^(please(\\s*,|)\\s+|)(re|)open$": "open",
     "^ping$": "ping",
-    "^(please(\s*,|)\s+|)test$": "test",
+    "^(please(\\s*,|)\\s+|)test$": "test",
 }
 
 

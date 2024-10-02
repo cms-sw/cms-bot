@@ -6,7 +6,6 @@ UPLOAD_PATH="${CMSSW_VERSION}-${PR_REPO_NUM}/${ARCHITECTURE}/${BUILD_NUMBER}"
 # Report test started
 mark_commit_status_all_prs 'hlt-p2-integration' 'pending' -u "${BUILD_URL}" -d "Running"
 
-ls -l /eos/cms/store
 # Do work
 HLT_P2_SCRIPT="src/HLTrigger/Configuration/scripts"
 HLT_BASEDIR="${CMSSW_BASE}"
@@ -16,7 +15,7 @@ rm -rf $WORKSPACE/rundir/__pycache__
 
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-  timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests 2>&1 | tee -a ${WORKSPACE}/hlt-p2-integration.log
+  timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) 2>&1 | tee -a ${WORKSPACE}/hlt-p2-integration.log
 popd
 
 # Upload results

@@ -40,7 +40,7 @@ ls
 ./runAll.csh IB | tee -a $WORKSPACE/results/runIB.log
 ./examLogs.csh | tee -a $WORKSPACE/results/examLogs.out
 if which hltPhase2UpgradeIntegrationTests 2>/dev/null ; then
-    hltPhase2UpgradeIntegrationTests | tee -a  $WORKSPACE/results/hltPhase2UpgradeIntegrationTests.log
+    hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) | tee -a  $WORKSPACE/results/hltPhase2UpgradeIntegrationTests.log
 else
     echo "hltPhase2UpgradeIntegrationTests not found, skipping"
 fi

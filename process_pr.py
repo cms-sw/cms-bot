@@ -96,9 +96,9 @@ TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
 IGNORING_TESTS_MSG = "Ignoring test request."
-TESTS_RESULTS_MSG = r"^\s*([-|+]1|I had the issue.*)\s*$"
+TESTS_RESULTS_MSG = "^\\s*([-|+]1|I had the issue.*)\\s*$"
 FAILED_TESTS_MSG = "The jenkins tests job failed, please try again."
-PUSH_TEST_ISSUE_MSG = r"^\[Jenkins CI\] Testing commit: [0-9a-f]+$"
+PUSH_TEST_ISSUE_MSG = "^\\[Jenkins CI\\] Testing commit: [0-9a-f]+$"
 HOLD_MSG = "Pull request has been put on hold by "
 # Regexp to match the test requests
 CODE_CHECKS_REGEXP = re.compile(

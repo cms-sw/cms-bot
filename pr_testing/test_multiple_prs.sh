@@ -97,6 +97,7 @@ DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
 DO_CRAB_TESTS=false
 DO_HLT_P2_TIMING=false
+DO_HLT_P2_INTEGRATION=false
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
 BUILD_VERBOSE=true
@@ -1235,12 +1236,21 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
       fi
     fi
   fi
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_INTEGRATION$' | wc -l) -gt 0 ] ; then
+    if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
+      if [ -e ${CMSSW_RELEASE_BASE}/src/HLTrigger/Configuration/scripts/hltPhase2UpgradeIntegrationTests ]; then
+        DO_HLT_P2_INTEGRATION=true
+        mark_commit_status_all_prs 'hlt-p2-integration' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+      fi
+    fi
+  fi
 else
   DO_TESTS=false
   DO_SHORT_MATRIX=false
   DO_ADDON_TESTS=false
   DO_CRAB_TESTS=false
   DO_HLT_P2_TIMING=false
+  DO_HLT_P2_INTEGRATION=false
 fi
 
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
@@ -1407,6 +1417,10 @@ fi
 
 if [ "${DO_HLT_P2_TIMING}" = "true" ] ;  then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt_p2_timing.prop
+fi
+
+if [ "${DO_HLT_P2_INTEGRATION}" = "true" ] ;  then
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt_p2_integration.prop
 fi
 
 rm -f $WORKSPACE/test-env.txt

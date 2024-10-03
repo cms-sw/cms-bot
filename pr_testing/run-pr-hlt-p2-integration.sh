@@ -22,7 +22,7 @@ popd
 source $WORKSPACE/cms-bot/jenkins-artifacts
 touch ${RESULTS_DIR}/15-hlt-p2-integration-report.res ${RESULTS_DIR}/15-hlt-p2-integration-failed.res
 if [ -f $WORKSPACE/rundir/Phase2Timing_resources.json ] ; then
-    echo "HLT_P2_INTEGRATION;SUCCESS,HLT Phase 2 integration Test" >> ${RESULTS_DIR}/hlt-p2-integration.txt
+    echo "HLT_P2_INTEGRATION;SUCCESS,HLT Phase 2 integration Test,See Logs,hlt-p2-integration.log" >> ${RESULTS_DIR}/hlt-p2-integration.txt
     echo -e "\n* **HLT P2 Integration**" > ${RESULTS_DIR}/15-hlt-p2-integration-report.res
     mark_commit_status_all_prs 'hlt-p2-integration' 'success' -u "${BUILD_URL}" -d "HLT Phase2 integration data collected"
 else

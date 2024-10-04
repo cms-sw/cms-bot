@@ -9,8 +9,8 @@ ISSUE_SEEN_MSG = "^A new (Pull Request|Issue) was created by "
 VALID_CMSDIST_BRANCHES = "^IB/CMSSW_.+$"
 BACKPORT_STR = "- Backported from #"
 CMSBUILD_GH_USER = "cmsbuild"
-CMSBOT_IGNORE_MSG = "<cmsbot>\s*</cmsbot>"
-CMSBOT_NO_NOTIFY_MSG = "<notify>\s*</notify>"
+CMSBOT_IGNORE_MSG = "<cmsbot>\\s*</cmsbot>"
+CMSBOT_NO_NOTIFY_MSG = "<notify>\\s*</notify>"
 CMSBOT_TECHNICAL_MSG = "cms-bot internal usage"
 VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cmssw",

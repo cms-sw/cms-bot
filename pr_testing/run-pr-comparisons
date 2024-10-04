@@ -289,6 +289,30 @@ popd
 
 set +x
 # --------------------------------------------------------------------------
+# maxmem-profile comparison
+# --------------------------------------------------------------------------
+echo "Started maxmem-profile comparison at `date`"
+OUTPUT_DIR=$WORKSPACE/results/maxmem-comparison
+#create the output dir
+mkdir -p $OUTPUT_DIR
+for maxmem in $(find $WORKSPACE/data/PR-${PR_NUM} -follow -name 'maxmem_profile_*.txt' -type f | sed "s|$WORKSPACE/data/PR-${PR_NUM}/||") ; do
+  echo "Maxmem Profile> Working on ${maxmem}"
+  if [ ! -e "$WORKSPACE/data/$COMPARISON_RELEASE/${maxmem}" ] ; then
+    echo "ERROR: Missing Ref MaxMemory file: $COMPARISON_RELEASE/${maxmem}"
+    continue
+  fi
+  WF_NUMBER=$(echo ${maxmem} | sed 's|_.*||')
+  $CMS_BOT_DIR/comparisons/compare-maxmem.py $WORKSPACE/data/PR-${PR_NUM}/${maxmem} \
+    $WORKSPACE/data/$COMPARISON_RELEASE/${maxmem} > $OUTPUT_DIR/${WF_NUMBER}.json 2> $OUTPUT_DIR/${WF_NUMBER}.err || true
+done
+$CMS_BOT_DIR/comparisons/compare-maxmem-summary.py -i $OUTPUT_DIR -f '*.json' -F html -o $OUTPUT_DIR/index.html -u $JENKINS_ARTIFACTS_URL/$PR_BASELINE_DIR || true
+if grep "exceeds threshold" $OUTPUT_DIR/*.err 2>/dev/null; then
+  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
+else
+  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
+fi
+
+# --------------------------------------------------------------------------
 # JR-Comparison
 # --------------------------------------------------------------------------
 #This is used mainly for testing. In jenkins the 3 forms of comparisons are always run. But if you are testing you can control
@@ -543,6 +567,9 @@ done
 
 #nano
 [ -d $WORKSPACE/results/nano ] && mv $WORKSPACE/results/nano upload/
+
+#maxmem comparison
+[ -d $WORKSPACE/results/maxmem-comparison ] && mv $WORKSPACE/results/maxmem-comparison upload/
 
 #files
 if [ -e results/files ] ; then

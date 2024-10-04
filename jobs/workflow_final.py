@@ -62,11 +62,11 @@ def update_worklog(workflow_dir, jobs):
     for job in jobs["commands"]:
         step_num += 1
         try:
-            m = re.match("^.*\s+step([1-9][0-9]*)\s+.*$", job["command"])
+            m = re.match("^.*\\s+step([1-9][0-9]*)\\s+.*$", job["command"])
             if m:
                 cmd_step = int(m.group(1))
             else:
-                m = re.match(".*\s*>\s*step([1-9][0-9]*)_[^\s]+\.log.*$", job["command"])
+                m = re.match(".*\\s*>\\s*step([1-9][0-9]*)_[^\\s]+\\.log.*$", job["command"])
                 if m:
                     cmd_step = int(m.group(1))
                 else:
@@ -115,7 +115,7 @@ def update_worklog(workflow_dir, jobs):
     e, o = run_cmd(
         "grep ' exit: ' %s | sed 's|exit:.*$|exit: %s|'" % (workflow_logfile, exit_codes.strip())
     )
-    o = re.sub("\s+Step0-.+\s+-\s+time\s+", step_str + "  - time ", o)
+    o = re.sub("\\s+Step0-.+\\s+-\\s+time\\s+", step_str + "  - time ", o)
     wfile = open(workflow_logfile, "w")
     wfile.write(o + "\n")
     wfile.write("%s tests passed, %s failed\n" % (test_passed.strip(), test_failed.strip()))

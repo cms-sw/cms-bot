@@ -10,6 +10,16 @@ if [ "${STATUS}" = "online" -o "${STATUS}" = "reconfigure" ] ; then
   sed -i -e "s|@LABELS@|$LABELS gridid-${CONDOR_JOB_ID}.0 schedulername-$SCHEDD_NAME|g;s|@NODE_NAME@|$NODE_NAME|g" node.xml
   sed -i -e "s|@WORK_DIR@|$WORK_DIR|g;s|@JENKINS_HOME@|$JENKINS_HOME|g;s|@CMS_BOT_DIR@|$CMS_BOT_DIR|" node.xml
   sed -i -e "s|@CONDOR_USER@|$CONDOR_USER|g;s|@CONDOR_SUMBITTER_SYSTEM@|$CONDOR_SUMBITTER_SYSTEM|g" node.xml
+  cnt=$(grep '<int>[1-9][0-9]*</int>' node.xml  | tr '<>' '-' | cut -d- -f3)
+  if [ "${cnt}" != "" ] ; then
+    xcnt=$cnt
+    xnum=$(echo "${LABELS}" | tr ' ' '\n' | grep '^cpu-[1-9][0-9]*$' | cut -d- -f2)
+    if [ "${xnum}" != "" ] ; then
+      sed -r -i -e "s|^(\s*)<string>CMS_BOT_DIR</string>|\1<string>JENKINS_AGENT_CORES</string>\n\1<string>${xnum}</string>\n\1<string>CMS_BOT_DIR</string>|" node.xml
+      let xcnt=$xcnt+1
+    fi
+    [ "${xcnt}" != "${cnt}" ] && sed -i -e "s|<int>${cnt}</int>|<int>${xcnt}</int>|" node.xml
+  fi
   if [ $(echo $LABELS | grep ' nvidia ' | wc -l) -eq 0 ] ; then
     sed -i -e 's|\-\-nv||' node.xml
   fi
@@ -43,7 +53,6 @@ elif [ "${STATUS}" = "offline" ] ; then
       echo "NODE_ARCH=aarch64" >> create-node.txt
       echo "REQUEST_MAXRUNTIME=604800" >> create-node.txt
     elif [ $(echo " ${LABELS} " | grep ' x86_64 ' | wc -l) -gt 0 ] ; then
-      echo "REQUEST_CPUS=16" >> create-node.txt
       echo "NODE_ARCH=x86_64" >> create-node.txt
     fi
   fi

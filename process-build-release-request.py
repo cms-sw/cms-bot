@@ -944,7 +944,7 @@ def guess_prev_rel_name(release_name, issue):
     rel_match = (
         rel_name_match.group(1)
         + prev_num_str
-        + "\(_[a-zA-Z]*patch[0-9][0-9]*\|\)"
+        + "\\(_[a-zA-Z]*patch[0-9][0-9]*\\|\\)"
         + rel_name_match.group(5)
         + ";"
     )
@@ -952,7 +952,7 @@ def guess_prev_rel_name(release_name, issue):
         rel_match = (
             rel_name_match.group(1)
             + rel_name_match.group(2)
-            + "_pre\([0-9][0-9]*\)"
+            + "_pre\\([0-9][0-9]*\\)"
             + rel_name_match.group(5)
             + ";"
         )

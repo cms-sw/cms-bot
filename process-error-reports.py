@@ -28,8 +28,8 @@ FAILED_RE = "Step([0-9])-FAILED"
 # - Replace regexp special caratecters with their escaped counter parts
 # - Replace back @@@ to be "(.*)" for the matching
 def reEscape(s):
-    s = re.sub("%\([a-z_A-Z]+\)s", "@@@", s)
-    s = re.sub("([\[\]\(\)\*\+\.])", "\\\\\\1", s)
+    s = re.sub("%\\([a-z_A-Z]+\\)s", "@@@", s)
+    s = re.sub("([\\[\\]\\(\\)\\*\\+\\.])", "\\\\\\1", s)
     s = s.replace("\n", "\\n")
     s = re.sub("@@@", "(.*)", s)
     return s

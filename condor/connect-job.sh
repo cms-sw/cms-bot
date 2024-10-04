@@ -5,7 +5,13 @@ if [ "${_CONDOR_JOB_AD}" != "" ] ; then
   [ -e ${_CONDOR_JOB_AD} ] && cat ${_CONDOR_JOB_AD}
 fi
 if [ "${_CONDOR_MACHINE_AD}" != "" ] ; then
-  [ -e ${_CONDOR_MACHINE_AD} ] && cat ${_CONDOR_MACHINE_AD}
+  if [ -e ${_CONDOR_MACHINE_AD} ] ; then
+    cat ${_CONDOR_MACHINE_AD}
+    xnum=$(grep -i '^cpus *= *' ${_CONDOR_MACHINE_AD} | sed 's|.*=||;s| ||g')
+    if [ "${xnum}" != "" ] ; then export JENKINS_AGENT_CORES=${xnum} ; fi
+    #xnum=$(grep -i '^memory *= *' ${_CONDOR_MACHINE_AD} | sed 's|.*=||;s| ||g')
+    #if [ "${xnum}" != "" ] ; then export JENKINS_AGENT_MEMORY=${xnum} ; fi
+  fi
 fi
 if [ "${USER}" = "" ] ; then export USER=$(whoami); fi
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
@@ -31,9 +37,11 @@ done
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${WORKSPACE}/slave.jar | sed 's| .*||')
 $WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}"
 SLAVE_LABELS=$($WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}" | grep '^DATA_SLAVE_LABELS=' | sed 's|^DATA_SLAVE_LABELS=|condor |')
-if [ $(nproc) -lt 8 ] ; then
+xcore=${JENKINS_AGENT_CORES}
+[ "${xcore}" = "" ] && xcore=$(nproc)
+if [ ${xcore} -lt 8 ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} scripts" 
-elif [ $(nproc) -gt 8 ] ; then
+elif [ ${xcore} -gt 8 ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} cmsbuild"
 fi
 if [ "X${EXTRA_LABELS}" != "X" ] ; then SLAVE_LABELS="${SLAVE_LABELS} ${EXTRA_LABELS}" ;fi

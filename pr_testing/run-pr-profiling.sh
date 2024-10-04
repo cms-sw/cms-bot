@@ -48,7 +48,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   $WORKSPACE/profiling/Gen_tool/profile_mem_jemalloc.sh $CMSSW_VERSION || true
   echo "<li><a href=\"$PROFILING_WORKFLOW/\">$PROFILING_WORKFLOW/</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/RES_CPU_step3.txt  ${CMSSW_VERSION}_RES_CPU_step3.txt || true
-  $WORKSPACE/profiling/Analyze_tool/compare_cpu_txt.py --old ${CMSSW_VERSION}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare_$PROFILING_WORKFLOW.txt || true
+  $WORKSPACE/profiling/Gen_tool/compare_cpu_txt.py --old ${CMSSW_VERSION}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare_$PROFILING_WORKFLOW.txt || true
   echo "<li><a href=\"$PROFILING_WORKFLOW/RES_CPU_compare_$PROFILING_WORKFLOW.txt\">Igprof Comparison cpu usage RECO produce methods.</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   cp $WORKSPACE/cms-bot/comparisons/compareProducts.* ./
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/step3_sizes_${PROFILING_WORKFLOW}.txt  step3_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt || true
@@ -95,8 +95,11 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     ls -l $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/$BASENAME || true
     AMP="&"
     echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME
+    $CMS_BOT_DIR/comparisons/resources-diff.py $f $CMSSW_VERSION-$BASENAME >$f.log || true
+    echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*') ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html') ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true

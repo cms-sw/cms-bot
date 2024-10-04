@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-from categories_map import CMSSW_CATEGORIES
 import sys
+from argparse import ArgumentParser
+from collections import defaultdict
+
+from categories_map import CMSSW_CATEGORIES
 
 
 def package2category(filename):
@@ -10,24 +13,27 @@ def package2category(filename):
     cat = "unknown"
     if file_pack in pack2cat:
         cat = "-".join(sorted(pack2cat[file_pack]))
-    if not cat in cats:
-        cats[cat] = {}
-    cats[cat][file_pack] = 1
+    cats[cat].add(file_pack)
 
 
-pack2cat = {}
+parser = ArgumentParser()
+parser.add_argument("-i", "--stdin", action="store_true", help="Also read file name(s) from stdin")
+parser.add_argument("files", nargs="*", help="File name(s)")
+args = parser.parse_args()
+
+pack2cat = defaultdict(list)
 for cat in CMSSW_CATEGORIES:
     for pack in CMSSW_CATEGORIES[cat]:
-        if pack not in pack2cat:
-            pack2cat[pack] = []
         pack2cat[pack].append(cat)
 
-cats = {}
-for line in sys.stdin:
+cats = defaultdict(set)
+
+for line in args.files:
     package2category(line.strip())
 
-for line in sys.argv[1:]:
-    package2category(line.strip())
+if args.stdin:
+    for line in sys.stdin:
+        package2category(line.strip())
 
 for cat in cats:
-    print("%s %s" % (cat, " ".join(cats[cat].keys())))
+    print("%s %s" % (cat, " ".join(cats[cat])))

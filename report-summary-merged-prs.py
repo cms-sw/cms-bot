@@ -1108,8 +1108,41 @@ def find_one_vtune_result(magic_command):
     return "inprogress"
 
 
+def process_one_clang_analyzer(rel_name, architecture, result):
+    if result != "found":
+        return result
+    rlog_dir = "/ib-static-analysis/%s/%s/build-logs" % (rel_name, architecture)
+    result = "passed"
+    try:
+        resfile = JENKINS_ARTIFACTS_DIR + rlog_dir + "/logAnalysis.pkl"
+        if exists(resfile):
+            pkgobj = open(resfile, "rb")
+            pklr = Unpickler(pkgobj)
+            # Load release info
+            data = pklr.load()
+            # Load errors types
+            data = pklr.load()
+            # Load Error/warning count
+            data = pklr.load()
+            print(data)
+            pkgobj.close()
+
+            if "compError" in data and data["compError"] > 0:
+                result = "error"
+            elif "compWarning" in data and data["compWarning"] > 0:
+                result = "warning"
+    except Exception as e:
+        print(e)
+    return {"status": result, "data": rlog_dir}
+
+
 def find_general_test_results(
-    test_field, comparisons, architecture, magic_command, results_function=find_one_test_results
+    test_field,
+    comparisons,
+    architecture,
+    magic_command,
+    results_function=find_one_test_results,
+    process_result=None,
 ):
     """
     Finds for results for the test_field. Modifies `comparisons` dict in place.
@@ -1118,6 +1151,7 @@ def find_general_test_results(
     :param magic_command: string with bash command to execute
     :param test_field: field to write back the results to
     :param results_function: function how to process results
+    :param proces_result: function to process the result of results_function
     """
 
     for comp in comparisons:
@@ -1127,6 +1161,8 @@ def find_general_test_results(
             "ARCHITECTURE", architecture
         )
         comp[test_field] = results_function(command_to_execute)
+        if process_result:
+            comp[test_field] = process_result(rel_name, architecture, comp[test_field])
 
 
 def find_general_test_results_2(test_field, comparisons, magic_command):
@@ -1191,11 +1227,14 @@ def find_check_hlt_p2_timing(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp["compared_tags"].split("-->")[1]
         print("Looking for {0} results for {1}.".format("hlt p2 timing", rel_name))
-        comp["hlt-p2-timing"] = find_and_check_result(
-            rel_name, architecture, CHECK_HLT_TIMING_PATH, "/bin/true"
+        status = find_and_check_result(
+            rel_name, architecture, CHECK_HLT_TIMING_PATH, "grep -h -c 'failed' {0}"
         )
-        if comp["hlt-p2-timing"] == "passed":
+        if status == "passed":
             comp["hlt-p2-timing"] = {"status": "passed", "arch": architecture}
+        else:
+            comp["hlt-p2-timing"] = status
+    return
 
 
 def find_check_crab(comparisons, architecture):
@@ -1670,6 +1709,11 @@ if __name__ == "__main__":
         + JENKINS_ARTIFACTS_DIR
         + "/ib-static-analysis/RELEASE_NAME/"
     )
+    MAGIC_COMMAND_FIND_CLANG_ANALYZER = (
+        "test -d "
+        + JENKINS_ARTIFACTS_DIR
+        + "/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/build-logs"
+    )
     MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1 = (
         "test -s "
         + JENKINS_ARTIFACTS_DIR
@@ -1729,8 +1773,7 @@ if __name__ == "__main__":
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"
     )
     CHECK_HLT_TIMING_PATH = (
-        JENKINS_ARTIFACTS_DIR
-        + "/hlt-p2-timing/RELEASE_NAME/ARCHITECTURE/Phase2Timing_resources.json"
+        JENKINS_ARTIFACTS_DIR + "/hlt-p2-timing/RELEASE_NAME/ARCHITECTURE/status.txt"
     )
     CHECK_CRAB_PATH = JENKINS_ARTIFACTS_DIR + "/ib-run-crab/RELEASE_NAME/*"
     MAGIC_COMMAND_FIND_DQM_TESTS = (
@@ -1938,6 +1981,14 @@ if __name__ == "__main__":
                         arch,
                         MAGIC_COMMAND_FIND_CLASS_VERSIONS,
                         find_one_class_versions_result,
+                    )
+                if "clang-analyzer" in tests_to_find:
+                    find_general_test_results(
+                        "clang_analyzer",
+                        release_queue_results["comparisons"],
+                        arch,
+                        MAGIC_COMMAND_FIND_CLANG_ANALYZER,
+                        process_result=process_one_clang_analyzer,
                     )
                 if "flawfinder" in tests_to_find:
                     find_general_test_results(

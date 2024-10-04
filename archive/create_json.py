@@ -17,7 +17,7 @@ def extract_data(inputfile):
         first_char = file.read(1)
         if not first_char:
             print("Error: Input file is empty"), sys.exit(1)
-        pattern = re.compile("^([a-z]+)\+([\w-]+)\+([\w.-]+)\s\(([\w]+)\)")
+        pattern = re.compile(r"^([a-z]+)\+([\w-]+)\+([\w.-]+)\s\(([\w]+)\)")
         matched_lines = [pattern.match(l) for l in file.readlines()]
         for line in matched_lines:
             if line:

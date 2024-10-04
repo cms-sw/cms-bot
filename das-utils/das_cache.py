@@ -12,6 +12,7 @@ import sys
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import run_cmd
 
+order_fields = ["file", "run", "lumi"]
 field_map = {
     "file": "name",
     "lumi": "number",
@@ -30,14 +31,19 @@ ignore_lfn = [
 ]
 
 
-def write_json(outfile, cache):
+def write_file(outfile, data):
     outdir = dirname(outfile)
     if not exists(outdir):
         run_cmd("mkdir -p %s" % outdir)
     ofile = open(outfile, "w")
     if ofile:
-        ofile.write(json.dumps(cache, sort_keys=True, indent=2, separators=(",", ": ")))
+        ofile.write(data)
         ofile.close()
+
+
+def write_json(outfile, cache):
+    data = json.dumps(cache, sort_keys=True, indent=2, separators=(",", ": "))
+    write_file(outfile, data)
 
 
 def read_json(infile):
@@ -53,10 +59,24 @@ def run_das_client(
     if "=" in field:
         field = field.split("=", 1)[0]
     fields = field.split(",")
+    ofields = [f for f in order_fields if f in fields] + [
+        f for f in fields if f not in order_fields
+    ]
+    fields = ofields[:]
     field_filter = ""
     field = fields[-1]
-    if field in ["file", "site", "dataset"]:
-        field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)
+    run_non_json = False
+    if not "|" in query:
+        if field in ["file", "site", "dataset"]:
+            field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)
+    else:
+        if "grep" in query:
+            fields = [
+                f for f in query.split("grep ")[-1].split("|")[0].replace(" ", "").split(",") if f
+            ]
+        else:
+            run_non_json = True
+    top_fields = [f.split(".")[0] for f in fields]
     retry_str = ""
     if "das_client" in dasclient:
         retry_str = "--retry=%s" % retry
@@ -95,56 +115,72 @@ def run_das_client(
     ):
         print("Failed: %s %s\n  %s" % (sha, query, out))
         return False
-    all_ok = True
-    for fx in fields:
-        fn = field_map[fx]
-        for item in jdata["data"]:
-            try:
-                if (
-                    (not fx in item)
-                    or (not item[fx])
-                    or (not fn in item[fx][0])
-                    or (item[fx][0][fn] is None)
-                ):
-                    all_ok = False
-            except Exception as e:
-                with open(efile, "w") as ofile:
-                    ofile.write("Wrong DAS result format for %s,%s\n" % (fn, fx))
-                    ofile.write(json.dumps(item))
-                    ofile.write("\n%s\n" % e)
-                    return False
-    if not all_ok:
-        # if 'site=T2_CH_CERN' in query:
-        #  run_cmd("rm -f %s" % efile)
-        #  query = query.replace("site=T2_CH_CERN","").strip()
-        #  lmt = 0
-        #  if "file" in fields: lmt = 100
-        #  print("Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query))
-        #  return run_das_client(outfile, query, override, dasclient, options, threshold, retry, limit=lmt)
-        print("  DAS WRONG Results:", fields, sha, out)
-        return False
-    run_cmd("rm -f %s" % efile)
     results = []
-    for item in jdata["data"]:
-        res = str(item[field][0][field_map[field]])
-        xf = "lumi"
-        if (len(fields) > 1) and (fields[0] == xf):
-            try:
-                res = res + " [" + ",".join([str(i) for i in item[xf][0][field_map[xf]]]) + "]"
-            except Exception as e:
-                with open(efile, "w") as ofile:
-                    ofile.write("Wrong DAS result format for lumi\n")
-                    ofile.write(json.dumps(item))
-                    ofile.write("\n%s\n" % e)
-                print("  Failed to load das output:", sha, e)
-                return False
-        if fields[0] == "file" and res in ignore_lfn:
-            print("  Ignoring %s" % res)
-            continue
-        if not res in results:
-            results.append(res)
-    print("  Results:", sha, len(results))
-    if (len(results) == 0) and ("site=T2_CH_CERN" in query):
+    xresults = []
+    if run_non_json:
+        non_json_cmd = das_cmd.replace(" --format=json ", " ")
+        print("  Running: ", sha, non_json_cmd)
+        err, out = run_cmd(non_json_cmd)
+        if err:
+            print("  DAS ERROR:", sha, out)
+            return False
+        for line in out.split("\n"):
+            results.append(line)
+    else:
+        all_ok = True
+        for fx in top_fields:
+            fn = field_map[fx]
+            for item in jdata["data"]:
+                try:
+                    if (
+                        (not fx in item)
+                        or (not item[fx])
+                        or (not fn in item[fx][0])
+                        or (item[fx][0][fn] is None)
+                    ):
+                        all_ok = False
+                except Exception as e:
+                    with open(efile, "w") as ofile:
+                        ofile.write("Wrong DAS result format for %s,%s\n" % (fn, fx))
+                        ofile.write(json.dumps(item))
+                        ofile.write("\n%s\n" % e)
+                        return False
+        if not all_ok:
+            # if 'site=T2_CH_CERN' in query:
+            #  run_cmd("rm -f %s" % efile)
+            #  query = query.replace("site=T2_CH_CERN","").strip()
+            #  lmt = 0
+            #  if "file" in fields: lmt = 100
+            #  print("Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query))
+            #  return run_das_client(outfile, query, override, dasclient, options, threshold, retry, limit=lmt)
+            print("  DAS WRONG Results:", fields, sha, out)
+            return False
+        run_cmd("rm -f %s" % efile)
+        for item in jdata["data"]:
+            if ("file" in top_fields) and str(item["file"][0][field_map["file"]]) in ignore_lfn:
+                continue
+            res = []
+            res_ok = True
+            for f in fields:
+                fitems = f.split(".")
+                fname = fitems[0]
+                fvalue = field_map[fname]
+                fdata = item[fname][0][fvalue] if (len(fitems) == 1) else item[fname][0][fitems[1]]
+                res.append(str(fdata).replace(" ", ""))
+                if (f == "file.nevents") and len(res) > 1:
+                    res[-1] = "  %s" % res[-1]
+                    if fdata < 900:
+                        res_ok = False
+            res = " ".join(res)
+            if res_ok:
+                if not res in results:
+                    results.append(res)
+            else:
+                if not res in xresults:
+                    xresults.append(res)
+    total_results = results + xresults
+    print("  Results:", sha, len(total_results))
+    if (len(total_results) == 0) and ("site=T2_CH_CERN" in query):
         query = query.replace("site=T2_CH_CERN", "").strip()
         lmt = 0
         if "file" in fields:
@@ -157,12 +193,12 @@ def run_das_client(
         return run_das_client(
             outfile, query, override, dasclient, options, threshold, retry, limit=lmt
         )
-    if results or override:
+    if total_results or override:
         xfile = outfile + ".json"
         write_json(xfile + ".tmp", jdata)
         if exists(xfile):
             e, o = run_cmd(
-                "diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\(\.[0-9]*\|\)$'"
+                r"diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\(\.[0-9]*\|\)$'"
                 % (xfile, xfile)
             )
             if o:
@@ -172,10 +208,14 @@ def run_das_client(
         else:
             run_cmd("mv %s.tmp %s" % (xfile, xfile))
         print("  Success %s '%s', found %s results." % (sha, query, len(results)))
-        if results:
+        if total_results:
             with open(outfile, "w") as ofile:
-                for res in sorted(results):
-                    ofile.write(res + "\n")
+                if results:
+                    for res in sorted(results):
+                        ofile.write(res + "\n")
+                else:
+                    for res in sorted(xresults):
+                        ofile.write(res + "\n")
             run_cmd("echo '%s' > %s.timestamp" % (int(time()), outfile))
         else:
             run_cmd("rm -f %s" % (outfile))
@@ -338,6 +378,9 @@ if __name__ == "__main__":
             print("IGNORED : %s" % sha)
             continue
         outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
+        query_file = outfile + ".query"
+        if not exists(query_file):
+            write_file(query_file, query)
         print("[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query))
         vold = False
         if exists(outfile):

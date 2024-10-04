@@ -9,7 +9,7 @@ from os import stat as tstat
 from time import time
 
 CMSSDT_ES_QUERY = "https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
-ES_SERVER = "https://es-cmssdt1.cern.ch/es"
+ES_SERVER = "https://os-cmssdt1.cern.ch/os"
 ES_NEW_SERVER = ES_SERVER
 ES_PASSWD = None
 
@@ -201,7 +201,7 @@ def get_template(index=""):
 def find_indexes(index):
     idxs = {}
     for line in get_indexes(index).split("\n"):
-        line = re.sub("\s\s+", " ", line.strip())
+        line = re.sub("\\s\\s+", " ", line.strip())
         if not line:
             continue
         data = line.split(" ")

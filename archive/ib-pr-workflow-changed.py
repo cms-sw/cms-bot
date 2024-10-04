@@ -14,14 +14,14 @@ def parse_workflows(workflow_file):
     steps = 0
     for line in out.split("\n"):
         line = line.strip()
-        m = re.match("^.*\[(\d+)] *: *(.+)$", line)
+        m = re.match(r"^.*\[(\d+)] *: *(.+)$", line)
         if not m:
             continue
         step = m.group(1)
         cmd = m.group(2).strip()
         prefix, rest = line.split(":", 1)
         items = prefix.split(" ")
-        if re.match("^\d+(\.\d+|)$", items[0]):
+        if re.match(r"^\d+(\.\d+|)$", items[0]):
             wf = items[0]
         if not wf in wfs:
             wfs[wf] = {}

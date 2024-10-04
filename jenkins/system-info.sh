@@ -103,8 +103,11 @@ echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
 if [ "${JAVA_CMD}" = "java" ] ; then
+  JAVA17=$(ls -d /usr/lib/jvm/jdk-17.*/bin/java 2>/dev/null || true)
   if [ -e "/etc/alternatives/jre_17/bin/java" ] ; then
     JAVA_CMD="/etc/alternatives/jre_17/bin/java"
+  elif [ "${JAVA17}" != "" ] ; then
+    JAVA_CMD="${JAVA17}"
   elif [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
     JAVA_CMD="/etc/alternatives/jre_11/bin/java"
   else

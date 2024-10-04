@@ -96,30 +96,30 @@ TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
 IGNORING_TESTS_MSG = "Ignoring test request."
-TESTS_RESULTS_MSG = "^\s*([-|+]1|I had the issue.*)\s*$"
+TESTS_RESULTS_MSG = "^\\s*([-|+]1|I had the issue.*)\\s*$"
 FAILED_TESTS_MSG = "The jenkins tests job failed, please try again."
-PUSH_TEST_ISSUE_MSG = "^\[Jenkins CI\] Testing commit: [0-9a-f]+$"
+PUSH_TEST_ISSUE_MSG = "^\\[Jenkins CI\\] Testing commit: [0-9a-f]+$"
 HOLD_MSG = "Pull request has been put on hold by "
 # Regexp to match the test requests
 CODE_CHECKS_REGEXP = re.compile(
-    "code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)(\s+and\s+apply\s+patch|)$"
+    r"code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)(\s+and\s+apply\s+patch|)$"
 )
-WF_PATTERN = "[1-9][0-9]*(\.[0-9]+|)"
+WF_PATTERN = r"[1-9][0-9]*(\.[0-9]+|)"
 CMSSW_QUEUE_PATTERN = "CMSSW_[0-9]+_[0-9]+_(X|[A-Z][A-Z0-9]+_X|[0-9]+(_[a-zA-Z0-9_]+|))"
 CMSSW_PACKAGE_PATTERN = "[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)"
 ARCH_PATTERN = "[a-z0-9]+_[a-z0-9]+_[a-z0-9]+"
 CMSSW_RELEASE_QUEUE_PATTERN = format(
     "(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)", cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN
 )
-RELVAL_OPTS = "[-][a-zA-Z0-9_.,\s/'-]+"
-CLOSE_REQUEST = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$", re.I)
-REOPEN_REQUEST = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)(re|)open\s*$", re.I)
+RELVAL_OPTS = r"[-][a-zA-Z0-9_.,\s/'-]+"
+CLOSE_REQUEST = re.compile(r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$", re.I)
+REOPEN_REQUEST = re.compile(r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)(re|)open\s*$", re.I)
 CMS_PR_PATTERN = format(
     "(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)",
     cmsorgs="|".join(EXTERNAL_REPOS),
 )
 TEST_REGEXP = format(
-    "^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
+    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
     workflow=WF_PATTERN,
     cms_pr=CMS_PR_PATTERN,
     pkg=CMSSW_PACKAGE_PATTERN,
@@ -129,29 +129,29 @@ TEST_REGEXP = format(
 AUTO_TEST_REPOS = ["cms-sw/cmssw"]
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile(
-    "^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I
+    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I
 )
 REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
-REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
-REGEX_IGNORE_FILE_COUNT = "\+file-count"
+REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
+REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
-EXTRA_TESTS = "|".join(EXTRA_RELVALS_TESTS) + "|hlt_p2_timing|profiling|none"
+EXTRA_TESTS = "|".join(EXTRA_RELVALS_TESTS) + "|hlt_p2_integration|hlt_p2_timing|profiling|none"
 SKIP_TESTS = "|".join(["static", "header"])
 ENABLE_TEST_PTRN = "enable(_test(s|)|)"
-JENKINS_NODES = "[a-zA-Z0-9_|&\s()-]+"
+JENKINS_NODES = r"[a-zA-Z0-9_|&\s()-]+"
 MULTILINE_COMMENTS_MAP = {
     "(workflow|relval)(s|)("
     + EXTRA_RELVALS_TESTS_OPTS
-    + "|)": [format("%(workflow)s(\s*,\s*%(workflow)s|)*", workflow=WF_PATTERN), "MATRIX_EXTRAS"],
+    + "|)": [format(r"%(workflow)s(\s*,\s*%(workflow)s|)*", workflow=WF_PATTERN), "MATRIX_EXTRAS"],
     "(workflow|relval)(s|)_profiling": [
-        format("%(workflow)s(\s*,\s*%(workflow)s|)*", workflow=WF_PATTERN),
+        format(r"%(workflow)s(\s*,\s*%(workflow)s|)*", workflow=WF_PATTERN),
         "PROFILING_WORKFLOWS",
     ],
     "pull_request(s|)": [
@@ -162,12 +162,12 @@ MULTILINE_COMMENTS_MAP = {
     "disable_poison": ["true|false", "DISABLE_POISON"],
     "use_ib_tag": ["true|false", "USE_IB_TAG"],
     "baseline": ["self|default", "USE_BASELINE"],
-    "skip_test(s|)": [format("(%(tests)s)(\s*,\s*(%(tests)s))*", tests=SKIP_TESTS), "SKIP_TESTS"],
+    "skip_test(s|)": [format(r"(%(tests)s)(\s*,\s*(%(tests)s))*", tests=SKIP_TESTS), "SKIP_TESTS"],
     "dry_run": ["true|false", "DRY_RUN"],
     "jenkins_(slave|node)": [JENKINS_NODES, "RUN_ON_SLAVE"],
     "(arch(itecture(s|))|release|release/arch)": [CMSSW_RELEASE_QUEUE_PATTERN, "RELEASE_FORMAT"],
     ENABLE_TEST_PTRN: [
-        format("(%(tests)s)(\s*,\s*(%(tests)s))*", tests=EXTRA_TESTS),
+        format(r"(%(tests)s)(\s*,\s*(%(tests)s))*", tests=EXTRA_TESTS),
         "ENABLE_BOT_TESTS",
     ],
     "ignore_test(s|)": ["build-warnings|clang-warnings", "IGNORE_BOT_TESTS"],
@@ -491,7 +491,7 @@ def has_user_emoji(bot_cache, comment, repository, emoji, user):
 
 def get_assign_categories(line, extra_labels):
     m = re.match(
-        "^\s*(New categories assigned:\s*|(unassign|assign)\s+(from\s+|package\s+|))([a-zA-Z0-9/,\s-]+)\s*$",
+        r"^\s*(New categories assigned:\s*|(unassign|assign)\s+(from\s+|package\s+|))([a-zA-Z0-9/,\s-]+)\s*$",
         line,
         re.I,
     )
@@ -921,17 +921,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # Process Pull Request
     pkg_categories = set([])
     REGEX_TYPE_CMDS = (
-        "^(type|(build-|)state)\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
+        r"^(type|(build-|)state)\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
     )
-    REGEX_EX_CMDS = "^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (
+    REGEX_EX_CMDS = r"^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (
         repo.full_name
     )
     known_ignore_tests = "%s" % MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
-    REGEX_EX_IGNORE_CHKS = "^ignore\s+((%s)(\s*,\s*(%s))*|none)$" % (
+    REGEX_EX_IGNORE_CHKS = r"^ignore\s+((%s)(\s*,\s*(%s))*|none)$" % (
         known_ignore_tests,
         known_ignore_tests,
     )
-    REGEX_EX_ENABLE_TESTS = "^enable\s+(%s)$" % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
+    REGEX_EX_ENABLE_TESTS = r"^enable\s+(%s)$" % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
     L2_DATA = init_l2_data(repo_config, cms_repo)
     last_commit_date = None
     last_commit_obj = None
@@ -1301,7 +1301,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if valid_commenter:
                 enable_tests, ignore = check_enable_bot_tests(first_line.split(" ", 1)[-1])
                 comment_emoji = "+1"
-        elif re.match("^allow\s+@([^ ]+)\s+test\s+rights$", first_line, re.I):
+        elif re.match(r"^allow\s+@([^ ]+)\s+test\s+rights$", first_line, re.I):
             comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers):
                 tester = first_line.split("@", 1)[-1].split(" ", 1)[0]
@@ -1522,7 +1522,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         if issue.pull_request or push_test_issue:
             # Check if the release manager asked for merging this.
-            if re.match("^\s*(merge)\s*$", first_line, re.I):
+            if re.match(r"^\s*(merge)\s*$", first_line, re.I):
                 emoji = "-1"
                 if (commenter in releaseManagers) or ("orp" in commenter_categories):
                     mustMerge = True
@@ -1625,6 +1625,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             pr.changed_files >= TOO_MANY_FILES_WARN_THRESHOLD
             and (not warned_too_many_files)
             and (not ok_too_many_files)
+            and cmssw_repo
         ):
             if pr.changed_files < TOO_MANY_FILES_FAIL_THRESHOLD:
                 if not dryRun:
@@ -1650,7 +1651,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
             return
 
-        if pr.changed_files >= TOO_MANY_FILES_WARN_THRESHOLD and not ok_too_many_files:
+        if (
+            pr.changed_files >= TOO_MANY_FILES_WARN_THRESHOLD
+            and not ok_too_many_files
+            and cmssw_repo
+        ):
             print("Changed file count reached and not overridden, quitting")
             return
 
@@ -2184,6 +2189,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             for signature in new_assign_cats
             if signature in l2_categories
         ]
+        new_l2s = sorted(set(new_l2s), key=lambda s: s.lower())
         if not dryRun:
             issue.create_comment(
                 "New categories assigned: "

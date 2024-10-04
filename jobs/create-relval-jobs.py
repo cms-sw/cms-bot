@@ -134,7 +134,7 @@ for cmds_log in o.split("\n"):
                 "cpu": 300,
                 "rss": 4.5 * 1024 * 1024 * 1024,
                 "time": 120,
-                "command": re.sub("\s*;\s*$", "", c.split(":", 1)[-1]),
+                "command": re.sub("\\s*;\\s*$", "", c.split(":", 1)[-1]),
             }
             step = c.split(":")[0]
             if (wf in wf_stats) and (step in wf_stats[wf]):

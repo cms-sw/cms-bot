@@ -12,6 +12,7 @@ from os.path import expanduser, abspath, dirname, join, exists
 import sys, re
 from argparse import ArgumentParser
 from _py2with3compatibility import run_cmd, quote
+from github_utils import api_rate_limits
 
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
@@ -63,7 +64,9 @@ if exists(join(repo_dir, "repo_config.py")):
     sys.path.insert(0, repo_dir)
 import repo_config
 
+print("Using GH token from: ",repo_config.GH_TOKEN)
 gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
+api_rate_limits(gh)
 gh_repo = gh.get_repo(args.repo)
 print("Authentication succeeded to " + str(gh_repo))
 cmd = (

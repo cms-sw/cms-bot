@@ -37,7 +37,7 @@ except:
     ixs = find_indexes("cmssdt-*")
     for k in ixs:
         for idx in ixs[k]:
-            m = re.match("^(.+)[_-]([\d]+)$", idx)
+            m = re.match(r"^(.+)[_-]([\d]+)$", idx)
             if m:
                 ix = m.group(1)
                 wk = m.group(2)

@@ -43,5 +43,6 @@ kinit ${KPRINCIPAL} -k -t ${KTAB}
 if $K5COPY ; then
   ssh -n $SSH_OPTS ${TARGET} "${SCHEDD_ENV}K5FILE=\$(klist | grep 'FILE:' | sed 's|.*FILE:||') && rsync -v -e 'condor_ssh_to_job' \$K5FILE $GRID_ID:~/${REMOTE_USER}.cc"
 fi
-ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}condor_ssh_to_job -auto-retry $GRID_ID '${JAVA} -jar ${WORKSPACE}/slave.jar -jar-cache ${WORKSPACE}/tmp'" || true
+JAVA_OPTS="-Djdk.reflect.useDirectMethodHandle=false   --add-opens java.base/java.lang=ALL-UNNAMED   --add-opens java.base/java.lang.reflect=ALL-UNNAMED"
+ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}condor_ssh_to_job -auto-retry $GRID_ID '${JAVA} ${JAVA_OPTS} -jar ${WORKSPACE}/slave.jar -jar-cache ${WORKSPACE}/tmp'" || true
 ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}condor_ssh_to_job -auto-retry $GRID_ID 'rm -rf .condor_ssh_to_job_*'"

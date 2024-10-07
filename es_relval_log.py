@@ -73,14 +73,14 @@ def es_parse_jobreport(payload, logFile):
                 for i in metrics_list:
                     name = i.get("Name")
                     val = i.get("Value")
-                    if not val:
+                    if (not val) or ("nan" in val):
                         val = ""
                     payload[name] = val
             elif j.get("Metric") == "Timing":
                 metrics_list = j.iter()
                 for i in metrics_list:
                     val = i.get("Value")
-                    if not val:
+                    if (not val) or ("nan" in val):
                         val = ""
                     elif "e" in val:
                         val = float(val)

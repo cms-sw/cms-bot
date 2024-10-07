@@ -54,33 +54,33 @@ def es_parse_jobreport(payload, logFile):
     root = tree.getroot()
     events_read = []
     total_events = []
-    for i in root.getiterator("EventsRead"):
+    for i in root.iter("EventsRead"):
         events_read.append(i.text)
-    for i in root.getiterator("TotalEvents"):
+    for i in root.iter("TotalEvents"):
         total_events.append(i.text)
     if events_read:
         payload["events_read"] = max(events_read)
     if total_events:
         payload["total_events"] = max(total_events)
-    reports_p = root.getiterator("PerformanceReport")
+    reports_p = root.iter("PerformanceReport")
     for i in reports_p:
-        summaries = i.getiterator("PerformanceSummary")
+        summaries = i.iter("PerformanceSummary")
         for j in summaries:
             if j.get("Metric") == "SystemMemory" or j.get("Metric") == "StorageStatistics":
                 continue
             if j.get("Metric") == "ApplicationMemory":
-                metrics_list = j.getchildren()
+                metrics_list = j.iter()
                 for i in metrics_list:
                     name = i.get("Name")
                     val = i.get("Value")
-                    if "nan" in val:
+                    if not val:
                         val = ""
                     payload[name] = val
             elif j.get("Metric") == "Timing":
-                metrics_list = j.getchildren()
+                metrics_list = j.iter()
                 for i in metrics_list:
                     val = i.get("Value")
-                    if "nan" in val:
+                    if not val:
                         val = ""
                     elif "e" in val:
                         val = float(val)

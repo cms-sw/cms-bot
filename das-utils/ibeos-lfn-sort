@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 MAX_COUNT=20
 IBEOS_FILES=""
 NON_IBEOS_FILES=""

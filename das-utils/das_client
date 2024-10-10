@@ -16,6 +16,7 @@ function get_parent_cmds ()
 }
 
 CMD_NAME=$(basename $0)
+SCRIPT_DIR=$(dirname $0)
 CMD_NAME="dasgoclient"
 LIMIT_RESULTS="NO"
 QUERY=
@@ -89,7 +90,7 @@ else
   fi
 fi
 if [ "$LIMIT_RESULTS" = "YES" ] ; then
-  cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out | ibeos-lfn-sort > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected
+  cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out | ${SCRIPT_DIR}/ibeos-lfn-sort > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected
 else
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out

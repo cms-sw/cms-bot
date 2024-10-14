@@ -188,10 +188,10 @@ def extract_relval_error(release_name, arch, rvItem):
 
         if "End Fatal Exception" in line:
             exception_message.state["state"] = 0
-            return True, "\n".join(exception_message.state["data"])
+            return True, " ".join(exception_message.state["data"])
 
         if exception_message.state["state"] == 1:
-            exception_message.state["data"].append(line)
+            exception_message.state["data"].append(line.replace('"', ""))
 
         return False, None
 
@@ -735,14 +735,9 @@ def search_es(index, **kwargs):
     query = " AND ".join(
         "{0}:{1}".format(k, f'\\"{v}\\"' if isinstance(v, str) else v) for k, v in kwargs.items()
     )
-    # if kwargs.get("workflow", None) == "280.0":
-    #     print(f"Sending query: index cmssdt-{index}-failures, query {query}")
     ret = es_utils.es_query(
         f"cmssdt-{index}-failures", query, start_time=0, end_time=1000 * int(time.time())
     )
-    # if kwargs.get("workflow", None) == "280.0":
-    #     print(ret)
-    #     exit(0)
     return tuple(x["_source"] for x in ret["hits"]["hits"])
 
 

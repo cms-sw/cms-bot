@@ -1,4 +1,18 @@
 #!/bin/bash -ex
+
+function set_jenkins_callback()
+{
+  pushd $WORKSPACE/cache/cms-bot
+    git pull --rebase || git pull --rebase
+    export JENKINS_CALLBACK=$(python3 -c "import cms_static;print(cms_static.get_jenkins('${JENKINS_PREFIX}'))")
+  popd
+}
+
+function jenkins_data()
+{
+  echo "${JENKINS_PAYLOAD}" | sed "s|@STATE@|$1|;s|@JENKINS_CALLBACK@|${JENKINS_CALLBACK}|"
+}
+
 env
 ls -la
 if [ "${_CONDOR_JOB_AD}" != "" ] ; then
@@ -36,6 +50,7 @@ for x in .netrc tnsnames.ora .cms_cond/db.key ; do
 done
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${WORKSPACE}/slave.jar | sed 's| .*||')
 $WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}"
+
 SLAVE_LABELS=$($WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}" | grep '^DATA_SLAVE_LABELS=' | sed 's|^DATA_SLAVE_LABELS=|condor |')
 xcore=${JENKINS_AGENT_CORES}
 [ "${xcore}" = "" ] && xcore=$(nproc)
@@ -45,21 +60,22 @@ elif [ ${xcore} -gt 8 ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} cmsbuild"
 fi
 if [ "X${EXTRA_LABELS}" != "X" ] ; then SLAVE_LABELS="${SLAVE_LABELS} ${EXTRA_LABELS}" ;fi
+set_jenkins_callback
 
 JENKINS_WEBHOOK="${JENKINS_WEBHOOK-https://cmssdt.cern.ch/SDT/cgi-bin/condor_webhook}"
 JOB_ID=$(grep '^ *ClusterId *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g').0
 SCHEDD_NAME=$(grep '^ *GlobalJobId *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s|#.*||;s|"||g')
 TOKEN="$(sha256sum ${AFS_HOME}/private/secrets/github_hook_secret | sed 's| .*||')"
 SIGNATURE=$(echo -n "${JOB_ID}:${WORKSPACE} ${TOKEN}" | sha256sum | sed 's| .*||')
-JENKINS_PAYLOAD='{"jenkins_url":"'${JENKINS_CALLBACK}'","signature":"'${SIGNATURE}'","work_dir":"'${WORKSPACE}'","schedd_name":"'${SCHEDD_NAME}'","condor_job_id":"'${JOB_ID}'","labels":"'${SLAVE_LABELS}'","status":"@STATE@"}'
+JENKINS_PAYLOAD='{"jenkins_url":"@JENKINS_CALLBACK@","signature":"'${SIGNATURE}'","work_dir":"'${WORKSPACE}'","schedd_name":"'${SCHEDD_NAME}'","condor_job_id":"'${JOB_ID}'","labels":"'${SLAVE_LABELS}'","status":"@STATE@"}'
 
 CURL_OPTS='-s -k -f --retry 3 --retry-delay 5 --max-time 30 -X POST'
 if [ ! -f ${LOCAL_DATA}/online ] ; then
-  SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|online|')
+  SEND_DATA=$(jenkins_data online)
   curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
   touch ${LOCAL_DATA}/online
 else
-  SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|reconfigure|')
+  SEND_DATA=$(jenkins_data reconfigure)
   curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
 fi
 
@@ -111,7 +127,8 @@ while true ; do
   elif [ $CTIME -gt ${OFFLINE_NOTICE_TIME} -a "$FORCE_EXIT" = "false" ] ; then
     echo "Sending going to Offline notification"
     FORCE_EXIT=true
-    SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|offline|')
+    set_jenkins_callback
+    SEND_DATA=$(jenkins_data offline)
     curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
     touch ${LOCAL_DATA}/offline
   fi
@@ -127,7 +144,8 @@ echo "Going to shutdown."
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set -x ; fi
 rm -rf ${WORKSPACE}
 if [ ! -f ${WORKSPACE}/.shut-down ] ; then
-  SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|shutdown|')
+  set_jenkins_callback
+  SEND_DATA=$(jenkins_data shutdown)
   curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
 fi
 rm -rf ${WORKSPACE}

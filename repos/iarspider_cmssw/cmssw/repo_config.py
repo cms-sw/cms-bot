@@ -12,7 +12,7 @@ CMSBUILD_USER = "iarspider"
 GH_REPO_ORGANIZATION = basename(dirname(CONFIG_DIR))
 GH_REPO_FULLNAME = "iarspider-cmssw/cmssw"
 CREATE_EXTERNAL_ISSUE = False
-# Jenkins CI server: User default http://CMS_JENKINS_HOST.cern.ch:8080/cms-jenkins
+# Jenkins CI server: User default http://cms-jenkins.cern.ch:8080/cms-jenkins
 JENKINS_SERVER = "http://localhost:8080/cms-jenkins"
 # GH Web hook pass phrase. This is encrypeted used bot keys.
 # GITHUB_WEBHOOK_TOKEN = ""

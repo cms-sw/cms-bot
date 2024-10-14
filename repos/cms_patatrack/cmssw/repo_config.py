@@ -11,7 +11,7 @@ CMSBUILD_USER = "cmsbot"
 GH_REPO_ORGANIZATION = "cms-patatrack"
 GH_REPO_FULLNAME = "cms-patatrack/cmssw"
 CREATE_EXTERNAL_ISSUE = False
-# Jenkins CI server: User default http://CMS_JENKINS_HOST.cern.ch:8080/cms-jenkins
+# Jenkins CI server: User default http://cms-jenkins.cern.ch:8080/cms-jenkins
 JENKINS_SERVER = get_jenkins("cms-jenkins")
 # GH Web hook pass phrase. This is encrypeted used bot keys.
 GITHUB_WEBHOOK_TOKEN = """U2FsdGVkX19C9pvh4GUbgDDUy0G9tSJZu7pFoQ0QodGMQtb/h4AFOKPsBxKlORAz

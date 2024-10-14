@@ -1,4 +1,4 @@
-from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER, DMWM_JENKINS_HOST
+from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER, get_jenkins
 from os.path import basename, dirname, abspath
 
 # GH read/write token: Use default ~/.github-token-cmsbot
@@ -11,8 +11,8 @@ CMSBUILD_USER = "cmsdmwmbot"
 GH_REPO_ORGANIZATION = basename(dirname(CONFIG_DIR))
 GH_REPO_FULLNAME = "dmwm/CRABServer"
 CREATE_EXTERNAL_ISSUE = False
-# Jenkins CI server: User default http://CMS_JENKINS_HOST.cern.ch:8080/cms-jenkins
-JENKINS_SERVER = "http://%s.cern.ch:8080/dmwm-jenkins" % DMWM_JENKINS_HOST
+# Jenkins CI server: User default http://cms-jenkins.cern.ch:8080/cms-jenkins
+JENKINS_SERVER = get_jenkins("dmwm-jenkins")
 # Set to True if you want bot to add build/test labels to your repo
 ADD_LABELS = False
 # Set to True if you want bot to add GH webhooks. cmsbot needs admin rights

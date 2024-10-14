@@ -300,6 +300,17 @@ def extract_relval_error(release_name, arch, rvItem):
                 logURL = f"https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/raw/{arch}/{release_name}/pyRelValMatrixLogs/run/{rvItem['id']}_{rvItem['name']}/step{i + 1}_{rvItem['name']}.log"
 
                 utlDataURL = f"https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/raw_read_config/{arch}/{release_name}/pyRelValMatrixLogs/run/{rvItem['id']}_{rvItem['name']}/"
+                if exitcodeName == "TimeOut":
+                    return LogEntry(
+                        name=f"Relval {rvItem['id']} step {i + 1}",
+                        url=webURL,
+                        data={
+                            "exit_code_name": "TimeOut",
+                            "workflow": rvItem["id"],
+                            "step": i,
+                            "details": f"TimeOut in step {i}",
+                        },
+                    )
 
                 if rvStep["status"] != "DAS_ERROR":
                     utlDataURL = utlDataURL + f"step{i + 1}_{rvItem['name']}.log"

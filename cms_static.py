@@ -12,9 +12,9 @@ CMSBUILD_GH_USER = "cmsbuild"
 CMSBOT_IGNORE_MSG = "<cmsbot>\\s*</cmsbot>"
 CMSBOT_NO_NOTIFY_MSG = "<notify>\\s*</notify>"
 CMSBOT_TECHNICAL_MSG = "cms-bot internal usage"
-JENKINS_HOST = cmsjenkins04
-CMS_JENKINS_HOST = cmsjenkins02
-DMWM_JENKINS_HOST = cmsjenkins11
+JENKINS_HOST = "cmsjenkins04"
+CMS_JENKINS_HOST = "cmsjenkins02"
+DMWM_JENKINS_HOST = "cmsjenkins11"
 VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cmssw",
     "cmsdist",
@@ -32,3 +32,11 @@ VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cms-docker",
     "siteconf",
 ]
+
+def get_jenkins(prefix):
+  jhost = JENKINS_HOST
+  if prefix=="cms-jenkins":
+    jhost = CMS_JENKINS_HOST
+  elif prefix=="dmwm-jenkins":
+    jhost = DMWM_JENKINS_HOST
+  return "http://%s.cern.ch:8080/%s" % (jhost, prefix)

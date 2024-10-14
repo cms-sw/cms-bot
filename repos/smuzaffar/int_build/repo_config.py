@@ -1,4 +1,4 @@
-from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER
+from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER, CMS_JENKINS_HOST
 from os.path import basename, dirname, abspath
 
 GH_TOKEN = "~/.github-token-cmsbot"
@@ -8,7 +8,7 @@ CMSBUILD_USER = "cmsbot"
 GH_REPO_ORGANIZATION = basename(dirname(CONFIG_DIR))
 GH_REPO_FULLNAME = "smuzaffar/int-build"
 CREATE_EXTERNAL_ISSUE = False
-JENKINS_SERVER = "http://cmsjenkins02.cern.ch:8080/cms-jenkins"
+JENKINS_SERVER = "http://%s.cern.ch:8080/cms-jenkins" % CMS_JENKINS_HOST
 GITHUB_WEBHOOK_TOKEN = "U2FsdGVkX1+GEHdp/Cmu73+ctvrzSGXc9OvL+8bZyjOe6ZPkqr/GIPgpJHiEp+hR"
 ADD_LABELS = False
 ADD_WEB_HOOK = False

@@ -19,9 +19,6 @@ if "ghprbPullId" in os.environ:
     issueID = os.environ["ghprbPullId"]
 if "BUILD_URL" in os.environ:
     url = os.environ["BUILD_URL"]
-    url = url.replace("cmsjenkins04.cern.ch:443", "cmssdt.cern.ch")
-    url = url.replace("cmsjenkins02.cern.ch:443", "cmssdt.cern.ch")
-    url = url.replace("cmsjenkins11.cern.ch:443", "cmssdt.cern.ch")
     message += "\nSee %s for details" % url
 
 gh = Github(os.environ["DMWMBOT_TOKEN"])

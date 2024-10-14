@@ -1,4 +1,4 @@
-from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER
+from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER, JENKINS_HOST
 from os.path import dirname, abspath
 
 GH_TOKEN = "~/.github-token"
@@ -9,7 +9,7 @@ GH_REPO_ORGANIZATION = GH_CMSSW_ORGANIZATION
 CREATE_EXTERNAL_ISSUE = True
 CHECK_DPG_POG = True
 NONBLOCKING_LABELS = True
-JENKINS_SERVER = "http://cmsjenkins04.cern.ch:8080/jenkins"
+JENKINS_SERVER = "http://%s.cern.ch:8080/jenkins" % JENKINS_HOST
 IGNORE_ISSUES = {
     GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO: [12368],
 }

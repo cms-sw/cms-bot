@@ -1,4 +1,4 @@
-from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER
+from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER, CMS_JENKINS_HOST
 from os.path import basename, dirname, abspath
 
 GH_TOKEN = "~/.github-token-cmsbot"
@@ -9,7 +9,7 @@ GH_REPO_ORGANIZATION = "HcalConditionsAutomatization"
 GH_REPO_NAME = "ConditionsValidation"
 GH_REPO_FULLNAME = GH_REPO_ORGANIZATION + "/" + GH_REPO_NAME
 CREATE_EXTERNAL_ISSUE = False
-JENKINS_SERVER = "http://cmsjenkins02.cern.ch:8080/cms-jenkins"
+JENKINS_SERVER = "http://%s.cern.ch:8080/cms-jenkins" % CMS_JENKINS_HOST
 ADD_LABELS = False
 ADD_WEB_HOOK = True
 JENKINS_UPLOAD_DIRECTORY = "HcalConditionsAutomatization/ConditionsValidation"

@@ -33,10 +33,11 @@ VALID_CMS_SW_REPOS_FOR_TESTS = [
     "siteconf",
 ]
 
+
 def get_jenkins(prefix):
-  jhost = JENKINS_HOST
-  if prefix=="cms-jenkins":
-    jhost = CMS_JENKINS_HOST
-  elif prefix=="dmwm-jenkins":
-    jhost = DMWM_JENKINS_HOST
-  return "http://%s.cern.ch:8080/%s" % (jhost, prefix)
+    jhost = JENKINS_HOST
+    if prefix == "cms-jenkins":
+        jhost = CMS_JENKINS_HOST
+    elif prefix == "dmwm-jenkins":
+        jhost = DMWM_JENKINS_HOST
+    return "http://%s.cern.ch:8080/%s" % (jhost, prefix)

@@ -182,7 +182,7 @@ def es_parse_log(logFile):
     if exception:
         payload["exception"] = exception
     if errors:
-        payload["errors"] =  errors
+        payload["errors"] = errors
     payload["error_count"] = error_count
     try:
         payload = es_parse_jobreport(payload, logFile)

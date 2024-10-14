@@ -27,9 +27,9 @@ fi
 K5COPY=false
 if [ "X$SCHEDD_NAME" != "X" ] ; then
   if [ $(ssh -n $SSH_OPTS ${TARGET} echo \$SHELL 2>&1 | grep /tcsh |wc -l) -gt 0 ] ; then
-    SCHEDD_ENV="setenv _CONDOR_SCHEDD_HOST $SCHEDD_NAME && setenv _CONDOR_CREDD_HOST $SCHEDD_NAME && setenv SINGULARITY_BINDPATH /pool && "
+    SCHEDD_ENV="setenv _CONDOR_SCHEDD_HOST $SCHEDD_NAME && setenv _CONDOR_CREDD_HOST $SCHEDD_NAME && setenv SINGULARITY_BINDPATH /pool && kinit -R && "
   else
-    SCHEDD_ENV="export _CONDOR_SCHEDD_HOST=$SCHEDD_NAME && export _CONDOR_CREDD_HOST=$SCHEDD_NAME && export SINGULARITY_BINDPATH=/pool && "
+    SCHEDD_ENV="export _CONDOR_SCHEDD_HOST=$SCHEDD_NAME && export _CONDOR_CREDD_HOST=$SCHEDD_NAME && export SINGULARITY_BINDPATH=/pool && kinit -R && "
     K5COPY=true
   fi
 fi

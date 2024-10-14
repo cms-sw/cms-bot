@@ -1,4 +1,4 @@
-from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER, CMS_JENKINS_HOST
+from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER, get_jenkins
 from os.path import basename, dirname, abspath
 
 GH_TOKEN = "~/.github-token"
@@ -9,7 +9,7 @@ GH_REPO_ORGANIZATION = "EcalLaserValidation"
 GH_REPO_NAME = "HLT_EcalLaserValidation"
 GH_REPO_FULLNAME = GH_REPO_ORGANIZATION + "/" + GH_REPO_NAME
 CREATE_EXTERNAL_ISSUE = False
-JENKINS_SERVER = "http://%s.cern.ch:8080/cms-jenkins" % CMS_JENKINS_HOST
+JENKINS_SERVER = get_jenkins("cms-jenkins")
 GITHUB_WEBHOOK_TOKEN = "U2FsdGVkX18OTa0HlxmA6uQ9oimETZqECqGDvkqQsEW/7jod1rl8AF1GnmAu0kGt"
 # GITHUB_WEBHOOK_TOKEN='U2FsdGVkX18uyTkiQtIOYUfVj2PQLV34u5hQAbfNhl8='
 ADD_LABELS = False

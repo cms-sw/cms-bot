@@ -66,7 +66,7 @@ pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
     echo "${lfn}" >> lfns.txt
   done
   CNT=1
-  for lfn in $(cat lfns.txt | grep /store/ | sort | uniq) ; do
+  for lfn in $(grep /store/ lfns.txt | sed 's|/user/cmsbuild/store/|/|;s|^.*/store/|/store/|' | sort | uniq) ; do
     echo "LFN=${lfn}" > $WORKSPACE/lfn-to-ibeos-${CNT}.prop
     let CNT=${CNT}+1
   done

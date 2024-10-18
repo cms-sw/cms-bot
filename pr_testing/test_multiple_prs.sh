@@ -44,6 +44,37 @@ function get_pr_relval_args() {
   echo "${WF_ARGS}"
 }
 
+# Function to extract filenames by headername and append to indirectly-changed-files
+function extract_filenames() {
+  local headername="$1"
+  local input_file="./etc/dependencies/usedby.out"
+  local output_file="$WORKSPACE/indirectly-changed-files"
+  [ ! -e $output_file ] && touch $output_file
+
+  # Extract lines starting with headername, split them, and append each filename to the temp file
+  grep "^$headername" "$input_file" | while read -r line; do
+    # Split the line into an array
+    IFS=' ' read -r -a array <<< "$line"
+
+    # Loop through each element after the first (which is the headername)
+    for filename in "${array[@]:1}"; do
+      echo "$filename" >> "$output_file"
+    done
+  done
+}
+
+# Function to get indirectly changed files
+function process_changed_files() {
+  # Iterate over each line in $WORKSPACE/changed-files
+  while IFS= read -r headername; do
+    # Call the function to extract filenames and append them atomically
+    extract_filenames "$headername"
+  done < "$WORKSPACE/changed-files"
+  local temp_file=$(mktemp)
+  sort -u $WORKSPACE/changed-files $WORKSPACE/indirectly-changed-files > $temp_file
+  mv $temp_file $WORKSPACE/changed-files
+}
+
 # Constants
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
@@ -825,7 +856,6 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   fi
 
   git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
-
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
     echo "There was an issue with git-cms-merge-topic you can see the log here: ${PR_RESULT_URL}/git-merge-result" > ${RESULTS_DIR}/10-report.res
@@ -895,57 +925,6 @@ $CMS_BOT_DIR/report-pull-request-results MERGE_COMMITS --recent-merges $RECENT_C
 # Don't do the following if we are only testing CMSDIST PR
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   git log --oneline --merges ${CMSSW_VERSION}..
-fi
-
-# #############################################
-# test compilation with Clang
-# ############################################
-echo 'test clang compilation'
-
-NEED_CLANG_TEST=false
-if cat $CONFIG_MAP | grep $CMSSW_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARCH=$ARCHITECTURE; then
-  NEED_CLANG_TEST=true
-fi
-
-if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_PR" != X -a "$SKIP_STATIC_CHECKS" = "false" ]; then
-  #first, add the command to the log
-  CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j ${NCPU2} COMPILER='llvm compile'"
-  CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes"
-  echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
-
-  (eval $CLANG_CMD && echo 'ALL_OK') >>$WORKSPACE/buildClang.log 2>&1 || true
-  (eval ${ANALOG_CMD})               >>$WORKSPACE/buildClang.log 2>&1 || true
-
-  TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
-  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
-  get_compilation_warnings $WORKSPACE/buildClang.log > $WORKSPACE/all-warnings-clang.log
-  for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log) ; do
-    echo $i >> $WORKSPACE/clang-new-warnings.log
-    grep ": warning: " $WORKSPACE/all-warnings-clang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
-  done
-  if [ -e $WORKSPACE/clang-new-warnings.log ]  ; then
-    echo 'CLANG_NEW_WARNINGS;ERROR,Clang Warnings to fix,See Log,clang-new-warnings.log' >> ${RESULTS_DIR}/clang.txt
-    if $IS_DEV_BRANCH && [ $(echo "$IGNORE_BOT_TESTS" | tr ',' '\n' | grep '^CLANG-WARNINGS$' | wc -l) -eq 0 ] ; then
-      RUN_TESTS=false
-      ALL_OK=false
-      CLANG_BUILD_OK=false
-    fi
-  fi
-
-  if [ -d ${BUILD_LOG_DIR}/html ] ; then
-    mv ${BUILD_LOG_DIR}/html $WORKSPACE/clang-logs
-    echo 'CLANG_LOG;OK,Clang warnings summary,See Log,clang-logs' >> ${RESULTS_DIR}/clang.txt
-  fi
-  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
-    echo "Errors when testing compilation with clang"
-    echo 'CLANG_COMPILATION_RESULTS;ERROR,Clang Compilation,See Log,buildClang.log' >> ${RESULTS_DIR}/clang.txt
-    RUN_TESTS=false
-    ALL_OK=false
-    CLANG_BUILD_OK=false
-  else
-    echo "the clang compilation had no errors/warnings!!"
-    echo 'CLANG_COMPILATION_RESULTS;OK,Clang Compilation,See Log,buildClang.log' >> ${RESULTS_DIR}/clang.txt
-  fi
 fi
 
 #Do QA checks
@@ -1141,6 +1120,16 @@ GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
 
 rm -f $WORKSPACE/deprecated-warnings.log
 get_compilation_warnings $WORKSPACE/build.log > $WORKSPACE/all-warnings.log
+
+pushd ..
+scram b echo_SCRAM_TOOL_HOME
+test -e config/SCRAM/findDependencies.py
+SCRAM_TOOL_HOME=`scram b echo_SCRAM_TOOL_HOME 2>/dev/null | tail -1 | cut -d' ' -f3`
+mkdir -p etc/dependencies
+SCRAM_TOOL_HOME=$SCRAM_TOOL_HOME ./config/SCRAM/findDependencies.py -rel `pwd` -arch ${SCRAM_ARCH}
+process_changed_files
+popd
+
 for i in $(get_warnings_files $WORKSPACE/all-warnings.log) ; do
   echo $i > $WORKSPACE/warning.log
   grep ": warning: " $WORKSPACE/all-warnings.log | grep "/$i" >> $WORKSPACE/warning.log
@@ -1166,7 +1155,6 @@ if [ -e $WORKSPACE/deprecated-warnings.log ] ; then
   echo 'BUILD_DEPRECATED_WARNINGS;ERROR,CMS Deprecated Warnings,See Log,deprecated-warnings.log' >> ${RESULTS_DIR}/buildrules.txt
   echo "**CMS deprecated warnings**: $(cat ${WORKSPACE}/deprecated-warnings.log | grep 'Wdeprecated-declarations' | wc -l) CMS deprecated warnings found, see [summary page](${PR_RESULT_URL}/deprecated-warnings.log) for details." >> ${RESULTS_DIR}/09-report.res
 fi
-
 BUILD_LOG_RES="ERROR"
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"
@@ -1199,6 +1187,57 @@ else
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_DIR}/build.txt
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
+
+# #############################################
+# test compilation with Clang
+# ############################################
+echo 'test clang compilation'
+
+NEED_CLANG_TEST=false
+if cat $CONFIG_MAP | grep $CMSSW_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARCH=$ARCHITECTURE; then
+  NEED_CLANG_TEST=true
+fi
+
+if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_PR" != X -a "$SKIP_STATIC_CHECKS" = "false" ]; then
+  #first, add the command to the log
+  CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j ${NCPU2} COMPILER='llvm compile'"
+  CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes"
+  echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
+
+  (eval $CLANG_CMD && echo 'ALL_OK') >>$WORKSPACE/buildClang.log 2>&1 || true
+  (eval ${ANALOG_CMD})               >>$WORKSPACE/buildClang.log 2>&1 || true
+
+  TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
+  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
+  get_compilation_warnings $WORKSPACE/buildClang.log > $WORKSPACE/all-warnings-clang.log
+  for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log) ; do
+    echo $i >> $WORKSPACE/clang-new-warnings.log
+    grep ": warning: " $WORKSPACE/all-warnings-clang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
+  done
+  if [ -e $WORKSPACE/clang-new-warnings.log ]  ; then
+    echo 'CLANG_NEW_WARNINGS;ERROR,Clang Warnings to fix,See Log,clang-new-warnings.log' >> ${RESULTS_DIR}/clang.txt
+    if $IS_DEV_BRANCH && [ $(echo "$IGNORE_BOT_TESTS" | tr ',' '\n' | grep '^CLANG-WARNINGS$' | wc -l) -eq 0 ] ; then
+      RUN_TESTS=false
+      ALL_OK=false
+      CLANG_BUILD_OK=false
+    fi
+  fi
+
+  if [ -d ${BUILD_LOG_DIR}/html ] ; then
+    mv ${BUILD_LOG_DIR}/html $WORKSPACE/clang-logs
+    echo 'CLANG_LOG;OK,Clang warnings summary,See Log,clang-logs' >> ${RESULTS_DIR}/clang.txt
+  fi
+  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
+    echo "Errors when testing compilation with clang"
+    echo 'CLANG_COMPILATION_RESULTS;ERROR,Clang Compilation,See Log,buildClang.log' >> ${RESULTS_DIR}/clang.txt
+    RUN_TESTS=false
+    ALL_OK=false
+    CLANG_BUILD_OK=false
+  else
+    echo "the clang compilation had no errors/warnings!!"
+    echo 'CLANG_COMPILATION_RESULTS;OK,Clang Compilation,See Log,buildClang.log' >> ${RESULTS_DIR}/clang.txt
+  fi
+fi
 
 DO_PROFILING=false
 DO_GPU_TESTS=false

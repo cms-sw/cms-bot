@@ -22,6 +22,14 @@
       "start_date": 1700524800
     }
   ],
+  "AndreaBellora": [
+    {
+      "category": [
+        "proton-pog"
+      ],
+      "start_date": 1729036800
+    }
+  ],
   "ChrisMisan": [
     {
       "category": [
@@ -922,6 +930,14 @@
       "start_date": 1550793600
     }
   ],
+  "forthommel": [
+    {
+      "category": [
+        "proton-pog"
+      ],
+      "start_date": 1729036800
+    }
+  ],
   "francescobrivio": [
     {
       "category": [
@@ -1430,6 +1446,7 @@
       "category": [
         "proton-pog"
       ],
+      "end_date": 1729036800,
       "start_date": 1632787200
     }
   ],
@@ -1673,6 +1690,7 @@
       "category": [
         "proton-pog"
       ],
+      "end_date": 1729036800,
       "start_date": 1632787200
     }
   ],

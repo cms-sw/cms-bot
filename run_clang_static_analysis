@@ -13,9 +13,9 @@ rm -rf .git
 cp -pv Utilities/StaticAnalyzers/scripts/*  $LOCALRT/tmp
 cd $LOCALRT/tmp
 chmod +x *.py *.sh
-./run_class_dumper.sh $J
+bash -x ./run_class_dumper.sh $J
 cp -pv $LOCALRT/tmp/bloom.bin $LOCALRT/src/Utilities/StaticAnalyzers/scripts/bloom.bin
-./run_class_checker.sh $J
+bash -x ./run_class_checker.sh $J
 
 mv $LOCALRT/llvm-analysis/* $WORKSPACE/llvm-analysis
 chmod -R a+r $WORKSPACE/llvm-analysis

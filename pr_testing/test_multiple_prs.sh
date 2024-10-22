@@ -1174,6 +1174,7 @@ get_compilation_warnings $WORKSPACE/build.log > $WORKSPACE/all-warnings.log
 git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
 pushd ..
 SCRAM_TOOL_HOME=`scram b echo_SCRAM_TOOL_HOME 2>/dev/null | tail -1 | cut -d' ' -f3`
+mkdir -p etc/dependencies
 SCRAM_TOOL_HOME=$SCRAM_TOOL_HOME ./config/SCRAM/findDependencies.py -rel `pwd` -arch ${SCRAM_ARCH}
 process_changed_files
 popd

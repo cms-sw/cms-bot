@@ -62,7 +62,7 @@ function extract_filenames() {
   done
 
   # Remove duplicates in temp file and append to changed-files.txt atomically
-  sort -u "$temp_file" >> changed-files.txt
+  sort -u "$temp_file" >> $WORKSPACE/changed-files.txt
   rm "$temp_file"  # Clean up temp file
 }
 

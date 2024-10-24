@@ -8,8 +8,16 @@ report() {
        echo "FAILED" > $WORKSPACE/crab/statusfile
    fi
 }
+
+#Checkout a package
 git cms-addpkg FWCore/Version
+#Added test python module and script to make sure it is part of card sandbox
+mkdir -p ${CMSSW_BASE}/src/FWCore/Version/python ${CMSSW_BASE}/src/FWCore/Version/scripts
+echo 'CMSBOT_CRAB_TEST="OK"' > ${CMSSW_BASE}/src/FWCore/Version/python/cmsbot_crab_test.py
+echo -e '#!/bin/bash\necho OK' > ${CMSSW_BASE}/src/FWCore/Version/scripts/cmsbot_crab_test.sh
+chmod +x ${CMSSW_BASE}/src/FWCore/Version/scripts/cmsbot_crab_test.sh
 scram build -j $(nproc)
+
 [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE

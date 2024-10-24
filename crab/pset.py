@@ -11,7 +11,7 @@ def cmsbot_crab_test():
   from subprocess import getstatusoutput
   from FWCore.Version.cmsbot_crab_test import CMSBOT_CRAB_TEST
   cmsbot_exit, cmsbot_out = getstatusoutput("cmsbot_crab_test.sh")
-  if e or (o != "OK") or (CMSBOT_CRAB_TEST != "OK"):
+  if cmsbot_exit or (cmsbot_out != "OK") or (CMSBOT_CRAB_TEST != "OK"):
     sys.exit(1)
 
 cmsbot_crab_test()

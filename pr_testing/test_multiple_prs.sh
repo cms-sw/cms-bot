@@ -44,6 +44,37 @@ function get_pr_relval_args() {
   echo "${WF_ARGS}"
 }
 
+# Function to extract filenames by headername and append to changed-files.txt atomically
+function extract_filenames() {
+  local headername="$1"
+  local input_file="./etc/dependencies/usedby.out"
+  local temp_file=$(mktemp) # Create a temporary file for atomic update
+  
+  # Extract lines starting with headername, split them, and append each filename to the temp file
+  grep "^$headername" "$input_file" | while read -r line; do
+    # Split the line into an array
+    IFS=' ' read -r -a array <<< "$line"
+    
+    # Loop through each element after the first (which is the headername)
+    for filename in "${array[@]:1}"; do
+      echo "$filename" >> "$temp_file"
+    done
+  done
+
+  # Remove duplicates in temp file and append to changed-files.txt atomically
+  sort -u "$temp_file" >> $WORKSPACE/changed-files.txt
+  rm "$temp_file"  # Clean up temp file
+}
+
+# Function to process each line in $WORKSPACE/changed-files
+function process_changed_files() {
+  # Iterate over each line in $WORKSPACE/changed-files
+  while IFS= read -r headername; do
+    # Call the function to extract filenames and append them atomically
+    extract_filenames "$headername"
+  done < "$WORKSPACE/changed_files"
+}
+
 # Constants
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
@@ -824,8 +855,6 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
     exit 0
   fi
 
-  git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
-
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
     echo "There was an issue with git-cms-merge-topic you can see the log here: ${PR_RESULT_URL}/git-merge-result" > ${RESULTS_DIR}/10-report.res
@@ -1141,6 +1170,15 @@ GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
 
 rm -f $WORKSPACE/deprecated-warnings.log
 get_compilation_warnings $WORKSPACE/build.log > $WORKSPACE/all-warnings.log
+
+git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
+pushd ..
+SCRAM_TOOL_HOME=`scram b echo_SCRAM_TOOL_HOME 2>/dev/null | tail -1 | cut -d' ' -f3`
+mkdir -p etc/dependencies
+SCRAM_TOOL_HOME=$SCRAM_TOOL_HOME ./config/SCRAM/findDependencies.py -rel `pwd` -arch ${SCRAM_ARCH}
+process_changed_files
+popd
+
 for i in $(get_warnings_files $WORKSPACE/all-warnings.log) ; do
   echo $i > $WORKSPACE/warning.log
   grep ": warning: " $WORKSPACE/all-warnings.log | grep "/$i" >> $WORKSPACE/warning.log

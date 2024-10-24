@@ -8,7 +8,8 @@ report() {
        echo "FAILED" > $WORKSPACE/crab/statusfile
    fi
 }
-
+git cms-addpkg FWCore/Version
+scram build -j $(nproc)
 [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE

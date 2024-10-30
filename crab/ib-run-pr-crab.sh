@@ -29,7 +29,6 @@ cd $RELEASE_FORMAT
 eval `scram run -sh`
 
 #Checkout a package
-find src -name '*'
 git cms-addpkg FWCore/Version
 #Added test python module and script to make sure it is part of card sandbox
 mkdir -p ${CMSSW_BASE}/src/FWCore/Version/python ${CMSSW_BASE}/src/FWCore/Version/scripts
@@ -37,7 +36,6 @@ echo 'CMSBOT_CRAB_TEST="OK"' > ${CMSSW_BASE}/src/FWCore/Version/python/cmsbot_cr
 echo -e '#!/bin/bash\necho OK' > ${CMSSW_BASE}/src/FWCore/Version/scripts/cmsbot_crab_test.sh
 chmod +x ${CMSSW_BASE}/src/FWCore/Version/scripts/cmsbot_crab_test.sh
 scram build -j $(nproc)
-
 eval `scram run -sh`
 
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)

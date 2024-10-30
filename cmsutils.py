@@ -149,7 +149,8 @@ def epoch2week(epoch_sec, week_offset=4):
 
 def cmsswIB2Week(release, week_offset=4):
     from datetime import datetime
-    rel_date = "-".join(release.split("_")[-1].split("-")[:-1])+"-1200"
+
+    rel_date = "-".join(release.split("_")[-1].split("-")[:-1]) + "-1200"
     rel_sec = int(datetime.strptime(rel_date, "%Y-%m-%d-%H%M").strftime("%s"))
     return (epoch2week(rel_sec, week_offset), rel_sec)
 

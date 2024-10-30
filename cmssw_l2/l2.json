@@ -749,6 +749,14 @@
       "start_date": 1377043200
     }
   ],
+  "dickychant": [
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1730246400
+    }
+  ],
   "diguida": [
     {
       "category": [
@@ -1304,6 +1312,7 @@
       "category": [
         "ppd"
       ],
+      "end_date": 1730246400,
       "start_date": 1686182400
     }
   ],
@@ -1470,7 +1479,14 @@
         "pdmv",
         "tracking-pog"
       ],
+      "end_date": 1730246400,
       "start_date": 1718236800
+    },
+    {
+      "category": [
+        "tracking-pog"
+      ],
+      "start_date": 1730246400
     }
   ],
   "ktf": [
@@ -1890,6 +1906,7 @@
       "category": [
         "dqm"
       ],
+      "end_date": 1730246400,
       "start_date": 1683676800
     }
   ],
@@ -2152,11 +2169,20 @@
       "start_date": 1618272000
     }
   ],
+  "rseidita": [
+    {
+      "category": [
+        "dqm"
+      ],
+      "start_date": 1730246400
+    }
+  ],
   "rvenditti": [
     {
       "category": [
         "dqm"
       ],
+      "end_date": 1730246400,
       "start_date": 1611532800
     }
   ],
@@ -2386,6 +2412,7 @@
       "category": [
         "pdmv"
       ],
+      "end_date": 1730246400,
       "start_date": 1661904000
     }
   ],
@@ -2418,6 +2445,7 @@
       "category": [
         "dqm"
       ],
+      "end_date": 1730246400,
       "start_date": 1662595200
     }
   ],
@@ -2459,6 +2487,7 @@
       "category": [
         "dqm"
       ],
+      "end_date": 1730246400,
       "start_date": 1683676800
     }
   ],

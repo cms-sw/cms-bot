@@ -29,6 +29,7 @@ cd $RELEASE_FORMAT
 eval `scram run -sh`
 
 #Checkout a package
+find src -name '*'
 git cms-addpkg FWCore/Version
 #Added test python module and script to make sure it is part of card sandbox
 mkdir -p ${CMSSW_BASE}/src/FWCore/Version/python ${CMSSW_BASE}/src/FWCore/Version/scripts

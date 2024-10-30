@@ -48,7 +48,7 @@ do
     echo "CRAB is sourced from:"
     which crab-${CRABCLIENT_TYPE}
 
-    export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
+    export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${CRABCLIENT_TYPE}_${BUILD_ID}"
     rm -rf crab_${CRAB_REQUEST}
     crab-${CRABCLIENT_TYPE} submit -c $(dirname $0)/task.py
 

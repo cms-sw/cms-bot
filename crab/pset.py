@@ -5,15 +5,18 @@
 # with command line options: MinBias_8TeV_cfi --conditions auto:startup -s GEN,SIM --datatier GEN-SIM -n 10
 # --relval 9000,300 --eventcontent RAWSIM --io MinBias.io --python MinBias.py --no_exec --fileout minbias.root
 
-#Testing cmsbot crab setup
+
+# Testing cmsbot crab setup
 def cmsbot_crab_test():
-  import sys
-  from subprocess import getstatusoutput
-  from FWCore.Version.cmsbot_crab_test import CMSBOT_CRAB_TEST
-  cmsbot_exit, cmsbot_out = getstatusoutput("cmsbot_crab_test.sh")
-  print("CMSBOT Crab Test:",CMSBOT_CRAB_TEST,cmsbot_exit, cmsbot_out)
-  if cmsbot_exit or (cmsbot_out != "OK") or (CMSBOT_CRAB_TEST != "OK"):
-    sys.exit(1)
+    import sys
+    from subprocess import getstatusoutput
+    from FWCore.Version.cmsbot_crab_test import CMSBOT_CRAB_TEST
+
+    cmsbot_exit, cmsbot_out = getstatusoutput("cmsbot_crab_test.sh")
+    print("CMSBOT Crab Test:", CMSBOT_CRAB_TEST, cmsbot_exit, cmsbot_out)
+    if cmsbot_exit or (cmsbot_out != "OK") or (CMSBOT_CRAB_TEST != "OK"):
+        sys.exit(1)
+
 
 cmsbot_crab_test()
 import FWCore.ParameterSet.Config as cms

@@ -100,7 +100,7 @@ import glob
 import hashlib
 
 documents = []
-for f in glob.glob("%s/upload/*/*/*cpu*.json" % os.getenv("WORKSPACE")):
+for f in glob.glob("%s/upload/*/*/*.json" % os.getenv("WORKSPACE")):
     print(f)
     with open(f, "r") as file:
         dirs = splitall(f)

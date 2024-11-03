@@ -248,11 +248,11 @@
       },
       "javaVersionUpdated": {
         "errorStr": [
-          "Caused: java.io.IOException: Cannot run program",
+          "Caused: java.io.IOException: Cannot run program"
         ],
         "action": "nodeOff",
 	"allJobs": "true"
-      },	    
+      },
       "gridConnection": {
         "errorStr": [
           "Unexpected exception occurred while performing connect-node command"

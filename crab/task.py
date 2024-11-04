@@ -1,6 +1,7 @@
 from CRABClient.UserUtilities import config
 import os, re, time
 
+pset = os.getenv("CMSRUN_PSET", os.path.join(os.path.dirname(__file__), "pset.py"))
 archs = os.environ["SCRAM_ARCH"].split("_")
 osMajorVer = int(re.sub("[a-z]", "", archs[0]))
 
@@ -15,7 +16,7 @@ config.Data.totalUnits = 10
 config.Data.splitting = "EventBased"
 config.Data.publication = False
 
-config.JobType.psetName = os.path.join(os.path.dirname(__file__), "pset.py")
+config.JobType.psetName = pset
 config.JobType.pluginName = "PrivateMC"
 config.JobType.maxJobRuntimeMin = 60
 config.JobType.maxMemoryMB = 2000

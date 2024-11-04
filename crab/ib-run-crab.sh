@@ -34,8 +34,15 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
 fi
 
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
+cmssw_queue=$(echo ${CMSSW_VERSION} | cut -d_ -f1-3)_X
+thisdir=$(dirname $0)
+if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
+  export CMSRUN_PSET=${thisdir}/${cmssw_queue}/pset.py
+else
+  export CMSRUN_PSET=${thisdir}/pset.py
+fi
 voms-proxy-init -voms cms
-crab submit -c $(dirname $0)/task.py
+crab submit -c ${thisdir}/task.py
 rm -rf ${WORKSPACE}/crab
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
 echo "INPROGRESS" > $WORKSPACE/crab/statusfile

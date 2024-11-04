@@ -21,11 +21,13 @@ fi
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
 if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
-x509_proxyfile=x509up_u`id -u`
-export X509_USER_PROXY=$WORKSPACE/${x509_proxyfile}
-#Make sure to delete /tmp/${x509_proxyfile} as dasgoclient prefer to read it instead of $X509_USER_PROXY
-#See https://github.com/dmwm/dasgoclient/issues/37
-[ ! -e /tmp/${x509_proxyfile} ] || rm -f /tmp/${x509_proxyfile}
+if [ "${X509_USER_PROXY}" = "" ] ; then
+  x509_proxyfile=x509up_u`id -u`
+  export X509_USER_PROXY=$WORKSPACE/${x509_proxyfile}
+  #Make sure to delete /tmp/${x509_proxyfile} as dasgoclient prefer to read it instead of $X509_USER_PROXY
+  #See https://github.com/dmwm/dasgoclient/issues/37
+  [ ! -e /tmp/${x509_proxyfile} ] || rm -f /tmp/${x509_proxyfile}
+fi
 XPATH=""
 py3or2_dir="$HOME/bin"
 if [ ! -e ${py3or2_dir} ] ; then

@@ -20,12 +20,15 @@ for (it in jenkins.model.Jenkins.instance.getItem("build-release").builds)
     catch (e) {println "Error: Unable to find workspace"; continue;}
   }
   pfile = wspace+"/properties.kill-build-release-"+it.getNumber();
+  host_obj = it.getBuiltOn();
+  host = host_obj.getLauncher().getCommand().split(" ")[1];
+  if (!host.contains("@")){host=host+"@"+host_obj.getNodeName();}
   println "Creating property file:"+pfile;
   def out = new File(pfile);
   out << "CMSSW_X_Y_Z="+version+"\n";
   out << "ARCHITECTURE="+arch+"\n";
   out << "BUILD_DIR="+ws+"\n";
-  out << "BUILD_HOST="+it.getBuiltOn().getLauncher().getCommand().split(" ")[1]+"\n";
+  out << "BUILD_HOST="+host+"\n";
   out << "DRY_RUN="+dryrun+"\n";
 }
 

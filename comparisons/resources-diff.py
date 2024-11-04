@@ -15,8 +15,8 @@ def diff_from(metrics, data, dest, res):
         dkey = "%s_diff" % metric
         res[dkey] = dmetric
         pdmetric = 0.0
-        if not dest[metric] == 0.0:
-            pdmetric = 100 * dmetric / dest[metric]
+        if not data[metric] == 0.0:
+            pdmetric = 100 * dmetric / data[metric]
         pdkey = "%s_pdiff" % metric
         res[pdkey] = pdmetric
 

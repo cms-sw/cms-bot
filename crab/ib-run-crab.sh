@@ -41,7 +41,11 @@ if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
 else
   export CMSRUN_PSET=${thisdir}/pset.py
 fi
-voms-proxy-init -voms cms || voms-proxy-init
+if [ "${X509_USER_PROXY}" = "" ] ; then
+ voms-proxy-init -voms cms
+fi
+pyver=$(${CMSBOT_PYTHON_CMD} -c 'import sys;print("python%s%s" % (sys.version_info[0],sys.version_info[1]))')
+if [ -e ${thisdir}/${pyver} ] ; then export PYTHONPATH="${thisdir}/${pyver}:${PYTHONPATH}"; fi
 crab submit -c ${thisdir}/task.py
 rm -rf ${WORKSPACE}/crab
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab

@@ -49,8 +49,7 @@ function extract_filenames() {
   local headername="$1"
   local input_file="./etc/dependencies/usedby.out"
   local output_file="$WORKSPACE/indirectly-changed-files"
-  [ ! -e $output_file ] && touch $output_file
-
+  
   # Extract lines starting with headername, split them, and append each filename to the temp file
   grep "^$headername" "$input_file" | while read -r line; do
     # Split the line into an array
@@ -65,6 +64,7 @@ function extract_filenames() {
 
 # Function to get indirectly changed files
 function process_changed_files() {
+  [ -e "$WORKSPACE/indirectly-changed-files" ] || touch "$WORKSPACE/indirectly-changed-files"
   # Iterate over each line in $WORKSPACE/changed-files
   while IFS= read -r headername; do
     # Call the function to extract filenames and append them atomically
@@ -856,6 +856,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   fi
 
   git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
+
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
     echo "There was an issue with git-cms-merge-topic you can see the log here: ${PR_RESULT_URL}/git-merge-result" > ${RESULTS_DIR}/10-report.res

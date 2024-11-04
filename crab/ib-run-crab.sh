@@ -41,7 +41,7 @@ if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
 else
   export CMSRUN_PSET=${thisdir}/pset.py
 fi
-voms-proxy-init -voms cms
+voms-proxy-init -voms cms || voms-proxy-init
 crab submit -c ${thisdir}/task.py
 rm -rf ${WORKSPACE}/crab
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab

@@ -9,8 +9,10 @@ cvmfs_config probe || true
 for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
   ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
 done
-voms-proxy-init -voms cms || true
-voms-proxy-info || true
+if [ "${X509_USER_PROXY}" = "" ] ; then
+  voms-proxy-init -voms cms || true
+  voms-proxy-info || true
+fi
 if [ "\$(systemctl is-system-running 2>/dev/null || true)" = "offline" ] ; then
   if [ "\${DBUS_SESSION_BUS_ADDRESS}" != "" ] ; then
     unset DBUS_SESSION_BUS_ADDRESS

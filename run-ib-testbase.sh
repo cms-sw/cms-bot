@@ -9,7 +9,7 @@ cvmfs_config probe || true
 for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
   ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
 done
-if [ "${X509_USER_PROXY}" = "" ] ; then
+if [ "${X509_USER_PROXY}" = "" -o ! -e "${X509_USER_PROXY}" ] ; then
   voms-proxy-init -voms cms || true
   voms-proxy-info || true
 fi

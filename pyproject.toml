@@ -1,6 +1,7 @@
 [tool.black]
 line-length = 99
 target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py311']
+exclude = 'crab/python26/functools.py'
 
 [tool.pylint.main]
 # Analyse import fallback blocks. This can be used to support both Python 2 and 3

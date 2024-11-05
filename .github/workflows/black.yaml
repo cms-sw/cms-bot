@@ -16,4 +16,4 @@ jobs:
 
     - uses: psf/black@stable
       with:
-        options: "--exclude crab/python26/functools.py --check --diff --verbose -l 99 -t py36 -t py37 -t py38 -t py39 -t py310 -t py311"
+        options: "--check --diff --verbose -l 99 -t py36 -t py37 -t py38 -t py39 -t py310 -t py311"

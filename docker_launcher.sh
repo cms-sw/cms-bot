@@ -21,10 +21,11 @@ fi
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
 if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
-x509_proxyfile=x509up_u`id -u`
-#Make sure to delete /tmp/${x509_proxyfile} as dasgoclient prefer to read it instead of $X509_USER_PROXY
-#See https://github.com/dmwm/dasgoclient/issues/37
-[ ! -e /tmp/${x509_proxyfile} ] || rm -f /tmp/${x509_proxyfile}
+if [ "${X509_USER_PROXY}" = "" ] ; then
+  export X509_USER_PROXY=${WORKSPACE}/x509up_u$(id -u)
+  voms-proxy-init -voms cms -rfc -valid 24:00 || true
+fi
+
 XPATH=""
 py3or2_dir="$HOME/bin"
 if [ ! -e ${py3or2_dir} ] ; then
@@ -92,7 +93,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ -d $HOME/bin ] ; then
     CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "
   fi
-  CMD2RUN="${CMD2RUN}export X509_USER_PROXY=${WORKSPACE}/${x509_proxyfile}; voms-proxy-init -voms cms -rfc -valid 24:00 || true ; voms-proxy-info || true; echo \$HOME; cd $WORKSPACE; echo \$PATH; $@"
+  CMD2RUN="${CMD2RUN}export X509_USER_PROXY=${X509_USER_PROXY}; if [ ! -e ${X509_USER_PROXY} ] ; then voms-proxy-init -voms cms -rfc -valid 24:00 || true ; voms-proxy-info || true; fi; echo \$HOME; cd $WORKSPACE; echo \$PATH; $@"
   if $HAS_DOCKER ; then
     docker pull $DOCKER_IMG
     set +x

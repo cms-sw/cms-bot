@@ -41,11 +41,13 @@ if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
 else
   export CMSRUN_PSET=${thisdir}/pset.py
 fi
-[ "${X509_USER_PROXY}" = "" ] && voms-proxy-init -voms cms
-x509proxy=$(voms-proxy-info -path)
+if [ "${X509_USER_PROXY}" = "" ] ; then
+  voms-proxy-init -voms cms
+  export X509_USER_PROXY=$(voms-proxy-info -path)
+fi
 pyver=$(${CMSBOT_PYTHON_CMD} -c 'import sys;print("python%s%s" % (sys.version_info[0],sys.version_info[1]))')
 if [ -e ${thisdir}/${pyver} ] ; then export PYTHONPATH="${thisdir}/${pyver}:${PYTHONPATH}"; fi
-crab submit --proxy ${x509proxy} -c ${thisdir}/task.py
+crab submit --proxy ${X509_USER_PROXY} -c ${thisdir}/task.py
 rm -rf ${WORKSPACE}/crab
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
 echo "INPROGRESS" > $WORKSPACE/crab/statusfile
@@ -62,7 +64,7 @@ while [ "${GRIDSITE}" = "N/Ayet" ]
 do
   sleep 10
   echo "Gridsite has not been assigned yet!"
-  export GRIDSITE=$(crab status --proxy ${x509proxy} -d ./crab | grep "Grid scheduler - Task Worker:" | cut -d ":" -f2 | cut -d "-" -f1 | tr -d '\t' | tr -d " ")
+  export GRIDSITE=$(crab status --proxy ${X509_USER_PROXY} -d ./crab | grep "Grid scheduler - Task Worker:" | cut -d ":" -f2 | cut -d "-" -f1 | tr -d '\t' | tr -d " ")
 done
 
 # Store information for the monitoring job

@@ -24,10 +24,14 @@ if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
 if [ "${X509_USER_PROXY}" = "" ] ; then
   x509_proxyfile=x509up_u`id -u`
   export X509_USER_PROXY=$WORKSPACE/${x509_proxyfile}
-  voms-proxy-init -voms cms || true
   #Make sure to delete /tmp/${x509_proxyfile} as dasgoclient prefer to read it instead of $X509_USER_PROXY
   #See https://github.com/dmwm/dasgoclient/issues/37
-  [ ! -e /tmp/${x509_proxyfile} ] || rm -f /tmp/${x509_proxyfile}
+  if [ -e /tmp/${x509_proxyfile} ] ; then
+    mv /tmp/${x509_proxyfile} ${X509_USER_PROXY}
+  else
+    rm -f /tmp/${x509_proxyfile}
+    voms-proxy-init -voms cms || true
+  fi
 fi
 XPATH=""
 py3or2_dir="$HOME/bin"

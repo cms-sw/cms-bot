@@ -25,6 +25,7 @@ while true ; do
   sleep 300
 done
 rm -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log
+curl "${GRIDSITE}/job_out.1.0.txt" > $WORKSPACE/testsResults/job_out.log || true
 if [ $(echo "${status}" | grep 'finished' | wc -l) -gt 0 ] ; then
   echo "PASSED" > $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE}
   TEST_PASSED=true

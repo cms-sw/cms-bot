@@ -39,8 +39,10 @@ eval `scram run -sh`
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 CRABCLIENT_TYPES=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' || true)
 [ "${CRABCLIENT_TYPES}" != "" ] || CRABCLIENT_TYPES="prod"
-[ "${X509_USER_PROXY}" = "" ] && voms-proxy-init -voms cms
-x509proxy=$(voms-proxy-info -path)
+if [ "${X509_USER_PROXY}" = "" ] ; then
+  voms-proxy-init -voms cms
+  export X509_USER_PROXY=$(voms-proxy-info -path)
+fi
 for CRABCLIENT_TYPE in ${CRABCLIENT_TYPES}
 do
     # Report PR status
@@ -50,7 +52,7 @@ do
 
     export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${CRABCLIENT_TYPE}_${BUILD_ID}"
     rm -rf crab_${CRAB_REQUEST}
-    crab-${CRABCLIENT_TYPE} submit --proxy ${x509proxy} -c $(dirname $0)/task.py
+    crab-${CRABCLIENT_TYPE} submit --proxy ${X509_USER_PROXY} -c $(dirname $0)/task.py
 
     export ID=$(id -u)
     export TASK_ID=$(grep crab_${CRAB_REQUEST} crab_${CRAB_REQUEST}/.requestcache | sed 's|^V||')
@@ -60,7 +62,7 @@ do
     while [ "${GRIDSITE}" = "" ]
     do
       sleep 10
-      export GRIDSITE=$(curl -s -X GET --cert "${x509proxy}" --key "${x509proxy}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/prod/task?subresource=search&workflow=${TASK_ID}" | grep -o "http.*/${TASK_ID}")
+      export GRIDSITE=$(curl -s -X GET --cert "${X509_USER_PROXY}" --key "${X509_USER_PROXY}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/prod/task?subresource=search&workflow=${TASK_ID}" | grep -o "http.*/${TASK_ID}")
     done
 
     # Store information for the monitoring job

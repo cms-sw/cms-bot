@@ -36,19 +36,16 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   scram project ${CMSSW_VERSION}
   cd $CMSSW_VERSION
   eval `scram run -sh`
-  cd $WORKSPACE/IB
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   export RUNALLSTEPS=1
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   unset RUNALLSTEPS
-  cd $CMSSW_VERSION
   eval `scram unsetenv -sh`
-  cd $WORKSPACE/$CMSSW_VERSION
+  cd $LOCALRT
   eval `scram run -sh`
   cd $WORKSPACE
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
-  cp -v $WORKSPACE/IB/$CMSSW_VERSION/$PROFILING_WORKFLOW/step2.root $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW || true
-  for f in $(find $WORKSPACE/IB/$CMSSW_VERSION/$PROFILING_WORKFLOW -name step*.json);do
+  for f in $(find $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW -name step*.json);do
 	  b=$(basename $f)
 	  cp -v $f $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW/$CMSSW_VERSION-$b || true
   done

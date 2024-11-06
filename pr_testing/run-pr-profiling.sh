@@ -29,6 +29,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   echo "<html><head></head><title>Profiling wf $PROFILING_WORKFLOW' results</title><body><ul>" > $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
+  export WORKING_DIR=${WORKSPACE}/${CMSSW_VERSION}
   PROF_RES="OK"
   export PROFILING_WORKFLOW
   mkdir -p $WORKSPACE/IB
@@ -41,7 +42,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   unset RUNALLSTEPS
   eval `scram unsetenv -sh`
-  cd $LOCALRT
+  cd $WORKING_DIR
   eval `scram run -sh`
   cd $WORKSPACE
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true

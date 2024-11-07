@@ -650,7 +650,7 @@ if ${BUILD_EXTERNAL} ; then
     mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/selected ${CTOOLS}
     #Copy extra available tools
     if [ -d $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/available -a -d $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/available ] ; then
-      mv $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/available.backup
+      mv $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/{available,available.backup}
       mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/available $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/available
     fi
 

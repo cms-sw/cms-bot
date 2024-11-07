@@ -100,6 +100,9 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_0_X/master"].append("IB/CMSSW_14_0_X/cs
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_1_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_1_X/master"].append("IB/CMSSW_14_1_X/cs9")
 
+#Added by smuzaffar: Special O2O test release
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_14_1_X"] = ["CMSSW_14_1_O2OTest_X"]
+
 # Automatically added
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_14_2_X"] = []
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_14_2_X"].append("CMSSW_14_2_DEVEL_X")

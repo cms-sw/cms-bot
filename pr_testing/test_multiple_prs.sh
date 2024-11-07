@@ -19,7 +19,7 @@ function get_compilation_warnings() {
 
 function get_warnings_files(){
   for i in $(cat $1 | sed 's|^src/||;s|:.*||;s| ||g;s|[(].*||' | sort -u) ; do
-    [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] && echo $i
+    [ $(grep "$i" $WORKSPACE/full-list-of-changed-files.txt | wc -l) -gt 0 ] && echo $i
   done
 }
 
@@ -70,9 +70,7 @@ function process_changed_files() {
     # Call the function to extract filenames and append them atomically
     extract_filenames "$headername"
   done < "$WORKSPACE/changed-files"
-  local temp_file=$(mktemp)
-  sort -u $WORKSPACE/changed-files $WORKSPACE/indirectly-changed-files > $temp_file
-  mv $temp_file $WORKSPACE/changed-files
+  sort -u $WORKSPACE/changed-files $WORKSPACE/indirectly-changed-files > $WORKSPACE/full-list-of-changed-files.txt
 }
 
 # Constants

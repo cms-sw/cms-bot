@@ -491,8 +491,12 @@ if ${BUILD_EXTERNAL} ; then
       dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
     fi
-    if $UPLOAD_TO_PACKAGE_STORE ; then
-      [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store-s3"
+    if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
+      if $UPLOAD_TO_PACKAGE_STORE ; then
+        CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store-s3"
+      else
+        CMSBUILD_ARGS="${CMSBUILD_ARGS} --no-package-store"
+      fi
     fi
     #Process cmsdist Build options
     BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')

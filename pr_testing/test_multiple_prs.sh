@@ -98,6 +98,7 @@ DO_DAS_QUERY=false
 DO_CRAB_TESTS=false
 DO_HLT_P2_TIMING=false
 DO_HLT_P2_INTEGRATION=false
+[ "${UPLOAD_TO_PACKAGE_STORE}" != "" ] || UPLOAD_TO_PACKAGE_STORE=true
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
 BUILD_VERBOSE=true
@@ -490,7 +491,9 @@ if ${BUILD_EXTERNAL} ; then
       dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
     fi
-    [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store-s3"
+    if $UPLOAD_TO_PACKAGE_STORE ; then
+      [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store-s3"
+    fi
     #Process cmsdist Build options
     BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
     MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')

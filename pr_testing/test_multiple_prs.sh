@@ -648,6 +648,11 @@ if ${BUILD_EXTERNAL} ; then
     echo "${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${TOOL_CONF_VERSION}" > $WORKSPACE/cmssw-tool-conf.txt
     echo "CMSSWTOOLCONF_VERSION;OK,External tool conf,See log,cmssw-tool-conf.txt" >> ${RESULTS_DIR}/toolconf.txt
     mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/selected ${CTOOLS}
+    #Copy extra available tools
+    if [ -d $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/available -a -d $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/available ] ; then
+      mv $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/available.backup
+      mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/available $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/available
+    fi
 
     #Generate External Tools Status
     echo '<html><head><link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet"></head>' > $WORKSPACE/upload/external-tools.html

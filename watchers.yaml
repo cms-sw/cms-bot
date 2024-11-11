@@ -1191,10 +1191,6 @@ jdolen:
 - CommonTools/ParticleFlow
 - CommonTools/PileupAlgos
 - CommonTools/RecoAlgos
-kreczko:
-- DataFormats/L1Trigger
-- L1Trigger/L1TNtuples
-- L1TriggerOffline
 pfs:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi

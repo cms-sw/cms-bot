@@ -45,7 +45,6 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   cd $WORKING_DIR
   eval `scram run -sh`
   cd $WORKSPACE
-  $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   for f in $(find $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW -name step*.json);do
 	  b=$(basename $f)
 	  cp -v $f $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW/$CMSSW_VERSION-$b || true

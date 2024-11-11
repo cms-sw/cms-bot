@@ -49,7 +49,7 @@ function extract_filenames() {
   local headername="$1"
   local input_file="./etc/dependencies/usedby.out"
   local output_file="$WORKSPACE/indirectly-changed-files"
-  
+
   # Extract lines starting with headername, split them, and append each filename to the temp file
   grep "^$headername" "$input_file" | while read -r line; do
     # Split the line into an array
@@ -64,7 +64,7 @@ function extract_filenames() {
 
 # Function to get indirectly changed files
 function process_changed_files() {
-  [ -e "$WORKSPACE/indirectly-changed-files" ] || touch "$WORKSPACE/indirectly-changed-files"
+  touch "$WORKSPACE/indirectly-changed-files"
   # Iterate over each line in $WORKSPACE/changed-files
   while IFS= read -r headername; do
     # Call the function to extract filenames and append them atomically
@@ -1125,7 +1125,12 @@ scram b echo_SCRAM_TOOL_HOME
 test -e config/SCRAM/findDependencies.py
 SCRAM_TOOL_HOME=`scram b echo_SCRAM_TOOL_HOME 2>/dev/null | tail -1 | cut -d' ' -f3`
 mkdir -p etc/dependencies
-SCRAM_TOOL_HOME=$SCRAM_TOOL_HOME ./config/SCRAM/findDependencies.py -rel `pwd` -arch ${SCRAM_ARCH}
+SCRAM_VER=$(cat config/scram_version)
+if [ $(echo ${SCRAM_VER} | grep '^V3' | wc -l) -gt 0 ] ; then
+  SCRAM_TOOL_HOME=$SCRAM_TOOL_HOME ./config/SCRAM/findDependencies.py -rel `pwd` -arch ${SCRAM_ARCH}
+else
+  perl config/SCRAM/findDependencies.pl -rel `pwd` -arch ${SCRAM_ARCH} -scramroot $SCRAM_TOOL_HOME
+fi
 process_changed_files
 popd
 

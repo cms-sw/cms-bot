@@ -29,9 +29,26 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   echo "<html><head></head><title>Profiling wf $PROFILING_WORKFLOW' results</title><body><ul>" > $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
+  export WORKING_DIR=${WORKSPACE}/${CMSSW_VERSION}
   PROF_RES="OK"
   export PROFILING_WORKFLOW
+  mkdir -p $WORKSPACE/IB
+  cd $WORKSPACE/IB
+  scram project ${CMSSW_VERSION}
+  cd $CMSSW_VERSION
+  eval `scram run -sh`
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
+  export RUNALLSTEPS=1
+  $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
+  unset RUNALLSTEPS
+  eval `scram unsetenv -sh`
+  cd $WORKING_DIR
+  eval `scram run -sh`
+  cd $WORKSPACE
+  for f in $(find $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW -name step*.json);do
+	  b=$(basename $f)
+	  cp -v $f $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW/$CMSSW_VERSION-$b || true
+  done
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_mem_GC.sh $CMSSW_VERSION || true
@@ -95,8 +112,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     ls -l $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/$BASENAME || true
     AMP="&"
     echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME
-    $CMS_BOT_DIR/comparisons/resources-diff.py $f $CMSSW_VERSION-$BASENAME >$f.log || true
+    $CMS_BOT_DIR/comparisons/resources-diff.py $f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME >$f.log || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html') ; do

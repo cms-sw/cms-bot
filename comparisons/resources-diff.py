@@ -5,11 +5,7 @@ import json
 import os
 
 
-def diff_from(metrics, data, dest, res):
-    #    ratio = 0.0
-    #    if not dest["events"] == 0:
-    #      ratio = data["events"]/dest["events"]
-    #    data["events"] = ratio * dest["events"]
+def diff_from(metrics, data, data_total, dest, dest_total, res):
     for metric in metrics:
         dmetric = dest[metric] - data[metric]
         dkey = "%s_diff" % metric
@@ -19,69 +15,110 @@ def diff_from(metrics, data, dest, res):
             pdmetric = 100 * dmetric / data[metric]
         pdkey = "%s_pdiff" % metric
         res[pdkey] = pdmetric
-
-
-#        data[metric] = ratio * dest[metric]
+        fkey = "%s_frac" % metric
+        fdest = 100 * dest[metric] / dest_total[metric]
+        dest[fkey] = fdest
+        fdata = 100 * data[metric] / data_total[metric]
+        data[fkey] = fdata
+        dfmetric = fdest - fdata
+        dfkey = "%s_frac_diff" % metric
+        res[dfkey] = dfmetric
+        pdfmetric = 0.0
+        if not fdata == 0.0:
+            pdfmetric = 100 * dfmetric / fdata
+        dkpkey = "%s_frac_pdiff" % metric
+        res[dkpkey] = pdfmetric
 
 
 if len(sys.argv) == 1:
     print(
-        """Usage: resources-diff.py FILE1 FILE2
+        """Usage: resources-diff.py IB_FILE PR_FILE
 Diff the content of two "resources.json" files and print the result to standard output."""
     )
     sys.exit(1)
 
 with open(sys.argv[1]) as f:
-    output = json.load(f)
+    ibdata = json.load(f)
 
-metrics = [label for resource in output["resources"] for label in resource]
+metrics = [label for resource in ibdata["resources"] for label in resource]
 
-datamap = {module["type"] + "|" + module["label"]: module for module in output["modules"]}
+datamapib = {module["type"] + "|" + module["label"]: module for module in ibdata["modules"]}
+
+datacumulsib = {}
+for module in ibdata["modules"]:
+    datacumul = datacumulsib.get(module["type"])
+    if datacumul:
+        datacumul["count"] += 1
+        for metric in metrics:
+            datacumul[metric] += module[metric]
+    else:
+        datacumul = {}
+        datacumul["count"] = 1
+        for metric in metrics:
+            datacumul[metric] = module[metric]
+        datacumulsib[module["type"]] = datacumul
+print(datacumulsib)
 
 with open(sys.argv[2]) as f:
-    input = json.load(f)
-if output["resources"] != input["resources"]:
+    prdata = json.load(f)
+if ibdata["resources"] != prdata["resources"]:
     print("Error: input files describe different metrics")
     sys.exit(1)
 
-datamap2 = {module["type"] + "|" + module["label"]: module for module in input["modules"]}
+datamappr = {module["type"] + "|" + module["label"]: module for module in prdata["modules"]}
 
-if output["total"]["label"] != input["total"]["label"]:
+datacumulspr = {}
+for module in prdata["modules"]:
+    datacumul = datacumulspr.get(module["type"])
+    if datacumul:
+        datacumul["count"] += 1
+        for metric in metrics:
+            datacumul[metric] += module[metric]
+    else:
+        datacumul = {}
+        datacumul["count"] = 1
+        for metric in metrics:
+            datacumul[metric] = module[metric]
+        datacumulspr[module["type"]] = datacumul
+print(datacumulspr)
+
+if ibdata["total"]["label"] != prdata["total"]["label"]:
     print("Warning: input files describe different process names")
 results = {}
 results["resources"] = []
-for resource in input["resources"]:
+for resource in prdata["resources"]:
     for k, v in resource.items():
         dkey = "%s_diff" % k
-        pdkey = "%s_pdiff" % k
         results["resources"].append({dkey: "%s diff" % v})
-        results["resources"].append({pdkey: "%s percentage diff" % v})
 results["total"] = {}
-results["total"]["label"] = input["total"]["label"]
-results["total"]["events"] = input["total"]["events"]
-results["total"]["type"] = input["total"]["type"]
+results["total"]["label"] = prdata["total"]["label"]
+results["total"]["events"] = prdata["total"]["events"]
+results["total"]["type"] = prdata["total"]["type"]
 results["modules"] = []
 
-diff_from(metrics, input["total"], output["total"], results["total"])
+diff_from(
+    metrics, prdata["total"], prdata["total"], ibdata["total"], ibdata["total"], results["total"]
+)
 
-for module in input["modules"]:
+for module in prdata["modules"]:
     key = module["type"] + "|" + module["label"]
     result = {}
     result["type"] = module["type"]
     result["label"] = module["label"]
     result["events"] = module["events"]
-    if key in datamap:
-        diff_from(metrics, module, datamap[key], result)
+    if key in datamapib:
+        diff_from(metrics, module, prdata["total"], datamapib[key], ibdata["total"], result)
         results["modules"].append(result)
     else:
-        datamap[key] = module
-        diff_from(metrics, module, datamap[key], result)
+        datamapib[key] = module
+        diff_from(metrics, module, prdata["total"], datamapib[key], ibdata["total"], result)
         results["modules"].append(result)
 
-datamap3 = {module["type"] + "|" + module["label"]: module for module in results["modules"]}
+datamapres = {module["type"] + "|" + module["label"]: module for module in results["modules"]}
 
-threshold = 1.0
-error_threshold = 10.0
+
+threshold = 5.0
+error_threshold = 20.0
 
 
 summaryLines = []
@@ -96,13 +133,55 @@ summaryLines += [
     + '%</td><td></td></tr><tr><td bgcolor="red">'
     + "error threshold %0.2f" % error_threshold
     + "%</td><td></td></tr>",
-    "<tr><td>metric:<BR>&lt;pull request &gt;<BR>&lt;baseline&gt;<BR>(PR - baseline)</td><td><br>&lt;100* (PR - baseline)/baseline&gt;<br></td></tr></table><table>",
-    '<tr><td align="center">Module type</td>'
-    + '<td align="center">Module label</td>'
-    + '<td align="center">real time diff</td>'
+    "<tr><td>metric:<BR>&lt;pull request &gt;<BR>&lt;baseline&gt;<BR>(PR - baseline)</td><td><br>&lt;100* (PR - baseline)/baseline&gt;<br></td></tr></table>"
+    + "<table>"
+    + '<tr><td align="center">Type</td>'
+    + '<td align="center">Label</td>'
+    + '<td align="center">real time</td>'
     + '<td align="center">real time percent diff</td>'
-    + '<td align="center">cpu time diff</td>'
+    + '<td align="center">cpu time</td>'
     + '<td align="center">cpu time percent diff</td>'
+    + '<td align="center">allocated memory total</td>'
+    + '<td align="center">allocated memory percent diff</td>'
+    + '<td align="center">deallocated memory diff</td>'
+    + '<td align="center">deallocated memory percent diff</td>'
+    + '<td align="center">events</td>'
+    + "</tr>"
+    + "<td>%s</td>" % prdata["total"]["type"]
+    + "<td>%s</td>" % prdata["total"]["label"]
+    + '<td align="right">%0.6f<br>%0.6f<br>%0.6f</td>'
+    % (
+        prdata["total"]["time_real"],
+        ibdata["total"]["time_real"],
+        results["total"]["time_real_diff"],
+    )
+    + '<td align="right">%0.2f%%</td>' % results["total"]["time_real_pdiff"]
+    + '<td align="right">%0.6f<br>%0.6f<br>%0.6f</td>'
+    % (
+        prdata["total"]["time_thread"],
+        ibdata["total"]["time_thread"],
+        results["total"]["time_thread_diff"],
+    )
+    + '<td align="right">%0.2f%%</td>' % results["total"]["time_thread_pdiff"]
+    + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+    % (
+        prdata["total"]["mem_alloc"],
+        ibdata["total"]["mem_alloc"],
+        results["total"]["mem_alloc_diff"],
+    )
+    + '<td align="right">%0.2f%%</td>' % results["total"]["mem_alloc_pdiff"]
+    + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+    % (prdata["total"]["mem_free"], ibdata["total"]["mem_free"], results["total"]["mem_free_diff"])
+    + '<td align="right">%0.2f%%</td>' % results["total"]["mem_free_pdiff"]
+    + "<td>%i<br>%i<br>%i</td>"
+    % (prdata["total"]["events"], ibdata["total"]["events"], results["total"]["events"])
+    + "</tr></table>"
+    + '<table><tr><td align="center">Module type</td>'
+    + '<td align="center">Module label</td>'
+    + '<td align="center">real time fraction percent</td>'
+    + '<td align="center">real time fraction percent diff</td>'
+    + '<td align="center">cpu time fraction percent</td>'
+    + '<td align="center">cpu time fraction percent diff</td>'
     + '<td align="center">allocated memory diff</td>'
     + '<td align="center">allocated memory percent diff</td>'
     + '<td align="center">deallocated memory diff</td>'
@@ -112,40 +191,51 @@ summaryLines += [
 ]
 
 
-for key in sorted(datamap3.keys()):
+for key in sorted(datamapres.keys()):
     if not key == "|":
-        module1 = datamap[key]
-        module2 = datamap2[key]
-        module3 = datamap3[key]
+        moduleib = datamapib[key]
+        modulepr = datamappr[key]
+        moduleres = datamapres[key]
         cellString = '<td align="right" '
         color = ""
-        if abs(module3["time_thread_pdiff"]) > threshold:
+        if abs(moduleres["time_thread_frac_pdiff"]) > threshold:
             color = 'bgcolor="orange"'
-        if abs(module3["time_thread_pdiff"]) > error_threshold:
+        if abs(moduleres["time_thread_frac_pdiff"]) > error_threshold:
             color = 'bgcolor="red"'
         cellString += color
         cellString += ">"
         summaryLines += [
             "<tr>"
-            + "<td>%s</td>" % module3["type"]
-            + "<td>%s</td>" % module3["label"]
-            + '<td align="right">%0.4f<br>%0.4f<br>%0.4f</td>'
-            % (module1["time_real"], module2["time_real"], module3["time_real_diff"])
-            + '<td align="right">%0.2f%%</td>' % module3["time_real_pdiff"]
-            + '<td align="right">%0.4f<br>%0.4f<br>%0.4f</td>'
-            % (module1["time_thread"], module2["time_thread"], module3["time_thread_diff"])
+            + "<td>%s</td>" % moduleres["type"]
+            + "<td>%s</td>" % moduleres["label"]
+            + '<td align="right">%0.6f<br>%0.6f<br>%0.6f</td>'
+            % (
+                moduleib["time_real_frac"],
+                modulepr["time_real_frac"],
+                moduleres["time_real_frac_diff"],
+            )
+            + '<td align="right">%0.6f%%</td>' % moduleres["time_real_frac_pdiff"]
+            + '<td align="right">%0.6f<br>%0.6f<br>%0.6f</td>'
+            % (
+                moduleib["time_thread_frac"],
+                modulepr["time_thread_frac"],
+                moduleres["time_thread_frac_diff"],
+            )
             + cellString
-            + "%0.2f%%</td>" % module3["time_thread_pdiff"]
+            + "%0.6f%%</td>" % moduleres["time_thread_frac_pdiff"]
             + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (module1["mem_alloc"], module2["mem_alloc"], module3["mem_alloc_diff"])
-            + '<td align="right">%0.2f%%</td>' % module3["mem_alloc_pdiff"]
+            % (moduleib["mem_alloc"], modulepr["mem_alloc"], moduleres["mem_alloc_diff"])
+            + '<td align="right">%0.2f%%</td>' % moduleres["mem_alloc_pdiff"]
             + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (module1["mem_free"], module2["mem_free"], module3["mem_free_diff"])
-            + '<td align="right">%0.2f%%</td>' % module3["mem_free_pdiff"]
-            + "<td>%i<br>%i<br>%i</td>" % (module1["events"], module2["events"], module3["events"])
+            % (moduleib["mem_free"], modulepr["mem_free"], moduleres["mem_free_pdiff"])
+            + '<td align="right">%0.2f%%</td>' % moduleres["mem_free_diff"]
+            + "<td>%i<br>%i<br>%i</td>"
+            % (moduleib["events"], modulepr["events"], moduleres["events"])
             + "</tr>"
         ]
-summaryLines += ["</table></body></html>"]
+
+summaryLines += []
+summaryLines += ["</body></html>"]
 
 summaryFile = os.path.dirname(sys.argv[1]) + "/diff-" + os.path.basename(sys.argv[1]) + ".html"
 with open(summaryFile, "w") as g:

@@ -960,7 +960,7 @@ def get_org_package_version(org, package, version_id, package_type="container", 
 def get_commits(repository, branch, until, per_page=1):
     get_gh_token(repository)
     if isinstance(until, datetime.datetime):
-        until = until.replace(microsecond=0).isoformat() + "Z"
+        until = until.replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
     data = github_api(
         "/repos/%s/commits" % repository,

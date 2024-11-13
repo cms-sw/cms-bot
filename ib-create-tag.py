@@ -33,10 +33,8 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 
 def currenttz():
-    if time.daylight:
-        return datetime.timezone(datetime.timedelta(seconds=-time.altzone), time.tzname[1])
-    else:
-        return datetime.timezone(datetime.timedelta(seconds=-time.timezone), time.tzname[0])
+    tm = time.localtime()
+    return datetime.timezone(datetime.timedelta(seconds=tm.tm_gmtoff), tm.tm_zone)
 
 
 if __name__ == "__main__":

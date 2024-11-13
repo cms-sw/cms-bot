@@ -48,6 +48,7 @@ if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
   RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
 fi
 UNAME_M=$(uname -m)
+export CMSBOT_CI_TESTS=true
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
     if [ $(echo "${DOCKER_IMG}" | grep ':' | wc -l) -eq 0 ] ; then

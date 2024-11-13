@@ -7,10 +7,11 @@
 # Testing cmsbot crab setup
 def cmsbot_crab_test():
     import sys
+
     try:
-      from subprocess import getstatusoutput
+        from subprocess import getstatusoutput
     except:
-      from commands import getstatusoutput
+        from commands import getstatusoutput
     from FWCore.Version.cmsbot_crab_test import CMSBOT_CRAB_TEST
 
     cmsbot_exit, cmsbot_out = getstatusoutput("cmsbot_crab_test.sh")

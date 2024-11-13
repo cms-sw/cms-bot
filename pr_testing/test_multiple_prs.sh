@@ -1136,7 +1136,6 @@ get_compilation_warnings $WORKSPACE/build.log > $WORKSPACE/all-warnings.log
 
 pushd ..
 scram b echo_SCRAM_TOOL_HOME
-test -e config/SCRAM/findDependencies.py
 SCRAM_TOOL_HOME=`scram b echo_SCRAM_TOOL_HOME 2>/dev/null | tail -1 | cut -d' ' -f3`
 mkdir -p etc/dependencies
 SCRAM_VER=$(cat config/scram_version)

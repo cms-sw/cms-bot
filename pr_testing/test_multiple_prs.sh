@@ -714,11 +714,13 @@ if ${BUILD_EXTERNAL} ; then
           scram setup $xml >> $WORKSPACE/scram-tool-setup.log 2>&1 || TOOL_SETUP=false
           continue
         fi
-        nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-        over=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+        nver=$(grep '<tool ' $xml            | tr ' ' '\n' | grep 'version='  | sed 's|version="||;s|".*||g')
+        over=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'version='  | sed 's|version="||;s|".*||g')
+        nrev=$(grep '<tool ' $xml            | tr ' ' '\n' | grep 'revision=' | sed 's|revision="||;s|".*||g')
+        orev=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'revision=' | sed 's|revision="||;s|".*||g')
         echo "Checking version in release: $over vs $nver"
-        if [ "$nver" = "$over" ] ; then continue ; fi
-        echo "Setting up $name: $over vs $nver"
+        if [ "$nver" = "$over" -a "$nrev" ="$orev" ] ; then continue ; fi
+        echo "Setting up $name: Version: $over vs $nver / Revision: $orev vs $nrev"
         DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
       done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml

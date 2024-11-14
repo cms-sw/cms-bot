@@ -15,7 +15,7 @@ from pprint import pformat
 
 from cmsutils import get_config_map_properties
 from github_utils import get_merge_prs
-from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION, RELVAL_REAL_ARCH
+from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
 from releases import CMSSW_DEVEL_BRANCH
 from socket import setdefaulttimeout
 
@@ -954,21 +954,6 @@ def add_tests_to_results(
             comp["tests_archs"] = list(set(a + b + c))
 
 
-def find_comparison_baseline_results(comparisons, architecture):
-    """
-    Finds for an IB the results of the Comparison BaseLine
-    """
-    for comp in comparisons:
-        rel_name = comp["compared_tags"].split("-->")[1]
-        print("Looking for comparison baseline results for ", rel_name)
-        comp["comp_baseline"] = find_one_comparison_baseline(rel_name, architecture)
-        comp["comp_baseline_state"] = "errors"
-        if comp["comp_baseline"] != "not-found":
-            comp["comp_baseline_state"] = find_one_comparison_baseline_errors(
-                rel_name, architecture
-            )
-
-
 def find_material_budget_results(comparisons, architecture):
     """
     Finds for an IB the results of the material_budget
@@ -1356,44 +1341,6 @@ def find_one_material_budget(release_name, architecture):
     return (None, None, "inprogress")
 
 
-def find_one_comparison_baseline_errors(release_name, architecture):
-    """
-    Looks for one comparison baseline errors result for the IB, if no errors then value is 'ok' if not,
-    the value is 'errors'
-    """
-    command_to_execute = MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS.replace(
-        "RELEASE_NAME", release_name
-    )
-    command_to_execute = command_to_execute.replace("ARCHITECTURE", architecture)
-    print("Running ", command_to_execute)
-    out, err, ret_code = get_output_command(command_to_execute)
-    print("Ran:", out, err, ret_code, command_to_execute)
-    if out == "":
-        return "ok"
-    else:
-        return "errors"
-
-
-def find_one_comparison_baseline(release_name, architecture):
-    """
-    Looks for one comparison baseline result for the IB, if it finds it, the value is 'found' if not, the value is ''
-    """
-    command_to_execute = MAGIC_COMMAND_FIND_COMPARISON_BASELINE.replace(
-        "RELEASE_NAME", release_name
-    )
-    command_to_execute = command_to_execute.replace("ARCHITECTURE", architecture)
-    print("Running ", command_to_execute)
-    out, err, ret_code = get_output_command(command_to_execute)
-    print("Ran:", out, err, ret_code, command_to_execute)
-    if ret_code == 0:
-        print("found")
-        return COMPARISON_BASELINE_TESTS_URL.replace("RELEASE_NAME", release_name).replace(
-            "ARCHITECTURE", architecture
-        )
-    print("inprogress")
-    return "inprogress"
-
-
 def generate_separated_json_results(results):
     """
     reads the results and generates a separated json for each release_queue
@@ -1754,23 +1701,6 @@ if __name__ == "__main__":
         + JENKINS_ARTIFACTS_DIR
         + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$|/r-step3-WORKFLOW-hs|"'
     )
-    MAGIC_COMMAND_FIND_COMPARISON_BASELINE = (
-        "test -f "
-        + JENKINS_ARTIFACTS_DIR
-        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/%s/matrix-results/wf_errors.txt"
-        % RELVAL_REAL_ARCH
-    )
-    MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = (
-        "cat "
-        + JENKINS_ARTIFACTS_DIR
-        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/%s/matrix-results/wf_errors.txt"
-        % RELVAL_REAL_ARCH
-    )
-    COMPARISON_BASELINE_TESTS_URL = (
-        "https://cmssdt.cern.ch/"
-        + JENKINS_ARTIFACTS_SUBDIR
-        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/%s/matrix-results" % RELVAL_REAL_ARCH
-    )
     CHECK_HLT_PATH = (
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"
     )
@@ -1960,8 +1890,6 @@ if __name__ == "__main__":
                     find_static_results(release_queue_results["comparisons"], arch)
                 if "material-budget" in tests_to_find:
                     find_material_budget_results(release_queue_results["comparisons"], arch)
-                if "baseline" in tests_to_find:
-                    find_comparison_baseline_results(release_queue_results["comparisons"], arch)
                 if "valgrind" in tests_to_find:
                     find_general_test_results(
                         "valgrind",

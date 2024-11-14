@@ -81,6 +81,9 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   ALL_OK=false
   RELVALS_OK=false
   $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-report.res --report-url ${PR_RESULT_URL} $NO_POST
+  if [ $(grep -v '## RelVals' ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-report.res | grep -v '^ *$' | wc -l) -eq 0 ] ; then
+    echo -e "## RelVals\n\n\`\`\`\n${TEST_ERRORS}\n\`\`\`\n" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-report.res
+  fi
   if [ "${TEST_FLAVOR}" != "" ] ; then
     sed -i -e "s|## RelVals|## RelVals-${UC_TEST_FLAVOR}|;s|/runTheMatrix-results|/runTheMatrix${UC_TEST_FLAVOR}-results|g" ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-report.res
     echo "RelVals-${UC_TEST_FLAVOR}" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-failed.res

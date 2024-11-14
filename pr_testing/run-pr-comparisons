@@ -77,7 +77,7 @@ JR_COMP_DIR=$WORKSPACE/results/JR-comparison
 mkdir -p $WORKSPACE/upload ${JR_COMP_DIR} $WORKSPACE/data
 rm -f $WORKSPACE/ALL_DONE
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$CMSSW_VERSION; fi
-if [ "$REAL_ARCH" = "" ] ; then REAL_ARCH="-GenuineIntel"; fi
+if [ "$REAL_ARCH" = "" ] ; then REAL_ARCH="${RELVAL_REAL_ARCH}"; fi
 PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix${TEST_FLAVOR}-results
 PR_BASELINE_JOBDIR=pull-request-integration/${UPLOAD_UNIQ_ID}

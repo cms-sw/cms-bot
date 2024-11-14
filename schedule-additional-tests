@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+source $(dirname $0)/cmsrep.sh
 CONFIG_MAP=$(dirname $0)/config.map
 PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
 for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
@@ -17,7 +18,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
   fi
   echo "ADDITIONAL_TEST_NAME=$x" >> ${pfile}
   if [ "$x" == "baseline" ]; then
-    echo "REAL_ARCH=-GenuineIntel" >> ${pfile}
+    echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> ${pfile}
   fi
   if [ "$x" = "igprof-pp" -o  "$x" = "igprof-mp"  ] ; then
     prof=$(echo $x | sed 's|igprof-||')

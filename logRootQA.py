@@ -325,7 +325,7 @@ qaIssues = False
 # one way to set up for local tests..
 # login to ssh cmssdt server (see CMSSDT_SERVER in ./cmssdt.sh for server name)
 # copy out data from a recent pull request comparison
-# cd /data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/CMSSW_10_0_X_2017-11-05-2300/slc6_amd64_gcc630/-GenuineIntel
+# cd /data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/CMSSW_10_0_X_2017-11-05-2300/slc6_amd64_gcc630/${REAL_ARCH}
 # scp -r matrix-results/ dlange@cmsdev01:/build/dlange/171103/t1/
 # cd ../../../../pull-request-integration/PR-21181/24200/
 # scp -r runTheMatrix-results/ dlange@cmsdev01:/build/dlange/171103/t1/.

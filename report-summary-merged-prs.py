@@ -15,7 +15,7 @@ from pprint import pformat
 
 from cmsutils import get_config_map_properties
 from github_utils import get_merge_prs
-from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
+from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION, RELVAL_REAL_ARCH
 from releases import CMSSW_DEVEL_BRANCH
 from socket import setdefaulttimeout
 
@@ -1757,17 +1757,19 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = (
         "test -f "
         + JENKINS_ARTIFACTS_DIR
-        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt"
+        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/%s/matrix-results/wf_errors.txt"
+        % RELVAL_REAL_ARCH
     )
     MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = (
         "cat "
         + JENKINS_ARTIFACTS_DIR
-        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt"
+        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/%s/matrix-results/wf_errors.txt"
+        % RELVAL_REAL_ARCH
     )
     COMPARISON_BASELINE_TESTS_URL = (
         "https://cmssdt.cern.ch/"
         + JENKINS_ARTIFACTS_SUBDIR
-        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results"
+        + "/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/%s/matrix-results" % RELVAL_REAL_ARCH
     )
     CHECK_HLT_PATH = (
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"

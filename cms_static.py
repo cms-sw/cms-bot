@@ -15,7 +15,6 @@ CMSBOT_TECHNICAL_MSG = "cms-bot internal usage"
 JENKINS_HOST = "cmsjenkins04"
 CMS_JENKINS_HOST = "cmsjenkins02"
 DMWM_JENKINS_HOST = "cmsjenkins11"
-RELVAL_REAL_ARCH = "-GenuineIntel"
 VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cmssw",
     "cmsdist",

@@ -116,7 +116,7 @@ if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
   echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline
 
   REL_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's|_X_.*|_X|')
-  if python3 -v ; then
+  if python3 -V ; then
     DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python3 -c 'from releases import CMSSW_DEVEL_BRANCH; print (CMSSW_DEVEL_BRANCH)')
   else
     DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print (CMSSW_DEVEL_BRANCH)')

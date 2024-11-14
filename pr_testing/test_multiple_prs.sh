@@ -312,6 +312,7 @@ if $DO_COMPARISON ; then
     echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
     echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
+    echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
     echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> run-baseline-${BUILD_ID}-01.default
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
@@ -1397,6 +1398,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
+  echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> $WORKSPACE/run-relvals.prop
   WF_COMMON="-s $(get_pr_relval_args $DO_COMPARISON '')"
   [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF_COMMON="${WF_COMMON};-l ${WORKFLOWS_PR_LABELS}"
   echo "MATRIX_ARGS=${WF_COMMON}" >> $WORKSPACE/run-relvals.prop

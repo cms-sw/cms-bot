@@ -11,8 +11,7 @@ def diff_from(metrics, data, data_total, dest, dest_total, res):
         dkey = "%s_diff" % metric
         res[dkey] = dmetric
         pdmetric = 0.0
-        if not data[metric] == 0.0:
-            pdmetric = 100 * dmetric / data[metric]
+        pdmetric = 100 * dmetric
         pdkey = "%s_pdiff" % metric
         res[pdkey] = pdmetric
         fkey = "%s_frac" % metric
@@ -24,8 +23,7 @@ def diff_from(metrics, data, data_total, dest, dest_total, res):
         dfkey = "%s_frac_diff" % metric
         res[dfkey] = dfmetric
         pdfmetric = 0.0
-        if not fdata == 0.0:
-            pdfmetric = 100 * dfmetric / fdata
+        pdfmetric = 100 * dfmetric
         dkpkey = "%s_frac_pdiff" % metric
         res[dkpkey] = pdfmetric
 
@@ -57,7 +55,7 @@ for module in ibdata["modules"]:
         for metric in metrics:
             datacumul[metric] = module[metric]
         datacumulsib[module["type"]] = datacumul
-print(datacumulsib)
+# print(datacumulsib)
 
 with open(sys.argv[2]) as f:
     prdata = json.load(f)
@@ -80,7 +78,7 @@ for module in prdata["modules"]:
         for metric in metrics:
             datacumul[metric] = module[metric]
         datacumulspr[module["type"]] = datacumul
-print(datacumulspr)
+# print(datacumulspr)
 
 if ibdata["total"]["label"] != prdata["total"]["label"]:
     print("Warning: input files describe different process names")
@@ -132,19 +130,19 @@ summaryLines += [
     + "warn threshold %0.2f" % threshold
     + '%</td><td></td></tr><tr><td bgcolor="red">'
     + "error threshold %0.2f" % error_threshold
+    + '%</td><td></td></tr><tr><td bgcolor="green">'
+    + "warn threshold -%0.2f" % threshold
+    + '%</td><td></td></tr><tr><td bgcolor="cyan">'
+    + "warn threshold -%0.2f" % error_threshold
     + "%</td><td></td></tr>",
-    "<tr><td>metric:<BR>&lt;pull request &gt;<BR>&lt;baseline&gt;<BR>(PR - baseline)</td><td><br>&lt;100* (PR - baseline)/baseline&gt;<br></td></tr></table>"
+    "<tr><td>metric:<BR>&lt;pull request &gt;<BR>&lt;baseline&gt;<BR>(PR - baseline)</td><td><br>&lt;100* (PR - baseline)&gt;<br></td></tr></table>"
     + "<table>"
     + '<tr><td align="center">Type</td>'
     + '<td align="center">Label</td>'
     + '<td align="center">real time</td>'
-    + '<td align="center">real time percent diff</td>'
     + '<td align="center">cpu time</td>'
-    + '<td align="center">cpu time percent diff</td>'
-    + '<td align="center">allocated memory total</td>'
-    + '<td align="center">allocated memory percent diff</td>'
-    + '<td align="center">deallocated memory diff</td>'
-    + '<td align="center">deallocated memory percent diff</td>'
+    + '<td align="center">allocated memory </td>'
+    + '<td align="center">deallocated memory </td>'
     + '<td align="center">events</td>'
     + "</tr>"
     + "<td>%s</td>" % prdata["total"]["type"]
@@ -155,37 +153,31 @@ summaryLines += [
         ibdata["total"]["time_real"],
         results["total"]["time_real_diff"],
     )
-    + '<td align="right">%0.2f%%</td>' % results["total"]["time_real_pdiff"]
     + '<td align="right">%0.6f<br>%0.6f<br>%0.6f</td>'
     % (
         prdata["total"]["time_thread"],
         ibdata["total"]["time_thread"],
         results["total"]["time_thread_diff"],
     )
-    + '<td align="right">%0.2f%%</td>' % results["total"]["time_thread_pdiff"]
     + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
         prdata["total"]["mem_alloc"],
         ibdata["total"]["mem_alloc"],
         results["total"]["mem_alloc_diff"],
     )
-    + '<td align="right">%0.2f%%</td>' % results["total"]["mem_alloc_pdiff"]
     + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (prdata["total"]["mem_free"], ibdata["total"]["mem_free"], results["total"]["mem_free_diff"])
-    + '<td align="right">%0.2f%%</td>' % results["total"]["mem_free_pdiff"]
     + "<td>%i<br>%i<br>%i</td>"
     % (prdata["total"]["events"], ibdata["total"]["events"], results["total"]["events"])
     + "</tr></table>"
     + '<table><tr><td align="center">Module type</td>'
     + '<td align="center">Module label</td>'
-    + '<td align="center">real time fraction percent</td>'
-    + '<td align="center">real time fraction percent diff</td>'
-    + '<td align="center">cpu time fraction percent</td>'
-    + '<td align="center">cpu time fraction percent diff</td>'
+    + '<td align="center">real time fraction</td>'
+    + '<td align="center">real time fraction diff percent</td>'
+    + '<td align="center">cpu time fraction </td>'
+    + '<td align="center">cpu time fraction diff percent</td>'
     + '<td align="center">allocated memory diff</td>'
-    + '<td align="center">allocated memory percent diff</td>'
     + '<td align="center">deallocated memory diff</td>'
-    + '<td align="center">deallocated memory percent diff</td>'
     + '<td align="center">events</td>'
     + "</tr>",
 ]
@@ -198,10 +190,14 @@ for key in sorted(datamapres.keys()):
         moduleres = datamapres[key]
         cellString = '<td align="right" '
         color = ""
-        if abs(moduleres["time_thread_frac_pdiff"]) > threshold:
+        if moduleres["time_thread_frac_pdiff"] > threshold:
             color = 'bgcolor="orange"'
-        if abs(moduleres["time_thread_frac_pdiff"]) > error_threshold:
+        if moduleres["time_thread_frac_pdiff"] > error_threshold:
             color = 'bgcolor="red"'
+        if moduleres["time_thread_frac_pdiff"] < -1.0 * threshold:
+            color = 'bgcolor="cyan"'
+        if moduleres["time_thread_frac_pdiff"] < -1.0 * error_threshold:
+            color = 'bgcolor="green"'
         cellString += color
         cellString += ">"
         summaryLines += [
@@ -225,10 +221,8 @@ for key in sorted(datamapres.keys()):
             + "%0.6f%%</td>" % moduleres["time_thread_frac_pdiff"]
             + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (moduleib["mem_alloc"], modulepr["mem_alloc"], moduleres["mem_alloc_diff"])
-            + '<td align="right">%0.2f%%</td>' % moduleres["mem_alloc_pdiff"]
             + '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (moduleib["mem_free"], modulepr["mem_free"], moduleres["mem_free_pdiff"])
-            + '<td align="right">%0.2f%%</td>' % moduleres["mem_free_diff"]
+            % (moduleib["mem_free"], modulepr["mem_free"], moduleres["mem_free_diff"])
             + "<td>%i<br>%i<br>%i</td>"
             % (moduleib["events"], modulepr["events"], moduleres["events"])
             + "</tr>"

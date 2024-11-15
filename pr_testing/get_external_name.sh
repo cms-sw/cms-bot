@@ -11,6 +11,7 @@ ARRAY=(
     "cms-externals/eigen-git-mirror:eigen"
     "cms-externals/tensorflow:tensorflow-sources"
     "cms-sw/cmssw-config:coral"
+    "cms-externals/dxr:py3-dxr"
     )
 
 case ${PKG_REPO} in

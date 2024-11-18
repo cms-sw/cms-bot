@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import os
 import argparse
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run Python formatting and linting.")
     parser.add_argument(
@@ -23,9 +25,7 @@ def main():
         return
     try:
         with open(input_file, "r") as file:
-            files_list = [
-                os.path.join(cmssw_base, line.strip()) for line in file if line.strip()
-            ]
+            files_list = [os.path.join(cmssw_base, line.strip()) for line in file if line.strip()]
     except IOError as e:
         print("Error reading {}: {}".format(input_file, e))
         return
@@ -47,10 +47,7 @@ def main():
             linting_output.write("All checks passed!\n")
 
     print("Python linting completed. Check 'python-linting.txt' for details.")
-    pfa_command = (
-        "python3 ../cms-bot/PFA.py "
-        + " ".join(files_list)
-    )
+    pfa_command = "python3 ../cms-bot/PFA.py " + " ".join(files_list)
 
     format_result = os.system(pfa_command)
 
@@ -59,6 +56,6 @@ def main():
     else:
         print("An error occurred while running PFA.py. Exit code: {}".format(format_result))
 
+
 if __name__ == "__main__":
     main()
-

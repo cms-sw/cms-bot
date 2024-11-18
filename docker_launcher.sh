@@ -1,4 +1,10 @@
 #!/bin/bash -ex
+if [ "$(uname -m)" = "riscv64" ]; then
+  if [ -z "${TMPDIR}" ] && [ -n "${WORKSPACE}" ]; then
+    mkdir -p "${WORKSPACE}/tmp"
+    export TMPDIR="${WORKSPACE}/tmp"
+  fi
+fi
 if [ "${USER}" = "" ] ; then export USER=$(whoami); fi
 if [ "${HOME}" = "" ] ; then
   if [ "${_CONDOR_SCRATCH_DIR}" != "" ] ; then export HOME="${_CONDOR_SCRATCH_DIR}" ; fi

@@ -54,7 +54,7 @@ DIRS="${DIRS} test-os-alma8 test-os-cs8 test-os-ubi8 test-os-lxplus8 test-os-rhe
 for dir in ${DIRS}; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
-  find ${JENKINS_ARTIFACTS}/${dir} -mtime +${DAYS_TO_KEEP} -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  find ${JENKINS_ARTIFACTS}/${dir} -mindepth 1 -maxdepth 1 -mtime +${DAYS_TO_KEEP} | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 #Keep the following for 14 days
@@ -64,7 +64,7 @@ DIRS="${DIRS} auto-build-release auto-upload-release cleanup-auto-build build-fw
 for dir in ${DIRS}; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
-  find ${JENKINS_ARTIFACTS}/${dir} -mtime +${DAYS_TO_KEEP} -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  find ${JENKINS_ARTIFACTS}/${dir} -mindepth 1 -maxdepth 1 -mtime +${DAYS_TO_KEEP} | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 #Keep only 1 day data
@@ -73,12 +73,12 @@ DIRS="cuda-compatible-runtime"
 for dir in ${DIRS}; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
-  find ${JENKINS_ARTIFACTS}/${dir} -mtime +${DAYS_TO_KEEP} -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  find ${JENKINS_ARTIFACTS}/${dir} -mindepth 1 -maxdepth 1 -mtime +${DAYS_TO_KEEP} | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 #Cleanup dirs which are available on CVMFS
 for dir in ib-baseline-tests ; do
-  for ver in $(find ${JENKINS_ARTIFACTS}/${dir}  -maxdepth 2 -mindepth 2 -path "*/${dir}/CMSSW_*/*" -type d | sed "s|${JENKINS_ARTIFACTS}/||") ; do
+  for ver in $(find ${JENKINS_ARTIFACTS}/${dir} -maxdepth 2 -mindepth 2 -path "*/${dir}/CMSSW_*/*" -type d | sed "s|${JENKINS_ARTIFACTS}/||") ; do
     if [ -d ${CVMFS_JENKINS_ARTIFACTS}/${ver} ] ; then
       $DRY_RUN rm -rf ${JENKINS_ARTIFACTS}/${ver}
       $DRY_RUN ln -s ${CVMFS_JENKINS_ARTIFACTS}/${ver} ${JENKINS_ARTIFACTS}/${ver}

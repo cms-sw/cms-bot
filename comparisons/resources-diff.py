@@ -82,22 +82,24 @@ for module in prdata["modules"]:
 
 if ibdata["total"]["label"] != prdata["total"]["label"]:
     print("Warning: input files describe different process names")
+
 results = {}
 results["resources"] = []
 for resource in prdata["resources"]:
     for k, v in resource.items():
         dkey = "%s_diff" % k
+        results["resources"].append({k: "%s" % v})
         results["resources"].append({dkey: "%s diff" % v})
+
 results["total"] = {}
+results["total"]["type"] = prdata["total"]["type"]
 results["total"]["label"] = prdata["total"]["label"]
 results["total"]["events"] = prdata["total"]["events"]
-results["total"]["type"] = prdata["total"]["type"]
-results["modules"] = []
-
 diff_from(
     metrics, prdata["total"], prdata["total"], ibdata["total"], ibdata["total"], results["total"]
 )
 
+results["modules"] = []
 for module in prdata["modules"]:
     key = module["type"] + "|" + module["label"]
     result = {}
@@ -183,7 +185,8 @@ summaryLines += [
 ]
 
 
-for key in sorted(datamapres.keys()):
+for item in sorted(datamapres.items(), key=lambda x:x[1]["time_thread_frac_pdiff"], reverse=True):
+    key = item[1]["type"] + "|" + item[1]["label"]
     if not key == "|":
         moduleib = datamapib[key]
         modulepr = datamappr[key]

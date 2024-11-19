@@ -185,7 +185,7 @@ summaryLines += [
 ]
 
 
-for item in sorted(datamapres.items(), key=lambda x:x[1]["time_thread_frac_pdiff"], reverse=True):
+for item in sorted(datamapres.items(), key=lambda x: x[1]["time_thread_frac_pdiff"], reverse=True):
     key = item[1]["type"] + "|" + item[1]["label"]
     if not key == "|":
         moduleib = datamapib[key]

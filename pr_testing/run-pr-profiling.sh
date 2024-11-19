@@ -40,6 +40,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   export RUNALLSTEPS=1
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
+  unset RUNALLSTEPS
   eval `scram unsetenv -sh`
   cd $WORKING_DIR
   eval `scram run -sh`

@@ -100,7 +100,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     ls -l $WORKSPACE/igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/$BASENAME || true
     echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.sql3/}\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*.json' ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*.json' ) ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true

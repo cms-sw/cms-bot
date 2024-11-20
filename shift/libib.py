@@ -308,7 +308,7 @@ def extract_relval_error(release_name, arch, rvItem):
                             "exit_code_name": "TimeOut",
                             "workflow": rvItem["id"],
                             "step": i,
-                            "details": f"TimeOut in step {i}",
+                            "details": f"TimeOut in step {i+1}",
                         },
                     )
 

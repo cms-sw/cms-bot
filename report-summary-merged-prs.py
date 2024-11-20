@@ -1044,7 +1044,7 @@ def find_one_profiling_result(magic_command):
     """
     Looks for one profiling result
     """
-    command_to_execute = magic_command.replace("WORKFLOW", "12634.21")
+    command_to_execute = magic_command.replace("WORKFLOW", "13034.21")
     print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
     print("Ran:", out, err, ret_code, command_to_execute)

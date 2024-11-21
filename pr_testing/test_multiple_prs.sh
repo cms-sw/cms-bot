@@ -924,7 +924,7 @@ fi
 
 if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_PR" != X -a "$SKIP_STATIC_CHECKS" = "false" ]; then
   #first, add the command to the log
-  CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j ${NCPU2} COMPILER='llvm compile'"
+  CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' /usr/bin/time -v scram build -k -j ${NCPU2} COMPILER='llvm compile'"
   CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes"
   echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
 
@@ -1090,7 +1090,7 @@ if $IS_DEV_BRANCH ; then
     if [ -e "$WORKSPACE/$RELEASE_FORMAT/src/TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h" ] ; then
       IGNORE_HDRS="TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i"
     fi
-    COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='${IGNORE_HDRS}' scram build -k -j ${NCPU} check-headers"
+    COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='${IGNORE_HDRS}' /usr/bin/time -v scram build -k -j ${NCPU} check-headers"
     echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
     (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/headers_chks.log 2>&1 || true
     echo 'END OF HEADER CHEKS LOG'
@@ -1140,9 +1140,9 @@ if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
-COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS scram b ${BUILD_VERBOSE} -k -j ${NCPU}"
+COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS /usr/bin/time -v scram b ${BUILD_VERBOSE} -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
-  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes $USER_FLAGS scram build ${BUILD_VERBOSE} -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
+  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes $USER_FLAGS /usr/bin/time -v scram build ${BUILD_VERBOSE} -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/build.log 2>&1 || true

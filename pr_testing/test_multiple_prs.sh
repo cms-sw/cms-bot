@@ -802,6 +802,7 @@ if $DISABLE_CMS_DEPRECATED ;  then
   ANALOG_OPT="--ignoreWarning=Wdeprecated-declarations"
 fi
 ANALOG_CMD="scram build outputlog && (${CMS_PYTHON_TO_USE} $CMS_BOT_DIR/buildLogAnalyzer.py ${ANALOG_OPT} --logDir ${BUILD_LOG_DIR}/src || true)"
+OK_ANALOG_CMD="true && (${CMS_PYTHON_TO_USE} $CMS_BOT_DIR/buildLogAnalyzer.py ${ANALOG_OPT} --logDir ${BUILD_LOG_DIR}/src || true)"
 
 cd $WORKSPACE/$CMSSW_IB/src
 git config --global --replace-all merge.renamelimit 2500 || true
@@ -929,10 +930,14 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
   echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
 
   (eval $CLANG_CMD && echo 'ALL_OK') >>$WORKSPACE/buildClang.log 2>&1 || true
-  (eval ${ANALOG_CMD})               >>$WORKSPACE/buildClang.log 2>&1 || true
+  if [ $(grep "^ALL_OK$" $WORKSPACE/buildClang.log | wc -l) -gt 0 ] ; then
+    (eval ${OK_ANALOG_CMD}) >>$WORKSPACE/buildClang.log 2>&1 || true
+  else
+    (eval ${ANALOG_CMD})    >>$WORKSPACE/buildClang.log 2>&1 || true
+  fi
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
-  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
+  GENERAL_ERRORS=`grep "^ALL_OK$" $WORKSPACE/buildClang.log` || true
   get_compilation_warnings $WORKSPACE/buildClang.log > $WORKSPACE/all-warnings-clang.log
   for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log) ; do
     echo $i >> $WORKSPACE/clang-new-warnings.log
@@ -1146,13 +1151,17 @@ if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/co
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/build.log 2>&1 || true
-(eval ${ANALOG_CMD}) >>$WORKSPACE/build.log 2>&1 || true
+if [ $(grep "^ALL_OK$" $WORKSPACE/build.log |wc -l) -gt 0 ] ; then
+  (eval ${OK_ANALOG_CMD}) >>$WORKSPACE/build.log 2>&1 || true
+else
+  (eval ${ANALOG_CMD})    >>$WORKSPACE/build.log 2>&1 || true
+fi
 if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html ${WORKSPACE}/build-logs ; fi
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
 
 TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log` || true
-GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
+GENERAL_ERRORS=`grep "^ALL_OK$" $WORKSPACE/build.log` || true
 
 rm -f $WORKSPACE/deprecated-warnings.log
 get_compilation_warnings $WORKSPACE/build.log > $WORKSPACE/all-warnings.log

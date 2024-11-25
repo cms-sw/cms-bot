@@ -3,7 +3,7 @@ CMSREP_IB_SERVER=cmsrep.cern.ch
 CMSBUILD_OPTS_FILE="etc/build_options.sh"
 BUILD_OPTS=""
 MULTIARCH_OPTS=""
-RELVAL_REAL_ARCH="-GenuineIntel"
+RELVAL_REAL_ARCH="AuthenticAMD"
 umask 0002
 export CMS_PYTHON_TO_USE="python"
 if which python3 >/dev/null 2>&1 ; then export CMS_PYTHON_TO_USE="python3" ; fi

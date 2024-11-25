@@ -130,8 +130,11 @@ def get_wf_error_msg(out_file, filename=True):
             elif "A fatal system signal has occurred:" in line:
                 error_lines += "\n" + line
                 break
-    if not error_lines and filename:
-        error_lines = "/".join(out_file.split("/")[-2:]) + "\n"
+    if not error_lines:
+        if filename:
+            error_lines = "/".join(out_file.split("/")[-2:]) + "\n"
+        else:
+            error_lines = "UNKNOWN\n"
     return error_lines
 
 
@@ -170,7 +173,7 @@ def parse_workflow_info(parts, relval_dir):
 # and then proceeds to read the corresponding log file to identify the message
 #
 def read_matrix_log_file(matrix_log):
-    workflows_with_error = []
+    workflows_with_error = {}
     relval_dir = join(dirname(matrix_log), "runTheMatrix-results")
     common_errors = []
     for line in openlog(matrix_log):
@@ -180,15 +183,15 @@ def read_matrix_log_file(matrix_log):
             parts = re.sub("\\s+", " ", line).split(" ")
             workflow_info = parse_workflow_info(parts, relval_dir)
             if "number" in workflow_info:
-                workflows_with_error.append(workflow_info)
+                number = workflow_info.pop("number")
+                if number not in workflows_with_error:
+                    workflows_with_error[number] = workflow_info
         elif " Step0-DAS_ERROR " in line:
             print("processing: %s" % line)
             parts = line.split("_", 2)
-            workflow_info = {}
-            workflow_info["step"] = "step1"
-            workflow_info["number"] = parts[0]
-            workflow_info["message"] = "DAS Error"
-            workflows_with_error.append(workflow_info)
+            number = parts[0]
+            workflow_info = {"step": "step1", "message": "DAS Error"}
+            workflows_with_error[number] = workflow_info
         elif "ValueError: Undefined" in line:
             common_errors.append(line + "\n")
 
@@ -201,8 +204,7 @@ def read_matrix_log_file(matrix_log):
     cnt = 0
     max_show = 3
     extra_msg = False
-    for wf in workflows_with_error:
-        wnum = wf["number"]
+    for wnum, wf in workflows_with_error.items():
         cnt += 1
         if "out_directory" in wf:
             wnum = "[%s](%s/runTheMatrix-results/%s)" % (

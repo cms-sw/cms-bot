@@ -19,7 +19,6 @@ KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:$SCRATCH
 
 echo "Launching LUMI node... for ${OS} using ${TARGET}"
-JENKINS_VERSION=$(jenkins --version)
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 scp $SSH_OPTS /var/lib/jenkins/slave.jar ${TARGET}:~/cmsbuild/slave-${NODE_NAME}.jar

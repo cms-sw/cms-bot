@@ -109,7 +109,7 @@ def extract_and_upload(directory):
             document = "cmssw-pkginfo"
             # Upload one entry per package
             print(payload)
-            #send_payload(index, document, id, json.dumps(payload))
+            send_payload(index, document, id, json.dumps(payload))
     return result
 
 

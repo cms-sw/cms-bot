@@ -13,6 +13,8 @@ def package2category(filename):
     cat = "unknown"
     if file_pack in pack2cat:
         cat = "-".join(sorted(pack2cat[file_pack]))
+    if cat in ["alca", "db"]: cat="alca-db"
+    files[cat].add(filename)
     cats[cat].add(file_pack)
 
 
@@ -27,6 +29,7 @@ for cat in CMSSW_CATEGORIES:
         pack2cat[pack].append(cat)
 
 cats = defaultdict(set)
+files = defaultdict(set)
 
 for line in args.files:
     package2category(line.strip())
@@ -34,6 +37,22 @@ for line in args.files:
 if args.stdin:
     for line in sys.stdin:
         package2category(line.strip())
+
+add_misc=False
+if add_misc:
+  num = 1
+  misc = "misc%s" % num
+  misc_files=0
+  for cat in files:
+    if len(files[cat])<=5:
+      misc_files+=len(files[cat])
+      for pkg in cats[cat]:
+        cats[misc].add(pkg)
+      if misc_files>10:
+        num+=1
+        misc = "misc%s" % num
+        misc_files=0
+      del cats[cat]
 
 for cat in cats:
     print("%s %s" % (cat, " ".join(cats[cat])))

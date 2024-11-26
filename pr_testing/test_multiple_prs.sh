@@ -719,7 +719,7 @@ if ${BUILD_EXTERNAL} ; then
         over=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'version='  | sed 's|version="||;s|".*||g')
         nrev=$(grep '<tool ' $xml            | tr ' ' '\n' | grep 'revision=' | sed 's|revision="||;s|".*||g')
         orev=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'revision=' | sed 's|revision="||;s|".*||g')
-        echo "Checking version in release: $over vs $nver"
+        echo "Checking version in release: ${over}(${orev}) vs $nver(${nrev})"
         if [ "$nver" = "$over" -a "$nrev" = "$orev" ] ; then continue ; fi
         echo "Setting up $name: Version: $over vs $nver / Revision: $orev vs $nrev"
         DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"

@@ -18,6 +18,8 @@ export SALLOC_ACCOUNT=$SLURM_ACCOUNT
 
 # set up the project directories
 export PROJECT=/project/$SLURM_ACCOUNT
+export SCRATCH=${PROJECT}/$USER/$SESSION
+mkdir -p $SCRATCH
 
 # disable automatic re-queueing of jobs on failed nodes
 export SBATCH_NO_REQUEUE=1

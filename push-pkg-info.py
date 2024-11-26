@@ -86,7 +86,7 @@ def extract_and_upload(directory):
             if architecture != "Not found" and release_name != "Not found":
                 packages = extract_packages(package_file)
         else:
-            release_cycle, flavor, date = parse_folder_name(package_file.split("/")[6])
+            release_cycle, flavor, date = parse_ib_folder_name(package_file.split("/")[6])
             architecture = package_file.split("/")[7]
             name = package_file.split("/")[6]
             weeknum, _ = cmsswIB2Week(name, 0)

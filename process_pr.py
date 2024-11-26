@@ -2085,7 +2085,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         labels.append("tests-" + override_tests_failure)
 
     # automatically approve CATS_TO_APPROVE_ON_TEST on test-approved
-    if ("tests" in signatures) and (signatures["tests"] == "approved"):
+    if signatures.get("tests") == "approved":
         for cat in [c for c in CATS_TO_APPROVE_ON_TEST if (signatures.get(c) == "pending")]:
             signatures[cat] = "approved"
             print("Overriding/Approving singatures for %s due to tests-approved" % cat)

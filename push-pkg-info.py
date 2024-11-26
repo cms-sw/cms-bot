@@ -123,3 +123,6 @@ else: # integration builds
     directory = "/data/sdt/SDT/jenkins-artifacts/build-any-ib/*/*_*_*/*/DEPS/cmssw-ib.json" # cmssdt path
 
 extract_and_upload(directory)
+
+# TODO: Check if data is already in OpenSearch before pushing it (get_payload_wscroll)
+# TODO: Check if IB data in cmssdt goes first to cmsrep (I didn't find it)

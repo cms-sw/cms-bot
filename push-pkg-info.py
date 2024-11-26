@@ -81,16 +81,17 @@ def extract_and_upload(directory):
     for package_file in files:
         print("--> Processing file: ", package_file)
         if process_type == "release":
-            index = "cmssw-pkginfo"
             architecture, name, release_cycle, flavor, date = parse_releases_path(file_path)
+            index = "cmssw-pkginfo"
             if architecture != "Not found" and release_name != "Not found":
                 packages = extract_packages(package_file)
         else:
-            weeknum, _ = cmsswIB2Week(IB, 0)
-            index = "cmssw-pkginfo-" + str(weeknum)
             release_cycle, flavor, date = parse_folder_name(package_file.split("/")[6])
             architecture = package_file.split("/")[7]
             name = package_file.split("/")[6]
+            weeknum, _ = cmsswIB2Week(name, 0)
+            index = "cmssw-pkginfo-" + str(weeknum)
+            packages = extract_packages(package_file)
 
         for package in packages:
             payload = {

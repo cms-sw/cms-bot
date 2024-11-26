@@ -117,7 +117,7 @@ process_type = sys.argv[1]
 if process_type == "release":
     print("Processing Releases...")
     directory = "/data/cmssw/repos/cms/*_*_*/*/WEB/*/cms+cmssw+CMSSW*.json" # cmsrep path
-else # integration builds
+else: # integration builds
     print("Processing IBs...")
     directory = "/data/sdt/SDT/jenkins-artifacts/build-any-ib/*/*_*_*/*/DEPS/cmssw-ib.json" # cmssdt path
 

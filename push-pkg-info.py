@@ -108,7 +108,7 @@ def extract_and_upload(directory):
             id = sha1(unique_id.encode("utf-8")).hexdigest()
             document = "cmssw-pkginfo"
             # Upload one entry per package
-            print("Uploading to index " + index + " ...")
+            print(payload)
             #send_payload(index, document, id, json.dumps(payload))
     return result
 

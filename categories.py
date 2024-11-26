@@ -157,6 +157,9 @@ CMSSW_L2 = {
     "y19y19": ["ml"],
 }
 
+# Automatically sign these categories if tests are passed
+CATS_TO_APPROVE_ON_TEST = ["operations"]
+
 # All CMS_SDT members can sign externals ( e.g Pull Requests in cms-sw/cmsdist , cms-data and cms-externals
 for user in CMS_SDT:
     if user not in CMSSW_L2:

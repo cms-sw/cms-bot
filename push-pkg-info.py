@@ -5,11 +5,13 @@ from es_utils import send_payload
 from cmsutils import cmsswIB2Week
 from hashlib import sha1
 
+
 def get_current_time():
     """Returns current time in milliseconds."""
     current_time = datetime.utcnow() - datetime(1970, 1, 1)
     current_time = round(current_time.total_seconds() * 1000)
     return current_time
+
 
 def extract_packages(package_file):
     """Extracts package information from json file."""
@@ -30,6 +32,7 @@ def extract_packages(package_file):
         package_dict[package_name] = package_version
     return package_dict
 
+
 def parse_ib_folder_name(folder_name):
     match = re.match(r"^(CMSSW_\d+_\d+)(_?[^_]+)?(_X)?_(\d{4}-\d{2}-\d{2}-\d{4})$", folder_name)
     if not match:
@@ -44,6 +47,7 @@ def parse_ib_folder_name(folder_name):
         flavor = "DEFAULT"
     date = match.group(4)
     return version, flavor, date
+
 
 def parse_releases_path(path):
     architecture_pattern = r"/cms/([^/]+)/"
@@ -75,6 +79,7 @@ def parse_releases_path(path):
 
     return architecture, release_name, release_cycle, flavor, date
 
+
 def extract_and_upload(directory):
     result = {}
     files = glob.glob(directory)
@@ -101,7 +106,7 @@ def extract_and_upload(directory):
                 "date": date,
                 "architecture": architecture,
                 "@timestamp": get_current_time(),
-                package: packages[package]
+                package: packages[package],
             }
 
             unique_id = f"{release_cycle}_{flavor}_{date}_{architecture}_{package}"
@@ -117,10 +122,12 @@ process_type = sys.argv[1]
 
 if process_type == "release":
     print("Processing Releases...")
-    directory = "/data/cmssw/repos/cms/*_*_*/*/WEB/*/cms+cmssw+CMSSW*.json" # cmsrep path
-else: # integration builds
+    directory = "/data/cmssw/repos/cms/*_*_*/*/WEB/*/cms+cmssw+CMSSW*.json"  # cmsrep path
+else:  # integration builds
     print("Processing IBs...")
-    directory = "/data/sdt/SDT/jenkins-artifacts/build-any-ib/*/*_*_*/*/DEPS/cmssw-ib.json" # cmssdt path
+    directory = (
+        "/data/sdt/SDT/jenkins-artifacts/build-any-ib/*/*_*_*/*/DEPS/cmssw-ib.json"  # cmssdt path
+    )
 
 extract_and_upload(directory)
 

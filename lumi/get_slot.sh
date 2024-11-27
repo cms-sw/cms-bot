@@ -18,7 +18,7 @@ export SALLOC_ACCOUNT=$SLURM_ACCOUNT
 
 # set up the project directories
 export PROJECT=/project/$SLURM_ACCOUNT
-export SCRATCH=${PROJECT}/$USER/$SESSION
+export SCRATCH=${PROJECT}/$USER/$OS
 mkdir -p $SCRATCH
 
 # disable automatic re-queueing of jobs on failed nodes
@@ -32,12 +32,7 @@ if ! [ -f $SINGULARITY_SCRATCH ]; then
   /usr/sbin/mkfs.ext3 -m 0 -E root_owner $SINGULARITY_SCRATCH 100G
 fi
 
-export SINGCVMFS_CACHEIMAGE=$SCRATCH/cvmfscache.ext3
-if ! [ -f $SINGCVMFS_CACHEIMAGE ]; then
-  mkdir -p $(dirname $SINGCVMFS_CACHEIMAGE)
-  /usr/sbin/mkfs.ext3 -m 0 -E root_owner $SINGCVMFS_CACHEIMAGE 50G
-fi
-
+# check the Kerberos authentication
 export KRB5CCNAME=FILE:$SCRATCH/krb5cc_${USER}_${NODE_NAME}
 klist || true
 
@@ -53,6 +48,8 @@ REQUEST_MEMORY="60G"
 
 echo "SLURM ACCOUNT: $SLURM_ACCOUNT"
 echo "SINGULARITY_SCRATCH: $SINGULARITY_SCRATCH"
-echo "SINGULARITY_CACHEDIR: $SINGULARITY_CACHEDIR"
 
-${PROJECT}/local/bin/cms-${OS}-exec --bind $SINGULARITY_SCRATCH:/workspace:image-src=/ $(dirname $0)/jenkins_java.sh ${JENKINS_JAR}
+# request an allocation, start the CMS OS container, and launch the Jenkins client
+srun --pty --time=$REQUEST_TIME --partition=$REQUEST_PARTITION --hint=multithread --nodes=$REQUEST_NODE \
+--ntasks=$REQUEST_TASKS --cpus-per-task=$REQUEST_CPU --gpus=$REQUEST_GPU --mem=$REQUEST_MEMORY \
+/project/$SLURM_ACCOUNT/local/bin/cms-${OS}-exec --bind $SINGULARITY_SCRATCH:/workspace:image-src=/ $(dirname $0)/jenkins_java.sh ${JENKINS_JAR}

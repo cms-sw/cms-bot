@@ -1051,6 +1051,21 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   else
     echo "EDM_ML_DEBUG_CHECKS;OK,Static Check build log,See Log,llvm-analysis/runStaticChecks.log" >> ${RESULTS_DIR}/static.txt
   fi
+  if $IS_DEV_BRANCH ;then 
+    curl -s -L https://patch-diff.githubusercontent.com/raw/${PR_REPO}/pull/${PR_NUMBER}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/all-changed-files.txt
+    touch $WORKSPACE/llvm-analysis/esrget-sa.txt
+    grep ': warning: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | grep -f $WORKSPACE/all-changed-files.txt | grep edm::eventsetup::EventSetupRecord::get | sort -u > $WORKSPACE/llvm-analysis/esrget-sa.txt
+    touch $WORKSPACE/llvm-analysis/legacy-mod-sa.txt
+    grep ': warning: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | grep -f $WORKSPACE/all-changed-files.txt | grep 'inherits from edm::EDProducer,edm::EDFilter,edm::EDAnalyzer, or edm::OutputModule' | sort -u > $WORKSPACE/llvm-analysis/legacy-mod-sa.txt
+    if [ $(cat $WORKSPACE/llvm-analysis/esrget-sa.txt | wc -l) -gt 0 ] ; then
+      echo "STATIC_CHECK_ESRGET;ERROR,Static analyzer EventSetupRecord::get warnings,See warnings log,llvm-analysis/esrget-sa.txt" >> ${RESULTS_DIR}/static.txt
+      echo "**CMS StaticAnalyzer warnings**: There are $(cat $WORKSPACE/llvm-analysis/esrget-sa.txt | wc -l) EventSetupRecord::get warnings. See ${PR_RESULT_URL}/llvm-analysis/esrget-sa.txt for details." >> ${RESULTS_DIR}/09-report.res
+    fi
+    if  [ $(cat $WORKSPACE/llvm-analysis/legacy-mod-sa.txt | wc -l) -gt 0 ] ; then
+      echo "STATIC_CHECK_LEGACY;ERROR,Static analyzer inherits from legacy modules warnings,See warnings log,llvm-analysis/legacy-mod-sa.txt" >> ${RESULTS_DIR}/static.txt
+      echo "**CMS StaticAnalyzer warnings**: There are $(cat $WORKSPACE/llvm-analysis/legacy-mod-sa.txt | wc -l) inherits from legacy modules warnings. See ${PR_RESULT_URL}/llvm-analysis/legacy-mod-sa.txt for details." >> ${RESULTS_DIR}/09-report.res
+    fi
+  fi
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'
   popd
@@ -1257,29 +1272,6 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
   if [ -d ${BUILD_LOG_DIR}/html ] ; then
     mv ${BUILD_LOG_DIR}/html $WORKSPACE/clang-logs
     echo 'CLANG_LOG;OK,Clang warnings summary,See Log,clang-logs' >> ${RESULTS_DIR}/clang.txt
-  fi
-fi
-
-# Analyze static check logs
-if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" -a "$SKIP_STATIC_CHECKS" = "false" ]; then
-  if $IS_DEV_BRANCH ;then 
-    # Get files changed only by current PR (PR_NUMBER)
-    curl -s -L https://patch-diff.githubusercontent.com/raw/${PR_REPO}/pull/${PR_NUMBER}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/git-changed-files.txt
-    # Add files that depend on changed files
-    process_changed_files $WORKSPACE/git-changed-files.txt $WORKSPACE/all-changed-files.txt
-
-    touch $WORKSPACE/llvm-analysis/esrget-sa.txt
-    grep ': warning: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | grep -f $WORKSPACE/all-changed-files.txt | grep edm::eventsetup::EventSetupRecord::get | sort -u > $WORKSPACE/llvm-analysis/esrget-sa.txt
-    touch $WORKSPACE/llvm-analysis/legacy-mod-sa.txt
-    grep ': warning: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | grep -f $WORKSPACE/all-changed-files.txt | grep 'inherits from edm::EDProducer,edm::EDFilter,edm::EDAnalyzer, or edm::OutputModule' | sort -u > $WORKSPACE/llvm-analysis/legacy-mod-sa.txt
-    if [ $(cat $WORKSPACE/llvm-analysis/esrget-sa.txt | wc -l) -gt 0 ] ; then
-      echo "STATIC_CHECK_ESRGET;ERROR,Static analyzer EventSetupRecord::get warnings,See warnings log,llvm-analysis/esrget-sa.txt" >> ${RESULTS_DIR}/static.txt
-      echo "**CMS StaticAnalyzer warnings**: There are $(cat $WORKSPACE/llvm-analysis/esrget-sa.txt | wc -l) EventSetupRecord::get warnings. See ${PR_RESULT_URL}/llvm-analysis/esrget-sa.txt for details." >> ${RESULTS_DIR}/09-report.res
-    fi
-    if  [ $(cat $WORKSPACE/llvm-analysis/legacy-mod-sa.txt | wc -l) -gt 0 ] ; then
-      echo "STATIC_CHECK_LEGACY;ERROR,Static analyzer inherits from legacy modules warnings,See warnings log,llvm-analysis/legacy-mod-sa.txt" >> ${RESULTS_DIR}/static.txt
-      echo "**CMS StaticAnalyzer warnings**: There are $(cat $WORKSPACE/llvm-analysis/legacy-mod-sa.txt | wc -l) inherits from legacy modules warnings. See ${PR_RESULT_URL}/llvm-analysis/legacy-mod-sa.txt for details." >> ${RESULTS_DIR}/09-report.res
-    fi
   fi
 fi
 

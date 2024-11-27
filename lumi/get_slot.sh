@@ -36,6 +36,11 @@ fi
 export KRB5CCNAME=FILE:$SCRATCH/krb5cc_${USER}_${NODE_NAME}
 klist || true
 
+# set grid certificates
+export X509_CERT_DIR=/cvmfs/grid.cern.ch/etc/grid-security/certificates
+export X509_VOMS_DIR=/cvmfs/grid.cern.ch/etc/grid-security/vomsdir
+export VOMS_USERCONF=/cvmfs/grid.cern.ch/etc/grid-security/vomses
+
 echo "#########################################"
 
 REQUEST_TIME="48:00:00"

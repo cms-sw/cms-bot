@@ -24,8 +24,6 @@ mkdir -p $SCRATCH
 # disable automatic re-queueing of jobs on failed nodes
 export SBATCH_NO_REQUEUE=1
 
-export SINGULARITY_CACHEDIR=/project/$SLURM_ACCOUNT/singularity
-
 export SINGULARITY_SCRATCH=$SCRATCH/workspace.ext3
 if ! [ -f $SINGULARITY_SCRATCH ]; then
   mkdir -p $(dirname $SINGULARITY_SCRATCH)

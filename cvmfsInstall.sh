@@ -22,7 +22,7 @@ DEV=$5
 PROOTDIR=$6
 TEST_INSTALL=$7
 NUM_WEEKS=$8
-REINSTALL_COMMON=$9
+REINSTALL_ARGS=$9
 INSTALL_PACKAGES="${10}"
 
 CVMFS_PUBLISH_PATH=""
@@ -37,10 +37,10 @@ if ${USE_CVMFS_GW} ; then
   CVMFS_PUBLISH_PATH="/sw/${CMS_ARCH}"
   export BASEDIR="${BASEDIR}${CVMFS_PUBLISH_PATH}"
 fi
-if [ "$REINSTALL_COMMON" = "true" ] ; then
-  REINSTALL_COMMON="--reinstall"
+if [ "$REINSTALL_ARGS" = "true" ] ; then
+  REINSTALL_ARGS="--reinstall"
 else
-  REINSTALL_COMMON=""
+  REINSTALL_ARGS=""
 fi
 [ "X$NUM_WEEKS" != "X" ] || NUM_WEEKS=2
 if [ "X$DEV" = "Xtrue" ] ; then
@@ -145,8 +145,8 @@ for REPOSITORY in $REPOSITORIES; do
         x="cms+cmssw-ib+$RELEASE_NAME"
         ${CMSPKG} clean
         ${CMSPKG} install -y $x || true
-        time ${CMSPKG} install  --ignore-size -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true
-        time ${CMSPKG} install  --ignore-size -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
+        time ${CMSPKG} install ${REINSTALL_ARGS} --ignore-size -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true
+        time ${CMSPKG} install ${REINSTALL_ARGS} --ignore-size -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
         relname=`echo $x | awk -F + '{print $NF}'`
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'`
         if [ "X$timestamp" != "X" ] ; then

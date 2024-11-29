@@ -930,11 +930,9 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
   echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
 
   (eval $CLANG_CMD && echo 'ALL_OK') >>$WORKSPACE/buildClang.log 2>&1 || true
-  if [ $(grep "^ALL_OK$" $WORKSPACE/buildClang.log | wc -l) -gt 0 ] ; then
-    (eval ${OK_ANALOG_CMD}) >>$WORKSPACE/buildClang.log 2>&1 || true
-  else
-    (eval ${ANALOG_CMD})    >>$WORKSPACE/buildClang.log 2>&1 || true
-  fi
+  #always run ${ANALOG_CMD} to print out the compile command which are normally printed when on runs full build
+  #in llvm case we are only doing compile (withoutlinking)
+  (eval ${ANALOG_CMD})    >>$WORKSPACE/buildClang.log 2>&1 || true
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "^ALL_OK$" $WORKSPACE/buildClang.log` || true

@@ -1262,7 +1262,7 @@ echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-log
 # Analyze LLVM compilation logs
 if [ -f $WORKSPACE/buildClang.log ] ; then
   get_compilation_warnings $WORKSPACE/buildClang.log > $WORKSPACE/all-warnings-clang.log
-  for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log) ; do
+  for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log $WORKSPACE/full-list-of-changed-files.txt) ; do
     echo $i >> $WORKSPACE/clang-new-warnings.log
     grep ": warning: " $WORKSPACE/all-warnings-clang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
   done

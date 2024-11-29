@@ -169,6 +169,7 @@ if [ "${JAVA}" = "" ] ; then
   if [ "${JAVA}" = "" ] ; then JAVA="java"; fi
 fi
 ssh $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} \
+  -Djava.io.tmpdir=$WORKSPACE/tmp \
   -Djdk.reflect.useDirectMethodHandle=false \
   --add-opens java.base/java.lang=ALL-UNNAMED \
   --add-opens java.base/java.lang.reflect=ALL-UNNAMED \

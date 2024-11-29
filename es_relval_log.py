@@ -89,6 +89,8 @@ def es_parse_jobreport(payload, logFile):
 
 
 def es_parse_log(logFile):
+    stamp = "%s-es" % logFile
+    if exists(stamp): return
     t = os.path.getmtime(logFile)
     timestp = int(t * 1000)
     payload = {}
@@ -209,6 +211,8 @@ def es_parse_log(logFile):
             dataset["lfn"] = "/store/" + ds_items[0].split("/store/", 1)[1].strip()
             idx = sha1((id + ds).encode()).hexdigest()
             send_payload("ib-dataset-" + week, "relvals-dataset", idx, json.dumps(dataset))
+    ref = open(stamp, "w")
+    ref.close()
 
 
 if __name__ == "__main__":

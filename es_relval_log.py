@@ -91,8 +91,8 @@ def es_parse_jobreport(payload, logFile):
 def es_parse_log(logFile):
     stamp = "%s-es" % logFile
     if exists(stamp):
-       print("Adready process: ",logFile)
-       return
+        print("Adready process: ", logFile)
+        return
     t = os.path.getmtime(logFile)
     timestp = int(t * 1000)
     payload = {}
@@ -215,7 +215,7 @@ def es_parse_log(logFile):
             send_payload("ib-dataset-" + week, "relvals-dataset", idx, json.dumps(dataset))
     ref = open(stamp, "w")
     ref.close()
-    print("Done processing :",logFile)
+    print("Done processing :", logFile)
 
 
 if __name__ == "__main__":

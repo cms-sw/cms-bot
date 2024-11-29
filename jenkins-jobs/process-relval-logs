@@ -62,6 +62,7 @@ function process_dir()
     if [ -f $dir/../pyRelValMatrixLogs/run/all.pages ] || [ "X$TIMEOUT" = "X1" ] ; then
       pushd $dir
         rm -rf $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip
+        rm -rf */*.log-es || true
         rm -rf */*.tar || true
         rm -rf */*.gz || true
         rm -rf */*.db || true

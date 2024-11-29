@@ -973,6 +973,11 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "^ALL_OK$" $WORKSPACE/buildClang.log` || true
 
+  if [ -d ${BUILD_LOG_DIR}/html ] ; then
+    mv ${BUILD_LOG_DIR}/html $WORKSPACE/clang-logs
+    echo 'CLANG_LOG;OK,Clang warnings summary,See Log,clang-logs' >> ${RESULTS_DIR}/clang.txt
+  fi
+
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when testing compilation with clang"
     echo 'CLANG_COMPILATION_RESULTS;ERROR,Clang Compilation,See Log,buildClang.log' >> ${RESULTS_DIR}/clang.txt
@@ -1255,7 +1260,7 @@ fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_DIR}/build.txt
 
 # Analyze LLVM compilation logs
-if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_PR" != X -a "$SKIP_STATIC_CHECKS" = "false" ]; then
+if [ -f $WORKSPACE/buildClang.log ] ; then
   get_compilation_warnings $WORKSPACE/buildClang.log > $WORKSPACE/all-warnings-clang.log
   for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log) ; do
     echo $i >> $WORKSPACE/clang-new-warnings.log
@@ -1268,10 +1273,6 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
       ALL_OK=false
       CLANG_BUILD_OK=false
     fi
-  fi
-  if [ -d ${BUILD_LOG_DIR}/html ] ; then
-    mv ${BUILD_LOG_DIR}/html $WORKSPACE/clang-logs
-    echo 'CLANG_LOG;OK,Clang warnings summary,See Log,clang-logs' >> ${RESULTS_DIR}/clang.txt
   fi
 fi
 

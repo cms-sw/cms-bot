@@ -46,7 +46,7 @@ function get_pr_relval_args() {
   echo "${WF_ARGS}"
 }
 
-# Function to extract filenames by headername and append to indirectly-changed-files
+# Function to extract filenames by headername and append to indirectly-changed-files.txt
 function extract_filenames() {
   local headername="$1"
   local input_file="./etc/dependencies/usedby.out"
@@ -68,14 +68,14 @@ function extract_filenames() {
 function process_changed_files() {
   local directlyChangedFiles="$1"
   local allChangedFiles="$2"
-  cat </dev/null >"$WORKSPACE/indirectly-changed-files"
-  # Iterate over each line in $WORKSPACE/changed-files
+  cat </dev/null >"$WORKSPACE/indirectly-changed-files.txt"
+  # Iterate over each line in $WORKSPACE/changed-files.txt
   while IFS= read -r headername; do
     # Call the function to extract files that use $headername and append them to $WORKSPACE/indirectly-changed-files
-    extract_filenames "$headername" "$WORKSPACE/indirectly-changed-files"
+    extract_filenames "$headername" "$WORKSPACE/indirectly-changed-files.txt"
   done < "$directlyChangedFiles"
   # Merge lists
-  sort -u "$directlyChangedFiles" $WORKSPACE/indirectly-changed-files > "$allChangedFiles"
+  sort -u "$directlyChangedFiles" $WORKSPACE/indirectly-changed-files.txt > "$allChangedFiles"
 }
 
 # Constants
@@ -1196,6 +1196,7 @@ if [ $(echo ${SCRAM_VER} | grep '^V3' | wc -l) -gt 0 ] ; then
 else
   perl config/SCRAM/findDependencies.pl -rel `pwd` -arch ${SCRAM_ARCH} -scramroot $SCRAM_TOOL_HOME
 fi
+[ -f etc/dependencies/usedby.out ] && cp etc/dependencies/usedby.out $WORKSPACE/$WORKSPACE/usedby.txt
 process_changed_files "$WORKSPACE/changed-files" "$WORKSPACE/full-list-of-changed-files.txt"
 popd
 

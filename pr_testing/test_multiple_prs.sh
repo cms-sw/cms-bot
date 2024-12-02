@@ -1196,7 +1196,7 @@ if [ $(echo ${SCRAM_VER} | grep '^V3' | wc -l) -gt 0 ] ; then
 else
   perl config/SCRAM/findDependencies.pl -rel `pwd` -arch ${SCRAM_ARCH} -scramroot $SCRAM_TOOL_HOME
 fi
-#[ -f etc/dependencies/usedby.out ] && cp etc/dependencies/usedby.out $WORKSPACE/$WORKSPACE/usedby.txt
+[ -f etc/dependencies/usedby.out ] && cp etc/dependencies/usedby.out $WORKSPACE/usedby.txt
 process_changed_files "$WORKSPACE/changed-files" "$WORKSPACE/full-list-of-changed-files.txt"
 popd
 

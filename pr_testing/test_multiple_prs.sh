@@ -18,8 +18,10 @@ function get_compilation_warnings() {
 }
 
 function get_warnings_files(){
-  for i in $(cat $1 | sed 's|^src/||;s|:.*||;s| ||g;s|[(].*||' | sort -u) ; do
-    [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] && echo $i
+  local logFile="$1"
+  local changedFiles="$2"
+  for i in $(cat $logFile | sed 's|^src/||;s|:.*||;s| ||g;s|[(].*||' | sort -u) ; do
+    [ $(grep "$i" "$changedFiles" | wc -l) -gt 0 ] && echo $i
   done
 }
 
@@ -42,6 +44,38 @@ function get_pr_relval_args() {
     WF_ARGS="${WF_LIST} $(eval echo \${EXTRA_MATRIX_ARGS$2})"
   fi
   echo "${WF_ARGS}"
+}
+
+# Function to extract filenames by headername and append to indirectly-changed-files
+function extract_filenames() {
+  local headername="$1"
+  local input_file="./etc/dependencies/usedby.out"
+  local output_file="$2"
+
+  # Extract lines starting with headername, split them, and append each filename to the temp file
+  grep "^$headername" "$input_file" | while read -r line; do
+    # Split the line into an array
+    IFS=' ' read -r -a array <<< "$line"
+
+    # Loop through each element after the first (which is the headername)
+    for filename in "${array[@]:1}"; do
+      echo "$filename" >> "$output_file"
+    done
+  done
+}
+
+# Function to get indirectly changed files
+function process_changed_files() {
+  local directlyChangedFiles="$1"
+  local allChangedFiles="$2"
+  cat </dev/null >"$WORKSPACE/indirectly-changed-files"
+  # Iterate over each line in $WORKSPACE/changed-files
+  while IFS= read -r headername; do
+    # Call the function to extract files that use $headername and append them to $WORKSPACE/indirectly-changed-files
+    extract_filenames "$headername" "$WORKSPACE/indirectly-changed-files"
+  done < "$directlyChangedFiles"
+  # Merge lists
+  sort -u "$directlyChangedFiles" $WORKSPACE/indirectly-changed-files > "$allChangedFiles"
 }
 
 # Constants
@@ -936,24 +970,12 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "^ALL_OK$" $WORKSPACE/buildClang.log` || true
-  get_compilation_warnings $WORKSPACE/buildClang.log > $WORKSPACE/all-warnings-clang.log
-  for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log) ; do
-    echo $i >> $WORKSPACE/clang-new-warnings.log
-    grep ": warning: " $WORKSPACE/all-warnings-clang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
-  done
-  if [ -e $WORKSPACE/clang-new-warnings.log ]  ; then
-    echo 'CLANG_NEW_WARNINGS;ERROR,Clang Warnings to fix,See Log,clang-new-warnings.log' >> ${RESULTS_DIR}/clang.txt
-    if $IS_DEV_BRANCH && [ $(echo "$IGNORE_BOT_TESTS" | tr ',' '\n' | grep '^CLANG-WARNINGS$' | wc -l) -eq 0 ] ; then
-      RUN_TESTS=false
-      ALL_OK=false
-      CLANG_BUILD_OK=false
-    fi
-  fi
 
   if [ -d ${BUILD_LOG_DIR}/html ] ; then
     mv ${BUILD_LOG_DIR}/html $WORKSPACE/clang-logs
     echo 'CLANG_LOG;OK,Clang warnings summary,See Log,clang-logs' >> ${RESULTS_DIR}/clang.txt
   fi
+
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when testing compilation with clang"
     echo 'CLANG_COMPILATION_RESULTS;ERROR,Clang Compilation,See Log,buildClang.log' >> ${RESULTS_DIR}/clang.txt
@@ -1163,7 +1185,21 @@ GENERAL_ERRORS=`grep "^ALL_OK$" $WORKSPACE/build.log` || true
 
 rm -f $WORKSPACE/deprecated-warnings.log
 get_compilation_warnings $WORKSPACE/build.log > $WORKSPACE/all-warnings.log
-for i in $(get_warnings_files $WORKSPACE/all-warnings.log) ; do
+
+pushd $CMSSW_BASE
+scram b echo_SCRAM_TOOL_HOME
+SCRAM_TOOL_HOME=`scram b echo_SCRAM_TOOL_HOME 2>/dev/null | tail -1 | cut -d' ' -f3`
+mkdir -p etc/dependencies
+SCRAM_VER=$(cat config/scram_version)
+if [ $(echo ${SCRAM_VER} | grep '^V3' | wc -l) -gt 0 ] ; then
+  SCRAM_TOOL_HOME=$SCRAM_TOOL_HOME ./config/SCRAM/findDependencies.py -rel `pwd` -arch ${SCRAM_ARCH}
+else
+  perl config/SCRAM/findDependencies.pl -rel `pwd` -arch ${SCRAM_ARCH} -scramroot $SCRAM_TOOL_HOME
+fi
+process_changed_files "$WORKSPACE/changed-files" "$WORKSPACE/full-list-of-changed-files.txt"
+popd
+
+for i in $(get_warnings_files $WORKSPACE/all-warnings.log $WORKSPACE/full-list-of-changed-files.txt) ; do
   echo $i > $WORKSPACE/warning.log
   grep ": warning: " $WORKSPACE/all-warnings.log | grep "/$i" >> $WORKSPACE/warning.log
   if $IS_DEV_BRANCH ; then
@@ -1220,6 +1256,24 @@ else
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_DIR}/build.txt
+
+# Analyze LLVM compilation logs
+if [ -f $WORKSPACE/buildClang.log ] ; then
+  get_compilation_warnings $WORKSPACE/buildClang.log > $WORKSPACE/all-warnings-clang.log
+  for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log $WORKSPACE/full-list-of-changed-files.txt) ; do
+    echo $i >> $WORKSPACE/clang-new-warnings.log
+    grep ": warning: " $WORKSPACE/all-warnings-clang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
+  done
+  if [ -e $WORKSPACE/clang-new-warnings.log ]  ; then
+    echo 'CLANG_NEW_WARNINGS;ERROR,Clang Warnings to fix,See Log,clang-new-warnings.log' >> ${RESULTS_DIR}/clang.txt
+    if $IS_DEV_BRANCH && [ $(echo "$IGNORE_BOT_TESTS" | tr ',' '\n' | grep '^CLANG-WARNINGS$' | wc -l) -eq 0 ] ; then
+      RUN_TESTS=false
+      ALL_OK=false
+      CLANG_BUILD_OK=false
+    fi
+  fi
+fi
+
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 
 DO_PROFILING=false

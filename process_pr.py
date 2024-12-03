@@ -1835,13 +1835,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     signatures[cat] = "pending"
             print("Signatures:", signatures)
 
-    if (
-        issue.pull_request
-        and auto_test_comment
-        and (test_comment is None)
-        and ((repository in auto_test_repo) or ("*" in auto_test_repo))
-    ):
-        test_comment = auto_test_comment
+    # if (
+    #     issue.pull_request
+    #     and auto_test_comment
+    #     and (test_comment is None)
+    #     and ((repository in auto_test_repo) or ("*" in auto_test_repo))
+    # ):
+    #     test_comment = auto_test_comment
 
     if push_test_issue:
         auto_close_push_test_issue = True

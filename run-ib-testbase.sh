@@ -71,4 +71,5 @@ if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   which dasgoclient
   grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true
 fi
+cudaComputeCapabilities || true
 EOF

@@ -1423,7 +1423,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF_COMMON="${WF_COMMON};-l ${WORKFLOWS_PR_LABELS}"
   echo "MATRIX_ARGS=${WF_COMMON}" >> $WORKSPACE/run-relvals.prop
   if $PRODUCTION_RELEASE && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
-    echo "RUN_THE_MATRIX_CMD_OPTS=--maxmem_profile" >> $WORKSPACE/run-relvals.prop
+    echo "RUN_THE_MATRIX_CMD_OPTS=--maxmem_profile ${EXTRA_MATRIX_COMMAND_ARGS}" >> $WORKSPACE/run-relvals.prop
   fi
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then

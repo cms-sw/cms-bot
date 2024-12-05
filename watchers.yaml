@@ -1768,6 +1768,20 @@ denizsun:
 - DQM/HcalMonitorTasks
 - DQM/HcalTasks
 - DQMOffline/Hcal
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
+- RecoLocalCalo/Configuration
+- RecoLocalCalo
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- DataFormats/ForwardDetId
+- RecoHGCal
+- SimTracker/TrackerMaterialAnalysis
+- SimCalorimetry/HGCalSimProducers
+- SimDataFormats
+- Configuration/Skimming
+- DPGAnalysis/Skims
 salimcerci:
 - DQM/HcalCommon
 - DQM/HcalMonitorClient

@@ -26,7 +26,7 @@ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
     args=$(echo "${args}" | sed "s|all|${ALL_WFS}|")
   fi
   dateBefore=$(date +"%s")
-  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} RUN_THE_MATRIX_CMD_OPTS=${RUN_THE_MATRIX_CMD_OPTS} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee ${LOG}.tmp
+  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} EXTRA_MATRIX_COMMAND_ARGS=${RUN_THE_MATRIX_CMD_OPTS} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee ${LOG}.tmp
   if [ $(grep -a "ALL_OK" ${LOG}.tmp | wc -l) -eq 0 ] ; then echo "ERROR Running runTheMatrix for '$args'" >> ${LOG}.tmp ; fi
   cat ${LOG}.tmp >> ${LOG}
   rm -rf ${LOG}.tmp

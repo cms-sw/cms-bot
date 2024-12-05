@@ -21,6 +21,7 @@ config.JobType.pluginName = "PrivateMC"
 config.JobType.maxJobRuntimeMin = 60
 config.JobType.maxMemoryMB = 2000
 config.JobType.allowUndistributedCMSSW = True
+config.JobType.scriptExe = "run.sh"
 
 config.Site.storageSite = "T2_CH_CERN"
 

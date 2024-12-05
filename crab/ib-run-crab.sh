@@ -17,7 +17,12 @@ echo 'CMSBOT_CRAB_TEST="OK"' > ${CMSSW_BASE}/src/FWCore/Version/python/cmsbot_cr
 echo -e '#!/bin/bash\necho OK' > ${CMSSW_BASE}/src/FWCore/Version/scripts/cmsbot_crab_test.sh
 chmod +x ${CMSSW_BASE}/src/FWCore/Version/scripts/cmsbot_crab_test.sh
 scram build -j $(nproc)
-
+#bug in build rules where scram creates a broken symlink
+if [ -d ${CMSSW_BASE}/biglib/${SCRAM_ARCH} ] ; then
+  for l in $(find ${CMSSW_BASE}/biglib/${SCRAM_ARCH} -type l) ; do
+    [ -e $l ] || rm -f $l
+  done
+fi
 [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
@@ -36,6 +41,7 @@ fi
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 cmssw_queue=$(echo ${CMSSW_VERSION} | cut -d_ -f1-3)_X
 thisdir=$(dirname $0)
+cp ${thisdir}/run.sh .
 if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
   export CMSRUN_PSET=${thisdir}/${cmssw_queue}/pset.py
 else

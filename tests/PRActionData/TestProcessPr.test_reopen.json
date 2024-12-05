@@ -101,6 +101,10 @@
         ]
     },
     {
+        "type": "open",
+        "data": null
+    },
+    {
         "type": "emoji",
         "data": [
             2049242908,
@@ -115,10 +119,6 @@
     {
         "type": "remove-label",
         "data": []
-    },
-    {
-        "type": "open",
-        "data": null
     },
     {
         "type": "edit-comment",

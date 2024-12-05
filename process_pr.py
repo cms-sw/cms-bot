@@ -881,8 +881,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         return
 
     gh_user_char = "@"
+
     if not notify_user(issue):
         gh_user_char = ""
+
     api_rate_limits(gh)
     prId = issue.number
     repository = repo.full_name
@@ -961,12 +963,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     warned_too_many_commits = False
     ok_too_many_files = False
     warned_too_many_files = False
+    is_draft_pr = False
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
         if pr.changed_files == 0:
             print("Ignoring: PR with no files changed")
             return
+        if pr.draft:
+            print("Draft PR, mentions turned off")
+            is_draft_pr = True
+            gh_user_char = ""
         if cmssw_repo and cms_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
             if pr.state != "closed":
                 print("This pull request must go in to master branch")
@@ -1109,7 +1116,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ]
         print("PR Statuses:", commit_statuses)
         print(len(commit_statuses))
-        last_commit_date = last_commit.committer.date
+        last_commit_date = last_commit.committer.date.replace(tzinfo=None)
+
         print(
             "Latest commit by ",
             last_commit.committer.name.encode("ascii", "ignore").decode(),
@@ -1664,6 +1672,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         print("Processing commits")
 
+        if not pull_request_updated:
+            _bot_cache_shas = set(bot_cache["commits"].keys())
+            diff = all_commit_shas.difference(_bot_cache_shas)
+            if diff:
+                print("Setting pull-request-update to True:", len(diff), "new commit(s)")
+                pull_request_updated = True
+
         # Make sure to mark squashed=False if a cached/squashed commit is added back
         for commit_sha in [
             sha
@@ -2193,6 +2208,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         new_categories.add(nc_lab)
 
     if new_assign_cats:
+        tmp_gh_user_char = gh_user_char
+        if notify_user(issue):
+            gh_user_char = "@"
         new_l2s = [
             gh_user_char + name
             for name, l2_categories in list(CMSSW_L2.items())
@@ -2208,6 +2226,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 + ",".join(new_l2s)
                 + " you have been requested to review this Pull request/Issue and eventually sign? Thanks"
             )
+        gh_user_char = tmp_gh_user_char
 
     # update blocker massge
     if new_blocker:
@@ -2491,11 +2510,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         )
 
         messageUpdatedPR = format(
-            "Pull request #%(pr)s was updated."
-            " %(signers)s can you please check and sign again.\n",
+            "Pull request #%(pr)s was updated.",
             pr=pr.number,
-            signers=", ".join(missing_notifications),
         )
+
+        if not is_draft_pr:
+            messageUpdatedPR += format(
+                " %(signers)s can you please check and sign again.\n",
+                signers=", ".join(missing_notifications),
+            )
     else:
         messageNewPR = format(
             "%(msgPrefix)s %(gh_user_char)s%(user)s"
@@ -2528,11 +2551,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print("Status: Not see= %s, Updated: %s" % (already_seen, pull_request_updated))
     if is_closed_branch(pr.base.ref) and (pr.state != "closed"):
         commentMsg = messageBranchClosed
-    elif (not already_seen) or pull_request_updated:
-        if not already_seen:
-            commentMsg = messageNewPR
-        else:
-            commentMsg = messageUpdatedPR
+    elif (already_seen or is_draft_pr) and pull_request_updated:
+        commentMsg = messageUpdatedPR
+    elif not already_seen and not is_draft_pr:
+        commentMsg = messageNewPR
     elif new_categories:
         commentMsg = messageUpdatedPR
     elif not missingApprovals:
@@ -2542,7 +2564,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if commentMsg and dryRun:
         print("The following comment will be made:")
         try:
-            print(commentMsg.decode("ascii", "replace"))
+            print(commentMsg.encode("ascii", "replace").decode("ascii", "replace"))
         except:
             pass
     for pre_check in pre_checks + extra_pre_checks:

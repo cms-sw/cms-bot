@@ -882,7 +882,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     gh_user_char = "@"
 
-    if issue.as_pull_request().draft or (not notify_user(issue)):
+    if not notify_user(issue):
         gh_user_char = ""
 
     api_rate_limits(gh)
@@ -963,12 +963,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     warned_too_many_commits = False
     ok_too_many_files = False
     warned_too_many_files = False
+    is_draft_pr = False
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
         if pr.changed_files == 0:
             print("Ignoring: PR with no files changed")
             return
+        if pr.draft:
+            print("Draft PR, mentions turned off")
+            is_draft_pr = True
+            gh_user_char = ""
         if cmssw_repo and cms_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
             if pr.state != "closed":
                 print("This pull request must go in to master branch")
@@ -1111,7 +1116,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ]
         print("PR Statuses:", commit_statuses)
         print(len(commit_statuses))
-        last_commit_date = last_commit.committer.date
+        last_commit_date = last_commit.committer.date.replace(tzinfo=None)
 
         print(
             "Latest commit by ",
@@ -2488,7 +2493,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         )
 
         messageUpdatedPR = f"Pull request #{pr.number} was updated. "
-        if not issue.as_pull_request().draft:
+        if not is_draft_pr:
             messageUpdatedPR += (
                 f"{', '.join(missing_notifications)} can you please check and sign again.\n"
             )
@@ -2519,7 +2524,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         commentMsg = messageBranchClosed
     elif (not already_seen) or pull_request_updated:
         if not already_seen:
-            if not issue.as_pull_request().draft:
+            if not is_draft_pr:
                 commentMsg = messageNewPR
         else:
             commentMsg = messageUpdatedPR
@@ -2555,7 +2560,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     )
             continue
         if (not dryRunOrig) and (pre_checks_state[pre_check] == ""):
-            params = {"PULL_REQUEST": str(prId), "CONTEXT_PREFIX": cms_status_prefix}
+            params = {"PULL_REQUEST": "%s" % (prId), "CONTEXT_PREFIX": cms_status_prefix}
             if pre_check == "code-checks":
                 params["CMSSW_TOOL_CONF"] = code_checks_tools
                 params["APPLY_PATCH"] = str(code_check_apply_patch).lower()

@@ -15,7 +15,7 @@ config.Data.totalUnits = 10
 config.Data.splitting = "EventBased"
 config.Data.publication = False
 
-config.JobType.psetName = pset
+config.JobType.psetName = "pset.py"
 config.JobType.pluginName = "PrivateMC"
 config.JobType.maxJobRuntimeMin = 720
 config.JobType.maxMemoryMB = 16000

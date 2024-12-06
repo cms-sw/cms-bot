@@ -20,4 +20,5 @@ echo $LD_LIBRARY_PATH | tr : '\n'
 ld.so --help | grep supported | grep x86-64-v
 which cmsRun
 cmsRun --help || true
+strace -f cmsRun --help >>run.log 2>&1
 cmsRun -j FrameworkJobReport.xml PSet.py || true

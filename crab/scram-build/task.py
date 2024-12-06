@@ -15,11 +15,11 @@ config.Data.totalUnits = 10
 config.Data.splitting = "EventBased"
 config.Data.publication = False
 
-config.JobType.psetName = "pset.py"
+config.JobType.psetName = pset
 config.JobType.pluginName = "PrivateMC"
-config.JobType.maxJobRuntimeMin = 30
-config.JobType.maxMemoryMB = 2000
-config.JobType.numCores = 1
+config.JobType.maxJobRuntimeMin = 720
+config.JobType.maxMemoryMB = 16000
+config.JobType.numCores = 8
 config.JobType.allowUndistributedCMSSW = True
 config.JobType.scriptExe = "run.sh"
 config.JobType.outputFiles = "run.log"

@@ -43,6 +43,8 @@ if [ "${X509_USER_PROXY}" = "" ] ; then
   voms-proxy-init -voms cms
   export X509_USER_PROXY=$(voms-proxy-info -path)
 fi
+cp $(dirname $0)/pset.py .
+cp $(dirname $0)/run.sh .
 for CRABCLIENT_TYPE in ${CRABCLIENT_TYPES}
 do
     # Report PR status

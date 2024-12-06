@@ -27,6 +27,7 @@ fi
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
 [ "${CRABCONFIGINSTANCE}" != "" ]|| export CRABCONFIGINSTANCE="prod"
+[ "${JOB_DIR}" != "" ]           || JOB_DIR="."
 
 if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   osver=$(echo ${SCRAM_ARCH} | tr '_' '\n' | head -1 | sed 's|^[a-z][a-z]*||')
@@ -41,11 +42,11 @@ fi
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 cmssw_queue=$(echo ${CMSSW_VERSION} | cut -d_ -f1-3)_X
 thisdir=$(dirname $0)
-cp ${thisdir}/run.sh .
+cp ${thisdir}/${JOB_DIR}/run.sh .
 if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
-  export CMSRUN_PSET=${thisdir}/${cmssw_queue}/pset.py
+  cp ${thisdir}/${cmssw_queue}/pset.py .
 else
-  export CMSRUN_PSET=${thisdir}/pset.py
+  cp ${thisdir}/${JOB_DIR}/pset.py .
 fi
 if [ "${X509_USER_PROXY}" = "" ] ; then
   voms-proxy-init -voms cms
@@ -53,7 +54,7 @@ if [ "${X509_USER_PROXY}" = "" ] ; then
 fi
 pyver=$(${CMSBOT_PYTHON_CMD} -c 'import sys;print("python%s%s" % (sys.version_info[0],sys.version_info[1]))')
 if [ -e ${thisdir}/${pyver} ] ; then export PYTHONPATH="${thisdir}/${pyver}:${PYTHONPATH}"; fi
-crab submit --proxy ${X509_USER_PROXY} -c ${thisdir}/task.py
+crab submit --proxy ${X509_USER_PROXY} -c ${thisdir}/${JOB_DIR}/task.py
 rm -rf ${WORKSPACE}/crab
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
 echo "INPROGRESS" > $WORKSPACE/crab/statusfile

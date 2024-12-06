@@ -1,7 +1,5 @@
-#!/bin/bash -e
-echo "======  SCRAM Env ============="
-env
-echo "==============================="
-ldd $(which cmsRun)
-echo $LD_LIBRARY_PATH | tr : '\n'
+#!/bin/bash -ex
+pwd
+ls
+env > run.log
 cmsRun -j FrameworkJobReport.xml -p PSet.py

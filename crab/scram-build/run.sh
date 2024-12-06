@@ -1,5 +1,6 @@
 #!/bin/bash -ex
 log="run.log"
+ld.so --help | grep supported | grep x86-64-v
 pushd $CMSSW_BASE
   scram b clean
   scram build enable-multi-targets

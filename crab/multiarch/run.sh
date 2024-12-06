@@ -1,9 +1,9 @@
 #!/bin/bash
-for f in minbias.root FrameworkJobReport.xml ; do
-  curl -L -o $f http://cern.ch/muzaffar/$f
-  [ -e $f ] || exit 1
-done
-ls
+#for f in minbias.root FrameworkJobReport.xml ; do
+#  curl -L -o $f http://cern.ch/muzaffar/$f
+#  [ -e $f ] || exit 1
+#done
+#ls
 env > run.log
 echo "======================" >> run.log
 pushd $CMSSW_BASE
@@ -25,4 +25,6 @@ export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr : '\n' | grep -E -v "$CMSSW_
 echo $LD_LIBRARY_PATH | tr : '\n'
 ld.so --help | grep supported | grep x86-64-v
 which cmsRun
-strace -f cmsRun --help
+ls
+cmsRun --help
+cmsRun -p FrameworkJobReport.xml PSet.py

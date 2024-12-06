@@ -23,5 +23,4 @@ export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr : '\n' | grep -E -v "$CMSSW_
 echo $LD_LIBRARY_PATH | tr : '\n'
 ld.so --help | grep supported | grep x86-64-v
 which cmsRun
-strace -f cmsRun --help >>run.log 2>&1 || true
-echo DONE
+strace -f cmsRun --help

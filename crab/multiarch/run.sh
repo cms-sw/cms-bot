@@ -1,7 +1,6 @@
 #!/bin/bash -e
-pwd
-ls
 env > run.log
+echo "======================" >> run.log
 pushd $CMSSW_BASE
   for dir in lib biglib ; do
     rm -rf $dir
@@ -19,6 +18,7 @@ export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr : '\n' | grep -E -v "$CMSSW_
 echo $LD_LIBRARY_PATH | tr : '\n'
 ld.so --help | grep supported | grep x86-64-v
 which cmsRun
-cmsRun --help || true
 strace -f cmsRun --help >>run.log 2>&1
-cmsRun -j FrameworkJobReport.xml PSet.py || true
+for f in minbias.root FrameworkJobReport.xml ; do
+  cp $CMSSW_BASE/src/$f .
+done

@@ -881,8 +881,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         return
 
     gh_user_char = "@"
+
     if not notify_user(issue):
         gh_user_char = ""
+
     api_rate_limits(gh)
     prId = issue.number
     repository = repo.full_name
@@ -961,12 +963,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     warned_too_many_commits = False
     ok_too_many_files = False
     warned_too_many_files = False
+    is_draft_pr = False
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
         if pr.changed_files == 0:
             print("Ignoring: PR with no files changed")
             return
+        if pr.draft:
+            print("Draft PR, mentions turned off")
+            is_draft_pr = True
+            gh_user_char = ""
         if cmssw_repo and cms_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
             if pr.state != "closed":
                 print("This pull request must go in to master branch")
@@ -1109,7 +1116,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ]
         print("PR Statuses:", commit_statuses)
         print(len(commit_statuses))
-        last_commit_date = last_commit.committer.date
+        last_commit_date = last_commit.committer.date.replace(tzinfo=None)
+
         print(
             "Latest commit by ",
             last_commit.committer.name.encode("ascii", "ignore").decode(),
@@ -2193,6 +2201,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         new_categories.add(nc_lab)
 
     if new_assign_cats:
+        tmp_gh_user_char = gh_user_char
+        if notify_user(issue):
+            gh_user_char = "@"
         new_l2s = [
             gh_user_char + name
             for name, l2_categories in list(CMSSW_L2.items())
@@ -2208,6 +2219,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 + ",".join(new_l2s)
                 + " you have been requested to review this Pull request/Issue and eventually sign? Thanks"
             )
+        gh_user_char = tmp_gh_user_char
 
     # update blocker massge
     if new_blocker:
@@ -2466,58 +2478,40 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 pkg_msg.append("- %s (**%s**)" % (pkg, ", ".join(package_categories[pkg])))
             else:
                 pkg_msg.append("- %s (**new**)" % pkg)
-        messageNewPR = format(
-            "%(msgPrefix)s %(gh_user_char)s%(user)s"
-            " for %(branch)s.\n\n"
-            "It involves the following packages:\n\n"
-            "%(packages)s\n\n"
-            "%(new_package_message)s\n"
-            "%(l2s)s can you please review it and eventually sign?"
-            " Thanks.\n"
-            "%(watchers)s"
-            "%(releaseManagers)s"
-            "%(patch_branch_warning)s\n"
-            'cms-bot commands are listed <a href="http://cms-sw.github.io/cms-bot-cmssw-cmds.html">here</a>\n',
-            msgPrefix=NEW_PR_PREFIX,
-            user=pr.user.login,
-            gh_user_char=gh_user_char,
-            branch=pr.base.ref,
-            l2s=", ".join(missing_notifications),
-            packages="\n".join(pkg_msg),
-            new_package_message=new_package_message,
-            watchers=watchersMsg,
-            releaseManagers=releaseManagersMsg,
-            patch_branch_warning=warning_msg,
+        pkg_msg_s = "\n".join(pkg_msg)
+        messageNewPR = (
+            f"{NEW_PR_PREFIX} {gh_user_char}{pr.user.login} for {pr.base.ref}.\n\n"
+            f"It involves the following packages:\n\n"
+            f"{pkg_msg_s}\n\n"
+            f"{new_package_message}\n"
+            f"{', '.join(missing_notifications)} can you please review it and eventually sign?"
+            f" Thanks.\n"
+            f"{watchersMsg}"
+            f"{releaseManagersMsg}"
+            f"{warning_msg}\n"
+            'cms-bot commands are listed <a href="http://cms-sw.github.io/cms-bot-cmssw-cmds.html">here</a>\n'
         )
 
-        messageUpdatedPR = format(
-            "Pull request #%(pr)s was updated."
-            " %(signers)s can you please check and sign again.\n",
-            pr=pr.number,
-            signers=", ".join(missing_notifications),
-        )
+        messageUpdatedPR = f"Pull request #{pr.number} was updated. "
+        if not is_draft_pr:
+            messageUpdatedPR += (
+                f"{', '.join(missing_notifications)} can you please check and sign again.\n"
+            )
     else:
-        messageNewPR = format(
-            "%(msgPrefix)s %(gh_user_char)s%(user)s"
-            " for branch %(branch)s.\n\n"
-            "%(l2s)s can you please review it and eventually sign?"
-            " Thanks.\n"
-            "%(watchers)s"
-            "%(releaseManagers)s"
-            'cms-bot commands are listed <a href="http://cms-sw.github.io/cms-bot-cmssw-cmds.html">here</a>\n',
-            msgPrefix=NEW_PR_PREFIX,
-            user=pr.user.login,
-            gh_user_char=gh_user_char,
-            branch=pr.base.ref,
-            l2s=", ".join(missing_notifications),
-            releaseManagers=releaseManagersMsg,
-            watchers=watchersMsg,
+        messageNewPR = (
+            f"{NEW_PR_PREFIX} {gh_user_char}{pr.user.login} "
+            f"for branch {pr.base.ref}.\n\n"
+            f"{', '.join(missing_notifications)} can you please review it and eventually sign?"
+            f" Thanks.\n"
+            f"{watchersMsg}"
+            f"{releaseManagersMsg}"
+            'cms-bot commands are listed <a href="http://cms-sw.github.io/cms-bot-cmssw-cmds.html">here</a>\n'
         )
 
-        messageUpdatedPR = format("Pull request #%(pr)s was updated.", pr=pr.number)
+        messageUpdatedPR = f"Pull request #{pr.number} was updated."
 
     # Finally decide whether or not we should close the pull request:
-    messageBranchClosed = format(
+    messageBranchClosed = (
         "This branch is closed for updates."
         " Closing this pull request.\n"
         " Please bring this up in the ORP"
@@ -2530,7 +2524,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         commentMsg = messageBranchClosed
     elif (not already_seen) or pull_request_updated:
         if not already_seen:
-            commentMsg = messageNewPR
+            if not is_draft_pr:
+                commentMsg = messageNewPR
         else:
             commentMsg = messageUpdatedPR
     elif new_categories:

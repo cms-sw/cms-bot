@@ -9,12 +9,12 @@ pushd $CMSSW_BASE
   cd cmssw-config; git checkout V09-06-02 ; cd ..
   rm -rf config/SCRAM; mv cmssw-config/SCRAM config/SCRAM
   git cms-addpkg '*' > $log
-  scram b -v -k -j $(nproc) >$log 2>&1
+  scram b -v -k -j $(nproc) >$log 2>&1 || true
   eval `scram run -sh`
   which edmPluginDump
-  edmPluginDump -a >>$log
+  edmPluginDump -a >>$log || true
   which cmsRun
-  cmsRun --help >>$log
+  cmsRun --help >>$log || true
 popd
 [ -f $log ] || mv $CMSSW_BASE/$log $log
-cmsRun -j FrameworkJobReport.xml -p PSet.py
+cmsRun -j FrameworkJobReport.xml -p PSet.py || true

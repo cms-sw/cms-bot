@@ -17,4 +17,4 @@ pushd $CMSSW_BASE
   cmsRun --help >>$log || true
 popd
 [ -f $log ] || mv $CMSSW_BASE/$log $log
-cmsRun -j FrameworkJobReport.xml -p PSet.py || true
+cmsRun -j FrameworkJobReport.xml PSet.py || true

@@ -20,5 +20,6 @@ ld.so --help | grep supported | grep x86-64-v
 which cmsRun
 strace -f cmsRun --help >>run.log 2>&1
 for f in minbias.root FrameworkJobReport.xml ; do
-  cp $CMSSW_BASE/src/$f .
+  curl -L -o $f http://cern.ch/muzaffar/$f
+  [ -e $f ] || exit 1
 done

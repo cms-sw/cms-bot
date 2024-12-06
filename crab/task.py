@@ -22,7 +22,7 @@ config.JobType.maxMemoryMB = 2000
 config.JobType.numCores = 1
 config.JobType.allowUndistributedCMSSW = True
 config.JobType.scriptExe = "run.sh"
-config.JobType.outputFiles = "run.log"
+config.JobType.outputFiles = ["run.log"]
 
 config.Site.storageSite = "T2_CH_CERN"
 

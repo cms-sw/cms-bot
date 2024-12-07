@@ -4,6 +4,7 @@
 #  [ -e $f ] || exit 1
 #done
 #ls
+cat /proc/cpuinfo
 env > run.log
 echo "======================" >> run.log
 pushd $CMSSW_BASE

@@ -192,7 +192,7 @@ def external_to_package(repo_fullname):
 
 # extra labels which bot cn add via 'type label' comment
 def get_dpg_pog():
-    groups = ["pf", "l1t", "castor"]
+    groups = ["pf", "l1t", "castor", "ngt"]
     for user in CMSSW_L2:
         for cat in CMSSW_L2[user]:
             if "-" not in cat:

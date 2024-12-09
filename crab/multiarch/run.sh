@@ -33,6 +33,8 @@ pushd cmdrun
         let xd=$(date +%s)-${xt} || true
       done
       let RUN_GAP=$(date +%s)-${LRUN}
+      b64=$(echo -n "previous_${cmd}" | base64)
+      curl -L -X POST -d "$b64" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?$cmd"
     else
       curl -s -L -o run.sh https://muzaffar.web.cern.ch/crab-test/run.sh
       chmod +x run.sh
@@ -43,7 +45,7 @@ pushd cmdrun
       while [ $sline -le $total_lines ] ; do
         sed -n "${sline},+${xline}p" run.log | base64 > run.base64
         let sline=$sline+$xline+1
-        curl -L -X POST -d @run.base64  https://muzaffar.web.cern.ch/cgi-bin/test-v2?$cmd
+        curl -L -X POST -d @run.base64 "https://muzaffar.web.cern.ch/cgi-bin/test-v2?$cmd"
       done
       rm -f run.sh run.log run.base64
       PRECMD="${cmd}"
@@ -54,3 +56,4 @@ pushd cmdrun
 popd
 rm -rf cmdrun
 mv crabout/* .
+rm -rf crabout

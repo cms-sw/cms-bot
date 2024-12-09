@@ -116,7 +116,7 @@ fi
 ## build and upload revision based packages
 REV_PKGS=""
 REV_UPLOAD=""
-for p in cms-common fakesystem gcc-fixinclude; do
+for p in cms-common fakesystem gcc-fixincludes; do
   [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
 done
 if [ "${REV_PKGS}" != "" ] ; then

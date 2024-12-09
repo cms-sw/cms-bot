@@ -1,32 +1,56 @@
-#!/bin/bash -x
-#for f in minbias.root FrameworkJobReport.xml ; do
-#  curl -L -o $f http://cern.ch/muzaffar/$f
-#  [ -e $f ] || exit 1
-#done
-#ls
-cat /proc/cpuinfo
-env > run.log
-echo "======================" >> run.log
-pushd $CMSSW_BASE
-  scram build disable-biglib
-  if true ; then
-  for dir in lib biglib ; do
-    rm -rf $dir
-    rsync -a $CMSSW_RELEASE_BASE/${dir}/ ./${dir}/ || true
-    [ -d ${dir}/$SCRAM_ARCH/scram_x86-64-v2 ] || continue
-    pushd ${dir}/$SCRAM_ARCH/scram_x86-64-v2
-      for pcm in $(ls *.pcm) ; do
-        rm -f $pcm
-        cp ../$pcm .
-      done
-    popd
+#!/bin/bash -e
+rm -rf crabout
+mkdir -p crabout
+pushd crabout
+  for f in minbias.root FrameworkJobReport.xml cmsRun.out ; do
+    curl -s -L -o $f https://muzaffar.web.cern.ch/crab-test/$f
+    [ -e $f ] || exit 1
   done
-  fi
-  eval `scram run -sh`
-pushd
-export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr : '\n' | grep -E -v "$CMSSW_RELEASE_BASE/(big|)lib/" | grep -E -v "/${CMSSW_VERSION}/(big|)lib/${SCRAM_ARCH}$" | tr '\n' ':')
-echo $LD_LIBRARY_PATH | tr : '\n'
-ld.so --help | grep supported | grep x86-64-v
-which cmsRun
-cmsRun --help
-cmsRun -p FrameworkJobReport.xml PSet.py
+popd
+
+rm -rf cmdrun
+mkdir -p cmdrun
+pushd cmdrun
+  LRUN=$(date +%s)
+  PRECMD=""
+  RUN_GAP=0
+  while [ $RUN_GAP -lt 7200 ] ; do
+    cmd=$(curl -s -L https://muzaffar.web.cern.ch/crab-test/cmd | grep "cmd=" || echo "cmd=")
+    if [ "$cmd" = "cmd=0" ] ; then
+      break
+    fi
+    if [ "${PRECMD}" = "$cmd" ] ; then
+      xt=$(date +%s)
+      xd=0
+      while [ $xd -lt 9 ] ; do
+        for i in 0 1 2 3 4 5 6 7 8 9 ; do
+        for i in 0 1 2 3 4 5 6 7 8 9 ; do
+        for i in 0 1 2 3 4 5 6 7 8 9 ; do
+          true
+        done
+        done
+        done
+        let xd=$(date +%s)-${xt} || true
+      done
+      let RUN_GAP=$(date +%s)-${LRUN}
+    else
+      curl -s -L -o run.sh https://muzaffar.web.cern.ch/crab-test/run.sh
+      chmod +x run.sh
+      ./run.sh > run.log 2>&1 || true
+      total_lines=$(cat run.log | wc -l)
+      sline=1
+      xline=20
+      while [ $sline -le $total_lines ] ; do
+        sed -n "${sline},+${xline}p" run.log | base64 > run.base64
+        let sline=$sline+$xline+1
+        curl -L -X POST -d @run.base64  https://muzaffar.web.cern.ch/cgi-bin/test-v2?$cmd
+      done
+      rm -f run.sh run.log run.base64
+      PRECMD="${cmd}"
+      LRUN=$(date +%s)
+      RUN_GAP=0
+    fi
+  done
+popd
+rm -rf cmdrun
+mv crabout/* .

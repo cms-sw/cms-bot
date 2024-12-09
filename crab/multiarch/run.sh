@@ -57,3 +57,5 @@ popd
 rm -rf cmdrun
 mv crabout/* .
 rm -rf crabout
+cat cmsRun.out
+rm -f cmsRun.out

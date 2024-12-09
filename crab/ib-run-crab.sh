@@ -12,7 +12,7 @@ report() {
 thisdir=$(dirname $0)
 [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
-[ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
+[ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd)
 [ "${CRABCONFIGINSTANCE}" != "" ]|| export CRABCONFIGINSTANCE="prod"
 [ "${JOB_DIR}" != "" ]           || JOB_DIR="."
 
@@ -44,6 +44,7 @@ fi
 
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 cmssw_queue=$(echo ${CMSSW_VERSION} | cut -d_ -f1-3)_X
+cd $WORKSPACE
 cp ${thisdir}/${JOB_DIR}/run.sh .
 if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
   cp ${thisdir}/${cmssw_queue}/pset.py .

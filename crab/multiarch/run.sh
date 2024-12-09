@@ -31,7 +31,7 @@ pushd cmdrun
     if [ "$cmd" = "cmd=0" ] ; then
       break
     fi
-    if [ "${PRECMD}" = "$cmd" ] ; then
+    if [ "${PRECMD}" = "$cmd" -o "${cmd}" = "" ] ; then
       xt=$(date +%s)
       xd=0
       while [ $xd -lt 9 ] ; do

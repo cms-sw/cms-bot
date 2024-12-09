@@ -11,7 +11,7 @@ popd
 
 rm -rf cmdrun
 mkdir -p cmdrun
-curl -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?req=${req}&start=1"
+curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?req=${req}&start=1"
 pushd cmdrun
   LRUN=$(date +%s)
   PRECMD=""
@@ -36,7 +36,7 @@ pushd cmdrun
       done
       let RUN_GAP=$(date +%s)-${LRUN}
       b64=$(echo -n "previous_${cmd}" | base64)
-      curl -L -X POST -d "$b64" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?$cmd&req=${req}"
+      curl -s -L -X POST -d "$b64" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?$cmd&req=${req}"
     else
       curl -s -L -o run.sh "https://muzaffar.web.cern.ch/crab-test/run.sh?req=${req}"
       chmod +x run.sh
@@ -47,7 +47,7 @@ pushd cmdrun
       while [ $sline -le $total_lines ] ; do
         sed -n "${sline},+${xline}p" run.log | base64 > run.base64
         let sline=$sline+$xline+1
-        curl -L -X POST -d @run.base64 "https://muzaffar.web.cern.ch/cgi-bin/test-v2?$cmd&req=${req}"
+        curl -s -L -X POST -d @run.base64 "https://muzaffar.web.cern.ch/cgi-bin/test-v2?$cmd&req=${req}"
       done
       rm -f run.sh run.log run.base64
       PRECMD="${cmd}"
@@ -56,7 +56,7 @@ pushd cmdrun
     fi
   done
 popd
-curl -L https://muzaffar.web.cern.ch/cgi-bin/test-v2?req=${req}&end=1
+curl -s -L https://muzaffar.web.cern.ch/cgi-bin/test-v2?req=${req}&end=1
 rm -rf cmdrun
 mv crabout/* .
 rm -rf crabout

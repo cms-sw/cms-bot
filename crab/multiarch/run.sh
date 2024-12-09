@@ -3,7 +3,7 @@ req=$(date +%s)
 rm -rf crabout
 mkdir -p crabout
 pushd crabout
-  for f in minbias.root FrameworkJobReport.xml run.log ; do
+  for f in minbias.root FrameworkJobReport.xml run.txt ; do
     curl -s -L -o $f "https://muzaffar.web.cern.ch/crab-test/$f?req=${req}"
     [ -e $f ] || exit 1
   done
@@ -63,4 +63,5 @@ curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?end=1&req=${req}"
 rm -rf cmdrun
 mv crabout/* .
 rm -rf crabout
-cat run.log
+cat run.txt
+mv run.txt run.log

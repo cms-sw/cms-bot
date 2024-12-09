@@ -13,10 +13,12 @@ rm -rf cmdrun
 mkdir -p cmdrun
 curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?start=1&req=${req}"
 pushd cmdrun
-  LRUN=$(date +%s)
+  req=$(date +%s)
+  LRUN=${req}
   PRECMD=""
   RUN_GAP=0
   while [ $RUN_GAP -lt 7200 ] ; do
+    req=$(date +%s)
     cmd=$(curl -s -L "https://muzaffar.web.cern.ch/crab-test/cmd?req=${req}" | grep "cmd=" || echo "cmd=")
     if [ "$cmd" = "cmd=0" ] ; then
       break
@@ -56,6 +58,7 @@ pushd cmdrun
     fi
   done
 popd
+req=$(date +%s)
 curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?end=1&req=${req}"
 rm -rf cmdrun
 mv crabout/* .

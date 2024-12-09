@@ -115,11 +115,20 @@ fi
 
 ## build and upload revision based packages
 REV_PKGS=""
-for p in cms-common fakesystem gcc-fixinclude SCRAMV1 SCRAMV2 ; do
+for p in cms-common fakesystem gcc-fixinclude; do
   [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
 done
 if [ "${REV_PKGS}" != "" ] ; then
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build ${REV_PKGS}
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true
+  rm -rf ${WRKDIR}
+fi
+REV_PKGS=""
+for p in SCRAMV1 SCRAMV2 ; do
+  [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
+done
+if [ "${REV_PKGS}" != "" ] ; then
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} build ${REV_PKGS}
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true
   rm -rf ${WRKDIR}
 fi

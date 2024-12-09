@@ -45,10 +45,11 @@ pushd cmdrun
       ./run.sh > run.log 2>&1 || true
       total_lines=$(cat run.log | wc -l)
       sline=1
-      xline=20
+      xline=5
       while [ $sline -le $total_lines ] ; do
         sed -n "${sline},+${xline}p" run.log | base64 > run.base64
         curl -s -L -X POST -d @run.base64 "https://muzaffar.web.cern.ch/cgi-bin/test-v2?result=${sline}of${total_lines}&${cmd}&req=${req}"
+        sleep 1
         let sline=$sline+$xline+1
       done
       rm -f run.sh run.log run.base64

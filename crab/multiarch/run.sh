@@ -11,7 +11,7 @@ popd
 
 rm -rf cmdrun
 mkdir -p cmdrun
-curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?start=1&req=${req}"
+curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?start=-----------------------------------------&req=${req}"
 pushd cmdrun
   req=$(date +%s)
   LRUN=${req}
@@ -60,7 +60,7 @@ pushd cmdrun
   done
 popd
 req=$(date +%s)
-curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?end=1&req=${req}"
+curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?end=--------------------------------------------&req=${req}"
 rm -rf cmdrun
 mv crabout/* .
 rm -rf crabout

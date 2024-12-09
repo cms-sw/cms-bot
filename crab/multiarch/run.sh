@@ -56,9 +56,9 @@ pushd cmdrun
     fi
   done
 popd
-curl -s -L https://muzaffar.web.cern.ch/cgi-bin/test-v2?req=${req}&end=1
+curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?req=${req}&end=1"
 rm -rf cmdrun
 mv crabout/* .
 rm -rf crabout
-cat cmsRun.out
-rm -f cmsRun.out
+mv cmsRun.out run.log
+cat run.log

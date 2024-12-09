@@ -13,6 +13,8 @@ popd
 
 rm -rf cmdrun
 mkdir -p cmdrun
+xstart=$(echo "START\n" | base64)
+xend=$(echo "\nEND" | base64)
 curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?start=-----------------------------------------&req=${req}&uid=${JENKINS_ID}"
 pushd cmdrun
   req=$(date +%s)
@@ -49,6 +51,7 @@ pushd cmdrun
       curl -s -L -X POST -d "$b64" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?pending=++++++++++++++++++++++++++++++++++++++++++&${cmd}&req=${req}&uid=${JENKINS_ID}"
     else
       curl -s -L -o run.sh "https://muzaffar.web.cern.ch/crab-test/run.sh?req=${req}&uid=${JENKINS_ID}"
+      curl -s -L -X POST -d "${xstart}" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?run=start&req=${req}&${cmd}&uid=${JENKINS_ID}"
       chmod +x run.sh
       ./run.sh > run.log 2>&1 || true
       total_lines=$(cat run.log | wc -l)
@@ -60,6 +63,7 @@ pushd cmdrun
         sleep 1
         let sline=$sline+$xline+1
       done
+      curl -s -L -X POST -d "${xend}" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?run=end&req=${req}&${cmd}&uid=${JENKINS_ID}"
       rm -f run.sh run.log run.base64
       PRECMD="${cmd}"
       LRUN=$(date +%s)

@@ -115,26 +115,28 @@ fi
 
 ## build and upload revision based packages
 REV_PKGS=""
+REV_UPLOAD=""
 for p in cms-common fakesystem gcc-fixinclude; do
   [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
 done
 if [ "${REV_PKGS}" != "" ] ; then
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build ${REV_PKGS}
-  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true
-  rm -rf ${WRKDIR}
+  REV_UPLOAD="${REV_PKGS}"
 fi
-REV_PKGS=""
 for p in SCRAMV1 SCRAMV2 ; do
   [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
 done
 if [ "${REV_PKGS}" != "" ] ; then
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} build ${REV_PKGS}
-  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true
+  REV_UPLOAD="${REV_PKGS}"
+fi
+if [ "${REV_UPLOAD}" != "" ] ; then
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_UPLOAD} || true
   rm -rf ${WRKDIR}
 fi
 GCC_FIXINCLUDE=""
 [ -e CMSDIST/gcc-fixincludes.spec ] && GCC_FIXINCLUDE="gcc-fixincludes"
-PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build SCRAMV1 ${GCC_FIXINCLUDE}
+PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} build SCRAMV1 ${GCC_FIXINCLUDE}
 # Decide if we already have a release which uses the same CMSDIST.
 pushd ${WRKDIR}
 if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then

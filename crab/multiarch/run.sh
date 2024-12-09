@@ -37,7 +37,7 @@ pushd cmdrun
         let xd=$(date +%s)-${xt} || true
       done
       let RUN_GAP=$(date +%s)-${LRUN}
-      b64=$(echo -n "previous_${cmd}" | base64)
+      b64=$(echo "previous_${cmd}" | base64)
       curl -s -L -X POST -d "$b64" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?pending=1&${cmd}&req=${req}"
     else
       curl -s -L -o run.sh "https://muzaffar.web.cern.ch/crab-test/run.sh?req=${req}"

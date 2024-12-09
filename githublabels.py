@@ -41,6 +41,7 @@ TYPE_COMMANDS = {
         "performance|improvements|performance-improvements",
         "mtype",
     ],
+    "ngt": [LABEL_COLORS["performance"], "ngt", "mtype"],
 }
 
 for lab in get_dpg_pog():

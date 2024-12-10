@@ -62,6 +62,7 @@ if [ "${X509_USER_PROXY}" = "" ] ; then
 fi
 pyver=$(${CMSBOT_PYTHON_CMD} -c 'import sys;print("python%s%s" % (sys.version_info[0],sys.version_info[1]))')
 if [ -e ${thisdir}/${pyver} ] ; then export PYTHONPATH="${thisdir}/${pyver}:${PYTHONPATH}"; fi
+ls
 crab submit --proxy ${X509_USER_PROXY} -c ./task.py
 rm -rf ${WORKSPACE}/crab
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab

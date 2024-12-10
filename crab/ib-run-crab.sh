@@ -45,11 +45,16 @@ fi
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 cmssw_queue=$(echo ${CMSSW_VERSION} | cut -d_ -f1-3)_X
 cd $WORKSPACE
-cp ${thisdir}/${JOB_DIR}/run.sh .
+for f in run.sh task.py pset.py ; do
+  if [ -e ${thisdir}/${JOB_DIR}/$f ] ; then
+    cp ${thisdir}/${JOB_DIR}/$f .
+  else
+    cp ${thisdir}/$f .
+  fi
+done
 if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
+  rm -f pset.py
   cp ${thisdir}/${cmssw_queue}/pset.py .
-else
-  cp ${thisdir}/${JOB_DIR}/pset.py .
 fi
 if [ "${X509_USER_PROXY}" = "" ] ; then
   voms-proxy-init -voms cms
@@ -57,7 +62,7 @@ if [ "${X509_USER_PROXY}" = "" ] ; then
 fi
 pyver=$(${CMSBOT_PYTHON_CMD} -c 'import sys;print("python%s%s" % (sys.version_info[0],sys.version_info[1]))')
 if [ -e ${thisdir}/${pyver} ] ; then export PYTHONPATH="${thisdir}/${pyver}:${PYTHONPATH}"; fi
-crab submit --proxy ${X509_USER_PROXY} -c ${thisdir}/${JOB_DIR}/task.py
+crab submit --proxy ${X509_USER_PROXY} -c ./task.py
 rm -rf ${WORKSPACE}/crab
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
 echo "INPROGRESS" > $WORKSPACE/crab/statusfile

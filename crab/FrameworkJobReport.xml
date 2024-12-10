@@ -2,6 +2,7 @@
 
 <File>
 <State  Value="closed"/>
+<PFN>minbias.root/PFN>
 <LFN></LFN>
 <Catalog></Catalog>
 <ModuleLabel>RAWSIMoutput</ModuleLabel>

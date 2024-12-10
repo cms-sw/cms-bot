@@ -4,3 +4,4 @@ ls
 ld.so --help | grep supported | grep x86-64-v
 which cmsRun
 cmsRun --help >>run.log
+echo dummy file >minbias.root

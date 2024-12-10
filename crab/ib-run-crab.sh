@@ -9,8 +9,16 @@ report() {
    fi
 }
 
+thisdir=$(dirname $0)
+[ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
+[ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
+[ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd)
+[ "${CRABCONFIGINSTANCE}" != "" ]|| export CRABCONFIGINSTANCE="prod"
+[ "${JOB_DIR}" != "" ]           || JOB_DIR="."
+
 #Checkout a package
 git cms-addpkg FWCore/Version
+[ -x ${thisdir}/${JOB_DIR}/setup.sh ] && ${thisdir}/${JOB_DIR}/setup.sh
 #Added test python module and script to make sure it is part of card sandbox
 mkdir -p ${CMSSW_BASE}/src/FWCore/Version/python ${CMSSW_BASE}/src/FWCore/Version/scripts
 echo 'CMSBOT_CRAB_TEST="OK"' > ${CMSSW_BASE}/src/FWCore/Version/python/cmsbot_crab_test.py
@@ -23,11 +31,6 @@ if [ -d ${CMSSW_BASE}/biglib/${SCRAM_ARCH} ] ; then
     [ -e $l ] || rm -f $l
   done
 fi
-[ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
-[ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
-[ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
-[ "${CRABCONFIGINSTANCE}" != "" ]|| export CRABCONFIGINSTANCE="prod"
-[ "${JOB_DIR}" != "" ]           || JOB_DIR="."
 
 if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   osver=$(echo ${SCRAM_ARCH} | tr '_' '\n' | head -1 | sed 's|^[a-z][a-z]*||')
@@ -41,12 +44,17 @@ fi
 
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 cmssw_queue=$(echo ${CMSSW_VERSION} | cut -d_ -f1-3)_X
-thisdir=$(dirname $0)
-cp ${thisdir}/${JOB_DIR}/run.sh .
+cd $WORKSPACE
+for f in run.sh task.py pset.py ; do
+  if [ -e ${thisdir}/${JOB_DIR}/$f ] ; then
+    cp ${thisdir}/${JOB_DIR}/$f .
+  else
+    cp ${thisdir}/$f .
+  fi
+done
 if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
+  rm -f pset.py
   cp ${thisdir}/${cmssw_queue}/pset.py .
-else
-  cp ${thisdir}/${JOB_DIR}/pset.py .
 fi
 if [ "${X509_USER_PROXY}" = "" ] ; then
   voms-proxy-init -voms cms
@@ -54,7 +62,8 @@ if [ "${X509_USER_PROXY}" = "" ] ; then
 fi
 pyver=$(${CMSBOT_PYTHON_CMD} -c 'import sys;print("python%s%s" % (sys.version_info[0],sys.version_info[1]))')
 if [ -e ${thisdir}/${pyver} ] ; then export PYTHONPATH="${thisdir}/${pyver}:${PYTHONPATH}"; fi
-crab submit --proxy ${X509_USER_PROXY} -c ${thisdir}/${JOB_DIR}/task.py
+ls
+crab submit --proxy ${X509_USER_PROXY} -c ./task.py
 rm -rf ${WORKSPACE}/crab
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
 echo "INPROGRESS" > $WORKSPACE/crab/statusfile

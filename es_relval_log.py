@@ -215,7 +215,6 @@ def es_parse_log(logFile):
             send_payload("ib-dataset-" + week, "relvals-dataset", idx, json.dumps(dataset))
     ref = open(stamp, "w")
     ref.close()
-    print("Done processing :", logFile)
 
 
 if __name__ == "__main__":

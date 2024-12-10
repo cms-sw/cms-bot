@@ -22,7 +22,9 @@ config.JobType.maxMemoryMB = 16000
 config.JobType.numCores = 8
 config.JobType.allowUndistributedCMSSW = True
 config.JobType.scriptExe = "run.sh"
+config.JobType.disableAutomaticOutputCollection = True
 config.JobType.outputFiles = ["matrix.tar.gz", "matrix.log", "run.log"]
+config.JobType.inputFiles = ["FrameworkJobReport.xml"]
 
 config.Site.storageSite = "T2_CH_CERN"
 

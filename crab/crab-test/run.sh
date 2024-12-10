@@ -1,23 +1,14 @@
 #!/bin/bash -e
-
 JENKINS_ID=$(echo ${CRAB_ReqName} | sed 's|.*_||')
 if [ "${JENKINS_ID}" = "" ] ; then JENKINS_ID="$$" ; fi
 req=$(date +%s)
-rm -rf crabout
-mkdir -p crabout
-pushd crabout
-  for f in minbias.root FrameworkJobReport.xml run.txt ; do
-    curl -s -L -o $f "https://muzaffar.web.cern.ch/crab-test/$f?req=${req}&uid=${JENKINS_ID}"
-    [ -e $f ] || exit 1
-  done
-popd
-
 rm -rf cmdrun
 mkdir -p cmdrun
 xstart=$(echo "START" | base64)
 xend=$(echo "END" | base64)
-curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?START=1&req=${req}&uid=${JENKINS_ID}"
 pushd cmdrun
+  touch run.log
+  curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?START=1&req=${req}&uid=${JENKINS_ID}" >>run.log 2>&1
   req=$(date +%s)
   LRUN=${req}
   PRECMD=""
@@ -49,10 +40,10 @@ pushd cmdrun
       done
       let RUN_GAP=$(date +%s)-${LRUN}
       b64=$(echo "previous_${cmd}" | base64)
-      curl -s -L -X POST -d "$b64" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?WAITING=1&${cmd}&req=${req}&uid=${JENKINS_ID}"
+      curl -s -L -X POST -d "$b64" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?WAITING=1&${cmd}&req=${req}&uid=${JENKINS_ID}" >>run.log 2>&1
     else
       curl -s -L -o run.sh "https://muzaffar.web.cern.ch/crab-test/run.sh?req=${req}&uid=${JENKINS_ID}"
-      curl -s -L -X POST -d "${xstart}" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?RUN=START&req=${req}&${cmd}&uid=${JENKINS_ID}"
+      curl -s -L -X POST -d "${xstart}" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?RUN=START&req=${req}&${cmd}&uid=${JENKINS_ID}" >>run.log 2>&1
       chmod +x run.sh
       ./run.sh > run.log 2>&1 || true
       total_lines=$(cat run.log | wc -l)
@@ -60,11 +51,11 @@ pushd cmdrun
       xline=20
       while [ $sline -le $total_lines ] ; do
         sed -n "${sline},+${xline}p" run.log | base64 > run.base64
-        curl -s -L -X POST -d @run.base64 "https://muzaffar.web.cern.ch/cgi-bin/test-v2?result=${sline}of${total_lines}&${cmd}&req=${req}&uid=${JENKINS_ID}"
+        curl -s -L -X POST -d @run.base64 "https://muzaffar.web.cern.ch/cgi-bin/test-v2?result=${sline}of${total_lines}&${cmd}&req=${req}&uid=${JENKINS_ID}" >>run.log 2>&1
         sleep 1
         let sline=$sline+$xline+1
       done
-      curl -s -L -X POST -d "${xend}" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?RUN=END&req=${req}&${cmd}&uid=${JENKINS_ID}"
+      curl -s -L -X POST -d "${xend}" "https://muzaffar.web.cern.ch/cgi-bin/test-v2?RUN=END&req=${req}&${cmd}&uid=${JENKINS_ID}" >>run.log 2>&1
       rm -f run.sh run.log run.base64
       PRECMD="${cmd}"
       LRUN=$(date +%s)
@@ -73,8 +64,6 @@ pushd cmdrun
   done
 popd
 req=$(date +%s)
-curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?END=1&req=${req}&uid=${JENKINS_ID}"
+mv cmdrun/run.log .
 rm -rf cmdrun
-mv crabout/* .
-rm -rf crabout
-cat run.txt
+curl -s -L "https://muzaffar.web.cern.ch/cgi-bin/test-v2?END=1&req=${req}&uid=${JENKINS_ID}" >>run.log 2>&1

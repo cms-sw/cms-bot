@@ -17,9 +17,9 @@ config.Data.publication = False
 
 config.JobType.psetName = "pset.py"
 config.JobType.pluginName = "PrivateMC"
-config.JobType.maxJobRuntimeMin = int(os.getenv("CRAB_MAX_TIME", "720"))
-config.JobType.maxMemoryMB = 16000
-config.JobType.numCores = 8
+config.JobType.maxJobRuntimeMin = int(os.getenv("CRAB_MAX_TIME", "600"))
+config.JobType.maxMemoryMB = 2000
+config.JobType.numCores = 1
 config.JobType.allowUndistributedCMSSW = True
 config.JobType.scriptExe = "run.sh"
 

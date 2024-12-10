@@ -9,8 +9,16 @@ report() {
    fi
 }
 
+thisdir=$(dirname $0)
+[ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
+[ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
+[ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd)
+[ "${CRABCONFIGINSTANCE}" != "" ]|| export CRABCONFIGINSTANCE="prod"
+[ "${JOB_DIR}" != "" ]           || JOB_DIR="."
+
 #Checkout a package
 git cms-addpkg FWCore/Version
+[ -x ${thisdir}/${JOB_DIR}/setup.sh ] && ${thisdir}/${JOB_DIR}/setup.sh
 #Added test python module and script to make sure it is part of card sandbox
 mkdir -p ${CMSSW_BASE}/src/FWCore/Version/python ${CMSSW_BASE}/src/FWCore/Version/scripts
 echo 'CMSBOT_CRAB_TEST="OK"' > ${CMSSW_BASE}/src/FWCore/Version/python/cmsbot_crab_test.py
@@ -23,11 +31,6 @@ if [ -d ${CMSSW_BASE}/biglib/${SCRAM_ARCH} ] ; then
     [ -e $l ] || rm -f $l
   done
 fi
-[ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
-[ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
-[ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
-[ "${CRABCONFIGINSTANCE}" != "" ]|| export CRABCONFIGINSTANCE="prod"
-[ "${JOB_DIR}" != "" ]           || JOB_DIR="."
 
 if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   osver=$(echo ${SCRAM_ARCH} | tr '_' '\n' | head -1 | sed 's|^[a-z][a-z]*||')
@@ -41,7 +44,7 @@ fi
 
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 cmssw_queue=$(echo ${CMSSW_VERSION} | cut -d_ -f1-3)_X
-thisdir=$(dirname $0)
+cd $WORKSPACE
 cp ${thisdir}/${JOB_DIR}/run.sh .
 if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
   cp ${thisdir}/${cmssw_queue}/pset.py .

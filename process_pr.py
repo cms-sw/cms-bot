@@ -657,9 +657,9 @@ def check_test_cmd(first_line, repo, params):
             prs = get_prs_list_from_string(m.group(11), repo)
         if m.group(20):
             cmssw_que = m.group(20)
-        if m.group(23):
-            if "addpkg" in m.group(23):
-                params["EXTRA_CMSSW_PACKAGES"] = m.group(25).strip()
+        if m.group(25):
+            if "addpkg" in m.group(25):
+                params["EXTRA_CMSSW_PACKAGES"] = m.group(27).strip()
             else:
                 params["BUILD_FULL_CMSSW"] = "true"
         return (True, " ".join(prs), wfs, cmssw_que)

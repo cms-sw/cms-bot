@@ -1,2 +1,6 @@
 *.pyc
 .idea
+*.properties
+tests/Framework.py
+venv
+GithubCredentials.py

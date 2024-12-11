@@ -10,6 +10,7 @@ if [ $INSTALL_REQS -eq 1 ]; then
   python3 -m pip install --upgrade pip
   pip install -r test-requirements.txt
 fi
+
 if [ ! -e Framework.py ]; then
   curl -L https://github.com/PyGithub/PyGithub/raw/v1.54/tests/Framework.py > Framework.py
   sed -i -e 's/self\.retry/self.retry, per_page=100/g' Framework.py

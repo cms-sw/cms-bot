@@ -363,6 +363,7 @@ CMSSW_CATEGORIES = {
         "EventFilter/Modules",
         "EventFilter/OnlineMetaDataRawToDigi",
         "EventFilter/Phase2TrackerRawToDigi",
+        "EventFilter/Phase2PixelRawToDigi",
         "EventFilter/Playback",
         "EventFilter/Processor",
         "EventFilter/RawDataCollector",

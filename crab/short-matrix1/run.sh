@@ -11,6 +11,7 @@ pushd matrix
     esac
   done
 popd
+tar -czvf matrix.tar.gz matrix >>run.log 2>&1
 mv matrix/runall-report-step123-.log matrix.log
 grep -E ' Step[0-9]' matrix.log || true
-tar -czvf matrix.tar.gz matrix
+grep ' tests passed' matrix.log || true

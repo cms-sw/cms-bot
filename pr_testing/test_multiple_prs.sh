@@ -14,7 +14,7 @@ function get_pr_baseline_worklflow() {
 }
 
 function get_compilation_warnings() {
-  grep -E ': warning:|: warning #[0-9]+-D:' $1 | grep -E "/$CMSSW_IB/src/|^\s*src/" | sed "s|: warning #[0-9]+-D:|: warning:|;s|.*/$CMSSW_IB/||"
+  grep -E ': warning:|: warning #[0-9]+-D:' $1 | grep -E "/$CMSSW_IB/src/|^\s*src/" | sed -E "s|: warning #[0-9]+-D:|: warning:|;s|.*/$CMSSW_IB/||"
 }
 
 function get_warnings_files(){

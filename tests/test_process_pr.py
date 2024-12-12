@@ -697,6 +697,9 @@ class TestProcessPr(Framework.TestCase):
     def test_dirty_squash(self):
         self.runTest()
 
+    def test_partial_reset_dirty_squash(self):
+        self.runTest(prId=23)
+
     def test_sign_reject(self):
         self.runTest()
 

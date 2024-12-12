@@ -1683,6 +1683,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ).difference(all_commit_shas)
         last_seen_commit_time = None
         new_commits = set()
+        files_changed_in_squash = []
         if missing_commits:
             print(
                 "Possible squash detected: the following commits were cached, but missing from PR"
@@ -1718,13 +1719,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 (file.filename, file.sha) for file in changes_before_squash.files
             }
             diff_after_squash = {(file.filename, file.sha) for file in changes_after_squash.files}
+            diff_in_squash = diff_before_squash ^ diff_after_squash
 
-            if diff_before_squash ^ diff_after_squash:
+            if diff_in_squash:
                 print("PR diff changed, will not preserve signatures")
+                files_changed_in_squash = list(set(x[0] for x in diff_in_squash))
             else:
                 print("PR diff not changed, preserving signatures and commit statuses")
                 last_seen_commit_time = bot_cache["commits"][last_seen_commit_sha]["time"]
-                new_commits = all_commit_shas.difference(k for k in bot_cache["commits"])
+            new_commits = all_commit_shas.difference(k for k in bot_cache["commits"])
 
             # Mark removed commits in cache as squashed
             for commit_sha in missing_commits:
@@ -1749,8 +1752,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 bot_cache["commits"][commit.sha]["files"] = []
 
             if commit.sha in new_commits:
-                bot_cache["commits"][commit.sha]["files"] = []
-                bot_cache["commits"][commit.sha]["time"] = last_seen_commit_time
+                bot_cache["commits"][commit.sha]["files"] = files_changed_in_squash
+                if last_seen_commit_time:  # clean squash
+                    bot_cache["commits"][commit.sha]["time"] = last_seen_commit_time
 
             cache_entry = bot_cache["commits"][commit.sha]
             events[datetime.fromtimestamp(cache_entry["time"])].append(

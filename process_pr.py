@@ -1674,13 +1674,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         print("Processing commits")
 
-        if not pull_request_updated:
-            _bot_cache_shas = set(bot_cache["commits"].keys())
-            diff = all_commit_shas.difference(_bot_cache_shas)
-            if diff:
-                print("Setting pull-request-update to True:", len(diff), "new commit(s)")
-                pull_request_updated = True
-
         # Make sure to mark squashed=False if a cached/squashed commit is added back
         for commit_sha in [
             sha

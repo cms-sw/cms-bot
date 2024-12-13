@@ -1221,6 +1221,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             technical_comments.append(comment)
 
     if technical_comments:
+        if is_draft_pr:
+            pull_request_updated = technical_comments[0].created_at < last_commit_date
         bot_cache = extract_bot_cache(technical_comments)
 
     # Make sure bot cache has the needed keys

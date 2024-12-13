@@ -1165,6 +1165,9 @@ if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
+if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^MULTI-MICROARCHS$' | wc -l) -gt 0 ] ; then
+  scram build enable-multi-targets || true
+fi
 COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS /usr/bin/time -v scram b ${BUILD_VERBOSE} -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
   COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes $USER_FLAGS /usr/bin/time -v scram build ${BUILD_VERBOSE} -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"

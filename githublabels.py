@@ -63,6 +63,7 @@ COMMON_LABELS = {
     "hold": LABEL_COLORS["hold"],
     "compilation-warnings": LABEL_COLORS["hold"],
     "requires-external": LABEL_COLORS["info"],
+    "fully-signed-draft": LABEL_COLORS["hold"],
 }
 
 for lab in TYPE_COMMANDS:

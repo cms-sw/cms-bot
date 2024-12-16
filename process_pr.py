@@ -2189,7 +2189,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if missingApprovals:
         labels.append("pending-signatures")
     elif not "pending-assignment" in labels:
-        labels.append("fully-signed")
+        if not is_draft_pr:
+            labels.append("fully-signed")
+        else:
+            labels.append("fully-signed-draft")
     if need_external:
         labels.append("requires-external")
     labels = set(labels)
@@ -2360,11 +2363,19 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 managers=releaseManagersList,
             )
         elif ("orp" in signatures) and (signatures["orp"] != "approved"):
-            autoMergeMsg = format(
-                "This pull request will now be reviewed by the release team"
-                " before it's merged. %(managers)s (and backports should be raised in the release meeting by the corresponding L2)",
-                managers=releaseManagersList,
-            )
+            if not is_draft_pr:
+                autoMergeMsg = format(
+                    "This pull request will now be reviewed by the release team"
+                    " before it's merged. %(managers)s (and backports should be raised in the release meeting by the corresponding L2)",
+                    managers=releaseManagersList,
+                )
+            else:
+                if not "fully-signed-draft" in old_labels:
+                    messageFullySignedDraft = f'@{pr.user.login} if this PR is ready to be reviewed by the release team, please remove the "Draft" status.'
+                    if not dryRun:
+                        issue.create_comment(messageFullySignedDraft)
+                    else:
+                        print("DRY-RUN: not posting comment", messageFullySignedDraft)
 
     devReleaseRelVal = ""
     if (pr.base.ref in RELEASE_BRANCH_PRODUCTION) and (pr.base.ref != "master"):

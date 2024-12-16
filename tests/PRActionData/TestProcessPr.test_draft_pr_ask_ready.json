@@ -1,0 +1,90 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "28ce3f5888b5433dcae409ee336b2ad422595246": {
+                    "files": [
+                        "FWCore/Utilities/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1733495641
+                },
+                "9138474754099798ff50cb07287e7caa4786f247": {
+                    "files": [
+                        "FWCore/Utilities/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1733482192
+                }
+            },
+            "emoji": {
+                "2523442237": "+1",
+                "2532358732": "+1",
+                "2545714988": "+1",
+                "2545738731": "+1"
+            },
+            "last_seen_sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
+            "signatures": {
+                "2545714988": "28ce3f5888b5433dcae409ee336b2ad422595246",
+                "2545738731": "28ce3f5888b5433dcae409ee336b2ad422595246"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2523442237,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2545714988,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2545738731,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "fully-signed-draft",
+            "l1-approved"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "l1-pending",
+            "pending-signatures"
+        ]
+    },
+    {
+        "type": "create-comment",
+        "data": "@iarspider if this PR is ready to be reviewed by the release team, please remove the \"Draft\" status."
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"28ce3f5888b5433dcae409ee336b2ad422595246\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733495641},\"9138474754099798ff50cb07287e7caa4786f247\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733482192}},\"emoji\":{\"2523442237\":\"+1\",\"2532358732\":\"+1\",\"2545714988\":\"+1\",\"2545738731\":\"+1\"},\"last_seen_sha\":\"28ce3f5888b5433dcae409ee336b2ad422595246\",\"signatures\":{\"2545714988\":\"28ce3f5888b5433dcae409ee336b2ad422595246\",\"2545738731\":\"28ce3f5888b5433dcae409ee336b2ad422595246\"}} -->"
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "28ce3f5888b5433dcae409ee336b2ad422595246",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/21#issuecomment-2545738731",
+            "description": "Comment by iarspider at 2024-12-16 14:13:40 UTC processed.",
+            "context": "bot/21/ack"
+        }
+    }
+]

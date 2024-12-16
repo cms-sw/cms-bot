@@ -723,3 +723,9 @@ class TestProcessPr(Framework.TestCase):
 
     def test_draft_pr_ready(self):
         self.runTest(prId=21)
+
+    def test_draft_pr_ask_ready(self):
+        self.runTest(prId=21)
+
+    def test_draft_pr_fully_signed(self):
+        self.runTest(prId=21)

@@ -2370,7 +2370,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     managers=releaseManagersList,
                 )
             else:
-                if not "fully-signed-draft" in old_labels:
+                if ("fully-signed-draft" in labels) and (not "fully-signed-draft" in old_labels):
                     messageFullySignedDraft = f'@{pr.user.login} if this PR is ready to be reviewed by the release team, please remove the "Draft" status.'
                     if not dryRun:
                         issue.create_comment(messageFullySignedDraft)

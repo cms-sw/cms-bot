@@ -104,22 +104,8 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_1_X/master"].append("IB/CMSSW_14_1_X/cs
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_14_1_X"] = ["CMSSW_14_1_O2OTest_X"]
 
 # Automatically added
-# GIT_REPO_FWPORTS["cmssw"]["CMSSW_14_2_X"] = []
-# GIT_REPO_FWPORTS["cmssw"]["CMSSW_14_2_X"].append("CMSSW_14_2_DEVEL_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"] = []
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/rootmaster")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/cs9")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/clang")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/devel")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/g4")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/cudart")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/g13")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/tf")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/master"].append("IB/CMSSW_14_2_X/root632")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/rootmaster"] = ["IB/CMSSW_14_2_X/rootmodule"]
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/rootmaster"].append("IB/CMSSW_14_2_X/g13r6")
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/g13"] = ["IB/CMSSW_14_2_X/g13r6"]
-# GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_2_X/tf"] = ["IB/CMSSW_14_2_X/py312"]
 
 # Automatically added
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_15_0_X"] = []
@@ -133,7 +119,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/g4
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/cudart")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/g13")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/tf")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/root632")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/root634")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/rootmaster"] = ["IB/CMSSW_15_0_X/rootmodule"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/rootmaster"].append("IB/CMSSW_15_0_X/g13r6")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/g13"] = ["IB/CMSSW_15_0_X/g13r6"]

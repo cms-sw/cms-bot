@@ -712,10 +712,23 @@ class TestProcessPr(Framework.TestCase):
     def test_too_many_commits(self):
         self.runTest(prId=18)
 
-    # Not yet implemented
-    # def test_future_commit(self):
-    #     self.runTest()
+    def test_draft_pr_opened(self):
+        self.runTest(prId=21)
 
-    # Not yet implemented
-    # def test_backdated_commit(self):
-    #     self.runTest()
+    def test_draft_pr_assign(self):
+        self.runTest(prId=21)
+
+    def test_draft_pr_updated(self):
+        self.runTest(prId=21)
+
+    def test_draft_pr_start_test(self):
+        self.runTest(prId=21)
+
+    def test_draft_pr_ready(self):
+        self.runTest(prId=21)
+
+    def test_draft_pr_ask_ready(self):
+        self.runTest(prId=21)
+
+    def test_draft_pr_fully_signed(self):
+        self.runTest(prId=21)

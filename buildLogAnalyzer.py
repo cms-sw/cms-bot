@@ -123,8 +123,6 @@ class LogFileAnalyzer(object):
             "ok": "ok",
         }
 
-        self.cmsswVersion = os.getenv("CMSSW_VERSION", "master")
-
         # get the lists separately for "priority" treatment ...
         self.errMap = {}
         for key in self.errorKeys:
@@ -384,7 +382,7 @@ class LogFileAnalyzer(object):
         """docstring for makeHTMLFile"""
         linePartsUrl = re.compile(
             r"\s+(?P<full_path>(?:.*/"
-            + self.cmsswVersion
+            + self.release
             + r"/)?(?P<file>src/[^:(]+)[:(](?P<line>\d+)\)?):"
         )
 
@@ -421,7 +419,7 @@ class LogFileAnalyzer(object):
                 if m:
                     url = (
                         "https://github.com/cms-sw/cmssw/blob/"
-                        + self.cmsswVersion
+                        + self.release
                         + m["file"]
                         + "#L"
                         + m["line"]

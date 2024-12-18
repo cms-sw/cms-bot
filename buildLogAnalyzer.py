@@ -123,6 +123,8 @@ class LogFileAnalyzer(object):
             "ok": "ok",
         }
 
+        self.cmsswVersion = os.getenv("CMSSW_VERSION", "master")
+
         # get the lists separately for "priority" treatment ...
         self.errMap = {}
         for key in self.errorKeys:
@@ -380,7 +382,11 @@ class LogFileAnalyzer(object):
 
     def makeHTMLLogFile(self, pkg):
         """docstring for makeHTMLFile"""
-        linePartsUrl = re.compile(r"\s*(src(/[^:]+):(\d+)):.*")
+        linePartsUrl = re.compile(
+            r"\s+(?P<full_path>(?:.*/"
+            + self.cmsswVersion
+            + r"/)?(?P<file>src/[^:(]+)[:(](?P<line>\d+)\)?):"
+        )
 
         if not pkg.name() in self.tagList:
             return
@@ -413,9 +419,17 @@ class LogFileAnalyzer(object):
             if lineNo in pkg.errLines.keys():
                 m = linePartsUrl.match(newLine)
                 if m:
-                    branch = os.getenv("CMSSW_VERSION", "master")
-                    url = "https://github.com/cms-sw/cmssw/blob/" + branch + m[2] + "#L" + m[3]
-                    newLine = newLine.replace(m[1], '<a href="' + url + '">' + m[1] + "</a>", 1)
+                    url = (
+                        "https://github.com/cms-sw/cmssw/blob/"
+                        + self.cmsswVersion
+                        + m["file"]
+                        + "#L"
+                        + m["line"]
+                    )
+
+                    newLine = newLine.replace(
+                        m["full_path"], '<a href="' + url + '">' + m["full_path"] + "</a>", 1
+                    )
                 newLine = (
                     "<span class="
                     + self.styleClass[pkg.errLines[lineNo]]

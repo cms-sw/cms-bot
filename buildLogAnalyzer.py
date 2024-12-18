@@ -426,7 +426,9 @@ class LogFileAnalyzer(object):
                     )
 
                     newLine = newLine.replace(
-                        m.group("full_path"), '<a href="' + url + '">' + m.group("full_path") + "</a>", 1
+                        m.group("full_path"),
+                        '<a href="' + url + '">' + m.group("full_path") + "</a>",
+                        1,
                     )
                 newLine = (
                     "<span class="
@@ -788,7 +790,7 @@ def main(argv=None):
     pkgList = os.getenv("CMSSW_BASE", None)
     if pkgList:
         pkgList += "/src/PackageList.cmssw"
-    rel = os.getenv("CMSSW_VERSION", None)
+    rel = os.getenv("CMSSW_VERSION", "master")
     igWarning = []
     if argv is None:
         argv = sys.argv

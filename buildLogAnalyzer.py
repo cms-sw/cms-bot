@@ -380,6 +380,7 @@ class LogFileAnalyzer(object):
 
     def makeHTMLLogFile(self, pkg):
         """docstring for makeHTMLFile"""
+        linePartsUrl = re.compile(r"\s*(src(/[^:]+):(\d+)):.*")
 
         if not pkg.name() in self.tagList:
             return
@@ -410,6 +411,11 @@ class LogFileAnalyzer(object):
             )  # do this first to not escape it again in the next subs
             newLine = newLine.replace("<", "&lt;").replace(">", "&gt;")
             if lineNo in pkg.errLines.keys():
+                m = linePartsUrl.match(newLine)
+                if m:
+                    branch = os.getenv("CMSSW_VERSION", "master")
+                    url = "https://github.com/cms-sw/cmssw/blob/" + branch + m[2] + "#L" + m[3]
+                    newLine = newLine.replace(m[1], '<a href="' + url + '">' + m[1] + "</a>", 1)
                 newLine = (
                     "<span class="
                     + self.styleClass[pkg.errLines[lineNo]]

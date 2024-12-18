@@ -420,13 +420,13 @@ class LogFileAnalyzer(object):
                     url = (
                         "https://github.com/cms-sw/cmssw/blob/"
                         + self.release
-                        + m["file"]
+                        + m.group("file")
                         + "#L"
-                        + m["line"]
+                        + m.group("line")
                     )
 
                     newLine = newLine.replace(
-                        m["full_path"], '<a href="' + url + '">' + m["full_path"] + "</a>", 1
+                        m.group("full_path"), '<a href="' + url + '">' + m.group("full_path") + "</a>", 1
                     )
                 newLine = (
                     "<span class="

@@ -5,10 +5,14 @@ pushd $CMSSW_BASE
   scram b clean
   scram build enable-multi-targets
   rm -rf src
-  mkdir src
-  git cms-addpkg FWCore/Framework DataFormats/Common  > $log
+  for pkg in FWCore/Framework DataFormats/Common ; do
+    mkdir -p src/$pkg
+    rsync -a --no-g $CMSSW_RELEASE_BASE/src/$pkg/ src/$pkg/
+  done
   scram b -v -k -j $(nproc) >$log 2>&1 || true
   eval `scram run -sh`
+  echo $LD_LIBRARY_PATH | tr : '\n'
+  echo $PATH | tr : '\n'
   which edmPluginDump
   edmPluginDump -a >>$log || true
   which cmsRun

@@ -6,7 +6,7 @@ pushd $CMSSW_BASE
   scram build enable-multi-targets
   rm -rf src
   mkdir src
-  git cms-addpkg '*' > $log
+  git cms-addpkg FWCore/Framework DataFormats/Common  > $log
   scram b -v -k -j $(nproc) >$log 2>&1 || true
   eval `scram run -sh`
   which edmPluginDump
@@ -14,4 +14,3 @@ pushd $CMSSW_BASE
   which cmsRun
   cmsRun --help >>$log || true
 popd
-cmsRun -j FrameworkJobReport.xml PSet.py >run.log 2>&1 || true

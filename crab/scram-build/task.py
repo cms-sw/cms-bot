@@ -17,13 +17,14 @@ config.Data.publication = False
 
 config.JobType.psetName = "pset.py"
 config.JobType.pluginName = "PrivateMC"
-config.JobType.maxJobRuntimeMin = 720
-config.JobType.maxMemoryMB = 16000
-config.JobType.numCores = 8
+config.JobType.maxJobRuntimeMin = 30
+config.JobType.maxMemoryMB = 8000
+config.JobType.numCores = 4
 config.JobType.allowUndistributedCMSSW = True
 config.JobType.scriptExe = "run.sh"
 config.JobType.disableAutomaticOutputCollection = True
 config.JobType.outputFiles = ["run.log"]
+config.JobType.inputFiles = ["FrameworkJobReport.xml"]
 
 config.Site.storageSite = "T2_CH_CERN"
 

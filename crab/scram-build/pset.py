@@ -31,7 +31,7 @@ process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(10))
 process.source = cms.Source("EmptySource")
 
 process.options = cms.untracked.PSet()
-process.options.numberOfThreads = cms.untracked.uint32(8)
+process.options.numberOfThreads = cms.untracked.uint32(4)
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(

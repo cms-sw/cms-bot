@@ -633,10 +633,12 @@ if ${BUILD_EXTERNAL} ; then
     sver=$(grep '^lcg+SCRAMV1+' $WORKSPACE/cmsswtoolconf.log | head -1 | sed 's|^lcg+SCRAMV1+||;s| .*||')
     echo $sver  > $CMSSW_IB/config/scram_version
     config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
+    old_config_tag=$(cat $CMSSW_IB/config/config_tag)
     if [ -d $WORKSPACE/config ] ; then
       cp -r $WORKSPACE/config scram-buildrules
+      config_tag="${config_tag}-01"
     else
-      if [ "$(cat $CMSSW_IB/config/config_tag)" != "${config_tag}" ] ; then
+      if [ "${old_config_tag}" != "${config_tag}" ] ; then
         git clone git@github.com:cms-sw/cmssw-config scram-buildrules
         pushd scram-buildrules
           git checkout ${config_tag}
@@ -683,6 +685,12 @@ if ${BUILD_EXTERNAL} ; then
     echo "${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${TOOL_CONF_VERSION}" > $WORKSPACE/cmssw-tool-conf.txt
     echo "CMSSWTOOLCONF_VERSION;OK,External tool conf,See log,cmssw-tool-conf.txt" >> ${RESULTS_DIR}/toolconf.txt
     mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/selected ${CTOOLS}
+    if [ -e ${BTOOLS}/cmssw-config.xml ] ; then
+      cp ${BTOOLS}/cmssw-config.xml ${CTOOLS}/
+      if [ "${old_config_tag}" != "${config_tag}" ] ; then
+        sed -i -e "s|${old_config_tag}|${config_tag}|" ${CTOOLS}/cmssw-config.xml || true
+      fi
+    fi
     #Copy extra available tools
     if [ -d $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/available -a -d $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/available ] ; then
       mv $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/{available,available.backup}

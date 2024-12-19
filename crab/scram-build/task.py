@@ -17,7 +17,7 @@ config.Data.publication = False
 
 config.JobType.psetName = "pset.py"
 config.JobType.pluginName = "PrivateMC"
-config.JobType.maxJobRuntimeMin = 30
+config.JobType.maxJobRuntimeMin = 120
 config.JobType.maxMemoryMB = 8000
 config.JobType.numCores = 4
 config.JobType.allowUndistributedCMSSW = True

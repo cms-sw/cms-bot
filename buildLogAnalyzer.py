@@ -381,7 +381,7 @@ class LogFileAnalyzer(object):
     def makeHTMLLogFile(self, pkg):
         """docstring for makeHTMLFile"""
         linePartsUrl = re.compile(
-            r"\s+(?P<full_path>(?:.*/"
+            r"(?P<full_path>(?:.*/"
             + self.release
             + r"/)?(?P<file>src/[^:(]+)[:(](?P<line>\d+)\)?):"
         )
@@ -415,7 +415,7 @@ class LogFileAnalyzer(object):
             )  # do this first to not escape it again in the next subs
             newLine = newLine.replace("<", "&lt;").replace(">", "&gt;")
             if lineNo in pkg.errLines.keys():
-                m = linePartsUrl.match(newLine)
+                m = linePartsUrl.match(newLine.strip())
                 if m:
                     url = (
                         "https://github.com/cms-sw/cmssw/blob/"

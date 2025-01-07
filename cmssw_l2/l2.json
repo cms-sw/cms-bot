@@ -1184,6 +1184,14 @@
       "start_date": 1448496000
     }
   ],
+  "henriettepetersen": [
+    {
+      "category": [
+        "trk-dpg"
+      ],
+      "start_date": 1736208000
+    }
+  ],
   "hqucms": [
     {
       "category": [
@@ -2371,6 +2379,7 @@
       "category": [
         "trk-dpg"
       ],
+      "end_date": 1736208000,
       "start_date": 1662422400
     }
   ],

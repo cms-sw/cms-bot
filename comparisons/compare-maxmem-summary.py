@@ -42,24 +42,68 @@ def compare_maxmem_summary(**kwargs):
             workflows[workflow] = {}
             for step in max_memory_pr_dict.keys():
                 max_mem_pr = max_memory_pr_dict[step].get("max memory used")
-                if max_mem_pr:
-                    max_memory_pr = max_mem_pr / 1000000
-                else:
-                    max_memory_pr = 0.0
+                req_mem_pr = max_memory_pr_dict[step].get("total memory requested")
+                leak_mem_pr = max_memory_pr_dict[step].get("presently used")
+                nalloc_pr = max_memory_pr_dict[step].get("# allocations calls")
+                max_memory_pr = max_mem_pr / 1000000 if max_mem_pr else 0.0
+                req_memory_pr = req_mem_pr / 1000000 if req_mem_pr else 0.0
+                leak_memory_pr = leak_mem_pr / 1000000 if leak_mem_pr else 0.0
+                nallocated_pr = nalloc_pr if nalloc_pr else 0
+
                 max_mem_base = max_memory_base_dict[step].get("max memory used")
-                if max_mem_base:
-                    max_memory_base = max_mem_base / 1000000
-                else:
-                    max_memory_base = 0.0
+                req_mem_base = max_memory_base_dict[step].get("total memory requested")
+                leak_mem_base = max_memory_base_dict[step].get("presently used")
+                nalloc_base = max_memory_base_dict[step].get("# allocations calls")
+                max_memory_base = max_mem_base / 1000000 if max_mem_base else 0.0
+                req_memory_base = req_mem_base / 1000000 if req_mem_base else 0.0
+                leak_memory_base = leak_mem_base / 1000000 if leak_mem_base else 0.0
+                nallocated_base = nalloc_base if nalloc_pr else 0
+
                 max_mem_pdiff = max_memory_pdiff_dict[step].get("max memory used")
-                if max_mem_pr and max_mem_base:
-                    max_memory_pdiff = 100 * (max_mem_pr - max_mem_base) / max_mem_base
-                else:
-                    max_memory_pdiff = 0.0
+                req_mem_pdiff = max_memory_pdiff_dict[step].get("total memory requested")
+                leak_mem_pdiff = max_memory_pdiff_dict[step].get("presently used")
+                nalloc_pdiff = max_memory_pdiff_dict[step].get("# allocations calls")
+                max_memory_adiff = max_memory_pr - max_memory_base
+                max_memory_pdiff = (
+                    100 * (max_mem_pr - max_mem_base) / max_mem_base
+                    if (max_mem_pr and max_mem_base)
+                    else 0.0
+                )
+                req_memory_adiff = req_memory_pr - req_memory_base
+                req_memory_pdiff = (
+                    100 * (req_mem_pr - req_mem_base) / req_mem_base
+                    if (req_mem_pr and req_mem_base)
+                    else 0.0
+                )
+                leak_memory_adiff = leak_memory_pr - leak_memory_base
+                leak_memory_pdiff = (
+                    100 * (leak_mem_pr - leak_mem_base) / leak_mem_base
+                    if (leak_mem_pr and leak_mem_base)
+                    else 0.0
+                )
+                nallocated_adiff = nallocated_pr - nallocated_base
+                nallocated_pdiff = (
+                    100 * (nalloc_pr - nalloc_base) / nalloc_base
+                    if (nalloc_pr and nalloc_base)
+                    else 0.0
+                )
                 workflows[workflow][step] = {
                     "max memory pr": max_memory_pr,
                     "max memory base": max_memory_base,
-                    "max memory pdiffs": max_memory_pdiff,
+                    "max memory pdiff": max_memory_pdiff,
+                    "max memory adiff": max_memory_adiff,
+                    "req memory pr": req_memory_pr,
+                    "req memory base": req_memory_base,
+                    "req memory pdiff": req_memory_pdiff,
+                    "req memory adiff": req_memory_adiff,
+                    "leak memory pr": leak_memory_pr,
+                    "leak memory base": leak_memory_base,
+                    "leak memory pdiff": leak_memory_pdiff,
+                    "leak memory adiff": leak_memory_adiff,
+                    "nallocated pr": nallocated_pr,
+                    "nallocated base": nallocated_base,
+                    "nallocated pdiff": nallocated_pdiff,
+                    "nallocated adiff": nallocated_adiff,
                     "threshold": threshold,
                 }
 
@@ -76,18 +120,19 @@ def compare_maxmem_summary(**kwargs):
             + "table, th, td {border: 1px solid black;}</style>"
             + "<style> th, td {padding: 15px;}</style></head>",
             "<body><h3>Summary of Maxmem Profiler Comparisons</h3><table>",
-            '<tr><td align="center">Workflow</td>'
-            + '<td align="center">Step1</td>'
-            + '<td align="center">Step2</td>'
-            + '<td align="center">Step3</td>'
-            + '<td align="center">Step4</td>'
-            + '<td align="center">Step5</td>'
-            + '<td align="center">Step6</td>'
-            + '<td align="center">Step7</td>'
-            + '<td align="center">Step8</td>'
-            + '<td align="center">Step9</td>'
-            + '<td align="center">Step10</td>'
-            + '<td align="center">Step11</td>'
+            '<tr><th align="center">Workflow</th>'
+            + '<th align="center">Legend</th>'
+            + '<th align="center">Step1</th>'
+            + '<th align="center">Step2</th>'
+            + '<th align="center">Step3</th>'
+            + '<th align="center">Step4</th>'
+            + '<th align="center">Step5</th>'
+            + '<th align="center">Step6</th>'
+            + '<th align="center">Step7</th>'
+            + '<th align="center">Step8</th>'
+            + '<th align="center">Step9</th>'
+            + '<th align="center">Step10</th>'
+            + '<th align="center">Step11</th>'
             + "</tr>",
         ]
     elif summaryFormat == "txt":
@@ -115,15 +160,29 @@ def compare_maxmem_summary(**kwargs):
                 + resultsURL
                 + '/%s/">' % workflow
                 + "%s</a></td>" % workflow,
+                '<td style="white-space:nowrap"><b>max memory used:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>',
+                 "<b>total memory requested:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>",
+                 "<b>memory leaked:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>",
+                 "<b>#allocation calls:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>",
             ]
 
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             max_mem_pr = workflows[workflow][step]["max memory pr"]
             max_mem_base = workflows[workflow][step]["max memory base"]
-            if max_mem_base == 0.0:
-                max_mem_pdiff = 0.0
-            else:
-                max_mem_pdiff = 100 * (max_mem_pr - max_mem_base) / max_mem_base
+            max_mem_pdiff = workflows[workflow][step]["max memory pdiff"]
+            max_mem_adiff = workflows[workflow][step]["max memory adiff"]
+            req_mem_pr = workflows[workflow][step]["req memory pr"]
+            req_mem_base = workflows[workflow][step]["req memory base"]
+            req_mem_pdiff = workflows[workflow][step]["req memory pdiff"]
+            req_mem_adiff = workflows[workflow][step]["req memory adiff"]
+            leak_mem_pr = workflows[workflow][step]["leak memory pr"]
+            leak_mem_base = workflows[workflow][step]["leak memory base"]
+            leak_mem_pdiff = workflows[workflow][step]["leak memory pdiff"]
+            leak_mem_adiff = workflows[workflow][step]["leak memory adiff"]
+            nalloc_pr = workflows[workflow][step]["nallocated pr"]
+            nalloc_base = workflows[workflow][step]["nallocated base"]
+            nalloc_pdiff = workflows[workflow][step]["nallocated pdiff"]
+            nalloc_adiff = workflows[workflow][step]["nallocated adiff"]
             threshold = workflows[workflow][step]["threshold"]
             if not threshold:
                 threshold = 1.0
@@ -141,9 +200,26 @@ def compare_maxmem_summary(**kwargs):
             if summaryFormat == "html":
                 summaryLine += [
                     cellString
+                    + "<br/>"
                     + "%0.2f<br/>" % max_mem_base
                     + "%0.2f<br/>" % max_mem_pr
+                    + "%0.2f<br/>" % max_mem_adiff
                     + "%0.3f" % max_mem_pdiff
+                    + "%<br/><br/>"
+                    + "%0.2f<br/>" % req_mem_base
+                    + "%0.2f<br/>" % req_mem_pr
+                    + "%0.2f<br/>" % req_mem_adiff
+                    + "%0.3f" % req_mem_pdiff
+                    + "%<br/><br/>"
+                    + "%0.2f<br/>" % leak_mem_base
+                    + "%0.2f<br/>" % leak_mem_pr
+                    + "%0.2f<br/>" % leak_mem_adiff
+                    + "%0.3f" % leak_mem_pdiff
+                    + "%<br/><br/>"
+                    + "%i<br/>" % nalloc_base
+                    + "%i<br/>" % nalloc_pr
+                    + "%i<br/>" % nalloc_adiff
+                    + "%0.3f" % nalloc_pdiff
                     + "%</td>"
                 ]
             elif summaryFormat == "txt":
@@ -166,7 +242,6 @@ def compare_maxmem_summary(**kwargs):
             + '%</td></tr><tr><td bgcolor="red">'
             + "error threshold %0.2f" % error_threshold
             + "%</td></tr>",
-            "<tr><td>max memory used:<BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt;100* (PR - baseline)/baseline&gt;</tr>",
         ]
         summaryLines += ["</table></body></html>"]
     if summaryFormat == "txt":

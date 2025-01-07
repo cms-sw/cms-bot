@@ -101,7 +101,7 @@ CMSSW_L2 = {
     CMSBUILD_USER: ["tests"],
     # dpgs
     "mdelcourt": ["trk-dpg"],
-    "sroychow": ["trk-dpg"],
+    "henriettepetersen": ["trk-dpg"],
     "wang0jin": ["ecal-dpg"],
     "thomreis": ["ecal-dpg"],
     "wang-hui": ["hcal-dpg"],

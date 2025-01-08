@@ -209,14 +209,20 @@ def compare_maxmem_summary(**kwargs):
                 summaryLine += [
                     cellString
                     + "<br/>"
-                    + "%0.2f<br/>" % max_mem_base
-                    + "%0.2f<br/>" % max_mem_pr
-                    + "%0.2f<br/>" % max_mem_adiff
+                    + "{:,.2f}".format(max_mem_base)
+                    + "<br/>"
+                    + "{:,.2f}".format(max_mem_pr)
+                    + "<br/>"
+                    + "{:,.2f}".format(max_mem_adiff)
+                    + "<br/>"
                     + "%0.3f" % max_mem_pdiff
                     + "%<br/><br/>"
-                    + "%0.2f<br/>" % req_mem_base
-                    + "%0.2f<br/>" % req_mem_pr
-                    + "%0.2f<br/>" % req_mem_adiff
+                    + "{:,.2f}".format(req_mem_base)
+                    + "<br/>"
+                    + "{:,.2f}".format(req_mem_pr)
+                    + "<br/>"
+                    + "{:,.2f}".format(req_mem_adiff)
+                    + "<br/>"
                     + "%0.3f" % req_mem_pdiff
                     + "%<br/><br/>"
                     + "{:,}".format(nalloc_base)
@@ -227,9 +233,12 @@ def compare_maxmem_summary(**kwargs):
                     + "<br/>"
                     + "%0.3f" % nalloc_pdiff
                     + "%<br/><br/>"
-                    + "%0.2f<br/>" % leak_mem_base
-                    + "%0.2f<br/>" % leak_mem_pr
-                    + "%0.2f<br/>" % leak_mem_adiff
+                    + "{:,.2f}".format(leak_mem_base)
+                    + "<br/>"
+                    + "{:,.2f}".format(leak_mem_pr)
+                    + "<br/>"
+                    + "{:,.2f}".format(leak_mem_adiff)
+                    + "<br/>"
                     + "%0.3f" % leak_mem_pdiff
                     + "%<br/><br/>"
                     + "{:,}".format(nlalloc_base)

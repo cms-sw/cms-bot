@@ -131,7 +131,13 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     elif [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     fi
-    if [ "$DOCKER_IMGX" = "" ] ; then DOCKER_IMGX="docker://$DOCKER_IMG" ; fi
+    if [ "$DOCKER_IMGX" = "" ] ; then
+      if [ "$USE_GHRC" = "true" ] ; then
+        DOCKER_IMGX="docker://ghcr.io/cms-sw/$DOCKER_IMG"
+      else
+        DOCKER_IMGX="docker://$DOCKER_IMG"
+      fi
+    fi
     CLEAN_UP_CACHE=true
     export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
     mkdir -p $SINGULARITY_CACHEDIR

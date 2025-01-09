@@ -67,7 +67,7 @@ def compare_maxmem_summary(**kwargs):
                 req_mem_pdiff = max_memory_pdiff_dict[step].get("total memory requested")
                 leak_mem_pdiff = max_memory_pdiff_dict[step].get("presently used")
                 nalloc_pdiff = max_memory_pdiff_dict[step].get("# allocations calls")
-                max_memory_adiff = max_memory_pr - max_memory_base
+                max_memory_adiff = max_memory_pr - max_memory_base if (max_mem_pr and max_mem_base) else 0.0
                 max_memory_pdiff = (
                     100 * (max_mem_pr - max_mem_base) / max_mem_base
                     if (max_mem_pr and max_mem_base)
@@ -125,7 +125,7 @@ def compare_maxmem_summary(**kwargs):
         return float(re.sub("_.*", "", w))
 
     sortedworkflows = sorted(workflows.keys(), key=wffn)
-
+    print(sortedworkflows)
     summaryLines = []
     if summaryFormat == "html":
         summaryLines += [
@@ -135,6 +135,7 @@ def compare_maxmem_summary(**kwargs):
             + "<style> th, td {padding: 15px;}</style></head>",
             "<body><h3>Summary of Maxmem Profiler Comparisons</h3><table>",
             '<tr><th align="center">Workflow</th>'
+            + '<th align="center">Quantity</th>'
             + '<th align="center">Legend</th>'
             + '<th align="center">Step1</th>'
             + '<th align="center">Step2</th>'
@@ -153,22 +154,185 @@ def compare_maxmem_summary(**kwargs):
     def stepfn(step):
         return int(step.replace("step", ""))
 
-    max_mem_pr, max_mem_base, max_mem_pdiff = 0, 0, 0
     for workflow in sortedworkflows:
         summaryLine = []
         if summaryFormat == "html":
             summaryLine += [
                 "<tr>",
-                '  <td align="left"><a href="'
+                '  <td rowspan="26"><a href="'
                 + resultsURL
                 + '/%s/">' % workflow
                 + "%s</a></td>" % workflow,
-                '<td style="white-space:nowrap"><b>max memory used:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>',
-                "<b>total memory requested:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>",
-                "<b>#allocation calls:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>",
-                "<b>memory leaked:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>",
-                "<b>#allocation calls leaked:</b><BR>&lt;baseline (MB)&gt;<BR>&lt;pull request (MB)&gt;<BR>&lt PR - baseline&gt<BR>&lt;100* (PR - baseline)/baseline&gt;<BR>",
             ]
+
+        summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> max memory used:</th>']
+        summaryLine += ["<tr><td>&lt;pull request (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["max memory pr"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;baseline (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["max memory base"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;PR - baseline (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["max memory adiff"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.3f}".format(workflows[workflow][step]["max memory pdiff"]),
+                "%</td>"
+                ]
+        summaryLine += ["</tr>",]
+
+        summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> total memory request:</th>']
+        summaryLine += ["<tr><td>&lt;pull request (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["req memory pr"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;baseline (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["req memory base"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;PR - baseline (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["req memory adiff"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.3f}".format(workflows[workflow][step]["req memory pdiff"]),
+                "%</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["</tr>",]
+        summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> # allocation calls:</th>']
+        summaryLine += ["<tr><td>&lt;pull request &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,}".format(workflows[workflow][step]["nallocated pr"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,}".format(workflows[workflow][step]["nallocated base"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;PR - baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,}".format(workflows[workflow][step]["nallocated adiff"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.3f}".format(workflows[workflow][step]["nallocated pdiff"]),
+                "%</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> memory leaked:</th>']
+        summaryLine += ["<tr><td>&lt;pull request (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["leak memory pr"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;baseline (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["leak memory base"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;PR - baseline (MB)&gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.2f}".format(workflows[workflow][step]["leak memory adiff"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.3f}".format(workflows[workflow][step]["leak memory pdiff"]),
+                "%</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> # allocation calls leaked:</th>']
+        summaryLine += ["<tr><td>&lt;pull request &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,}".format(workflows[workflow][step]["nallocated pr"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,}".format(workflows[workflow][step]["nallocated base"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;PR - baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,}".format(workflows[workflow][step]["nallocated adiff"]),
+                "</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                "<td>",
+                "{:,.3f}".format(workflows[workflow][step]["nallocated pdiff"]),
+                "%</td>"
+                ]
+        summaryLine += ["</tr>",]
+        summaryLines += summaryLine
 
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             max_mem_pr = workflows[workflow][step]["max memory pr"]
@@ -205,54 +369,6 @@ def compare_maxmem_summary(**kwargs):
                 color = 'bgcolor="red"'
             cellString += color
             cellString += ">"
-            if summaryFormat == "html":
-                summaryLine += [
-                    cellString
-                    + "<br/>"
-                    + "{:,.2f}".format(max_mem_base)
-                    + "<br/>"
-                    + "{:,.2f}".format(max_mem_pr)
-                    + "<br/>"
-                    + "{:,.2f}".format(max_mem_adiff)
-                    + "<br/>"
-                    + "%0.3f" % max_mem_pdiff
-                    + "%<br/><br/>"
-                    + "{:,.2f}".format(req_mem_base)
-                    + "<br/>"
-                    + "{:,.2f}".format(req_mem_pr)
-                    + "<br/>"
-                    + "{:,.2f}".format(req_mem_adiff)
-                    + "<br/>"
-                    + "%0.3f" % req_mem_pdiff
-                    + "%<br/><br/>"
-                    + "{:,}".format(nalloc_base)
-                    + "<br/>"
-                    + "{:,}".format(nalloc_pr)
-                    + "<br/>"
-                    + "{:,}".format(nalloc_adiff)
-                    + "<br/>"
-                    + "%0.3f" % nalloc_pdiff
-                    + "%<br/><br/>"
-                    + "{:,.2f}".format(leak_mem_base)
-                    + "<br/>"
-                    + "{:,.2f}".format(leak_mem_pr)
-                    + "<br/>"
-                    + "{:,.2f}".format(leak_mem_adiff)
-                    + "<br/>"
-                    + "%0.3f" % leak_mem_pdiff
-                    + "%<br/><br/>"
-                    + "{:,}".format(nlalloc_base)
-                    + "<br/>"
-                    + "{:,}".format(nlalloc_pr)
-                    + "<br/>"
-                    + "{:,}".format(nlalloc_adiff)
-                    + "<br/>"
-                    + "%0.3f" % nlalloc_pdiff
-                    + "%</td>"
-                ]
-        if summaryFormat == "html":
-            summaryLine += ["</tr>"]
-            summaryLines += summaryLine
 
     if summaryFormat == "html":
         summaryLines += [

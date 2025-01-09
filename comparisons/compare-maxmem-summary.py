@@ -12,6 +12,7 @@ import re
 MAXMEM_WARN_THRESHOLD = 1.0
 MAXMEM_ERROR_THRESHOLD = 10.0
 
+
 def KILL(message):
     raise RuntimeError(message)
 

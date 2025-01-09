@@ -9,6 +9,8 @@ import json
 import glob
 import re
 
+MAXMEM_WARN_THRESHOLD = 1.0
+MAXMEM_ERROR_THRESHOLD = 10.0
 
 def KILL(message):
     raise RuntimeError(message)
@@ -200,8 +202,22 @@ def compare_maxmem_summary(**kwargs):
         ]
         summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
+            threshold = workflows[workflow][step]["threshold"]
+            if not threshold:
+                threshold = 1.0
+            error_threshold = workflows[workflow][step].get("error_threshold")
+            if not error_threshold:
+                error_threshold = 10.0
+            cellString = "<td "
+            color = ""
+            if abs(workflows[workflow][step]["max memory pdiff"]) > MAXMEM_WARN_THRESHOLD:
+                color = 'bgcolor="orange"'
+            if abs(workflows[workflow][step]["max memory pdiff"]) > MAXMEM_ERROR_THRESHOLD:
+                color = 'bgcolor="red"'
+            cellString += color
+            cellString += ">"
             summaryLine += [
-                "<td>",
+                cellString,
                 "{:,.3f}".format(workflows[workflow][step]["max memory pdiff"]),
                 "%</td>",
             ]
@@ -403,27 +419,13 @@ def compare_maxmem_summary(**kwargs):
             nlalloc_base = workflows[workflow][step]["leaked alloc base"]
             nlalloc_pdiff = workflows[workflow][step]["leaked alloc pdiff"]
             nlalloc_adiff = workflows[workflow][step]["leaked alloc adiff"]
-            threshold = workflows[workflow][step]["threshold"]
-            if not threshold:
-                threshold = 1.0
-            error_threshold = workflows[workflow][step].get("error_threshold")
-            if not error_threshold:
-                error_threshold = 10.0
-            cellString = '<td align="right" '
-            color = ""
-            if abs(max_mem_pdiff) > threshold:
-                color = 'bgcolor="orange"'
-            if abs(max_mem_pdiff) > error_threshold:
-                color = 'bgcolor="red"'
-            cellString += color
-            cellString += ">"
 
     if summaryFormat == "html":
         summaryLines += [
             '</table><table><tr><td bgcolor="orange">'
-            + "warn threshold %0.2f" % threshold
+            + "maximum memory used warn threshold %0.3f" % MAXMEM_WARN_THRESHOLD
             + '%</td></tr><tr><td bgcolor="red">'
-            + "error threshold %0.2f" % error_threshold
+            + "maximum memory used error threshold %0.3f" % MAXMEM_ERROR_THRESHOLD
             + "%</td></tr>",
         ]
         summaryLines += ["</table></body></html>"]
@@ -488,9 +490,9 @@ if __name__ == "__main__":
         "--output-format",
         dest="output_format",
         action="store",
-        default="txt",
-        choices=["html", "txt"],
-        help='format of output file (must be "txt" or "html") (default: "txt")',
+        default="html",
+        choices=["html"],
+        help='format of output file (must be "html") (default: "html")',
     )
 
     parser.add_argument(

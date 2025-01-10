@@ -137,7 +137,10 @@ def compare_maxmem_summary(**kwargs):
             "<html>",
             "<head><style>"
             + "table, th, td {border: 1px solid black;}</style>"
-            + "<style> th, td {padding: 15px;}</style></head>",
+            + "<style> th, td {padding: 15px;}</style>"
+            + "<style> tr:hover {background-color: yellow}</style>"
+            + "<style> .noborder {}</style>"
+            +"</head>",
             "<body><h3>Summary of Maxmem Profiler Comparisons</h3><table>",
             '<tr><th align="center">Workflow</th>'
             + '<th align="center">Quantity</th>'
@@ -171,7 +174,7 @@ def compare_maxmem_summary(**kwargs):
             ]
 
         summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> max memory used:</th>']
-        summaryLine += ["<tr><td>&lt;pull request (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style: hidden;">&lt;pull request (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -181,7 +184,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;baseline (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -191,7 +194,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;PR - baseline (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -201,7 +204,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             threshold = workflows[workflow][step]["threshold"]
             if not threshold:
@@ -229,7 +232,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             '<tr><th rowspan="5" style="white-space:nowrap"> total memory request:</th>'
         ]
-        summaryLine += ["<tr><td>&lt;pull request (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;"> &lt;pull request (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -239,7 +242,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;baseline (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -249,7 +252,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;PR - baseline (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -259,7 +262,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -273,7 +276,7 @@ def compare_maxmem_summary(**kwargs):
             "</tr>",
         ]
         summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> # allocation calls:</th>']
-        summaryLine += ["<tr><td>&lt;pull request &gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;pull request &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -283,7 +286,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -293,7 +296,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;PR - baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -303,7 +306,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -314,7 +317,7 @@ def compare_maxmem_summary(**kwargs):
             "</tr>",
         ]
         summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> memory leaked:</th>']
-        summaryLine += ["<tr><td>&lt;pull request (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;pull request (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -324,7 +327,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;baseline (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -334,7 +337,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;PR - baseline (MB)&gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -344,7 +347,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -357,7 +360,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             '<tr><th rowspan="5" style="white-space:nowrap"> # allocation calls leaked:</th>'
         ]
-        summaryLine += ["<tr><td>&lt;pull request &gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;pull request &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -367,7 +370,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -377,7 +380,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;PR - baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -387,7 +390,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ["<tr><td>&lt;100 * (PR - baseline)/baseline &gt;</td>"]
+        summaryLine += ['<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -398,28 +401,6 @@ def compare_maxmem_summary(**kwargs):
             "</tr>",
         ]
         summaryLines += summaryLine
-
-        for step in sorted(workflows[workflow].keys(), key=stepfn):
-            max_mem_pr = workflows[workflow][step]["max memory pr"]
-            max_mem_base = workflows[workflow][step]["max memory base"]
-            max_mem_pdiff = workflows[workflow][step]["max memory pdiff"]
-            max_mem_adiff = workflows[workflow][step]["max memory adiff"]
-            req_mem_pr = workflows[workflow][step]["req memory pr"]
-            req_mem_base = workflows[workflow][step]["req memory base"]
-            req_mem_pdiff = workflows[workflow][step]["req memory pdiff"]
-            req_mem_adiff = workflows[workflow][step]["req memory adiff"]
-            leak_mem_pr = workflows[workflow][step]["leak memory pr"]
-            leak_mem_base = workflows[workflow][step]["leak memory base"]
-            leak_mem_pdiff = workflows[workflow][step]["leak memory pdiff"]
-            leak_mem_adiff = workflows[workflow][step]["leak memory adiff"]
-            nalloc_pr = workflows[workflow][step]["nallocated pr"]
-            nalloc_base = workflows[workflow][step]["nallocated base"]
-            nalloc_pdiff = workflows[workflow][step]["nallocated pdiff"]
-            nalloc_adiff = workflows[workflow][step]["nallocated adiff"]
-            nlalloc_pr = workflows[workflow][step]["leaked alloc pr"]
-            nlalloc_base = workflows[workflow][step]["leaked alloc base"]
-            nlalloc_pdiff = workflows[workflow][step]["leaked alloc pdiff"]
-            nlalloc_adiff = workflows[workflow][step]["leaked alloc adiff"]
 
     if summaryFormat == "html":
         summaryLines += [

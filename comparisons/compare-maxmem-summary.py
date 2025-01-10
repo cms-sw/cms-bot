@@ -138,7 +138,7 @@ def compare_maxmem_summary(**kwargs):
             "<head><style>"
             + "table, th, td {border: 1px solid black;}</style>"
             + "<style> th, td {padding: 15px;}</style>"
-            + "<style> tr:hover {background-color: yellow}</style>"
+            + "<style> tr:hover {background-color: #eff3ff}</style>"
             + "<style> .noborder {}</style>"
             + "</head>",
             "<body><h3>Summary of Maxmem Profiler Comparisons</h3><table>",
@@ -179,7 +179,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style: hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["max memory pr"]),
                 "</td>",
             ]
@@ -191,7 +191,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["max memory base"]),
                 "</td>",
             ]
@@ -203,7 +203,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["max memory adiff"]),
                 "</td>",
             ]
@@ -220,7 +220,7 @@ def compare_maxmem_summary(**kwargs):
             error_threshold = workflows[workflow][step].get("error_threshold")
             if not error_threshold:
                 error_threshold = 10.0
-            cellString = "<td "
+            cellString = '<td style="border-top-style:hidden" '
             color = ""
             if abs(workflows[workflow][step]["max memory pdiff"]) > MAXMEM_WARN_THRESHOLD:
                 color = 'bgcolor="orange"'
@@ -245,7 +245,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["req memory pr"]),
                 "</td>",
             ]
@@ -257,7 +257,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["req memory base"]),
                 "</td>",
             ]
@@ -269,7 +269,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["req memory adiff"]),
                 "</td>",
             ]
@@ -281,7 +281,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-top-style:hidden;">',
                 "{:,.3f}".format(workflows[workflow][step]["req memory pdiff"]),
                 "%</td>",
             ]
@@ -295,7 +295,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;pull request &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;">',
                 "{:,}".format(workflows[workflow][step]["nallocated pr"]),
                 "</td>",
             ]
@@ -307,7 +307,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,}".format(workflows[workflow][step]["nallocated base"]),
                 "</td>",
             ]
@@ -319,7 +319,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,}".format(workflows[workflow][step]["nallocated adiff"]),
                 "</td>",
             ]
@@ -331,7 +331,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-top-style:hidden;">',
                 "{:,.3f}".format(workflows[workflow][step]["nallocated pdiff"]),
                 "%</td>",
             ]
@@ -344,7 +344,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["leak memory pr"]),
                 "</td>",
             ]
@@ -356,7 +356,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["leak memory base"]),
                 "</td>",
             ]
@@ -368,7 +368,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["leak memory adiff"]),
                 "</td>",
             ]
@@ -380,7 +380,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-top-style:hidden;">',
                 "{:,.3f}".format(workflows[workflow][step]["leak memory pdiff"]),
                 "%</td>",
             ]
@@ -393,7 +393,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;pull request &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;">',
                 "{:,}".format(workflows[workflow][step]["nallocated pr"]),
                 "</td>",
             ]
@@ -405,7 +405,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,}".format(workflows[workflow][step]["nallocated base"]),
                 "</td>",
             ]
@@ -417,7 +417,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,}".format(workflows[workflow][step]["nallocated adiff"]),
                 "</td>",
             ]
@@ -429,7 +429,7 @@ def compare_maxmem_summary(**kwargs):
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                "<td>",
+                '<td style="border-top-style:hidden;">',
                 "{:,.3f}".format(workflows[workflow][step]["nallocated pdiff"]),
                 "%</td>",
             ]

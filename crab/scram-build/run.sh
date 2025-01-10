@@ -13,7 +13,7 @@ pushd $CMSSW_BASE
   scram b clean >>$log 2>&1
   scram build enable-multi-targets >>$log 2>&1
   rm -rf src
-  for pkg in FWCore/Framework DataFormats/Common GeneratorInterface/RivetInterface Geometry BigProducts/Simulation SimG4CMS SimG4Core ; do
+  for pkg in FWCore/Framework DataFormats GeneratorInterface/RivetInterface Geometry BigProducts/Simulation SimG4CMS SimG4Core HeterogeneousTest HeterogeneousCore ; do
     mkdir -p src/$pkg
     rsync -a --no-g $CMSSW_RELEASE_BASE/src/$pkg/ src/$pkg/
   done

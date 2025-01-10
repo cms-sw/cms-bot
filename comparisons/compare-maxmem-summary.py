@@ -140,7 +140,7 @@ def compare_maxmem_summary(**kwargs):
             + "<style> th, td {padding: 15px;}</style>"
             + "<style> tr:hover {background-color: yellow}</style>"
             + "<style> .noborder {}</style>"
-            +"</head>",
+            + "</head>",
             "<body><h3>Summary of Maxmem Profiler Comparisons</h3><table>",
             '<tr><th align="center">Workflow</th>'
             + '<th align="center">Quantity</th>'
@@ -174,7 +174,9 @@ def compare_maxmem_summary(**kwargs):
             ]
 
         summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> max memory used:</th>']
-        summaryLine += ['<tr><td style="border-bottom-style: hidden;">&lt;pull request (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style: hidden;">&lt;pull request (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -184,7 +186,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -194,7 +198,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -204,7 +210,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             threshold = workflows[workflow][step]["threshold"]
             if not threshold:
@@ -232,7 +240,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             '<tr><th rowspan="5" style="white-space:nowrap"> total memory request:</th>'
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;"> &lt;pull request (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;"> &lt;pull request (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -242,7 +252,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -252,7 +264,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -262,7 +276,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -286,7 +302,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -296,7 +314,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -306,7 +326,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -317,7 +339,9 @@ def compare_maxmem_summary(**kwargs):
             "</tr>",
         ]
         summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> memory leaked:</th>']
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;pull request (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;">&lt;pull request (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -327,7 +351,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -337,7 +363,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -347,7 +375,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -370,7 +400,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -380,7 +412,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",
@@ -390,7 +424,9 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-        summaryLine += ['<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>']
+        summaryLine += [
+            '<tr><td style="border-top-style:hidden;">&lt;100 * (PR - baseline)/baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 "<td>",

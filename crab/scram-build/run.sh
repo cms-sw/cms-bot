@@ -1,5 +1,5 @@
 #!/bin/bash -x
-log="run.log"
+log="$CMSSW_BASE/run.log"
 ld.so --help | grep supported | grep x86-64-v
 pushd $CMSSW_BASE
   sed -i -e 's|</tool>|  <flags REM_CUDA_HOST_CXXFLAGS="-march=%"/>\n  <flags CUDA_HOST_CXXFLAGS="-march=x86-64-v2"/>\n</tool>|' config/toolbox/${SCRAM_ARCH}/tools/selected/cuda.xml
@@ -32,4 +32,4 @@ pushd $CMSSW_BASE
     find lib -type f >>$log
   done
 popd
-mv $CMSSW_BASE/$log .
+[ -f run.log ] || mv $log .

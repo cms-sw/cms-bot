@@ -23,7 +23,7 @@ config.JobType.numCores = 4
 config.JobType.allowUndistributedCMSSW = True
 config.JobType.scriptExe = "run.sh"
 config.JobType.disableAutomaticOutputCollection = True
-config.JobType.outputFiles = ["run.log"]
+config.JobType.outputFiles = ["run.log", "matrix.tar.gz", "matrix.log"]
 config.JobType.inputFiles = ["FrameworkJobReport.xml"]
 
 config.Site.storageSite = "T2_CH_CERN"

@@ -888,6 +888,7 @@ CMSSW_CATEGORIES = {
         "DataFormats/VertexSoA",
         "HeterogeneousCore/AlpakaCore",
         "HeterogeneousCore/AlpakaInterface",
+        "HeterogeneousCore/AlpakaMath",
         "HeterogeneousCore/AlpakaServices",
         "HeterogeneousCore/AlpakaTest",
         "HeterogeneousCore/CUDACore",

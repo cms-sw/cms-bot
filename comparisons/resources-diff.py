@@ -137,7 +137,7 @@ summaryLines += [
     + '%</td><td></td></tr><tr><td bgcolor="cyan">'
     + "warn threshold -%0.2f" % error_threshold
     + "%</td><td></td></tr>",
-    "<tr><td>metric:<BR>&lt;pull request &gt;<BR>&lt;baseline&gt;<BR>(PR - baseline)</td><td><br>&lt;100* (PR - baseline)&gt;<br></td></tr></table>"
+    "<tr><td>metric:<BR>&lt;pull request &gt;<BR>&lt;baseline&gt;<BR>(PR - baseline)</td><td><br>&lt;100*((PR/PR total) - (baseline/baseline total))&gt;<br></td></tr></table>"
     + "<table>"
     + '<tr><td align="center">Type</td>'
     + '<td align="center">Label</td>'

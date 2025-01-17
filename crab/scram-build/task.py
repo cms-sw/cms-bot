@@ -17,13 +17,13 @@ config.Data.publication = False
 
 config.JobType.psetName = "pset.py"
 config.JobType.pluginName = "PrivateMC"
-config.JobType.maxJobRuntimeMin = 120
+config.JobType.maxJobRuntimeMin = int(os.getenv("CRAB_MAX_TIME", "480"))
 config.JobType.maxMemoryMB = 8000
 config.JobType.numCores = 4
 config.JobType.allowUndistributedCMSSW = True
 config.JobType.scriptExe = "run.sh"
 config.JobType.disableAutomaticOutputCollection = True
-config.JobType.outputFiles = ["run.log"]
+config.JobType.outputFiles = ["run.log", "matrix.tar.gz", "matrix.log"]
 config.JobType.inputFiles = ["FrameworkJobReport.xml"]
 
 config.Site.storageSite = "T2_CH_CERN"

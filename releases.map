@@ -4501,3 +4501,4 @@ architecture=el9_amd64_gcc11;label=CMSSW_13_0_22;type=Production;state=Announced
 architecture=el8_amd64_gcc12;label=CMSSW_14_0_20;type=Production;state=Announced;prodarch=1;
 architecture=el9_amd64_gcc12;label=CMSSW_14_0_20;type=Production;state=Announced;prodarch=0;
 architecture=el8_aarch64_gcc12;label=CMSSW_14_0_20;type=Production;state=Announced;prodarch=0;
+architecture=el9_aarch64_gcc12;label=CMSSW_14_0_20;type=Production;state=Announced;prodarch=0;

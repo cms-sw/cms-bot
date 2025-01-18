@@ -150,13 +150,13 @@ summaryLines += [
     "</tr>",
     "<td>%s</td>" % prdata["total"]["type"],
     "<td>%s</td>" % prdata["total"]["label"],
-    '<td align="right">%0.6f<br>%0.6f<br>%0.6f</td>'
+    '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
         prdata["total"]["time_real"],
         ibdata["total"]["time_real"],
         results["total"]["time_real_diff"],
     ),
-    '<td align="right">%0.6f<br>%0.6f<br>%0.6f</td>'
+    '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
         prdata["total"]["time_thread"],
         ibdata["total"]["time_thread"],
@@ -212,26 +212,26 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["time_thread_frac_diff
             "<tr>",
             "<td> %s</td>" % moduleres["type"],
             "<td> %s</td>" % moduleres["label"],
-            '<td align="right"> %0.6f<br> %0.6f<br> %0.6f</td>'
+            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
                 moduleib["time_real"],
                 modulepr["time_real"],
                 moduleres["time_real_diff"],
             ),
-            '<td align="right"> %0.6f%%<br> %0.6f%%<br> %0.6f%%</td>'
+            '<td align="right"> %0.2f%%<br> %0.2f%%<br> %0.2f%%</td>'
             % (
                 moduleib["time_real_frac"],
                 modulepr["time_real_frac"],
                 moduleres["time_real_frac_diff"],
             ),
-            '<td align="right"> %0.6f<br> %0.6f<br> %0.6f</td>'
+            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
                 moduleib["time_thread"],
                 modulepr["time_thread"],
                 moduleres["time_thread_diff"],
             ),
             cellString
-            + "%0.6f%%<br> %0.6f%%<br> %0.6f%%</td>"
+            + "%0.2f%%<br> %0.2f%%<br> %0.2f%%</td>"
             % (
                 moduleib["time_thread_frac"],
                 modulepr["time_thread_frac"],
@@ -249,11 +249,11 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["time_thread_frac_diff
 summaryLines += []
 summaryLines += ["</body></html>"]
 
-summaryFile = os.path.dirname(sys.argv[1]) + "/diff-" + os.path.basename(sys.argv[1]) + ".html"
+summaryFile = os.path.dirname(sys.argv[2]) + "/diff-" + os.path.basename(sys.argv[2]) + ".html"
 with open(summaryFile, "w") as g:
     for summaryLine in summaryLines:
         print(summaryLine, file=g)
 
-dumpfile = os.path.dirname(sys.argv[1]) + "/diff-" + os.path.basename(sys.argv[1])
+dumpfile = os.path.dirname(sys.argv[2]) + "/diff-" + os.path.basename(sys.argv[2])
 with open(dumpfile, "w") as f:
     json.dump(results, f, indent=2)

@@ -56,7 +56,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     continue
   fi
   pushd $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW
-  cp $WORKSPACE/cms-bot/comparisons/compareProducts.sh ./
+  cp $WORKSPACE/cms-bot/comparisons/compareProducts.* ./
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/step3_sizes_${PROFILING_WORKFLOW}.txt  step3_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt || true
   if [ $(ls -d step3_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ]; then
     edmEventSize -v step3*.root > step3_sizes_${PROFILING_WORKFLOW}.txt || true

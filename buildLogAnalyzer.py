@@ -380,6 +380,11 @@ class LogFileAnalyzer(object):
 
     def makeHTMLLogFile(self, pkg):
         """docstring for makeHTMLFile"""
+        linePartsUrl = re.compile(
+            r"(?P<full_path>(?:.*/"
+            + self.release
+            + r"/)?src(?P<file>/[^:(]+)[:(](?P<line>\d+)\)?):"
+        )
 
         if not pkg.name() in self.tagList:
             return
@@ -410,6 +415,21 @@ class LogFileAnalyzer(object):
             )  # do this first to not escape it again in the next subs
             newLine = newLine.replace("<", "&lt;").replace(">", "&gt;")
             if lineNo in pkg.errLines.keys():
+                m = linePartsUrl.match(newLine.strip())
+                if m:
+                    url = (
+                        "https://github.com/cms-sw/cmssw/blob/"
+                        + self.release
+                        + m.group("file")
+                        + "#L"
+                        + m.group("line")
+                    )
+
+                    newLine = newLine.replace(
+                        m.group("full_path"),
+                        '<a href="' + url + '">' + m.group("full_path") + "</a>",
+                        1,
+                    )
                 newLine = (
                     "<span class="
                     + self.styleClass[pkg.errLines[lineNo]]
@@ -770,7 +790,7 @@ def main(argv=None):
     pkgList = os.getenv("CMSSW_BASE", None)
     if pkgList:
         pkgList += "/src/PackageList.cmssw"
-    rel = os.getenv("CMSSW_VERSION", None)
+    rel = os.getenv("CMSSW_VERSION", "master")
     igWarning = []
     if argv is None:
         argv = sys.argv

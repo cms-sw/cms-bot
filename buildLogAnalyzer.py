@@ -383,7 +383,7 @@ class LogFileAnalyzer(object):
         linePartsUrl = re.compile(
             r"(?P<full_path>(?:.*/"
             + self.release
-            + r"/)?(?P<file>src/[^:(]+)[:(](?P<line>\d+)\)?):"
+            + r"/)?src(?P<file>/[^:(]+)[:(](?P<line>\d+)\)?):"
         )
 
         if not pkg.name() in self.tagList:

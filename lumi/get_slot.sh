@@ -38,6 +38,8 @@ klist || true
 export X509_CERT_DIR=/cvmfs/grid.cern.ch/etc/grid-security/certificates
 export X509_VOMS_DIR=/cvmfs/grid.cern.ch/etc/grid-security/vomsdir
 export VOMS_USERCONF=/cvmfs/grid.cern.ch/etc/grid-security/vomses
+export X509_USER_KEY=$HOME/cmsbuild/.globus/userkey.pem
+export X509_USER_CERT=$HOME/cmsbuild/.globus/usercert.pem
 
 echo "#########################################"
 

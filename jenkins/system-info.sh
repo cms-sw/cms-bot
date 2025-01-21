@@ -128,7 +128,7 @@ if docker --version >/dev/null 2>&1 ; then
     docker ps >/dev/null 2>&1 || true
     if docker ps >/dev/null 2>&1 ; then
       DOCKER="docker"
-      [ -e /var/crash ] && (docker run -u 0:0 -v /var/crash:/tmp/crash --rm -w /tmp alpine:3.16.2 sh -c 'rm -rf /tmp/crash/*' || true)
+      ([ -e /var/crash ] && docker run -u 0:0 -v /var/crash:/tmp/crash --rm -w /tmp alpine:3.16.2 sh -c 'rm -rf /tmp/crash/*') || true
       if [ -e $HOME/.docker/config.json ] ; then
         SLAVE_LABELS="${SLAVE_LABELS} docker-build"
       fi

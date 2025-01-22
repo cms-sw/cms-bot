@@ -411,7 +411,7 @@ def read_unit_tests_file(unit_tests_file):
     send_message_pr(message)
 
 
-def read_gpu_tests_file(unit_tests_file):
+def read_gpu_tests_file(unit_tests_file, gpu_flavor="GPU"):
     errors_found = ""
     err_cnt = 0
     for line in openlog(unit_tests_file):
@@ -423,8 +423,8 @@ def read_gpu_tests_file(unit_tests_file):
                 continue
             errors_found += line
     message = (
-        "\n## GPU Unit Tests\n\nI found %s errors in the following unit tests:\n\n<pre>%s</pre>"
-        % (err_cnt, errors_found)
+        "\n## %s Unit Tests\n\nI found %s errors in the following unit tests:\n\n<pre>%s</pre>"
+        % (gpu_flavor, err_cnt, errors_found)
     )
     send_message_pr(message)
 
@@ -606,6 +606,8 @@ if (options.report_url == "") or (options.report_file == ""):
 GITLOG_FILE_BASE_URL = "%s/git-recent-commits.json" % options.report_url
 GIT_CMS_MERGE_TOPIC_BASE_URL = "%s/git-merge-result" % options.report_url
 
+ACTION = ACTION.upper()
+
 if ACTION == "GET_BASE_MESSAGE":
     get_base_message()
 elif ACTION == "PARSE_UNIT_TESTS_FAIL":
@@ -630,6 +632,10 @@ elif ACTION == "MATERIAL_BUDGET":
     read_material_budget_log_file(options.unit_tests_file)
 elif ACTION == "MERGE_COMMITS":
     add_to_report(get_recent_merges_message())
+elif ACTION == "PARSE_CUDA_UNIT_TESTS_FAIL":
+    read_gpu_tests_file(options.unit_tests_file, "CUDA")
+elif ACTION == "PARSE_ROCM_UNIT_TESTS_FAIL":
+    read_gpu_tests_file(options.unit_tests_file, "ROCm")
 elif ACTION == "PARSE_GPU_UNIT_TESTS_FAIL":
     read_gpu_tests_file(options.unit_tests_file)
 else:

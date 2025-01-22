@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+  #!/bin/bash -ex
 # This script will be called by Jenkins job 'ib-run-pr-tests'
 # and
 # 1) will merge multiple PRs for multiple repos
@@ -161,6 +161,7 @@ if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
     fi
   fi
 fi
+ALL_GPU_TYPES=("cuda" "rocm")
 
 # ----------
 # -- MAIN --
@@ -379,6 +380,16 @@ if $DO_COMPARISON ; then
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.${ex_type_lc} > run-baseline-${BUILD_ID}-02.${ex_type_lc}
       echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
       echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+      if [ X"${ex_type_lc}" = X"gpu" ]; then
+        for GPU_T in ${ALL_GPU_TYPES[@]}; do
+          cp run-baseline-${BUILD_ID}-01.${ex_type_lc} run-baseline-${BUILD_ID}-01.${GPU_T}
+          sed -i -e "s/TEST_FLAVOR=gpu/TEST_FLAVOR=${GPU_T}/g" run-baseline-${BUILD_ID}-01.${GPU_T}
+
+          cp run-baseline-${BUILD_ID}-02.${ex_type_lc} run-baseline-${BUILD_ID}-02.${GPU_T}
+          sed -i -e "s/TEST_FLAVOR=gpu/TEST_FLAVOR=${GPU_T}/g" run-baseline-${BUILD_ID}-02.${GPU_T}
+        done
+        rm run-baseline-${BUILD_ID}-01.${ex_type_lc} run-baseline-${BUILD_ID}-02.${ex_type_lc}
+      fi
     done
   popd
   send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
@@ -1314,7 +1325,9 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
     DO_GPU_TESTS=true
-    mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    for GPU_T in ${ALL_GPU_TYPES[@]} ; do
+      mark_commit_status_all_prs 'unittests/${GPU_T}' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    done
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
     if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
@@ -1456,6 +1469,12 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
       grep -v '^MATRIX_ARGS=' $WORKSPACE/run-relvals.prop > $WORKSPACE/run-relvals-${ex_type_lc}.prop
       echo "MATRIX_ARGS=$(get_pr_relval_args $DO_COMPARISON _${ex_type})" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
+      if [ "${ex_type_lc}" = "gpu" ]; then
+        for GPU_T in ${ALL_GPU_TYPES[@]}; do
+          cp $WORKSPACE/run-relvals-${ex_type_lc}.prop $WORKSPACE/run-relvals-${GPU_T}.prop
+        done
+        rm $WORKSPACE/run-relvals-${ex_type_lc}.prop
+      fi
     done
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e
@@ -1487,7 +1506,9 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
 fi
 
 if [ "X$DO_GPU_TESTS" = Xtrue ]; then
-  cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests.prop
+  for GPU_T in ${ALL_GPU_TYPES[@]}; do
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T}.prop
+  done
 fi
 
 if ${BUILD_EXTERNAL} ; then
@@ -1498,7 +1519,7 @@ fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
   PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
-  for wf in ${PROFILING_WORKFLOWS};do
+  for wf in ${PROFILING_WORKFLOWS}; do
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$wf.prop
     echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop
   done

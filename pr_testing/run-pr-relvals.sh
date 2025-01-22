@@ -17,7 +17,7 @@ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
   if [ $(echo "${args}" | sed 's|.*-l ||;s| .*||' | tr ',' '\n' | grep '^all$' | wc -l) -gt 0 ] ; then
     OPTS=""
     case "${TEST_FLAVOR}" in
-      gpu ) OPTS="-w gpu" ;;
+      cuda | rocm ) OPTS="-w gpu" ;;
       high_stats ) ;;
       nano ) OPTS="-w nano" ;;
       * ) ;;

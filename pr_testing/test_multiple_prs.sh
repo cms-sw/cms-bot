@@ -79,11 +79,12 @@ function process_changed_files() {
   sort -u "$directlyChangedFiles" $WORKSPACE/indirectly-changed-files.txt > "$allChangedFiles"
 }
 
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
+CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
+
 # Constants
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
-SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
-CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils
 source ${CMS_BOT_DIR}/cmsrep.sh
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
@@ -91,8 +92,8 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
 [ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
-[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="GPU THREADING HIGH_STATS NANO"
-EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | tr '\n' ' ')
+[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]')"
+EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | grep -v GPU | tr '\n' ' ')
 # ---
 # doc: Input variable
 # PULL_REQUESTS   # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
@@ -162,6 +163,20 @@ if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
     fi
   fi
 fi
+
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+
+declare -a ENABLE_GPU_FLAVORS
+for ex_type in ${ENABLE_BOT_TESTS} ; do
+  ex_type_lc=$(echo $ex_type | tr '[A-Z]' '[a-z]')
+  if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}" ; then
+    ENABLE_GPU_FLAVORS+=( $ex_type )
+    VAR_NAME="MATRIX_EXTRAS_${ex_type}"
+    if [ -z "${!VAR_NAME}" ]; then
+      eval "$VAR_NAME=${MATRIX_EXTRAS_GPU}"
+    fi
+  fi
+done
 
 # ----------
 # -- MAIN --
@@ -1324,9 +1339,8 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
       done
     fi
   fi
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
+  if [ ${#ENABLE_GPU_FLAVORS[@]} -ne 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
     DO_GPU_TESTS=true
-    mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
     if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
@@ -1499,7 +1513,12 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
 fi
 
 if [ "X$DO_GPU_TESTS" = Xtrue ]; then
-  cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests.prop
+  for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
+    GPU_T_LC=$(echo $GPU_T | tr '[A-Z]' '[a-z]')
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T_LC}.prop
+    echo "TEST_FLAVOR=${GPU_T_LC}" >> $WORKSPACE/run-unittests-${GPU_T_LC}.prop
+    mark_commit_status_all_prs "unittests/${GPU_T_LC}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  done
 fi
 
 if ${BUILD_EXTERNAL} ; then
@@ -1510,7 +1529,7 @@ fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
   PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
-  for wf in ${PROFILING_WORKFLOWS};do
+  for wf in ${PROFILING_WORKFLOWS}; do
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$wf.prop
     echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop
   done
@@ -1525,3 +1544,4 @@ if [ "${DO_HLT_P2_INTEGRATION}" = "true" ] ;  then
 fi
 
 rm -f $WORKSPACE/test-env.txt
+

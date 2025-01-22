@@ -10,57 +10,59 @@ cd $WORKSPACE/${CMSSW_VERSION}
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
 
-rm -f ${RESULTS_DIR}/unittestGPU.txt
-mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
+rm -f ${RESULTS_DIR}/unittest${TEST_FLAVOR}.txt
+mark_commit_status_all_prs "unittests/${TEST_FLAVOR}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 echo '--------------------------------------'
-mkdir -p $WORKSPACE/gpuUnitTests
+mkdir -p $WORKSPACE/${TEST_FLAVOR}UnitTests
 let UT_TIMEOUT=7200+${CMSSW_PKG_COUNT}*20
-UTESTS_CMD="USER_UNIT_TESTS=cuda timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  unittests "
+gpu_t_lc=$(echo ${TEST_FLAVOR} | tr '[A-Z]' '[a-z]')
+UTESTS_CMD="USER_UNIT_TESTS=${gpu_t_lc} timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  unittests "
 echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"
 scram build echo_LD_LIBRARY_PATH || true
 scram build -r echo_CXX || true
 cms_major=$(echo ${CMSSW_IB} | cut -d_ -f2)
 cms_minor=$(echo ${CMSSW_IB} | cut -d_ -f3)
 cms_ver="$(echo 00${cms_major} | sed -E 's|^.*(..)$|\1|')$(echo 00${cms_minor} | sed -E 's|^.*(..)$|\1|')"
-echo $UTESTS_CMD > $WORKSPACE/gpuUnitTests/log.txt
-(eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/gpuUnitTests/log.txt 2>&1 || true
+echo $UTESTS_CMD > $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt
+(eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt 2>&1 || true
 echo 'END OF UNIT TESTS'
 echo '--------------------------------------'
 
-TEST_ERRORS=$(grep -ai 'had errors\|recipe for target' $WORKSPACE/gpuUnitTests/log.txt | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
-TEST_ERRORS=`grep -ai "had errors" $WORKSPACE/gpuUnitTests/log.txt` || true
-GENERAL_ERRORS=`grep -a "ALL_OK" $WORKSPACE/gpuUnitTests/log.txt` || true
+TEST_ERRORS=$(grep -ai 'had errors\|recipe for target' $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
+TEST_ERRORS=`grep -ai "had errors" $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt` || true
+GENERAL_ERRORS=`grep -a "ALL_OK" $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt` || true
 
+TEST_FLAVOR_UC=$(echo $TEST_FLAVOR | tr '[:lower:]' '[:upper:]')
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
-  echo "Errors in the gpu unit tests"
-  echo 'GPU_UNIT_TEST_RESULTS;ERROR,GPU Unit Tests,See Log,gpuUnitTests' >> ${RESULTS_DIR}/unittestGPU.txt
+  echo "Errors in the ${TEST_FLAVOR} unit tests"
+  echo "${TEST_FLAVOR_UC}_UNIT_TEST_RESULTS;ERROR,Unit Tests ${TEST_FLAVOR_UC},See Log,${TEST_FLAVOR}UnitTests" >> ${RESULTS_DIR}/unittest${TEST_FLAVOR}.txt
   ALL_OK=false
   UNIT_TESTS_OK=false
-  $CMS_BOT_DIR/report-pull-request-results PARSE_GPU_UNIT_TESTS_FAIL -f $WORKSPACE/gpuUnitTests/log.txt --report-file ${RESULTS_DIR}/14-unittestGPU-report.res ${REPORT_OPTS}
-  echo "GpuUnitTests" > ${RESULTS_DIR}/14-failed.res
+  $CMS_BOT_DIR/report-pull-request-results PARSE_${TEST_FLAVOR_UC}_UNIT_TESTS_FAIL -f $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt --report-file ${RESULTS_DIR}/14-unittest${TEST_FLAVOR}-report.res ${REPORT_OPTS}
+  echo "${TEST_FLAVOR}UnitTests" > ${RESULTS_DIR}/14-${TEST_FLAVOR}-failed.res
 else
-  echo 'GPU_UNIT_TEST_RESULTS;OK,GPU Unit Tests,See Log,gpuUnitTests' >> ${RESULTS_DIR}/unittestGPU.txt
+  echo "${TEST_FLAVOR_UC}_UNIT_TEST_RESULTS;OK,Unit Tests ${TEST_FLAVOR_UC},See Log,${TEST_FLAVOR}UnitTests" >> ${RESULTS_DIR}/unittest${TEST_FLAVOR}.txt
 fi
-echo "<html><head></head><body>" > $WORKSPACE/gpuUnitTests/success.html
-cp $WORKSPACE/gpuUnitTests/success.html $WORKSPACE/gpuUnitTests/failed.html
+echo "<html><head></head><body>" > $WORKSPACE/${TEST_FLAVOR}UnitTests/success.html
+cp $WORKSPACE/${TEST_FLAVOR}UnitTests/success.html $WORKSPACE/${TEST_FLAVOR}UnitTests/failed.html
 UT_ERR=false
 utlog="testing.log"
 for t in $(find $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src -name ${utlog} -type f | sed "s|$WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/||;s|/${utlog}$||") ; do
-  mkdir -p $WORKSPACE/gpuUnitTests/${t}
-  mv $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/${t}/${utlog} $WORKSPACE/gpuUnitTests/${t}/
-  if [ $(grep -a '^\-\-\-> test  *[^ ]*  *succeeded$' $WORKSPACE/gpuUnitTests/${t}/${utlog} | wc -l) -gt 0 ] ; then
-    echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/gpuUnitTests/success.html
+  mkdir -p $WORKSPACE/${TEST_FLAVOR}UnitTests/${t}
+  mv $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/${t}/${utlog} $WORKSPACE/${TEST_FLAVOR}UnitTests/${t}/
+  if [ $(grep -a '^\-\-\-> test  *[^ ]*  *succeeded$' $WORKSPACE/${TEST_FLAVOR}UnitTests/${t}/${utlog} | wc -l) -gt 0 ] ; then
+    echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/${TEST_FLAVOR}UnitTests/success.html
   else
-    echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/gpuUnitTests/failed.html
+    echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/${TEST_FLAVOR}UnitTests/failed.html
     UT_ERR=true
   fi
 done
-if ! $UT_ERR ; then echo "No unit test failed" >> $WORKSPACE/gpuUnitTests/failed.html ; fi
-echo "</body></html>" >> $WORKSPACE/gpuUnitTests/success.html
-echo "</body></html>" >> $WORKSPACE/gpuUnitTests/failed.html
+if ! $UT_ERR ; then echo "No unit test failed" >> $WORKSPACE/${TEST_FLAVOR}UnitTests/failed.html ; fi
+echo "</body></html>" >> $WORKSPACE/${TEST_FLAVOR}UnitTests/success.html
+echo "</body></html>" >> $WORKSPACE/${TEST_FLAVOR}UnitTests/failed.html
 prepare_upload_results
 if $UNIT_TESTS_OK ; then
-  mark_commit_status_all_prs 'unittests/gpu' 'success' -u "${BUILD_URL}" -d "Passed"
+  mark_commit_status_all_prs "unittests/${TEST_FLAVOR}" 'success' -u "${BUILD_URL}" -d "Passed"
 else
-  mark_commit_status_all_prs 'unittests/gpu' 'error' -u "${BUILD_URL}" -d "Some unit tests were failed."
+  mark_commit_status_all_prs "unittests/${TEST_FLAVOR}" 'error' -u "${BUILD_URL}" -d "Some unit tests were failed."
 fi

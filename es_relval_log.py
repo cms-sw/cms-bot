@@ -128,6 +128,8 @@ def es_parse_log(logFile):
     errors = []
     inException = False
     inError = False
+    inStacktrace = False
+    stacktrace = []
     datasets = []
     error_count = 0
     if exists(logFile):
@@ -158,6 +160,9 @@ def es_parse_log(logFile):
                 except:
                     pass
                 continue
+            if "sig_dostack_then_abort" in l:
+                inStacktrace = True
+                continue
             if l.startswith("----- Begin Fatal Exception"):
                 inException = True
                 continue
@@ -171,6 +176,9 @@ def es_parse_log(logFile):
                     "%MSG-e ", ""
                 )
                 continue
+            if inStacktrace and not l.startswith("#"):
+                inStacktrace = False
+                continue
             if inError == True and l.startswith("%MSG"):
                 inError = False
                 if len(errors) < 10:
@@ -183,10 +191,15 @@ def es_parse_log(logFile):
                 exception += l + "\n"
             if inError:
                 error += l + "\n"
+            if inStacktrace:
+                if len(stacktrace) < 20:
+                    stacktrace.append(l)
     if exception:
         payload["exception"] = exception
     if errors:
         payload["errors"] = errors
+    if stacktrace:
+        payload["stacktrace"] = "\n".join(stacktrace)
     payload["error_count"] = error_count
     try:
         payload = es_parse_jobreport(payload, logFile)

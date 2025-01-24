@@ -87,7 +87,7 @@ for pkg in $(cat packages.txt | sed 's|.*=||' | sort | uniq) ; do
   for log in $(find class_versions/${pkg} -name '*.log' -type f); do
     if [ -s $log ] ; then
       echo "<html><head></head><body><pre>" > class_versions/${pkg}/edmDumpClassVersion.html
-      cat $log  >> class_versions/${pkg}/edmDumpClassVersion.html
+      sed -e 's|&|\&amp;|g;s|<|\&lt;|g;s|>|\&gt;|g' $log >> class_versions/${pkg}/edmDumpClassVersion.html
       echo "</pre></body></html>" >> class_versions/${pkg}/edmDumpClassVersion.html
     fi
     rm -f $log

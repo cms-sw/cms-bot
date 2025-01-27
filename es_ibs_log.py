@@ -75,20 +75,20 @@ def process_unittest_log(logFile):
         },
     ]
 
-    pkgTestStartRe = re.compile('^===== Test "(.*)" ====')
-    pkgTestEndRe = re.compile(r"^\^\^\^\^ End Test (.*) \^\^\^\^")
-    pkgTestResultRe = re.compile(".*---> test ([^ ]+) (had ERRORS|succeeded)")
+    pkgTestStartRe = re.compile('^===== Test\s+"([^\s]+)" ====')
+    pkgTestEndRe = re.compile(r"^\^\^\^\^ End Test\s+([^\s]+)\s+\^\^\^\^")
+    pkgTestResultRe = re.compile(".*---> test\s+([^\s]+)\s+(had ERRORS|succeeded)")
 
     with open(logFile, encoding="ascii", errors="ignore") as f:
         utname = None
         datasets = []
-        test_status = -1
+        test_status = 0
         for index, l in enumerate(f):
             l = l.strip()
             config_list = add_exception_to_config(l, index, config_list, custom_rule_set)
             if m := pkgTestStartRe.match(l):
                 utname = m[1]
-                test_status = -1
+                test_status = 0
                 datasets = []
                 continue
 
@@ -100,7 +100,7 @@ def process_unittest_log(logFile):
                         )
                     )  # TODO: do we want a more visible error (exit 1)? Or maybe skip this file?
                 else:
-                    test_status = 0 if m[2] == "succeeded" else 1
+                    test_status = 1 if m[2] == "had ERRORS" else 0
                 continue
 
             if m := pkgTestEndRe.match(l):
@@ -131,7 +131,7 @@ def process_unittest_log(logFile):
                     payload_utest["stacktrace"] = "\n".join(stacktrace)
                     stacktrace = []
                 utest_id = sha1hexdigest(release + architecture + utname)
-                print("==> ", json.dumps(payload_dataset) + "\n")
+                print("==> ", json.dumps(payload_utest) + "\n")
                 send_payload(index, "unittests", utest_id, json.dumps(payload_utest))
 
                 payload_dataset["name"] = "%s/%s" % (package, utname)

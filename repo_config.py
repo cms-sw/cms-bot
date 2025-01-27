@@ -1,7 +1,8 @@
 from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER, get_jenkins
 from os.path import dirname, abspath
+import os
 
-GH_TOKEN = "~/.github-token"
+GH_TOKEN = os.getenv("GH_TOKEN_FILE", "~/.github-token")
 GH_TOKEN_READONLY = "~/.github-token-readonly"
 CONFIG_DIR = dirname(abspath(__file__))
 CMSBUILD_USER = CMSBUILD_GH_USER

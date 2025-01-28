@@ -65,7 +65,7 @@ function send_jenkins_artifacts ()
   if [ "X$IS_DIR" = "X" ] ; then DES_DIR=$(dirname $DES) ; fi
   for i in 1 2 3 4 5 6 7 8 9 ;  do
     ( ssh $SSH_OPTS ${ARTIFACTS_MACHINE} mkdir -p ${ARTIFACT_BASE_DIR}/${DES_DIR} && \
-      rsync ${SEND_JENKINS_ARTIFACTS_OPTS} -azl -e "ssh $SSH_OPTS" ${SRC}${IS_DIR} ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${DES_DIR}${IS_DIR} && echo "JA_STATUS=OK") && return
+      rsync ${SEND_JENKINS_ARTIFACTS_OPTS} -rtzl --chmod=ugo=rwX -e "ssh $SSH_OPTS" ${SRC}${IS_DIR} ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${DES_DIR}${IS_DIR} && echo "JA_STATUS=OK") && return
     sleep 60
   done
   echo "JA_STATUS=ERROR"

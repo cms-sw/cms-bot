@@ -527,7 +527,7 @@ if ${BUILD_EXTERNAL} ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
     fi
     if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
-      [ "${NO_PACKAGE_STORE}" = "true" ] && UPLOAD_TO_PACKAGE_STORE=false
+      [ "${CMSBOT_SET_ENV_NO_PACKAGE_STORE}" = "true" ] && UPLOAD_TO_PACKAGE_STORE=false
       if $UPLOAD_TO_PACKAGE_STORE ; then
         CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store-s3"
       else

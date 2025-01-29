@@ -83,6 +83,9 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo "DO_STATIC_CHECKS=${DO_STATIC_CHECKS}" >> $OUTPUT_FILE
     echo "DO_DUPLICATE_CHECKS=${DO_DUPLICATE_CHECKS}" >> $OUTPUT_FILE
     echo "EXTRA_RELVALS_TESTS=${EXTRA_RELVALS_TESTS}" >> $OUTPUT_FILE
+    for v in $(echo ${CMSBOT_SET_ENV} | tr ',' ' ') ; do
+      echo "CMSBOT_SET_ENV_${v}=true" >> $OUTPUT_FILE
+    done
     for i in "" ${EXTRA_RELVALS_TESTS} ; do
       [ "$i" != "" ] && i="_$i"
       for t in EXTRA_MATRIX_ARGS MATRIX_EXTRAS EXTRA_MATRIX_COMMAND_ARGS ; do

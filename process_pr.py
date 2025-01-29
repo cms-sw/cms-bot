@@ -168,6 +168,7 @@ MULTILINE_COMMENTS_MAP = {
     "disable_poison": ["true|false", "DISABLE_POISON"],
     "use_ib_tag": ["true|false", "USE_IB_TAG"],
     "baseline": ["self|default", "USE_BASELINE"],
+    "set_env":  ["[A-Z][A-Z0-9_]+(\s*,\s*[A-Z][A-Z0-9_]+|)*","CMSBOT_SET_ENV"],
     "skip_test(s|)": [format(r"(%(tests)s)(\s*,\s*(%(tests)s))*", tests=SKIP_TESTS), "SKIP_TESTS"],
     "dry_run": ["true|false", "DRY_RUN"],
     "jenkins_(slave|node)": [JENKINS_NODES, "RUN_ON_SLAVE"],

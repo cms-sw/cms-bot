@@ -29,19 +29,20 @@ function get_pr_relval_args() {
   local WF_ARGS
   local WF_LIST
   local WF_LIST2
-  if true ; then
+  wf_args="$(eval echo \${EXTRA_MATRIX_ARGS$2})"
+  if $1 || [ "${wf_args}" != "" ] ; then
      WF_LIST=$(get_pr_baseline_worklflow "$2")
      [ "$WF_LIST" = "" ] || WF_LIST="-l $WF_LIST"
      WF_LIST2=$(order_workflow_list "$(eval echo \${MATRIX_EXTRAS$2})")
      if [ "${WF_LIST2}" = "" ] ; then
        WF_ARGS="${WF_LIST}"
      else
-       WF_ARGS="${WF_LIST};-l ${WF_LIST2} $(eval echo \${EXTRA_MATRIX_ARGS$2})"
+       WF_ARGS="${WF_LIST};-l ${WF_LIST2} ${wf_args}"
      fi
   else
     WF_LIST=$(get_pr_baseline_worklflow "$2" "$(eval echo \${MATRIX_EXTRAS$2})")
     [ "$WF_LIST" = "" ] || WF_LIST="-l $WF_LIST"
-    WF_ARGS="${WF_LIST} $(eval echo \${EXTRA_MATRIX_ARGS$2})"
+    WF_ARGS="${WF_LIST} ${wf_args}"
   fi
   echo "${WF_ARGS}"
 }

@@ -29,7 +29,7 @@ function get_pr_relval_args() {
   local WF_ARGS
   local WF_LIST
   local WF_LIST2
-  if $1 ; then
+  if true ; then
      WF_LIST=$(get_pr_baseline_worklflow "$2")
      [ "$WF_LIST" = "" ] || WF_LIST="-l $WF_LIST"
      WF_LIST2=$(order_workflow_list "$(eval echo \${MATRIX_EXTRAS$2})")

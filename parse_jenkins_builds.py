@@ -169,6 +169,27 @@ for element in queue_json["items"]:
     payload["wait_time"] = current_time - queue_time
     payload["start_time"] = 0
 
+    kill_index = 0
+
+    # Abort stuck rocm jobs
+    if job_name in ("ib-run-pr-unittests", "ib-run-pr-relvals") and reason.endswith("-offline") and (payload["wait_time"] / 1000 / 60 > 60):
+        params = element["params"].strip().split("\n")
+        main_params = ""
+        other_params = []
+        for _ in params:
+            k, v  = _.split("=")
+            if k == "PULL_REQUEST":
+                main_params = _
+            else:
+                other_params.append(_)
+
+        with open("abort-{0}.prop".format(kill_index), "w") as f:
+            f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
+            f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
+            f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
+
+        kill_index += 1
+
     unique_id = (
         JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id)
     )  # Not a real path

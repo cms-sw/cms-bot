@@ -120,6 +120,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/de
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/g4")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/cudart")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/g13")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/g14")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/tf")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/root634")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/rootmaster"] = ["IB/CMSSW_15_0_X/rootmodule"]

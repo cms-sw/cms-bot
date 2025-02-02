@@ -42,6 +42,7 @@ def process_unittest_log(logFile):
     architecture = pathInfo[4]
     release = pathInfo[8]
     week, rel_sec = cmsswIB2Week(release)
+    es_index = "ibs-" + week
     package = pathInfo[-3] + "/" + pathInfo[-2]
     payload_dataset = {"type": "unittest"}
     payload_dataset["release"] = release
@@ -132,7 +133,7 @@ def process_unittest_log(logFile):
                     stacktrace = []
                 utest_id = sha1hexdigest(release + architecture + utname)
                 print("==> ", json.dumps(payload_utest) + "\n")
-                send_payload(index, "unittests", utest_id, json.dumps(payload_utest))
+                send_payload(es_index, "unittests", utest_id, json.dumps(payload_utest))
 
                 payload_dataset["name"] = "%s/%s" % (package, utname)
                 dataset_id = sha1hexdigest(release + architecture + package + utname)

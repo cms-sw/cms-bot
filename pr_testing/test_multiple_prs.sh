@@ -1129,14 +1129,23 @@ if $IS_DEV_BRANCH ; then
     echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
     (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/headers_chks.log 2>&1 || true
     echo 'END OF HEADER CHEKS LOG'
-    TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/headers_chks.log` || true
-    GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/headers_chks.log` || true
+    for h in $(grep '^gmake: ' $WORKSPACE/headers_chks.log | grep '\.chk_header' | sed  -e "s|.*tmp/$ARCHITECTURE/*||;s|^check_header/*||;s|^src/*||;s|].*||;s|\.chk_header.*||;s|/src/[^/]*/|/interface/|") ; do
+      [ $(grep -E "/$h(:[0-9][0-9]*)*: error: #error " $WORKSPACE/headers_chks.log | wc -l) -gt 0 ] &&  continue
+      echo $h > ${WORKSPACE}/headers_with_error.log
+    done
     CHK_HEADER_LOG_RES="OK"
     CHK_HEADER_OK=true
-    if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
+    if [ -e ${WORKSPACE}/headers_with_error.log ] ; then
       CHK_HEADER_LOG_RES="ERROR"
       CHK_HEADER_OK=false
       ALL_OK=false
+      echo "Header files  with errors" > ${WORKSPACE}/headers_chks.log1
+      cat ${WORKSPACE}/headers_with_error.log >> ${WORKSPACE}/headers_chks.log1
+      echo "" >> ${WORKSPACE}/headers_chks.log1
+      echo "Full build log" >> ${WORKSPACE}/headers_chks.log1
+      cat $WORKSPACE/headers_chks.log >> $WORKSPACE/headers_chks.log1
+      rm -f $WORKSPACE/headers_chks.log ${WORKSPACE}/headers_with_error.log
+      mv $WORKSPACE/headers_chks.log1 $WORKSPACE/headers_chks.log
     fi
     echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> ${RESULTS_DIR}/header.txt
   fi

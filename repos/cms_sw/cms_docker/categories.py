@@ -18,6 +18,7 @@ CMSSW_CONTAINERS = [
     "docker-vtune",
     "el8",
     "el9",
+    "el10",
     "rocky8",
     "slc5",
     "slc6",

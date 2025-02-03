@@ -91,7 +91,7 @@ def es_parse_jobreport(payload, logFile):
 def es_parse_log(logFile):
     stamp = "%s-es" % logFile
     if exists(stamp):
-        print("Adready process: ", logFile)
+        print("Already processed: ", logFile)
         return
     t = os.path.getmtime(logFile)
     timestp = int(t * 1000)

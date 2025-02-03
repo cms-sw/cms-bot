@@ -112,7 +112,7 @@ def trigger_retry_action(
 
 
 def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):
-    nodeoff_msg = r"'Node\ marked\ as\ offline\ beacuse\ of\ " + job_url + "'"
+    nodeoff_msg = r"'Node\ marked\ as\ offline\ because\ of\ " + job_url + "'"
     take_nodeoff = (
         os.environ.get("JENKINS_CLI_CMD") + " offline-node " + node_name + " -m " + nodeoff_msg
     )

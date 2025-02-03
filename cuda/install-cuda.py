@@ -9,6 +9,7 @@ import glob
 import hashlib
 import json
 import os
+import os.path
 import re
 import shutil
 import stat
@@ -159,10 +160,22 @@ def movetree(src, dst, overwrite=False):
     srcmode = os.lstat(src).st_mode
     dstmode = os.lstat(dst).st_mode
 
+    while stat.S_ISLNK(srcmode):
+        tmp = os.readlink(src)
+        if not os.path.isabs(tmp):
+            tmp = os.path.join(os.path.dirname(src), tmp)
+        src = tmp
+        srcmode = os.lstat(src).st_mode
+
+    while stat.S_ISLNK(dstmode):
+        tmp = os.readlink(dst)
+        if not os.path.isabs(tmp):
+            tmp = os.path.join(os.path.dirname(dst), tmp)
+        dst = tmp
+        dstmode = os.lstat(dst).st_mode
+
     # If both src and dst are files or links, the behaviour depends on the `overwrite` parameter.
-    if (stat.S_ISLNK(srcmode) or stat.S_ISREG(srcmode)) and (
-        stat.S_ISLNK(dstmode) or stat.S_ISREG(dstmode)
-    ):
+    if stat.S_ISREG(srcmode) and stat.S_ISREG(dstmode):
         # If overwrite is True, overwrite dst.
         if overwrite:
             os.remove(dst)
@@ -184,7 +197,9 @@ def movetree(src, dst, overwrite=False):
 
     # Other combinations are not supported: directories cannot be merged with files or links, etc.
     else:
-        raise RuntimeError(f"Cannot merge or overwrite entries of different types: {src} vs {dst}")
+        raise RuntimeError(
+            f"Cannot merge or overwrite entries of different types: {src} (IS_DIR {stat.S_ISDIR(srcmode)} IS_LINK {stat.S_ISLNK(srcmode)} IS_REG {stat.S_ISREG(srcmode)}) vs {dst} (IS_DIR {stat.S_ISDIR(dstmode)} IS_LINK {stat.S_ISLNK(dstmode)} IS_REG {stat.S_ISREG(dstmode)})"
+        )
 
 
 # Download a JSON catalog from any URL supported by urllib ('http://...', 'https://...', 'file:...', etc.)

@@ -1136,7 +1136,7 @@ def find_general_test_results(
     :param magic_command: string with bash command to execute
     :param test_field: field to write back the results to
     :param results_function: function how to process results
-    :param proces_result: function to process the result of results_function
+    :param process_result: function to process the result of results_function
     """
 
     for comp in comparisons:

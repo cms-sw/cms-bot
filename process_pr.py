@@ -2107,7 +2107,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if (signatures.get("tests") == "approved") and [c for c in signatures if not c in xcats]:
         for cat in [c for c in CATS_TO_APPROVE_ON_TEST if (signatures.get(c) == "pending")]:
             signatures[cat] = "approved"
-            print("Overriding/Approving singatures for %s due to tests-approved" % cat)
+            print("Overriding/Approving signatures for %s due to tests-approved" % cat)
 
     for cat in signing_categories:
         l = cat + "-pending"

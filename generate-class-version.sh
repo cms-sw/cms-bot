@@ -78,7 +78,7 @@ for pkg in $(cat packages.txt | sed 's|.*=||' | sort | uniq) ; do
 done
 wait
 
-echo "Done runnin edmDumpClassVersion"
+echo "Done running edmDumpClassVersion"
 echo "Processing logs ..."
 
 echo "<html><head></head><body><pre>" > class_versions.html

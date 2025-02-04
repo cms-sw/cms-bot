@@ -1,4 +1,4 @@
-  #!/bin/bash -ex
+#!/bin/bash -ex
 # This script will be called by Jenkins job 'ib-run-pr-tests'
 # and
 # 1) will merge multiple PRs for multiple repos

@@ -187,12 +187,14 @@ for element in queue_json["items"]:
             else:
                 other_params.append(_)
 
-        with open("abort-{0}.prop".format(kill_index), "w") as f:
-            f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
-            f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
-            f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
+        if "GPU_FLAVOR=rocm" in other_params or "TEST_FLAVOR=rocm" in other_params:
+            with open("abort-{0}.prop".format(kill_index), "w") as f:
+                f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
+                f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
+                f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
 
-        kill_index += 1
+            kill_index += 1
+            # TODO: set commit status
 
     unique_id = (
         JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id)

@@ -172,12 +172,16 @@ for element in queue_json["items"]:
     kill_index = 0
 
     # Abort stuck rocm jobs
-    if job_name in ("ib-run-pr-unittests", "ib-run-pr-relvals") and reason.endswith("-offline") and (payload["wait_time"] / 1000 / 60 > 60):
+    if (
+        job_name in ("ib-run-pr-unittests", "ib-run-pr-relvals")
+        and reason.endswith("-offline")
+        and (payload["wait_time"] / 1000 / 60 > 60)
+    ):
         params = element["params"].strip().split("\n")
         main_params = ""
         other_params = []
         for _ in params:
-            k, v  = _.split("=")
+            k, v = _.split("=")
             if k == "PULL_REQUEST":
                 main_params = _
             else:

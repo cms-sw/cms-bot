@@ -516,16 +516,16 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--tag ${PR_NUM} --define cmsswdata_version_link"
+    CMSBUILD_ARGS="--tag ${PR_NUM}"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
-      CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
-    fi
-    if [ "${ALLOW_VERSION_SUFFIX}" = "true" ] ; then
-      CMSBUILD_ARGS="${CMSBUILD_ARGS} --define allow_version_suffix"
-    fi
-    if [ $(echo "${CONFIG_LINE}" | grep "DEBUG_EXTERNALS=" | wc -l) -gt 0 ] ; then
-      dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
-      CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
+      CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cmsswdata_version_link  --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
+      if [ "${ALLOW_VERSION_SUFFIX}" = "true" ] ; then
+        CMSBUILD_ARGS="${CMSBUILD_ARGS} --define allow_version_suffix"
+      fi
+      if [ $(echo "${CONFIG_LINE}" | grep "DEBUG_EXTERNALS=" | wc -l) -gt 0 ] ; then
+        dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
+        CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
+      fi
     fi
     if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
       [ "${CMSBOT_SET_ENV_NO_PACKAGE_STORE}" = "true" ] && UPLOAD_TO_PACKAGE_STORE=false

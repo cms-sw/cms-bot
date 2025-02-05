@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import subprocess
 from es_utils import send_payload, get_payload, resend_payload, get_payload_wscroll
 from cmsutils import epoch2week
+import urllib.request
 
 from github_utils import (
     api_rate_limits,
@@ -188,13 +189,21 @@ for element in queue_json["items"]:
         main_params = ""
         other_params = []
         context = ""
+        upload_unique_id = ""
+        pull_request = ""
+        commit = ""
+
         for _ in params:
             k, v = _.split("=")
             if k == "PULL_REQUEST":
                 main_params = _
+                pull_request = v
             else:
                 if k == "CONTEXT_PREFIX":
                     context = v
+                if k == "UPLOAD_UNIQ_ID":
+                    upload_unique_id = v
+
                 other_params.append(_)
 
         if "GPU_FLAVOR=rocm" in other_params or "TEST_FLAVOR=rocm" in other_params:
@@ -205,17 +214,27 @@ for element in queue_json["items"]:
 
             kill_index += 1
 
-            repository, pr = main_params.split("#", 1)
-            commit = get_pr_latest_commit(pr, repository)
-            mark_commit_status(
-                commit,
-                repository,
-                context,
-                "error",
-                "",
-                "Timed out waiting for ROCm node",
-                reset=False,
-            )
+            repository, pr = pull_request.split("#", 1)
+
+            if context:
+                with urllib.request.urlopen(
+                    "http://localhost/SDT/jenkins-artifacts/pull-request-integration/{0}/prs_commits.txt".format(
+                        upload_unique_id
+                    )
+                ) as f:
+                    commits = f.read().decode("ascii", "ignore").splitlines()
+
+                for _ in commits:
+                    if _.startswith(pull_request):
+                        commit = _.split("='", 1)[1]
+                        break
+
+                with open("commit-status-{0}.prop", "w") as f:
+                    f.write("REPOSITORY={0}\n".format(repository))
+                    f.write("PULL_REQUEST={0}\n".format(commit))
+                    f.write("CONTEXT={0}\n".format(context))
+                    f.write("STATUS=error\n")
+                    f.write("STATUS_MESSAGE=Timed out waiting for ROCm node\n")
 
             continue
 

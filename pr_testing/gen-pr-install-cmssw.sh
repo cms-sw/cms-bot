@@ -23,7 +23,23 @@ else
 fi
 cat <<EOF
 ./config/SCRAM/projectAreaRename.\${EXT} ${PR_BUILD_BASE} \${XDIR} ${ARCHITECTURE}
+
 set +x
+#Fix external glibc path e.g. in 8.0.X and 9.4.X
+case ${ARCHITECTURE} in
+  slc6_amd64_*)
+    if [ -e config/toolbox/${ARCHITECTURE}/tools/selected/glibc.xml ] ; then
+      GLIBC_PATH=$(grep GLIBC_BASE config/toolbox/${ARCHITECTURE}/tools/selected/glibc.xml | sed 's|.*="/|/|;s|".*||')
+      PATCHELF=$(ls /cvmfs/cms.cern.ch/${ARCHITECTURE}/external/patchelf/*/bin/patchelf | sort | tail -1)
+      for x in $(find bin/${ARCHITECTURE} -type f -exec file {} \; | grep ELF | cut -d':' -f1) ; do
+        if [ \$(strings \$x 2>&1 | grep "${ARCHITECTURE}/external/glibc/[^/]*/lib64/ld.so" |wc -l) -gt 0 ] ; then
+           \$PATCHELF --set-interpreter \$GLIBC_PATH/lib64/ld.so \$x
+        fi
+      done
+    fi
+    ;;
+  * ) ;;
+esac
 if [ "${EXT_DIR}" != "" ] ; then
   echo "Relocating external/${ARCHITECTURE} symlinks"
   for L in \$(find external/${ARCHITECTURE} -type l); do

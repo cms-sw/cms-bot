@@ -33,7 +33,8 @@ case ${ARCHITECTURE} in
       PATCHELF=\$(ls /cvmfs/cms-ib.cern.ch/week*/${ARCHITECTURE}/external/patchelf/*/bin/patchelf | sort | tail -1)
       for x in \$(find bin/${ARCHITECTURE} -type f -exec file {} \\; | grep ELF | cut -d':' -f1) ; do
         if [ \$(strings \$x 2>&1 | grep "${ARCHITECTURE}/external/glibc/[^/]*/lib64/ld.so" |wc -l) -gt 0 ] ; then
-           \$PATCHELF --set-interpreter \$GLIBC_PATH/lib64/ld.so \$x
+           echo "Fixing glibc/ld.so for \$x"
+ 	   \$PATCHELF --set-interpreter \$GLIBC_PATH/lib64/ld.so \$x
         fi
       done
     fi

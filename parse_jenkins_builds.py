@@ -6,6 +6,13 @@ import subprocess
 from es_utils import send_payload, get_payload, resend_payload, get_payload_wscroll
 from cmsutils import epoch2week
 
+from github_utils import (
+    api_rate_limits,
+    mark_commit_status,
+    get_combined_statuses,
+    get_pr_latest_commit,
+)
+
 JENKINS_PREFIX = "jenkins"
 try:
     JENKINS_PREFIX = os.environ["JENKINS_URL"].strip("/").split("/")[-1]
@@ -173,18 +180,21 @@ for element in queue_json["items"]:
 
     # Abort stuck rocm jobs
     if (
-        job_name in ("ib-run-pr-unittests", "ib-run-pr-relvals")
+        job_name in ("ib-run-pr-unittests", "ib-run-pr-relvals", "ib-run-baseline")
         and reason.endswith("-offline")
         and (payload["wait_time"] / 1000 / 60 > 60)
     ):
         params = element["params"].strip().split("\n")
         main_params = ""
         other_params = []
+        context = ""
         for _ in params:
             k, v = _.split("=")
             if k == "PULL_REQUEST":
                 main_params = _
             else:
+                if k == "CONTEXT_PREFIX":
+                    context = v
                 other_params.append(_)
 
         if "GPU_FLAVOR=rocm" in other_params or "TEST_FLAVOR=rocm" in other_params:
@@ -194,7 +204,20 @@ for element in queue_json["items"]:
                 f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
 
             kill_index += 1
-            # TODO: set commit status
+
+            repository, pr = main_params.split("#", 1)
+            commit = get_pr_latest_commit(pr, repository)
+            mark_commit_status(
+                commit,
+                repository,
+                context,
+                "error",
+                "",
+                "Timed out waiting for ROCm node",
+                reset=False,
+            )
+
+            continue
 
     unique_id = (
         JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id)

@@ -274,6 +274,7 @@ CMSSW_CATEGORIES = {
         "Documentation/DataFormats",
         "Documentation/PhysicsTools",
         "Documentation/ReferenceManualScripts",
+        "FWCore/AbstractServices",
         "FWCore/Catalog",
         "FWCore/Common",
         "FWCore/Concurrency",

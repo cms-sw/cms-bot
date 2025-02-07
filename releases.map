@@ -4521,3 +4521,4 @@ architecture=el9_amd64_gcc11;label=CMSSW_13_0_23;type=Production;state=Announced
 architecture=el8_amd64_gcc11;label=CMSSW_13_0_23_HeavyIon;type=Production;state=Announced;prodarch=1;
 architecture=el8_aarch64_gcc12;label=CMSSW_15_0_0_pre3;type=Development;state=Announced;prodarch=0;
 architecture=el8_aarch64_gcc13;label=CMSSW_15_0_0_pre3;type=Development;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc13;label=CMSSW_15_0_0_pre3;type=Development;state=Announced;prodarch=0;

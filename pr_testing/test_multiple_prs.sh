@@ -1508,6 +1508,7 @@ fi
 if [ "X$DO_GPU_TESTS" = Xtrue ]; then
   for GPU_T in ${ALL_GPU_TYPES[@]}; do
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T}.prop
+    echo "GPU_FLAVOR=${GPU_T}" >> $WORKSPACE/run-unittests-${GPU_T}.prop
   done
 fi
 
@@ -1534,3 +1535,4 @@ if [ "${DO_HLT_P2_INTEGRATION}" = "true" ] ;  then
 fi
 
 rm -f $WORKSPACE/test-env.txt
+

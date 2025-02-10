@@ -7,4 +7,4 @@ RUN_DEFAULT_CMS_BOT = False
 
 VALID_WEB_HOOKS = [".*"]
 WEBHOOK_PAYLOAD = True
-JENKINS_SERVER = get_jenkins("cms-jenkins")
+JENKINS_SERVER = get_jenkins("dmwm-jenkins")

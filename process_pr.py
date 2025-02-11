@@ -520,11 +520,10 @@ def get_assign_categories(line, extra_labels):
 
 
 def ignore_issue(repo_config, repo, issue):
-    if issue.number in repo_config.IGNORE_ISSUES:
+    ig_issues = getattr(repo_config, "IGNORE_ISSUES", {})
+    if issue.number in ig_issues:
         return True
-    if (repo.full_name in repo_config.IGNORE_ISSUES) and (
-        issue.number in repo_config.IGNORE_ISSUES[repo.full_name]
-    ):
+    if (repo.full_name in ig_issues) and (issue.number in ig_issues[repo.full_name]):
         return True
     if re.match(BUILD_REL, issue.title):
         return True

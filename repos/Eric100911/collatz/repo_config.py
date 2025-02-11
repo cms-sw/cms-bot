@@ -35,4 +35,4 @@ WEBHOOK_PAYLOAD = True
 #
 REQUEST_PROCESSOR = "simple-cms-bot"
 # List of admins who will trigger the test
-TRIGGER_PR_TESTS = ["smuzaffar"]
+TRIGGER_PR_TESTS = []

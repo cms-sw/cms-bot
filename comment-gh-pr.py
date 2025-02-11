@@ -73,7 +73,7 @@ if __name__ == "__main__":
         parser.error("Missing pull request number : -p|--pullrequest <number>")
     msg = ""
     if opts.msg:
-        msg = re.sub("@N@", "\n", get_message(opts.msg))
+        msg = get_message(re.sub("@N@", "\n", opts.msg))
     elif opts.report_file:
         msg = open(opts.report_file).read()
     else:

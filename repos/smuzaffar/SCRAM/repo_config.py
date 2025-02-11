@@ -10,7 +10,6 @@ CONFIG_DIR = dirname(abspath(__file__))
 CMSBUILD_USER = "cmsbot"
 GH_REPO_ORGANIZATION = "smuzaffar"
 
-CONFIG_DIR = dirname(abspath(__file__))
 GITHUB_WEBHOOK_TOKEN = "U2FsdGVkX1+8ckT0H3wKIUb59hZQrF5PZ2VlBxYyFek="
 REQUEST_PROCESSOR = "simple-cms-bot"
 TRIGGER_PR_TESTS = []

@@ -52,8 +52,8 @@ def process_issue_comment(payload, repo_config, gh, dryRun):
     try:
         parameters["BOT_JOB_NAME"] = repo_config.BOT_JOB_NAME
     except:
-        parameters["BOT_JOB_NAME"] = "pr-run-test-%s" % repo_name.replace("/", "-")
-    create_property_file("simple-cms-bot-pr-test-%s.txt" % prId, parameters, dryRun)
+        parameters["BOT_JOB_NAME"] = "pr-test-%s" % repo_name.replace("/", "-")
+    create_property_file("simple-cms-bot-pr-test-%s.properties" % prId, parameters, dryRun)
     return
 
 

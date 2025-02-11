@@ -30,3 +30,9 @@ CMS_STANDARD_TESTS = True
 CMS_BRANCH_MAP = {}
 # Valid Web hooks e.g. '.+' to match all event
 VALID_WEB_HOOKS = [".+"]
+# Set webhook config
+WEBHOOK_PAYLOAD = True
+# 
+REQUEST_PROCESSOR = "simple-cms-bot"
+# List of admins who will trigger the test
+TRIGGER_PR_TESTS = ['smuzaffar']

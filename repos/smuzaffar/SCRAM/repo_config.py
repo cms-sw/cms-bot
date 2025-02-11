@@ -16,4 +16,4 @@ REQUEST_PROCESSOR = "simple-cms-bot"
 TRIGGER_PR_TESTS = []
 VALID_WEB_HOOKS = ["issue_comment"]
 WEBHOOK_PAYLOAD = True
-JENKINS_SERVER = get_jenkins("dmwm-jenkins")
+JENKINS_SERVER = get_jenkins("cms-jenkins")

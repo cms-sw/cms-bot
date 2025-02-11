@@ -14,7 +14,7 @@ CREATE_EXTERNAL_ISSUE = False
 # Jenkins CI server: User default http://cms-jenkins.cern.ch:8080/cms-jenkins
 JENKINS_SERVER = get_jenkins("cms-jenkins")
 # GH Web hook pass phrase. This is encrypeted used bot keys.
-GITHUB_WEBHOOK_TOKEN = "U2FsdGVkX180n6lgD9Ac41iOU6/qKP2psIETs/6oZi4="
+GITHUB_WEBHOOK_TOKEN = "U2FsdGVkX18O+jU4VuiWo6fc2DfNRgHsR6TStlkt4QM="
 # Set to True if you want bot to add build/test labels to your repo
 ADD_LABELS = False
 # Set to True if you want bot to add GH webhooks. cmsbot needs admin rights

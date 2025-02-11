@@ -27,7 +27,7 @@ def process_issue_comment(payload, repo_config, gh, dryRun):
         return
     cobj = payload["comment"]
     comment = cobj["body"].strip().split("\n")
-    if not re.match("^((@|)cmsbot(,\s*|\s+)|)please\s+(run\s+|)test$", comment[0], re.I):
+    if not re.match("^((@*cmsbot(,\s*|\s+))|)please\s+(run\s+|)test$", comment[0], re.I):
         print("Unknown comment first line: %s" % comment[0])
         return
     commentor = cobj["user"]["login"]

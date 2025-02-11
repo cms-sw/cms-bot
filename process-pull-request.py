@@ -91,6 +91,8 @@ if __name__ == "__main__":
 
         if not getattr(repo_config, "RUN_DEFAULT_CMS_BOT", True):
             sys.exit(0)
+        if getattr(repo_config, "REQUEST_PROCESSOR", "cms-bot") != "cms-bot":
+            sys.exit(0)
         gh = Github(login_or_token=get_gh_token(opts.repository), per_page=100)
         api_rate_limits(gh)
         repo = gh.get_repo(opts.repository)

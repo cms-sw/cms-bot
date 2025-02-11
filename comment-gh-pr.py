@@ -11,11 +11,18 @@ from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from sys import exit
+import zlib, base64
 import re, sys
 from socket import setdefaulttimeout
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
+
+
+def get_message(msg):
+    if msg.startswith("b64:"):
+        msg = zlib.decompress(base64.decodebytes(msg[4:].encode())).decode()
+    return msg
 
 
 if __name__ == "__main__":
@@ -66,7 +73,7 @@ if __name__ == "__main__":
         parser.error("Missing pull request number : -p|--pullrequest <number>")
     msg = ""
     if opts.msg:
-        msg = re.sub("@N@", "\n", opts.msg)
+        msg = re.sub("@N@", "\n", get_message(opts.msg))
     elif opts.report_file:
         msg = open(opts.report_file).read()
     else:

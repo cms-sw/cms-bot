@@ -197,8 +197,7 @@
                     "busError",
                     "cvmfsFailure",
                     "afsFailure",
-                    "workspaceFailure",
-                    "missingBashFailure"
+                    "workspaceFailure"
                 ],
                 "maxTime": "3"
             }
@@ -258,7 +257,7 @@
                 "errorStr": [
                     "Caused: java.io.IOException: Cannot run program"
                 ],
-                "action": "nodeOff",
+                "action": "nodeReconnect",
                 "allJobs": "true"
             },
             "gridConnection": {
@@ -306,14 +305,6 @@
                     "No space left on device"
                 ],
                 "action": "nodeOff"
-            },
-            "missingBashFailure": {
-            	"errorStr": [
-	            	"Cannot run program \"/bin/bash\""
-            	],
-            	"action": "nodeReconnect",
-            	"allJobs": "true",
-            	"forceRetry": "true"
             }
         }
     }

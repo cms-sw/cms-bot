@@ -197,7 +197,8 @@
                     "busError",
                     "cvmfsFailure",
                     "afsFailure",
-                    "workspaceFailure"
+                    "workspaceFailure",
+                    "missingBashFailure"
                 ],
                 "maxTime": "3"
             }
@@ -305,6 +306,14 @@
                     "No space left on device"
                 ],
                 "action": "nodeOff"
+            },
+            "missingBashFailure": {
+            	"errorStr": [
+	            	"Cannot run program \"/bin/bash\""
+            	],
+            	"action": "nodeReconnect",
+            	"allJobs": "true",
+            	"forceRetry": "true"
             }
         }
     }

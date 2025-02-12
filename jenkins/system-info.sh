@@ -209,7 +209,19 @@ else
   fi
 fi
 echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
-if [ "$NVIDIA_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION" ; fi
+if [ "$NVIDIA_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda" ; fi
+
+if [ -f /sys/module/amdgpu/version ]; then
+  ROCM_VERSION=$(cat /sys/module/amdgpu/version)
+else
+  # Try to detect the ROCm version from the installed packages (if available)
+  if command -v rocminfo &>/dev/null; then
+    ROCM_VERSION=$(rocminfo | grep -m1 'ROCm Version' | awk '{print $3}')
+  fi
+fi
+
+echo "DATA_ROCM_VERSION=$ROCM_VERSION"
+if [ "$ROCM_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} rocm rocm-$ROCM_VERSION" ; fi
 
 if [ $(hostname | grep 'lxplus' | wc -l) -gt 0 ] ; then
   hname=$(hostname -s)

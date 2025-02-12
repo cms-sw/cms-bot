@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import subprocess
 from es_utils import send_payload, get_payload, resend_payload, get_payload_wscroll
 from cmsutils import epoch2week
+import urllib.request
 
 JENKINS_PREFIX = "jenkins"
 try:
@@ -168,6 +169,67 @@ for element in queue_json["items"]:
     payload["in_queue"] = 1
     payload["wait_time"] = current_time - queue_time
     payload["start_time"] = 0
+
+    kill_index = 0
+
+    # Abort stuck rocm jobs
+    if (
+        job_name in ("ib-run-pr-unittests", "ib-run-pr-relvals", "ib-run-baseline")
+        and reason.endswith("-offline")
+        and (payload["wait_time"] / 1000 / 60 > 60)
+    ):
+        params = element["params"].strip().split("\n")
+        main_params = ""
+        other_params = []
+        context = ""
+        upload_unique_id = ""
+        pull_request = ""
+        commit = ""
+
+        for _ in params:
+            k, v = _.split("=")
+            if k == "PULL_REQUEST":
+                main_params = _
+                pull_request = v
+            else:
+                if k == "CONTEXT_PREFIX":
+                    context = v
+                if k == "UPLOAD_UNIQ_ID":
+                    upload_unique_id = v
+
+                other_params.append(_)
+
+        if "GPU_FLAVOR=rocm" in other_params or "TEST_FLAVOR=rocm" in other_params:
+            with open("abort-{0}.prop".format(kill_index), "w") as f:
+                f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
+                f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
+                f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
+
+            kill_index += 1
+
+            repository, pr = pull_request.split("#", 1)
+
+            if upload_unique_id:
+                with urllib.request.urlopen(
+                    "http://localhost/SDT/jenkins-artifacts/pull-request-integration/{0}/prs_commits.txt".format(
+                        upload_unique_id
+                    )
+                ) as f:
+                    commits = f.read().decode("ascii", "ignore").splitlines()
+
+                for line in commits:
+                    if line.startswith(pull_request):
+                        commit = _.split("='", 1)[1]
+                        break
+
+                with open("commit-status-{0}.prop", "w") as f:
+                    f.write("REPOSITORY={0}\n".format(repository))
+                    f.write("PULL_REQUEST={0}\n".format(commit))
+                    f.write("CONTEXT={0}\n".format(context))
+                    f.write("STATUS=error\n")
+                    f.write("STATUS_MESSAGE=Timed out waiting for ROCm node\n")
+
+            continue
 
     unique_id = (
         JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id)

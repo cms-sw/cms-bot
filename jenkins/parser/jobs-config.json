@@ -1,304 +1,320 @@
 {
-  "defaultConfig": {
-    "forceRetry": "false",
-    "allJobs": "false"
-  },
-  "jobsConfig": {
-    "jenkinsJobs": [
-      {
-        "jobName": "jenkins-test-dummyjob",
-        "errorType": [
-          "hudsonConnection",
-          "timedOut",
-          "busError",
-          "workspaceFailure"
+    "defaultConfig": {
+        "forceRetry": "false",
+        "allJobs": "false"
+    },
+    "jobsConfig": {
+        "jenkinsJobs": [
+            {
+                "jobName": "jenkins-test-dummyjob",
+                "errorType": [
+                    "hudsonConnection",
+                    "timedOut",
+                    "busError",
+                    "workspaceFailure"
+                ],
+                "maxTime": "1",
+                "retryTime": "5"
+            },
+            {
+                "jobName": "ib-run-igprof",
+                "errorType": [
+                    "hudsonConnection",
+                    "timedOut",
+                    "segmentationFault",
+                    "singularityMountFailure"
+                ],
+                "maxTime": "13"
+            },
+            {
+                "jobName": "ib-run-profiling",
+                "errorType": [
+                    "timedOut"
+                ],
+                "maxTime": "8"
+            },
+            {
+                "jobName": "ib-run-HLT",
+                "errorType": [
+                    "hudsonConnection",
+                    "busError"
+                ],
+                "maxTime": "18"
+            },
+            {
+                "jobName": "ib-run-qa",
+                "errorType": [
+                    "hudsonConnection",
+                    "busError"
+                ],
+                "maxTime": "5"
+            },
+            {
+                "jobName": "ib-run-relvals",
+                "errorType": [
+                    "hudsonConnection",
+                    "afsFailure",
+                    "busError"
+                ],
+                "maxTime": "16"
+            },
+            {
+                "jobName": "ib-run-pr-relvals",
+                "errorType": [
+                    "hudsonConnection"
+                ],
+                "maxTime": "12"
+            },
+            {
+                "jobName": "ib-validation",
+                "errorType": [
+                    "afsFailure"
+                ],
+                "maxTime": "5"
+            },
+            {
+                "jobName": "build-any-ib",
+                "errorType": [
+                    "gitErrors"
+                ],
+                "maxTime": "18"
+            },
+            {
+                "jobName": "ib-run-pr-tests",
+                "errorType": [
+                    "gitErrors"
+                ],
+                "maxTime": "12"
+            },
+            {
+                "jobName": "ib-run-static-checks",
+                "errorType": [],
+                "maxTime": "6"
+            },
+            {
+                "jobName": "ib-run-invalid-includes",
+                "errorType": [
+                    "gitErrors",
+                    "cvmfsFailure",
+                    "busError"
+                ],
+                "maxTime": "6"
+            },
+            {
+                "jobName": "auto-forward-port-branch",
+                "errorType": [
+                    "gitErrors"
+                ],
+                "maxTime": "1"
+            },
+            {
+                "jobName": "ib-install-cvmfs",
+                "errorType": [
+                    "gitErrors",
+                    "cvmfsInstallFailure"
+                ],
+                "maxTime": "3"
+            },
+            {
+                "jobName": "run-pr-code-checks",
+                "errorType": [
+                    "gitErrors"
+                ],
+                "maxTime": "1"
+            },
+            {
+                "jobName": "ib-run-pr-addon",
+                "errorType": [
+                    "cvmfsFailure"
+                ],
+                "maxTime": "1"
+            },
+            {
+                "jobName": "ib-run-baseline",
+                "errorType": [],
+                "maxTime": "2"
+            },
+            {
+                "jobName": "check-docker",
+                "errorType": [],
+                "maxTime": "1"
+            },
+            {
+                "jobName": "test-os-alma8",
+                "errorType": [],
+                "maxTime": "3"
+            },
+            {
+                "jobName": "test-os-cs8",
+                "errorType": [],
+                "maxTime": "3"
+            },
+            {
+                "jobName": "test-os-el8",
+                "errorType": [],
+                "maxTime": "3"
+            },
+            {
+                "jobName": "test-os-lxplus8",
+                "errorType": [],
+                "maxTime": "3"
+            },
+            {
+                "jobName": "test-os-rhel8",
+                "errorType": [],
+                "maxTime": "3"
+            },
+            {
+                "jobName": "test-os-rocky8",
+                "errorType": [],
+                "maxTime": "3"
+            },
+            {
+                "jobName": "test-os-ubi8",
+                "errorType": [],
+                "maxTime": "3"
+            },
+            {
+                "jobName": "cvmfs-cms-stale-lock",
+                "errorType": [],
+                "maxTime": "1"
+            },
+            {
+                "jobName": "compare-root-files-short-matrix",
+                "errorType": [],
+                "maxTime": "10"
+            },
+            {
+                "jobName": "ib-run-iwyu",
+                "errorType": [],
+                "maxTime": "6"
+            },
+            {
+                "jobName": "ib-run-pr-wait-deployment",
+                "errorType": [
+                    "timedOut",
+                    "hudsonConnection",
+                    "busError",
+                    "cvmfsFailure",
+                    "afsFailure",
+                    "workspaceFailure",
+                    "missingBashFailure"
+                ],
+                "maxTime": "3"
+            }
         ],
-        "maxTime": "1",
-        "retryTime": "5"
-      },
-      {
-        "jobName": "ib-run-igprof",
-        "errorType": [
-          "hudsonConnection",
-          "timedOut",
-          "segmentationFault",
-	  "singularityMountFailure"
-        ],
-        "maxTime": "13"
-      },
-      {
-        "jobName": "ib-run-profiling",
-        "errorType": [
-          "timedOut"
-        ],
-        "maxTime": "8"
-      },
-      {
-        "jobName": "ib-run-HLT",
-        "errorType": [
-          "hudsonConnection",
-          "busError"
-        ],
-        "maxTime": "18"
-      },
-      {
-        "jobName": "ib-run-qa",
-        "errorType": [
-          "hudsonConnection",
-          "busError"
-        ],
-        "maxTime": "5"
-      },
-      {
-        "jobName": "ib-run-relvals",
-        "errorType": [
-          "hudsonConnection",
-          "afsFailure",
-          "busError"
-        ],
-        "maxTime": "16"
-      },
-      {
-        "jobName": "ib-run-pr-relvals",
-        "errorType": [
-          "hudsonConnection"
-        ],
-        "maxTime": "12"
-      },
-      {
-        "jobName": "ib-validation",
-        "errorType": [
-          "afsFailure"
-        ],
-        "maxTime": "5"
-      },
-      {
-        "jobName": "build-any-ib",
-        "errorType": [
-          "gitErrors"
-        ],
-        "maxTime": "18"
-      },
-      {
-        "jobName": "ib-run-pr-tests",
-        "errorType": [
-          "gitErrors"
-        ],
-        "maxTime": "12"
-      },
-      {
-        "jobName": "ib-run-static-checks",
-        "errorType": [],
-        "maxTime": "6"
-      },
-      {
-        "jobName": "ib-run-invalid-includes",
-        "errorType": [
-            "gitErrors",
-            "cvmfsFailure",
-            "busError"
-        ],
-        "maxTime": "6"
-      },
-      {
-        "jobName": "auto-forward-port-branch",
-        "errorType": [
-          "gitErrors"
-        ],
-        "maxTime": "1"
-      },
-      {
-        "jobName": "ib-install-cvmfs",
-        "errorType": [
-          "gitErrors",
-	  "cvmfsInstallFailure"
-        ],
-        "maxTime": "3"
-      },
-      {
-        "jobName": "run-pr-code-checks",
-        "errorType": [
-          "gitErrors"
-        ],
-        "maxTime": "1"
-      },
-      {
-        "jobName": "ib-run-pr-addon",
-        "errorType": [
-          "cvmfsFailure"
-        ],
-        "maxTime": "1"
-      },
-      {
-        "jobName": "ib-run-baseline",
-        "errorType": [],
-        "maxTime": "2"
-      },
-      {
-        "jobName": "check-docker",
-        "errorType": [],
-        "maxTime": "1"
-      },
-      {
-        "jobName": "test-os-alma8",
-        "errorType": [],
-        "maxTime": "3"
-      },
-      {
-	"jobName": "test-os-cs8",
-        "errorType": [],
-        "maxTime": "3"
-      },
-      {
-        "jobName": "test-os-el8",
-        "errorType": [],
-        "maxTime": "3"
-      },
-      {  
-	"jobName": "test-os-lxplus8",
-        "errorType": [],
-        "maxTime": "3"
-      },
-      {
-        "jobName": "test-os-rhel8",
-        "errorType": [],
-        "maxTime": "3"
-      },
-      {
-        "jobName": "test-os-rocky8",
-        "errorType": [],
-        "maxTime": "3"
-      },
-      {
-	"jobName": "test-os-ubi8",
-        "errorType": [],
-        "maxTime": "3"
-      },
-      {
-        "jobName": "cvmfs-cms-stale-lock",
-        "errorType": [],
-        "maxTime": "1"
-      },
-      {
-        "jobName": "compare-root-files-short-matrix",
-        "errorType": [],
-        "maxTime": "10"
-      },
-      {
-        "jobName": "ib-run-iwyu",
-        "errorType": [],
-        "maxTime": "6"
-      },
-      {
-	"jobName": "ib-run-pr-wait-deployment",
-	"errorType": ["timedOut", "hudsonConnection", "busError", "cvmfsFailure", "afsFailure", "workspaceFailure"],
-	"maxTime": "3"
-      }
-    ],
-    "errorMsg": {
-      "timedOut": {
-        "errorStr": [
-          "Build timed out",
-	  "Waiting for IB since 3600 secs"
-        ],
-        "action": "retryNow"
-      },
-      "hudsonConnection": {
-        "errorStr": [
-          "Remote call on .* failed. The channel is closing down or has closed down",
-	  "Remote call to .*"
-        ],
-        "action": "retryNow",
-        "forceRetry": "true",
-        "allJobs": "true"
-      },
-      "segmentationFault": {
-        "errorStr": [
-          "unexpected fault address"
-        ],
-        "action": "retryNow"
-      },
-      "gitErrors": {
-        "errorStr": [
-          "fatal: repository .* not found",
-          "Tag already exist",
-          "Connection to github\\.com closed by remote host.",
-          "Error while downloading sources from github\\.com",
-          "fatal: remote did not send all necessary objects",
-	  "Empty reply from server",
-	  "The requested URL returned error: 503",
-	  "error: RPC failed",
-	  "fatal: The remote end hung up unexpectedly",
-	  "Broken pipe",
-	  "fatal: fetch-pack",
-	  "transfer closed with outstanding read data remaining",
-	  "fatal: unable to access 'https://github\\.com",
-	  "fatal: Could not read from remote repository"
-        ],
-        "action": "retryLate",
-	"allJobs": "true"
-      },
-      "busError": {
-        "errorStr": [
-          "Bus error",
-          "Transport endpoint is not connected"
-        ],
-        "action": "nodeOff",
-	"allJobs": "true"
-      },
-      "javaVersionUpdated": {
-        "errorStr": [
-          "Caused: java.io.IOException: Cannot run program"
-        ],
-        "action": "nodeOff",
-	"allJobs": "true"
-      },
-      "gridConnection": {
-        "errorStr": [
-          "Unexpected exception occurred while performing connect-node command"
-        ],
-        "action": "retryNow"
-      },
-      "afsFailure": {
-        "errorStr": [
-          "no such identity: .* Permission denied"
-        ],
-        "action": "nodeOff"
-      },
-      "workspaceFailure": {
-        "errorStr": [
-          "Cannot delete workspace: Remote call on .* failed"
-        ],
-        "action": "nodeReconnect",
-        "allJobs": "true"
-      },
-      "cvmfsFailure": {
-        "errorStr": [
-          "Error: No such directory: /cvmfs/.*cern.ch$",
-	  "cannot open directory /cvmfs/.*cern.ch:",
-          "cannot access /cvmfs/.*cern.ch"
-        ],
-        "action": "nodeOff",
-        "allJobs": "true"
-      },
-      "cvmfsInstallFailure": {
-        "errorStr": [
-          "SessionContext: could not commit session. Aborting."
-        ],
-        "action": "retryNow"
-      },
-      "singularityMountFailure": {    
-        "errorStr": [
-          "mount hook function failure.*doesn't exist in container"
-	],
-	"action": "nodeOff"
-      },
-      "diskFullFailure": {
-	"errorStr": [
-	  "No space left on device"
-	],
-	"action": "nodeOff"
-      }
+        "errorMsg": {
+            "timedOut": {
+                "errorStr": [
+                    "Build timed out",
+                    "Waiting for IB since 3600 secs"
+                ],
+                "action": "retryNow"
+            },
+            "hudsonConnection": {
+                "errorStr": [
+                    "Remote call on .* failed. The channel is closing down or has closed down",
+                    "Remote call to .*"
+                ],
+                "action": "retryNow",
+                "forceRetry": "true",
+                "allJobs": "true"
+            },
+            "segmentationFault": {
+                "errorStr": [
+                    "unexpected fault address"
+                ],
+                "action": "retryNow"
+            },
+            "gitErrors": {
+                "errorStr": [
+                    "fatal: repository .* not found",
+                    "Tag already exist",
+                    "Connection to github\\.com closed by remote host.",
+                    "Error while downloading sources from github\\.com",
+                    "fatal: remote did not send all necessary objects",
+                    "Empty reply from server",
+                    "The requested URL returned error: 503",
+                    "error: RPC failed",
+                    "fatal: The remote end hung up unexpectedly",
+                    "Broken pipe",
+                    "fatal: fetch-pack",
+                    "transfer closed with outstanding read data remaining",
+                    "fatal: unable to access 'https://github\\.com",
+                    "fatal: Could not read from remote repository"
+                ],
+                "action": "retryLate",
+                "allJobs": "true"
+            },
+            "busError": {
+                "errorStr": [
+                    "Bus error",
+                    "Transport endpoint is not connected"
+                ],
+                "action": "nodeOff",
+                "allJobs": "true"
+            },
+            "javaVersionUpdated": {
+                "errorStr": [
+                    "Caused: java.io.IOException: Cannot run program"
+                ],
+                "action": "nodeOff",
+                "allJobs": "true"
+            },
+            "gridConnection": {
+                "errorStr": [
+                    "Unexpected exception occurred while performing connect-node command"
+                ],
+                "action": "retryNow"
+            },
+            "afsFailure": {
+                "errorStr": [
+                    "no such identity: .* Permission denied"
+                ],
+                "action": "nodeOff"
+            },
+            "workspaceFailure": {
+                "errorStr": [
+                    "Cannot delete workspace: Remote call on .* failed"
+                ],
+                "action": "nodeReconnect",
+                "allJobs": "true"
+            },
+            "cvmfsFailure": {
+                "errorStr": [
+                    "Error: No such directory: /cvmfs/.*cern.ch$",
+                    "cannot open directory /cvmfs/.*cern.ch:",
+                    "cannot access /cvmfs/.*cern.ch"
+                ],
+                "action": "nodeOff",
+                "allJobs": "true"
+            },
+            "cvmfsInstallFailure": {
+                "errorStr": [
+                    "SessionContext: could not commit session. Aborting."
+                ],
+                "action": "retryNow"
+            },
+            "singularityMountFailure": {
+                "errorStr": [
+                    "mount hook function failure.*doesn't exist in container"
+                ],
+                "action": "nodeOff"
+            },
+            "diskFullFailure": {
+                "errorStr": [
+                    "No space left on device"
+                ],
+                "action": "nodeOff"
+            },
+            "missingBashFailure": {
+            	"errorStr": [
+	            	"Cannot run program \"/bin/bash\""
+            	],
+            	"action": "nodeReconnect",
+            	"allJobs": "true",
+            	"forceRetry": "true"
+            }
+        }
     }
-  }
 }

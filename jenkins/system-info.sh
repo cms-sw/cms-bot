@@ -212,17 +212,11 @@ echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
 if [ "$NVIDIA_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda" ; fi
 
 if [ -f /sys/module/amdgpu/version ]; then
-  ROCM_VERSION=`cat /sys/module/amdgpu/version`
+  ROCM_VERSION=$(cat /sys/module/amdgpu/version)
 else
   # Try to detect the ROCm version from the installed packages (if available)
   if command -v rocminfo &>/dev/null; then
-    ROCM_VERSION=`rocminfo | grep -m1 'ROCm Version' | awk '{print $3}'`
-  else
-    # Check for ROCm packages and extract the version
-    ROCM_VERSION=`dpkg-query -W -f='${Version}' rocm-dev 2>/dev/null | cut -d'-' -f1`
-    if [ -z "$ROCM_VERSION" ]; then
-      ROCM_VERSION=`rpm -q --qf '%{VERSION}' rocm-dev 2>/dev/null`
-    fi
+    ROCM_VERSION=$(rocminfo | grep -m1 'ROCm Version' | awk '{print $3}')
   fi
 fi
 

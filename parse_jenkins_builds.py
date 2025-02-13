@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import subprocess
 from es_utils import send_payload, get_payload, resend_payload, get_payload_wscroll
 from cmsutils import epoch2week
-import urllib.request
+import json
 
 JENKINS_PREFIX = "jenkins"
 try:
@@ -172,11 +172,14 @@ for element in queue_json["items"]:
 
     kill_index = 0
 
-    # Abort stuck rocm jobs
+    with open("parse_jenkins_builds.json") as f:
+        config = json.load(f)
+
+    # Abort stuck jobs
     if (
-        job_name in ("ib-run-pr-unittests", "ib-run-pr-relvals", "ib-run-baseline")
+        job_name in config["whitelist"]
         and reason.endswith("-offline")
-        and (payload["wait_time"] / 1000 / 60 > 60)
+        and (payload["wait_time"] / 1000 > config["custom"].get(job_name, config["timeout"]))
     ):
         params = element["params"].strip().split("\n")
         main_params = ""
@@ -199,17 +202,15 @@ for element in queue_json["items"]:
 
                 other_params.append(_)
 
-        if "GPU_FLAVOR=rocm" in other_params or "TEST_FLAVOR=rocm" in other_params:
-            with open("abort-{0}.prop".format(kill_index), "w") as f:
-                f.write("UPLOAD_UNIQ_ID={0}\n".format(upload_unique_id))
-                f.write("PULL_REQUEST={0}\n".format(pull_request))
-                f.write("CONTEXT={0}\n".format(context))
-                f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
-                f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
-                f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
+        with open("abort-{0}.prop".format(kill_index), "w") as f:
+            f.write("UPLOAD_UNIQ_ID={0}\n".format(upload_unique_id))
+            f.write("PULL_REQUEST={0}\n".format(pull_request))
+            f.write("CONTEXT={0}\n".format(context))
+            f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
+            f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
+            f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
 
-            kill_index += 1
-            continue
+        kill_index += 1
 
     unique_id = (
         JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id)

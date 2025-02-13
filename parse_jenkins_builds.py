@@ -201,34 +201,14 @@ for element in queue_json["items"]:
 
         if "GPU_FLAVOR=rocm" in other_params or "TEST_FLAVOR=rocm" in other_params:
             with open("abort-{0}.prop".format(kill_index), "w") as f:
+                f.write("UPLOAD_UNIQ_ID={0}\n".format(upload_unique_id))
+                f.write("PULL_REQUEST={0}\n".format(pull_request))
+                f.write("CONTEXT={0}\n".format(context))
                 f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
                 f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
                 f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
 
             kill_index += 1
-
-            repository, pr = pull_request.split("#", 1)
-
-            if upload_unique_id:
-                with urllib.request.urlopen(
-                    "http://localhost/SDT/jenkins-artifacts/pull-request-integration/{0}/prs_commits.txt".format(
-                        upload_unique_id
-                    )
-                ) as f:
-                    commits = f.read().decode("ascii", "ignore").splitlines()
-
-                for line in commits:
-                    if line.startswith(pull_request):
-                        commit = _.split("='", 1)[1]
-                        break
-
-                with open("commit-status-{0}.prop", "w") as f:
-                    f.write("REPOSITORY={0}\n".format(repository))
-                    f.write("PULL_REQUEST={0}\n".format(commit))
-                    f.write("CONTEXT={0}\n".format(context))
-                    f.write("STATUS=error\n")
-                    f.write("STATUS_MESSAGE=Timed out waiting for ROCm node\n")
-
             continue
 
     unique_id = (

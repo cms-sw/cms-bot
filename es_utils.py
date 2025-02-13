@@ -201,7 +201,7 @@ def get_template(index=""):
 def find_indexes(index):
     idxs = {}
     for line in get_indexes(index).split("\n"):
-        line = re.sub("\\s\\s+", " ", line.strip())
+        line = re.sub(r"\s\s+", " ", line.strip())
         if not line:
             continue
         data = line.split(" ")

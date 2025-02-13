@@ -79,6 +79,7 @@ def main():
                             errors[arch]["relval"],
                         )
                     ):
+                        all_known = True
                         print(
                             "| What failed | Description | GH Issue | Failure descriptor |",
                             file=f,

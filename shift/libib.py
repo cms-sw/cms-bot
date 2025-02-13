@@ -219,7 +219,7 @@ def extract_relval_error(release_name, arch, rvItem):
 
         if line.startswith("Thread") or (not line.strip()) or line.startswith("Current Modules:"):
             return True, "?"
-        m = re.match("^#\d+\s+0x[0-9a-f]{16,16} in ([^?].+) from (.+)$", line)
+        m = re.match(r"^#\d+\s+0x[0-9a-f]{16,16} in ([^?].+) from (.+)$", line)
         if not m:
             return False, None
         else:

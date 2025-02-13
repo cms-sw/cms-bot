@@ -558,6 +558,7 @@ if ${BUILD_EXTERNAL} ; then
     fi
     if [ "${SOURCE_FLAG}" != "" ] ; then UPLOAD_OPTS="${UPLOAD_OPTS} --force-upload" ; fi
     rm -rf $WORKSPACE/$BUILD_DIR
+    [ -e cmsdist/fakesystem.spec ] && PKGS="fakesystem ${PKGS}"
     echo $COMPILATION_CMD build ${PKGS} > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
     # run the command and both log it to file and display it
     (eval $COMPILATION_CMD build ${PKGS} && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log

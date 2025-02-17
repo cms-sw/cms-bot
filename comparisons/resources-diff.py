@@ -40,7 +40,13 @@ Diff the content of two "resources.json" files and print the result to standard 
 with open(sys.argv[1]) as f:
     ibdata = json.load(f)
 
-metrics = [label for resource in ibdata["resources"] for label in resource]
+metrics = []
+for resource in ibdata["resources"]:
+    if "name" in resource:
+        metrics.append(resource["name"])
+    else:
+        for key in resource:
+            metrics.append(key)
 
 datamapib = {module["type"] + "|" + module["label"]: module for module in ibdata["modules"]}
 
@@ -57,7 +63,6 @@ for module in ibdata["modules"]:
         for metric in metrics:
             datacumul[metric] = module[metric]
         datacumulsib[module["type"]] = datacumul
-# print(datacumulsib)
 
 with open(sys.argv[2]) as f:
     prdata = json.load(f)

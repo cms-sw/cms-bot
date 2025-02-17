@@ -49,6 +49,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
 	  b=$(basename $f)
 	  cp -v $f $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW/$CMSSW_VERSION-$b || true
   done
+  $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Error: failed to run profiling"
     echo "<li>$PROFILING_WORKFLOW: No such directory</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

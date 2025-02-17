@@ -16,7 +16,7 @@ def main():
         flavor = args.queue.split("_")[3]
         if flavor == "X":
             flavor = "default"
-        
+
         status_suffix = flavor + "/" + status_suffix
 
     all_statuses = github_utils.get_combined_statuses(args.commit, args.repository).get(

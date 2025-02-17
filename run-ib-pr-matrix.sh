@@ -9,7 +9,7 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${ARTIFACT_DIR}/workflows-${BUILD_ID}.log
   OPTS=""
   case "${TEST_FLAVOR}" in
-    gpu ) OPTS="-w gpu" ;;
+    cuda | rocm ) OPTS="-w gpu" ;;
     high_stats ) ;;
     nano ) OPTS="-w nano" ;;
     * ) ;;
@@ -49,7 +49,7 @@ pushd "$WORKSPACE/matrix-results"
   CMD_OPTS=""
   if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then CMD_OPTS="--maxmem_profile" ; fi
   case "${TEST_FLAVOR}" in
-    gpu )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
+    cuda | rocm )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) CMD_OPTS="-n 500" ; MATRIX_ARGS="-i all ${MATRIX_ARGS}" ;;
     threading )  MATRIX_ARGS="-i all -t 4 ${MATRIX_ARGS}" ; let NJOBS=(${NJOBS}/4)+1 ;;
     nano )       MATRIX_ARGS="-w nano -i all ${MATRIX_ARGS}" ;;

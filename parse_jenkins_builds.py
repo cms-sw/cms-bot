@@ -188,6 +188,7 @@ for element in queue_json["items"]:
         upload_unique_id = ""
         pull_request = ""
         commit = ""
+        release = ""
 
         for _ in params:
             k, v = _.split("=")
@@ -195,9 +196,11 @@ for element in queue_json["items"]:
                 main_params = _
                 pull_request = v
             else:
-                if k == "CONTEXT_PREFIX":
+                if k == "RELEASE_FORMAT":
+                    release = v
+                elif k == "CONTEXT_PREFIX":
                     context = v
-                if k == "UPLOAD_UNIQ_ID":
+                elif k == "UPLOAD_UNIQ_ID":
                     upload_unique_id = v
 
                 other_params.append(_)
@@ -209,6 +212,7 @@ for element in queue_json["items"]:
             f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
             f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
             f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
+            f.write("RELEASE_FORMAT={0}\n".format(release))
 
         kill_index += 1
 

@@ -7,17 +7,11 @@ def main():
     parser.add_argument("--repository", "-r")
     parser.add_argument("--commit", "-c")
     parser.add_argument("--architecture", "-a")
-    parser.add_argument("--queue", "-u", required=False)
+    parser.add_argument("--queue", "-u")
     parser.add_argument("--prefix", "-p")
     args = parser.parse_args()
 
-    status_suffix = args.architecture
-    if args.queue:
-        flavor = args.queue.split("_")[3]
-        if flavor == "X":
-            flavor = "default"
-
-        status_suffix = flavor + "/" + status_suffix
+    status_prefix = f"{args.prefix}/{args.architecture}/{args.queue}/"
 
     all_statuses = github_utils.get_combined_statuses(args.commit, args.repository).get(
         "statuses", []
@@ -25,10 +19,7 @@ def main():
     index = 0
 
     for status in all_statuses:
-        if (
-            status["context"].startswith(args.prefix + "/" + status_suffix)
-            and status["state"] == "pending"
-        ):
+        if status["context"].startswith(status_prefix) and status["state"] == "pending":
             with open("update-pr-status-{0}.prop".format(index), "w") as f:
                 f.write("REPOSITORY={0}\n".format(args.repository))
                 f.write("PULL_REQUEST={0}\n".format(args.commit))

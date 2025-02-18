@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import subprocess
 from es_utils import send_payload, get_payload, resend_payload, get_payload_wscroll
 from cmsutils import epoch2week
+import json
 
 JENKINS_PREFIX = "jenkins"
 try:
@@ -168,6 +169,52 @@ for element in queue_json["items"]:
     payload["in_queue"] = 1
     payload["wait_time"] = current_time - queue_time
     payload["start_time"] = 0
+
+    kill_index = 0
+
+    with open("parse_jenkins_builds.json") as f:
+        config = json.load(f)
+
+    # Abort stuck jobs
+    if (
+        job_name in config["whitelist"]
+        and reason.endswith("-offline")
+        and (payload["wait_time"] / 1000 > config["custom"].get(job_name, config["timeout"]))
+    ):
+        params = element["params"].strip().split("\n")
+        main_params = ""
+        other_params = []
+        context = ""
+        upload_unique_id = ""
+        pull_request = ""
+        commit = ""
+        release = ""
+
+        for _ in params:
+            k, v = _.split("=")
+            if k == "PULL_REQUEST":
+                main_params = _
+                pull_request = v
+            else:
+                if k == "RELEASE_FORMAT":
+                    release = v
+                elif k == "CONTEXT_PREFIX":
+                    context = v
+                elif k == "UPLOAD_UNIQ_ID":
+                    upload_unique_id = v
+
+                other_params.append(_)
+
+        with open("abort-{0}.prop".format(kill_index), "w") as f:
+            f.write("UPLOAD_UNIQ_ID={0}\n".format(upload_unique_id))
+            f.write("PULL_REQUEST={0}\n".format(pull_request))
+            f.write("CONTEXT={0}\n".format(context))
+            f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
+            f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
+            f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
+            f.write("RELEASE_FORMAT={0}\n".format(release))
+
+        kill_index += 1
 
     unique_id = (
         JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id)

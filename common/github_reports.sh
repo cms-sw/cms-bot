@@ -22,7 +22,8 @@ function mark_commit_status_all_prs () {
       if [ $(echo $CMSSW_QUEUE | grep '_X' | wc -l) -gt 0 ] ; then
         CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
       fi
-      if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
+      if [ "${CMSSW_FLAVOR}" != "X" ] ; then CMSSW_FLAVOR="default" ; fi
+      CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}"
       if [ "$1" != "" ] ; then CONTEXT="${CONTEXT}/$1" ; fi
     else
       CONTEXT="${COMMIT_STATUS_CONTEXT}"

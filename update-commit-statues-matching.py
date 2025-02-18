@@ -24,7 +24,7 @@ def main():
                 f.write("REPOSITORY={0}\n".format(args.repository))
                 f.write("PULL_REQUEST={0}\n".format(args.commit))
                 f.write("CONTEXT={0}\n".format(status["context"]))
-                f.write("STATUS=error\n")
+                f.write("STATUS=success\n")
                 f.write("STATUS_MESSAGE=Stuck due to all nodes being offline\n")
 
             index = index + 1

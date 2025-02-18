@@ -97,7 +97,7 @@ for dir in `find /data/sdt/buildlogs -maxdepth 6 -mindepth 6 -name pyRelValParti
   echo "Working on $dir"
   set +x
   echo "Jobs running: $(jobs -p |wc -l)"
-  while [ $(jobs -p | wc -l) -ge 2 ]; do
+  while [ $(jobs -p | wc -l) -ge 4 ]; do
     sleep 30
     echo "Jobs running: $(jobs -p |wc -l)"
     jobs -pl

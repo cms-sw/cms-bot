@@ -28,7 +28,17 @@ if [ X`grep -e "architecture=$ARCHITECTURE;" releases.map | grep -e "label=$CMSS
       echo "Too many production architectures for release." && exit 1
     fi
   fi
-  echo "architecture=$ARCHITECTURE;label=$CMSSW_X_Y_Z;type=$RELEASE_TYPE;state=Announced;prodarch=$prodarch;" >> releases.map
+  extra_tags=";"
+  if [ $(echo "${ARCHITECTURE}" | grep '_amd64_' | wc -l) -gt 0 ] ; then
+    for e in $(env | grep '^UPLOAD_PROPERTY_' | grep '=' | sed 's|^UPLOAD_PROPERTY_||'); do
+      p=$(echo $e | sed 's|=.*||')
+      v=$(echo $e | sed 's|.*=||')
+      if [ "${p}" = "SCRAM_DEFAULT_MICROARCH" ] ; then
+        extra_tags="${extra_tags}default_micro_arch=${v};"
+      fi
+    done
+  fi
+  echo "architecture=$ARCHITECTURE;label=$CMSSW_X_Y_Z;type=$RELEASE_TYPE;state=Announced;prodarch=${prodarch}${extra_tags}" >> releases.map
   git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE ($archtype arch) as $RELEASE_TYPE release." releases.map
   git pull --rebase
   git push

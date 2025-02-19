@@ -146,9 +146,8 @@ ALL_CHECK_FUNCTIONS = None
 GPU_FLAVORS = ["cuda", "rocm"]
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
-EXTRA_TESTS = (
-    "|".join(EXTRA_RELVALS_TESTS) + "|" + "|".join(GPU_FLAVORS) +
-    + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs"
+EXTRA_TESTS = "{0}|{1}||hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs".format(
+    "|".join(EXTRA_RELVALS_TESTS), "|".join(GPU_FLAVORS)
 )
 SKIP_TESTS = "|".join(["static", "header"])
 ENABLE_TEST_PTRN = "enable(_test(s|)|)"

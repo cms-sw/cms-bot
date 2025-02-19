@@ -153,22 +153,22 @@ queue_json = json.loads(jque_res.stdout)
 jenkins_queue = dict()
 current_time = get_current_time()
 for element in queue_json["items"]:
-    payload = dict()
-
     job_name = element["task"]["name"]
     queue_id = int(element["id"])
     queue_time = int(element["inQueueSince"])
     labels = element["why"].encode("ascii", "ignore").decode("ascii", "ignore")
     reason = process_queue_reason(labels)
 
-    payload["jenkins_server"] = JENKINS_PREFIX
-    payload["in_queue_since"] = queue_time
-    payload["queue_id"] = queue_id
-    payload["job_name"] = job_name
-    payload["node_labels"] = reason
-    payload["in_queue"] = 1
-    payload["wait_time"] = current_time - queue_time
-    payload["start_time"] = 0
+    payload = {
+        "jenkins_server": JENKINS_PREFIX,
+        "in_queue_since": queue_time,
+        "queue_id": queue_id,
+        "job_name": job_name,
+        "node_labels": reason,
+        "in_queue": 1,
+        "wait_time": current_time - queue_time,
+        "start_time": 0,
+    }
 
     kill_index = 0
 
@@ -181,38 +181,32 @@ for element in queue_json["items"]:
         and reason.endswith("-offline")
         and (payload["wait_time"] / 1000 > config["custom"].get(job_name, config["timeout"]))
     ):
-        params = element["params"].strip().split("\n")
-        main_params = ""
-        other_params = []
-        context = ""
-        upload_unique_id = ""
-        pull_request = ""
-        commit = ""
-        release = ""
+        params = dict(
+            line.split("=", 1) for line in element["params"].strip().splitlines() if "=" in line
+        )
 
-        for _ in params:
-            k, v = _.split("=")
-            if k == "PULL_REQUEST":
-                main_params = _
-                pull_request = v
-            else:
-                if k == "RELEASE_FORMAT":
-                    release = v
-                elif k == "CONTEXT_PREFIX":
-                    context = v
-                elif k == "UPLOAD_UNIQ_ID":
-                    upload_unique_id = v
+        if "rocm" not in (params.get("GPU_FLAVOR"), params.get("TEST_FLAVOR")):
+            continue
 
-                other_params.append(_)
+        try:
+            pull_request = params["PULL_REQUEST"]
+            main_params = f"PULL_REQUEST={pull_request}"
+            release = params["RELEASE_FORMAT"]
+            context = params["CONTEXT_PREFIX"]
+            upload_unique_id = params["UPLOAD_UNIQ_ID"]
+        except KeyError:
+            continue
 
-        with open("abort-{0}.prop".format(kill_index), "w") as f:
-            f.write("UPLOAD_UNIQ_ID={0}\n".format(upload_unique_id))
-            f.write("PULL_REQUEST={0}\n".format(pull_request))
-            f.write("CONTEXT={0}\n".format(context))
-            f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
-            f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
-            f.write("EXTRA_PARAMS={0}\n".format(";".join(other_params)))
-            f.write("RELEASE_FORMAT={0}\n".format(release))
+        other_params = ";".join(f"{k}={v}" for k, v in params if k != "PULL_REQUEST")
+
+        with open(f"abort-{kill_index}.prop", "w") as f:
+            f.write(f"UPLOAD_UNIQ_ID={upload_unique_id}\n")
+            f.write(f"PULL_REQUEST={pull_request}\n")
+            f.write(f"CONTEXT={context}\n")
+            f.write(f"JENKINS_PROJECT_TO_KILL={job_name}\n")
+            f.write(f"JENKINS_PROJECT_PARAMS={main_params}\n")
+            f.write(f"EXTRA_PARAMS={other_params}\n")
+            f.write(f"RELEASE_FORMAT={release}\n")
 
         kill_index += 1
 

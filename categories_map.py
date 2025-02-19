@@ -309,6 +309,7 @@ CMSSW_CATEGORIES = {
         "FWCore/TestProcessor",
         "FWCore/Utilities",
         "FWCore/Version",
+        "FWIO/RNTuple",
         "IOMC/Input",
         "IOMC/RandomEngine",
         "IOPool/Common",

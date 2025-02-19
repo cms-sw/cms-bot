@@ -2678,4 +2678,3 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     target_url=ack_comment.html_url,
                     context=bot_ack_name,
                 )
-# fake update

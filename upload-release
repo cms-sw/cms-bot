@@ -33,12 +33,12 @@ $WORKSPACE/report-build-release-status $BUILD_NUMBER $WORKER $ISSUE_NUMBER $ARCH
 pushd $BUILD_DIR
   [ -f CMSDIST/${CMSBUILD_OPTS_FILE} ] && source CMSDIST/${CMSBUILD_OPTS_FILE}
   PYTHONPATH= PKGTOOLS/cmsBuild $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}") --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER}  --architecture=$ARCHITECTURE --sync-back upload cmssw$PATCH
+  set +x
   proj_config_file="${ARCHITECTURE}/cms/cmssw${PATCH}/${CMSSW_X_Y_Z}/config/Self.xml"
-  touch $WORKSPACE/release-upload-preoperties.txt
   if [ -f "${proj_config_file}" ] ; then
     default_arch=$(grep '="SCRAM_DEFAULT_MICROARCH"' ${proj_config_file} | sed 's|.* value="||;s|".*||')
     if [ "${default_arch}" != "" ] ; then
-      echo "SCRAM_DEFAULT_MICROARCH=${default_arch}" >> $WORKSPACE/release-upload-preoperties.txt
+      echo "UPLOAD_PROPERTY_SCRAM_DEFAULT_MICROARCH=${default_arch}"
     fi
   fi
 popd

@@ -143,10 +143,11 @@ REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
 REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
+GPU_FLAVORS = ["cuda", "rocm"]
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
-    "|".join(EXTRA_RELVALS_TESTS)
+    "|".join(EXTRA_RELVALS_TESTS) + "|" + "|".join(GPU_FLAVORS) +
     + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs"
 )
 SKIP_TESTS = "|".join(["static", "header"])
@@ -610,6 +611,8 @@ def check_enable_bot_tests(first_line, *args):
     tests = first_line.upper().replace(" ", "")
     if "NONE" in tests:
         tests = "NONE"
+    if "GPU" in tests and any(x.upper() in tests for x in GPU_FLAVORS):
+        tests = tests.replace("GPU", "").replace(",,", ",")
     return tests, None
 
 

@@ -36,6 +36,7 @@ def currenttz():
     tm = time.localtime()
     return datetime.timezone(datetime.timedelta(seconds=tm.tm_gmtoff), tm.tm_zone)
 
+
 IBS_WITH_HEAD_COMMITS = ["CMSSW_5_3_HI_X"]
 if __name__ == "__main__":
     from optparse import OptionParser

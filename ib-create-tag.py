@@ -36,7 +36,7 @@ def currenttz():
     tm = time.localtime()
     return datetime.timezone(datetime.timedelta(seconds=tm.tm_gmtoff), tm.tm_zone)
 
-
+IBS_WITH_HEAD_COMMITS = ["CMSSW_5_3_HI_X"]
 if __name__ == "__main__":
     from optparse import OptionParser
 
@@ -93,12 +93,15 @@ if __name__ == "__main__":
             sys.exit(1)
 
         head = None
-        for commit_ in commits_:
-            if len(commit_["parents"]) == 1:
-                continue
-            if commit_["url"].startswith(commit_url):
-                head = commit_
-                break
+        if QUEUE in IBS_WITH_HEAD_COMMITS:
+            head = commits_[0]
+        else:
+            for commit_ in commits_:
+                if len(commit_["parents"]) == 1:
+                    continue
+                if commit_["url"].startswith(commit_url):
+                    head = commit_
+                    break
 
         if head is None:
             sys.exit(1)

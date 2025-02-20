@@ -380,7 +380,7 @@ class PyRelValsThread(object):
                     try:
                         es_parse_log(logFile)
                     except Exception as e:
-                        print("Sending log information to elasticsearch failed", str(e))
+                        print("Sending log information to elasticsearch failed:", logFile, str(e))
                     inFile = open(logFile)
                     for line_nr, line in enumerate(inFile):
                         config_list = add_exception_to_config(line, line_nr, config_list)

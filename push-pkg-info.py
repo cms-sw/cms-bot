@@ -94,7 +94,7 @@ def extract_and_upload(directory):
             release_cycle, flavor, date = parse_ib_folder_name(package_file.split("/")[6])
             architecture = package_file.split("/")[7]
             name = package_file.split("/")[6]
-            weeknum, _ = cmsswIB2Week(name, 0)
+            weeknum, _ = cmsswIB2Week(name)
             index = "cmssw-pkginfo-" + str(weeknum)
             packages = extract_packages(package_file)
 

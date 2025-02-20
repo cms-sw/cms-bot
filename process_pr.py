@@ -143,8 +143,8 @@ REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
 REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
-GPU_FLAVORS = open("all_gpu_types.txt", "r").read().splitlines()
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
+GPU_FLAVORS = open(join(dirname(__file__), "all_gpu_types.txt"), "r").read().splitlines()
+EXTRA_RELVALS_TESTS = ["threading", "high-stats", "nano"] + GPU_FLAVORS
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = "{0}|{1}||hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs".format(
     "|".join(EXTRA_RELVALS_TESTS), "|".join(GPU_FLAVORS)

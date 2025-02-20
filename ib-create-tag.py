@@ -94,27 +94,25 @@ if __name__ == "__main__":
             sys.exit(1)
 
         head = None
-        if QUEUE in IBS_WITH_HEAD_COMMITS:
-            head = commits_[0]
-        else:
-            for commit_ in commits_:
-                if len(commit_["parents"]) == 1:
-                    continue
-                if commit_["url"].startswith(commit_url):
-                    head = commit_
-                    break
+        for commit_ in commits_:
+            if (len(commit_["parents"]) == 1) and (not QUEUE in IBS_WITH_HEAD_COMMITS):
+                continue
+            if commit_["url"].startswith(commit_url):
+                head = commit_
+                break
 
         if head is None:
             sys.exit(1)
 
         HEAD_SHA = head["sha"]
-        print("Tag head: ", HEAD_SHA)
         if not opts.dryRun:
             create_git_tag(
                 repo,
                 RELEASE_NAME,
                 HEAD_SHA,
             )
+        else:
+            print("Tag head: ", HEAD_SHA)
 
     tags = find_tags(repo, QUEUE + "_20")
     RELEASE_LIST = [

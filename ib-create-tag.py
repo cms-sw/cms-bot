@@ -107,14 +107,13 @@ if __name__ == "__main__":
             sys.exit(1)
 
         HEAD_SHA = head["sha"]
+        print("Tag head: ", HEAD_SHA)
         if not opts.dryRun:
             create_git_tag(
                 repo,
                 RELEASE_NAME,
                 HEAD_SHA,
             )
-        else:
-            print("Tag head: ", HEAD_SHA)
 
     tags = find_tags(repo, QUEUE + "_20")
     RELEASE_LIST = [

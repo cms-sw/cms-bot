@@ -10,7 +10,7 @@ PR_ID=$(echo ${PULL_REQUEST} | cut -d '#' -f 2)
 COMMIT_ID=$(curl -L http://localhost/SDT/jenkins-artifacts/pull-request-integration/${UPLOAD_UNIQUE_ID}/prs_commits.txt | grep "^${PULL_REQUEST}=")
 if [ "X${COMMIT_ID}" = "X" ] ; then exit 0 ; fi
 
-./cms-bot/update-commit-statuses-matching.py -r ${REPOSITORY} -c ${COMMIT_ID} -p ${CONTEXT}
+./cms-bot/update-commit-statuses-matching.py -r ${REPOSITORY} -c ${COMMIT_ID} -p ${CONTEXT} rocm
 
 touch abort-jenkins-job.prop
 echo "JENKINS_PROJECT_TO_KILL=${JENKINS_PROJECT_TO_KILL}" >> abort-jenkins-job.prop

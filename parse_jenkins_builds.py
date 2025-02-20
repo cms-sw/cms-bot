@@ -179,6 +179,7 @@ for element in queue_json["items"]:
     if (
         job_name in config["whitelist"]
         and reason.endswith("-offline")
+        and reason != "multiple-offline"
         and (payload["wait_time"] / 1000 > config["custom"].get(job_name, config["timeout"]))
     ):
         params = dict(

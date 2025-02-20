@@ -143,7 +143,7 @@ REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
 REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
-GPU_FLAVORS = ["cuda", "rocm"]
+GPU_FLAVORS = open("all_gpu_types.txt", "r").readlines()
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = "{0}|{1}||hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs".format(
@@ -607,12 +607,16 @@ def check_ignore_bot_tests(first_line, *args):
 
 
 def check_enable_bot_tests(first_line, *args):
-    tests = first_line.upper().replace(" ", "")
+    tests = first_line.upper().replace(" ", "").split(",")
     if "NONE" in tests:
-        tests = "NONE"
-    if "GPU" in tests and any(x.upper() in tests for x in GPU_FLAVORS):
-        tests = tests.replace("GPU", "").replace(",,", ",")
-    return tests, None
+        tests = ["NONE"]
+
+    if "GPU" in tests:
+        tests.remove("GPU")
+        if not any(x.upper() in tests for x in GPU_FLAVORS):
+            tests.extend(GPU_FLAVORS)
+
+    return ",".join(tests), None
 
 
 def check_extra_matrix_args(first_line, repo, params, mkey, param, *args):

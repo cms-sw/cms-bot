@@ -2317,7 +2317,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if release_arch:
         global_test_params["ARCHITECTURE_FILTER"] = release_arch
     global_test_params["EXTRA_RELVALS_TESTS"] = " ".join(
-        [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS]
+        [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS if t != "gpu"]
     )
 
     if "MATRIX_EXTRAS_GPU" in global_test_params:

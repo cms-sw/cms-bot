@@ -143,11 +143,11 @@ REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
 REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
+GPU_FLAVORS = open(join(dirname(__file__), "all_gpu_types.txt"), "r").read().splitlines()
+EXTRA_RELVALS_TESTS = ["threading", "high-stats", "nano", "gpu"] + GPU_FLAVORS
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
-EXTRA_TESTS = (
-    "|".join(EXTRA_RELVALS_TESTS)
-    + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs"
+EXTRA_TESTS = "{0}|{1}||hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs".format(
+    "|".join(EXTRA_RELVALS_TESTS), "|".join(GPU_FLAVORS)
 )
 SKIP_TESTS = "|".join(["static", "header"])
 ENABLE_TEST_PTRN = "enable(_test(s|)|)"
@@ -607,10 +607,16 @@ def check_ignore_bot_tests(first_line, *args):
 
 
 def check_enable_bot_tests(first_line, *args):
-    tests = first_line.upper().replace(" ", "")
+    tests = first_line.upper().replace(" ", "").split(",")
     if "NONE" in tests:
-        tests = "NONE"
-    return tests, None
+        tests = ["NONE"]
+
+    if "GPU" in tests:
+        tests.remove("GPU")
+        if not any(x.upper() in tests for x in GPU_FLAVORS):
+            tests.extend(GPU_FLAVORS)
+
+    return ",".join(tests), None
 
 
 def check_extra_matrix_args(first_line, repo, params, mkey, param, *args):
@@ -2311,8 +2317,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if release_arch:
         global_test_params["ARCHITECTURE_FILTER"] = release_arch
     global_test_params["EXTRA_RELVALS_TESTS"] = " ".join(
-        [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS]
+        [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS if t != "gpu"]
     )
+
+    if "MATRIX_EXTRAS_GPU" in global_test_params:
+        tmp = global_test_params.pop("MATRIX_EXTRAS_GPU")
+        for gpu in GPU_FLAVORS:
+            global_test_params[f"MATRIX_EXTRAS_{gpu.upper()}"] = tmp
 
     print("All Parameters:", global_test_params)
     # For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist

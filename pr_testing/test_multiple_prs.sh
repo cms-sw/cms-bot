@@ -5,6 +5,19 @@
 # 2) run tests and post result on github
 # ---
 #common function
+function is_in_array() {
+    local value="$1"
+    shift
+    local array=("$@")
+
+    for item in "${array[@]}"; do
+        if [[ "$item" == "$value" ]]; then
+            return 0  # Found match
+        fi
+    done
+    return 1  # No match
+}
+
 function order_workflow_list(){
   echo ${1} | tr ' ' '\n' | tr ',' '\n' | grep '^[0-9]\|^all$' | sort -n | uniq | tr '\n' ',' | sed 's|,*$||'
 }
@@ -91,7 +104,7 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
 [ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
-[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="GPU THREADING HIGH_STATS NANO"
+[ "${EXTRA_RELVALS_TESTS}" = "" ] && (EXTRA_RELVALS_TESTS=$ALL_GPU_TYPES[@]; EXTRA_RELVALS_TESTS="${EXTRA_RELVALS_TESTS} THREADING HIGH_STATS NANO")
 EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | tr '\n' ' ')
 # ---
 # doc: Input variable
@@ -162,6 +175,7 @@ if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
     fi
   fi
 fi
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/all_gpu_types.txt
 
 # ----------
 # -- MAIN --
@@ -1324,9 +1338,18 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
       done
     fi
   fi
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
-    DO_GPU_TESTS=true
-    mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  if [ X"${DISABLE_GPU_TESTS}" != X"true" ]; then
+    for gpu in "${ALL_GPU_TYPES[@]}"; do
+        if echo "${ENABLE_BOT_TESTS}" | tr ',' '\n' | grep -q "^${gpu}$"; then
+            DO_GPU_TESTS=true
+            break
+        fi
+    done
+  fi
+  if [ X"${DO_GPU_TESTS}" == X"true" ] ; then
+    for GPU_T in ${ALL_GPU_TYPES[@]} ; do
+      mark_commit_status_all_prs "unittests/${GPU_T}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    done
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
     if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
@@ -1467,7 +1490,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       [ "$WF_LIST" != "" ] || continue
       ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
       grep -v '^MATRIX_ARGS=' $WORKSPACE/run-relvals.prop > $WORKSPACE/run-relvals-${ex_type_lc}.prop
-      echo "MATRIX_ARGS=$(get_pr_relval_args $DO_COMPARISON _${ex_type})" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
+      if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}"; then
+        echo "GPU_FLAVOR=${ex_type_lc}" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
+      fi
+      echo "MATRIX_ARGS=$(get_pr_relval_args $DO_COMPARISON _${ex_type})" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop  
     done
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e
@@ -1499,7 +1525,11 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
 fi
 
 if [ "X$DO_GPU_TESTS" = Xtrue ]; then
-  cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests.prop
+  for GPU_T in ${ALL_GPU_TYPES[@]}; do
+    [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep -i "^${GPU_T}$" | wc -l) -gt 0 ] || continue
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T}.prop
+    echo "GPU_FLAVOR=${GPU_T}" >> $WORKSPACE/run-unittests-${GPU_T}.prop
+  done
 fi
 
 if ${BUILD_EXTERNAL} ; then
@@ -1510,7 +1540,7 @@ fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
   PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
-  for wf in ${PROFILING_WORKFLOWS};do
+  for wf in ${PROFILING_WORKFLOWS}; do
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$wf.prop
     echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop
   done
@@ -1525,3 +1555,4 @@ if [ "${DO_HLT_P2_INTEGRATION}" = "true" ] ;  then
 fi
 
 rm -f $WORKSPACE/test-env.txt
+

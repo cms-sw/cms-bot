@@ -144,7 +144,7 @@ REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 GPU_FLAVORS = open(join(dirname(__file__), "all_gpu_types.txt"), "r").read().splitlines()
-EXTRA_RELVALS_TESTS = ["threading", "high-stats", "nano"] + GPU_FLAVORS
+EXTRA_RELVALS_TESTS = ["threading", "high-stats", "nano", "gpu"] + GPU_FLAVORS
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = "{0}|{1}||hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs".format(
     "|".join(EXTRA_RELVALS_TESTS), "|".join(GPU_FLAVORS)
@@ -2319,6 +2319,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     global_test_params["EXTRA_RELVALS_TESTS"] = " ".join(
         [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS]
     )
+
+    if "MATRIX_EXTRAS_GPU" in global_test_params:
+        tmp = global_test_params.pop("MATRIX_EXTRAS_GPU")
+        for gpu in GPU_FLAVORS:
+            global_test_params[f"MATRIX_EXTRAS_{gpu.upper()}"] = tmp
 
     print("All Parameters:", global_test_params)
     # For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist

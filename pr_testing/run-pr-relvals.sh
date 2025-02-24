@@ -1,4 +1,19 @@
 #!/bin/bash -ex
+function is_in_array() {
+    local value="$1"
+    shift
+    local array=("$@")
+
+    for item in "${array[@]}"; do
+        if [[ "$item" == "$value" ]]; then
+            return 0  # Found match
+        fi
+    done
+    return 1  # No match
+}
+
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+
 source $(dirname $0)/setup-pr-test-env.sh
 GH_CONTEXT="relvals"
 GH_COMP_CONTEXT="comparison"
@@ -17,10 +32,12 @@ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
   if [ $(echo "${args}" | sed 's|.*-l ||;s| .*||' | tr ',' '\n' | grep '^all$' | wc -l) -gt 0 ] ; then
     OPTS=""
     case "${TEST_FLAVOR}" in
-      cuda | rocm ) OPTS="-w gpu" ;;
       high_stats ) ;;
       nano ) OPTS="-w nano" ;;
-      * ) ;;
+      * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
+            OPTS="-w gpu"
+          fi
+          ;;
     esac
     ALL_WFS=$(runTheMatrix.py -n ${OPTS} ${args} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' | tr '\n' ',' | sed 's|,$||')
     args=$(echo "${args}" | sed "s|all|${ALL_WFS}|")

@@ -1597,15 +1597,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # Extract enabled GPU flavors
     for gpu_lc in GPU_FLAVORS:
         gpu_uc = gpu_lc.upper()
-        if gpu_uc in enable_tests or gpu_uc in global_test_params["ENABLE_BOT_TESTS"]:
+        if gpu_uc in enable_tests or gpu_uc in global_test_params.get("ENABLE_BOT_TESTS", ""):
             enabled_gpu_flavors.append(gpu_lc)
 
     if not enabled_gpu_flavors and (
-        "GPU" in enable_tests or "GPU" in global_test_params["ENABLE_BOT_TESTS"]
+        "GPU" in enable_tests or "GPU" in global_test_params.get("ENABLE_BOT_TESTS", "")
     ):
         enabled_gpu_flavors = GPU_FLAVORS
 
-    global_test_params["ENABLE_GPU_FLAVORS"] = " ".join(enabled_gpu_flavors)
+    if enabled_gpu_flavors:
+        global_test_params["ENABLE_GPU_FLAVORS"] = " ".join(enabled_gpu_flavors)
 
     # Check if it needs to be automatically closed.
     if mustClose:

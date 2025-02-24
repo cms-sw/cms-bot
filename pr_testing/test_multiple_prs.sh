@@ -382,13 +382,13 @@ if $DO_COMPARISON ; then
       echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
       if [ X"${ex_type_lc}" = X"gpu" ]; then
         for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
-          cp run-baseline-${BUILD_ID}-01.${ex_type_lc} run-baseline-${BUILD_ID}-01.${GPU_T}
+          cp run-baseline-${BUILD_ID}-01.gpu run-baseline-${BUILD_ID}-01.${GPU_T}
           sed -i -e "s/TEST_FLAVOR=gpu/TEST_FLAVOR=${GPU_T}/g" run-baseline-${BUILD_ID}-01.${GPU_T}
 
-          cp run-baseline-${BUILD_ID}-02.${ex_type_lc} run-baseline-${BUILD_ID}-02.${GPU_T}
+          cp run-baseline-${BUILD_ID}-02.gpu run-baseline-${BUILD_ID}-02.${GPU_T}
           sed -i -e "s/TEST_FLAVOR=gpu/TEST_FLAVOR=${GPU_T}/g" run-baseline-${BUILD_ID}-02.${GPU_T}
         done
-        rm run-baseline-${BUILD_ID}-01.${ex_type_lc} run-baseline-${BUILD_ID}-02.${ex_type_lc}
+        rm run-baseline-${BUILD_ID}-01.gpu run-baseline-${BUILD_ID}-02.gpu
       fi
     done
   popd

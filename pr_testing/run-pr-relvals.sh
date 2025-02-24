@@ -12,9 +12,9 @@ function is_in_array() {
     return 1  # No match
 }
 
+source $(dirname $0)/setup-pr-test-env.sh
 readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 
-source $(dirname $0)/setup-pr-test-env.sh
 GH_CONTEXT="relvals"
 GH_COMP_CONTEXT="comparison"
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')

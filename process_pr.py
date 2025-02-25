@@ -144,7 +144,7 @@ REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 GPU_FLAVORS = open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]  # + GPU_FLAVORS
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"] + GPU_FLAVORS
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)
@@ -609,7 +609,6 @@ def check_ignore_bot_tests(first_line, *args):
 
 def check_enable_bot_tests(first_line, *args):
     tests = first_line.upper().replace(" ", "")
-    enable_gpus = []
     if "NONE" in tests:
         tests = "NONE"
     return tests, None

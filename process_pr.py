@@ -143,7 +143,8 @@ REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
 REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
+GPU_FLAVORS = open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"] + GPU_FLAVORS
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)
@@ -168,7 +169,7 @@ MULTILINE_COMMENTS_MAP = {
     "disable_poison": ["true|false", "DISABLE_POISON"],
     "use_ib_tag": ["true|false", "USE_IB_TAG"],
     "baseline": ["self|default", "USE_BASELINE"],
-    "set_env": ["[A-Z][A-Z0-9_]+(\s*,\s*[A-Z][A-Z0-9_]+|)*", "CMSBOT_SET_ENV"],
+    "set_env": [r"[A-Z][A-Z0-9_]+(\s*,\s*[A-Z][A-Z0-9_]+|)*", "CMSBOT_SET_ENV"],
     "skip_test(s|)": [format(r"(%(tests)s)(\s*,\s*(%(tests)s))*", tests=SKIP_TESTS), "SKIP_TESTS"],
     "dry_run": ["true|false", "DRY_RUN"],
     "jenkins_(slave|node)": [JENKINS_NODES, "RUN_ON_SLAVE"],
@@ -967,6 +968,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     ok_too_many_files = False
     warned_too_many_files = False
     is_draft_pr = False
+    enabled_gpu_flavors = []
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
@@ -1315,7 +1317,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         elif re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
             comment_emoji = "-1"
             if valid_commenter:
-                enable_tests, ignore = check_enable_bot_tests(first_line.split(" ", 1)[-1])
+                enable_tests, _ = check_enable_bot_tests(first_line.split(" ", 1)[-1])
                 comment_emoji = "+1"
         elif re.match(r"^allow\s+@([^ ]+)\s+test\s+rights$", first_line, re.I):
             comment_emoji = "-1"
@@ -1375,6 +1377,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 first_line, comment_lines, repository
             )
             if test_params_m:
+                # Error in parameters
                 test_params_msg = str(comment.id) + ":" + test_params_m
                 test_params_comment = comment
                 continue
@@ -1589,6 +1592,21 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
+
+    # Extract enabled GPU flavors
+    for gpu_lc in GPU_FLAVORS:
+        gpu_uc = gpu_lc.upper()
+        if gpu_uc in enable_tests or gpu_uc in global_test_params.get("ENABLE_BOT_TESTS", ""):
+            enabled_gpu_flavors.append(gpu_lc)
+
+    if not enabled_gpu_flavors and (
+        "GPU" in enable_tests or "GPU" in global_test_params.get("ENABLE_BOT_TESTS", "")
+    ):
+        enabled_gpu_flavors = GPU_FLAVORS
+
+    if enabled_gpu_flavors:
+        global_test_params["ENABLE_GPU_FLAVORS"] = " ".join(enabled_gpu_flavors)
+
     # Check if it needs to be automatically closed.
     if mustClose:
         if issue.state == "open":

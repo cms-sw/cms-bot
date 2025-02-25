@@ -24,7 +24,7 @@ END{
     if (useUnpacked) print "Compare unpacked values";
     else print "Compare packed values";
     print  "-----------------------------------------------------------------";
-    print  "   or, B         new, B      delta, B   delta, %   deltaJ, %    branch "
+    print  "   old, B         new, B      delta, B   delta, %   deltaJ, %    branch "
     print  "-----------------------------------------------------------------";
     for(br in ms){
 	osi=os[br]; nsi=ns[br]; 

@@ -1484,6 +1484,11 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
         for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
           cp $WORKSPACE/run-relvals-${ex_type_lc}.prop $WORKSPACE/run-relvals-${GPU_T}.prop
           echo "GPU_FLAVOR=${GPU_T}" >> $WORKSPACE/run-relvals-${GPU_T}.prop
+          if [ "$GPU_T" = "rocm" ]; then
+            grep -v "^RUN_THE_MATRIX_CMD_OPTS" $WORKSPACE/run-relvals-${GPU_T}.prop > $WORKSPACE/$WORKSPACE/run-relvals-${GPU_T}.tmp
+            echo "RUN_THE_MATRIX_CMD_OPTS=${EXTRA_MATRIX_COMMAND_ARGS}" >> $WORKSPACE/$WORKSPACE/run-relvals-${GPU_T}.tmp
+            mv $WORKSPACE/$WORKSPACE/run-relvals-${GPU_T}.tmp $WORKSPACE/$WORKSPACE/run-relvals-${GPU_T}.prop
+          fi
         done
         rm $WORKSPACE/run-relvals-${ex_type_lc}.prop
       fi

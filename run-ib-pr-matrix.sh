@@ -47,7 +47,11 @@ UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
 pushd "$WORKSPACE/matrix-results"
   NJOBS=$(nproc)
   CMD_OPTS=""
-  if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then CMD_OPTS="--maxmem_profile" ; fi
+  if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
+    if [ "TEST_FLAVOR" != "rocm" ]; then
+      CMD_OPTS="--maxmem_profile"
+    fi
+  fi
   case "${TEST_FLAVOR}" in
     cuda | rocm )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) CMD_OPTS="-n 500" ; MATRIX_ARGS="-i all ${MATRIX_ARGS}" ;;

@@ -79,6 +79,22 @@ function process_changed_files() {
   sort -u "$directlyChangedFiles" $WORKSPACE/indirectly-changed-files.txt > "$allChangedFiles"
 }
 
+function is_in_array() {
+    local value="$1"
+    shift
+    local array=("$@")
+
+    for item in "${array[@]}"; do
+        if [[ "$item" == "$value" ]]; then
+            return 0  # Found match
+        fi
+    done
+    return 1  # No match
+}
+
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+export ALL_GPU_TYPES
+ALL_GPU_TYPES_UC=( $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]') )
 # Constants
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
@@ -91,7 +107,7 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
 [ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
-[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="GPU THREADING HIGH_STATS NANO"
+[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO ${ALL_GPU_TYPES_UC[@]}"
 EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | tr '\n' ' ')
 # ---
 # doc: Input variable
@@ -380,16 +396,6 @@ if $DO_COMPARISON ; then
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.${ex_type_lc} > run-baseline-${BUILD_ID}-02.${ex_type_lc}
       echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
       echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
-      if [ X"${ex_type_lc}" = X"gpu" ]; then
-        for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
-          cp run-baseline-${BUILD_ID}-01.gpu run-baseline-${BUILD_ID}-01.${GPU_T}
-          sed -i -e "s/TEST_FLAVOR=gpu/TEST_FLAVOR=${GPU_T}/g" run-baseline-${BUILD_ID}-01.${GPU_T}
-
-          cp run-baseline-${BUILD_ID}-02.gpu run-baseline-${BUILD_ID}-02.${GPU_T}
-          sed -i -e "s/TEST_FLAVOR=gpu/TEST_FLAVOR=${GPU_T}/g" run-baseline-${BUILD_ID}-02.${GPU_T}
-        done
-        rm run-baseline-${BUILD_ID}-01.gpu run-baseline-${BUILD_ID}-02.gpu
-      fi
     done
   popd
   send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
@@ -1480,18 +1486,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
       grep -v '^MATRIX_ARGS=' $WORKSPACE/run-relvals.prop > $WORKSPACE/run-relvals-${ex_type_lc}.prop
       echo "MATRIX_ARGS=$(get_pr_relval_args $DO_COMPARISON _${ex_type})" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
-      if [ "${ex_type_lc}" = "gpu" ]; then
-        for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
-          cp $WORKSPACE/run-relvals-${ex_type_lc}.prop $WORKSPACE/run-relvals-${GPU_T}.prop
-          echo "GPU_FLAVOR=${GPU_T}" >> $WORKSPACE/run-relvals-${GPU_T}.prop
-          if [ "$GPU_T" = "rocm" ]; then
-            grep -v "^RUN_THE_MATRIX_CMD_OPTS" $WORKSPACE/run-relvals-${GPU_T}.prop > $WORKSPACE/$WORKSPACE/run-relvals-${GPU_T}.tmp
-            echo "RUN_THE_MATRIX_CMD_OPTS=${EXTRA_MATRIX_COMMAND_ARGS}" >> $WORKSPACE/$WORKSPACE/run-relvals-${GPU_T}.tmp
-            mv $WORKSPACE/$WORKSPACE/run-relvals-${GPU_T}.tmp $WORKSPACE/$WORKSPACE/run-relvals-${GPU_T}.prop
-          fi
-        done
-        rm $WORKSPACE/run-relvals-${ex_type_lc}.prop
-      fi
     done
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e

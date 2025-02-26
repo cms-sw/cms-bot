@@ -143,12 +143,13 @@ REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
 REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
-GPU_FLAVORS = open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"] + GPU_FLAVORS
+ALL_GPU_FLAVORS = open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)
-    + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs"
+    + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi-microarchs|"
+    + "|".join(ALL_GPU_FLAVORS)
 )
 SKIP_TESTS = "|".join(["static", "header"])
 ENABLE_TEST_PTRN = "enable(_test(s|)|)"
@@ -1593,8 +1594,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # end of parsing comments section
 
-    # Extract enabled GPU flavors
-    for gpu_lc in GPU_FLAVORS:
+    # Extract enabled GPU flavors and remove them from global_test_params and enable_tests
+    for gpu_lc in ALL_GPU_FLAVORS:
         gpu_uc = gpu_lc.upper()
         if gpu_uc in enable_tests or gpu_uc in global_test_params.get("ENABLE_BOT_TESTS", ""):
             enabled_gpu_flavors.append(gpu_lc)
@@ -1602,10 +1603,23 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if not enabled_gpu_flavors and (
         "GPU" in enable_tests or "GPU" in global_test_params.get("ENABLE_BOT_TESTS", "")
     ):
-        enabled_gpu_flavors = GPU_FLAVORS
+        enabled_gpu_flavors = ALL_GPU_FLAVORS
 
     if enabled_gpu_flavors:
         global_test_params["ENABLE_GPU_FLAVORS"] = " ".join(enabled_gpu_flavors)
+        for gpu_lc in enabled_gpu_flavors:
+            gpu_uc = gpu_lc.upper()
+            enable_tests = enable_tests.replace(gpu_uc, "")
+            if "ENABLE_BOT_TESTS" in global_test_params:
+                global_test_params["ENABLE_BOT_TESTS"] = global_test_params[
+                    "ENABLE_BOT_TESTS"
+                ].replace(gpu_uc, "")
+
+        enable_tests = re.sub(r"\s+", " ", enable_tests)
+        if "ENABLE_BOT_TESTS" in global_test_params:
+            global_test_params["ENABLE_BOT_TESTS"] = re.sub(
+                r"\s+", " ", global_test_params["ENABLE_BOT_TESTS"]
+            )
 
     # Check if it needs to be automatically closed.
     if mustClose:

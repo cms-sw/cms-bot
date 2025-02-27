@@ -1,5 +1,6 @@
 #!/bin/bash
-readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+readarray -t ALL_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors.txt
 CMSSW_VER=$CMSSW_VERSION
 [ "${CMSSW_VER}" != "" ] || CMSSW_VER=${RELEASE_FORMAT}
 CMSSW_MAJOR=0

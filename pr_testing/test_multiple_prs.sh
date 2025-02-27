@@ -103,6 +103,9 @@ for ex_type in ${EXTRA_RELVALS_TESTS} ; do
   ex_type_lc=$(echo $ex_type | tr '[A-Z]' '[a-z]')
   if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}" ; then
     ENABLE_GPU_FLAVORS+=( $ex_type )
+    if [ X"$(eval echo $MATRIX_EXTRAS_${ex_type})" = X"" ]; then
+      eval "MATRIX_EXTRAS_${ex_type}=${MATRIX_EXTRAS_GPU}"
+    fi
   fi
 done
 # Constants

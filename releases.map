@@ -4531,3 +4531,4 @@ architecture=el8_aarch64_gcc12;label=CMSSW_14_0_21;type=Production;state=Announc
 architecture=el9_aarch64_gcc12;label=CMSSW_14_0_21;type=Production;state=Announced;prodarch=0;
 architecture=el9_amd64_gcc12;label=CMSSW_14_0_21;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc12;label=CMSSW_14_0_21;type=Production;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc12;label=CMSSW_15_0_0;type=Production;state=Announced;prodarch=1;default_micro_arch=x86-64-v3;

@@ -94,7 +94,15 @@ function is_in_array() {
 
 readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 export ALL_GPU_TYPES
-ALL_GPU_TYPES_UC=( $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]') )
+
+declare -a ENABLE_GPU_FLAVORS
+for ex_type in ${EXTRA_RELVALS_TESTS} ; do
+  [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
+  ex_type_lc=$(echo $ex_type | tr '[A-Z]' '[a-z]')
+  if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}" ; then
+    ENABLE_GPU_FLAVORS+=( $ex_type )
+  fi
+done
 # Constants
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
@@ -107,7 +115,7 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
 [ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
-[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO ${ALL_GPU_TYPES_UC[@]}"
+[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]')"
 EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | tr '\n' ' ')
 # ---
 # doc: Input variable
@@ -383,6 +391,7 @@ if $DO_COMPARISON ; then
     fi
 
     for ex_type in ${EXTRA_RELVALS_TESTS} ; do
+      [ $ex_type = "GPU" ] && continue
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
       [ "$WF_LIST" != "" ] || continue
@@ -1342,9 +1351,6 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
     DO_GPU_TESTS=true
-    for GPU_T in ${ENABLE_GPU_FLAVORS[@]} ; do
-      mark_commit_status_all_prs "unittests/${GPU_T}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
-    done
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
     if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
@@ -1480,6 +1486,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   fi
   if $PRODUCTION_RELEASE ; then
     for ex_type in ${EXTRA_RELVALS_TESTS} ; do
+      [ $ex_type = "GPU" ] && continue
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
       [ "$WF_LIST" != "" ] || continue
@@ -1520,6 +1527,7 @@ if [ "X$DO_GPU_TESTS" = Xtrue ]; then
   for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T}.prop
     echo "GPU_FLAVOR=${GPU_T}" >> $WORKSPACE/run-unittests-${GPU_T}.prop
+    mark_commit_status_all_prs "unittests/${GPU_T}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   done
 fi
 

@@ -1529,9 +1529,10 @@ fi
 
 if [ "X$DO_GPU_TESTS" = Xtrue ]; then
   for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
-    cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T}.prop
-    echo "GPU_FLAVOR=${GPU_T}" >> $WORKSPACE/run-unittests-${GPU_T}.prop
-    mark_commit_status_all_prs "unittests/${GPU_T}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    GPU_T_LC=$(echo $GPU_T | tr '[A-Z]' '[a-z]')
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T_LC}.prop
+    echo "GPU_FLAVOR=${GPU_T_LC}" >> $WORKSPACE/run-unittests-${GPU_T_LC}.prop
+    mark_commit_status_all_prs "unittests/${GPU_T_LC}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   done
 fi
 

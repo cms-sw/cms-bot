@@ -96,7 +96,6 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 
 readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
-export ALL_GPU_TYPES
 
 declare -a ENABLE_GPU_FLAVORS
 for ex_type in ${EXTRA_RELVALS_TESTS} ; do

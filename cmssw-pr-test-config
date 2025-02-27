@@ -1,4 +1,5 @@
 #!/bin/bash
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 CMSSW_VER=$CMSSW_VERSION
 [ "${CMSSW_VER}" != "" ] || CMSSW_VER=${RELEASE_FORMAT}
 CMSSW_MAJOR=0
@@ -22,7 +23,7 @@ else
 fi
 if [ X"$PR_TEST_MATRIX_EXTRAS_GPU" != X"" ]; then
   for GPU_T in ${ALL_GPU_TYPES[@]} ; do
-    GPU_T_UC = $(echo ${GPU_T} | tr '[a-z]' '[A-Z]')
+    GPU_T_UC=$(echo ${GPU_T} | tr '[a-z]' '[A-Z]')
     eval "PR_TEST_MATRIX_EXTRAS_${GPU_T_UC}=$PR_TEST_MATRIX_EXTRAS_GPU"
   done
 fi

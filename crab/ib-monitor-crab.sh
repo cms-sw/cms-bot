@@ -22,7 +22,7 @@ while true ; do
     status=$(grep -Eo "'State': '(finished|failed)'" $WORKSPACE/status-${CRABCLIENT_TYPE}.log || echo "")
     [ "${status}" = "" ] || break
   fi
-  sleep 300
+  sleep 60
 done
 rm -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log
 curl "${GRIDSITE}/job_out.1.0.txt" > $WORKSPACE/testsResults/job_out.log || true

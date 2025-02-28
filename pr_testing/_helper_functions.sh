@@ -120,3 +120,16 @@ function prepare_upload_results (){
     mkdir -p ${RESULTS_DIR}
   popd
 }
+
+function is_in_array() {
+    local value="$1"
+    shift
+    local array=("$@")
+
+    for item in "${array[@]}"; do
+        if [[ "$item" == "$value" ]]; then
+            return 0  # Found match
+        fi
+    done
+    return 1  # No match
+}

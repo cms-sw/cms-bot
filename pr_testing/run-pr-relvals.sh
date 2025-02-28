@@ -1,17 +1,4 @@
 #!/bin/bash -ex
-function is_in_array() {
-    local value="$1"
-    shift
-    local array=("$@")
-
-    for item in "${array[@]}"; do
-        if [[ "$item" == "$value" ]]; then
-            return 0  # Found match
-        fi
-    done
-    return 1  # No match
-}
-
 source $(dirname $0)/setup-pr-test-env.sh
 readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 

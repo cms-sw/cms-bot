@@ -79,19 +79,6 @@ function process_changed_files() {
   sort -u "$directlyChangedFiles" $WORKSPACE/indirectly-changed-files.txt > "$allChangedFiles"
 }
 
-function is_in_array() {
-    local value="$1"
-    shift
-    local array=("$@")
-
-    for item in "${array[@]}"; do
-        if [[ "$item" == "$value" ]]; then
-            return 0  # Found match
-        fi
-    done
-    return 1  # No match
-}
-
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 

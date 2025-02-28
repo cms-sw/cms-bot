@@ -82,19 +82,6 @@ function process_changed_files() {
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 
-readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
-
-declare -a ENABLE_GPU_FLAVORS
-for ex_type in ${ENABLE_BOT_TESTS} ; do
-  ex_type_lc=$(echo $ex_type | tr '[A-Z]' '[a-z]')
-  if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}" ; then
-    ENABLE_GPU_FLAVORS+=( $ex_type )
-    VAR_NAME="MATRIX_EXTRAS_${ex_type}"
-    if [ -z "${!VAR_NAME}" ]; then
-      eval "$VAR_NAME=${MATRIX_EXTRAS_GPU}"
-    fi
-  fi
-done
 # Constants
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
@@ -176,6 +163,20 @@ if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
     fi
   fi
 fi
+
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+
+declare -a ENABLE_GPU_FLAVORS
+for ex_type in ${ENABLE_BOT_TESTS} ; do
+  ex_type_lc=$(echo $ex_type | tr '[A-Z]' '[a-z]')
+  if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}" ; then
+    ENABLE_GPU_FLAVORS+=( $ex_type )
+    VAR_NAME="MATRIX_EXTRAS_${ex_type}"
+    if [ -z "${!VAR_NAME}" ]; then
+      eval "$VAR_NAME=${MATRIX_EXTRAS_GPU}"
+    fi
+  fi
+done
 
 # ----------
 # -- MAIN --

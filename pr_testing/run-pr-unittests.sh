@@ -32,15 +32,16 @@ TEST_ERRORS=$(grep -ai 'had errors\|recipe for target' $WORKSPACE/${GPU_FLAVOR}U
 TEST_ERRORS=`grep -ai "had errors" $WORKSPACE/${GPU_FLAVOR}UnitTests/log.txt` || true
 GENERAL_ERRORS=`grep -a "ALL_OK" $WORKSPACE/${GPU_FLAVOR}UnitTests/log.txt` || true
 
+GPU_FLAVOR_UC=$(echo $GPU_FLAVOR | tr '[:lower:]' '[:upper:]')
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo "Errors in the ${GPU_FLAVOR} unit tests"
-  echo "${GPU_FLAVOR}_UNIT_TEST_RESULTS;ERROR,${GPU_FLAVOR} Unit Tests,See Log,${GPU_FLAVOR}UnitTests" >> ${RESULTS_DIR}/unittest${GPU_FLAVOR}.txt
+  echo "${GPU_FLAVOR_UC}_UNIT_TEST_RESULTS;ERROR,${GPU_FLAVOR_UC} Unit Tests,See Log,${GPU_FLAVOR}UnitTests" >> ${RESULTS_DIR}/unittest${GPU_FLAVOR}.txt
   ALL_OK=false
   UNIT_TESTS_OK=false
-  $CMS_BOT_DIR/report-pull-request-results PARSE_${GPU_FLAVOR}_UNIT_TESTS_FAIL -f $WORKSPACE/${GPU_FLAVOR}UnitTests/log.txt --report-file ${RESULTS_DIR}/14-unittest${GPU_FLAVOR}-report.res ${REPORT_OPTS}
-  echo "${GPU_FLAVOR}UnitTests" > ${RESULTS_DIR}/14-failed.res
+  $CMS_BOT_DIR/report-pull-request-results PARSE_${GPU_FLAVOR_UC}_UNIT_TESTS_FAIL -f $WORKSPACE/${GPU_FLAVOR}UnitTests/log.txt --report-file ${RESULTS_DIR}/14-unittest${GPU_FLAVOR}-report.res ${REPORT_OPTS}
+  echo "${GPU_FLAVOR}UnitTests" > ${RESULTS_DIR}/14-${GPU_FLAVOR}-failed.res
 else
-  echo "${GPU_FLAVOR}_UNIT_TEST_RESULTS;OK,GPU Unit Tests,See Log,${GPU_FLAVOR}UnitTests" >> ${RESULTS_DIR}/unittest${GPU_FLAVOR}.txt
+  echo "${GPU_FLAVOR_UC}_UNIT_TEST_RESULTS;OK,${GPU_FLAVOR_UC} Unit Tests,See Log,${GPU_FLAVOR}UnitTests" >> ${RESULTS_DIR}/unittest${GPU_FLAVOR}.txt
 fi
 echo "<html><head></head><body>" > $WORKSPACE/${GPU_FLAVOR}UnitTests/success.html
 cp $WORKSPACE/${GPU_FLAVOR}UnitTests/success.html $WORKSPACE/${GPU_FLAVOR}UnitTests/failed.html

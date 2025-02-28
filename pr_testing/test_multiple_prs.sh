@@ -1490,7 +1490,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   fi
   if $PRODUCTION_RELEASE ; then
     for ex_type in ${EXTRA_RELVALS_TESTS} ; do
-      [ $ex_type = "GPU" ] && continue
+      [ $ex_type = "GPU" ] && (mark_commit_status_all_prs "gpu" "success" -u "${BUILD_URL}" -d "Legacy status" -e; continue)
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
       [ "$WF_LIST" != "" ] || continue

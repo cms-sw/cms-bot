@@ -15,7 +15,7 @@ mark_commit_status_all_prs "unittests/${TEST_FLAVOR}" 'pending' -u "${BUILD_URL}
 echo '--------------------------------------'
 mkdir -p $WORKSPACE/${TEST_FLAVOR}UnitTests
 let UT_TIMEOUT=7200+${CMSSW_PKG_COUNT}*20
-gpu_t_lc=$(echo ${GPU_T} | tr '[A-Z]' '[a-z]')
+gpu_t_lc=$(echo ${TEST_FLAVOR} | tr '[A-Z]' '[a-z]')
 UTESTS_CMD="USER_UNIT_TESTS=${gpu_t_lc} timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  unittests "
 echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"
 scram build echo_LD_LIBRARY_PATH || true

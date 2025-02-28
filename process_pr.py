@@ -1603,8 +1603,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         else:
             new_enable_tests.append(test)
 
-    if enabled_gpu_flavors and "GPU" not in new_enable_tests:
-        new_enable_tests.append("GPU")
     new_enable_tests.extend(list(enabled_gpu_flavors))
     enable_tests = " ".join(new_enable_tests)
 

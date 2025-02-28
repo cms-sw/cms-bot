@@ -382,7 +382,6 @@ if $DO_COMPARISON ; then
     fi
 
     for ex_type in ${EXTRA_RELVALS_TESTS} ; do
-      [ $ex_type = "GPU" ] && continue
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
       [ "$WF_LIST" != "" ] || continue
@@ -1340,7 +1339,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
       done
     fi
   fi
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
+  if [ ${#ENABLE_GPU_FLAVORS[@]} -ne 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
     DO_GPU_TESTS=true
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
@@ -1477,7 +1476,9 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   fi
   if $PRODUCTION_RELEASE ; then
     for ex_type in ${EXTRA_RELVALS_TESTS} ; do
-      [ $ex_type = "GPU" ] && (mark_commit_status_all_prs "gpu" "success" -u "${BUILD_URL}" -d "Legacy status" -e; continue)
+      if is_in_array "${ex_type}" "${ENABLE_GPU_FLAVORS[@]}" ; then
+        mark_commit_status_all_prs "gpu" "success" -u "${BUILD_URL}" -d "Legacy status" -e
+      fi
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
       [ "$WF_LIST" != "" ] || continue

@@ -264,7 +264,7 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
 done
 
 echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
-echo "COMPARISON${TEST_FLAVOR_STR};RUNNING,Comparison with the ${UC_TEST_FLAVOR} baseline,See results,See results" >> ${RESULTS_FILE}
+echo "COMPARISON${TEST_FLAVOR_STR};RUNNING,Comparison with the ${UC_TEST_FLAVOR} baseline,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/" >> ${RESULTS_FILE}
 if [ "$DRY_RUN" = "" ] ; then
   send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison${UC_TEST_FLAVOR}.txt
 fi

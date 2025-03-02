@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+
 GH_CONTEXT="relvals"
 GH_COMP_CONTEXT="comparison"
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
@@ -17,10 +19,12 @@ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
   if [ $(echo "${args}" | sed 's|.*-l ||;s| .*||' | tr ',' '\n' | grep '^all$' | wc -l) -gt 0 ] ; then
     OPTS=""
     case "${TEST_FLAVOR}" in
-      gpu ) OPTS="-w gpu" ;;
       high_stats ) ;;
       nano ) OPTS="-w nano" ;;
-      * ) ;;
+      * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
+            OPTS="-w gpu"
+          fi
+          ;;
     esac
     ALL_WFS=$(runTheMatrix.py -n ${OPTS} ${args} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' | tr '\n' ',' | sed 's|,$||')
     args=$(echo "${args}" | sed "s|all|${ALL_WFS}|")

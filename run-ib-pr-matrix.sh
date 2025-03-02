@@ -1,6 +1,20 @@
 #!/bin/sh -ex
+function is_in_array() {
+    local value="$1"
+    shift
+    local array=("$@")
+
+    for item in "${array[@]}"; do
+        if [[ "$item" == "$value" ]]; then
+            return 0  # Found match
+        fi
+    done
+    return 1  # No match
+}
+
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(cd $(dirname $0) >/dev/null 2>&1; pwd -P)
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
 source $CMS_BOT_DIR/jenkins-artifacts
 #Run on any machine to see which workflows should be run
@@ -9,10 +23,12 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${ARTIFACT_DIR}/workflows-${BUILD_ID}.log
   OPTS=""
   case "${TEST_FLAVOR}" in
-    gpu ) OPTS="-w gpu" ;;
     high_stats ) ;;
     nano ) OPTS="-w nano" ;;
-    * ) ;;
+    * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
+          OPTS="-w gpu"
+        fi
+        ;;
   esac
   REL_WFS=""
   if has_jenkins_artifacts ${ARTIFACT_DIR} -d ; then
@@ -47,14 +63,20 @@ UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
 pushd "$WORKSPACE/matrix-results"
   NJOBS=$(nproc)
   CMD_OPTS=""
-  if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then CMD_OPTS="--maxmem_profile" ; fi
+  if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
+    if [ "TEST_FLAVOR" != "rocm" ]; then
+      CMD_OPTS="--maxmem_profile"
+    fi
+  fi
   case "${TEST_FLAVOR}" in
-    gpu )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) CMD_OPTS="-n 500" ; MATRIX_ARGS="-i all ${MATRIX_ARGS}" ;;
     threading )  MATRIX_ARGS="-i all -t 4 ${MATRIX_ARGS}" ; let NJOBS=(${NJOBS}/4)+1 ;;
     nano )       MATRIX_ARGS="-w nano -i all ${MATRIX_ARGS}" ;;
     input )      MATRIX_ARGS="-i all --maxSteps=2 ${MATRIX_ARGS}" ; CMD_OPTS="-n 1 --prefix ${CMS_BOT_DIR}/pr_testing/retry-command.sh" ; export CMS_BOT_RETRY_COUNT=3 ;;
-    * ) ;;
+    * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
+          MATRIX_ARGS="-w gpu ${MATRIX_ARGS}"
+        fi
+        ;;
   esac
   [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_ARGS="--job-reports $MATRIX_ARGS"
   [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ] && CMD_OPTS="${CMD_OPTS} --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport"

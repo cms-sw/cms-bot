@@ -1,4 +1,6 @@
 #!/bin/bash
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+readarray -t ALL_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors.txt
 CMSSW_VER=$CMSSW_VERSION
 [ "${CMSSW_VER}" != "" ] || CMSSW_VER=${RELEASE_FORMAT}
 CMSSW_MAJOR=0
@@ -19,6 +21,12 @@ elif [ "$CMSSW_VER" -ge 1300 ] ; then
   PR_TEST_MATRIX_EXTRAS_GPU=12434.586,12434.587
 else
   PR_TEST_MATRIX_EXTRAS_GPU=11634.586,11634.587
+fi
+if [ X"$PR_TEST_MATRIX_EXTRAS_GPU" != X"" ]; then
+  for GPU_T in ${ALL_GPU_TYPES[@]} ; do
+    GPU_T_UC=$(echo ${GPU_T} | tr '[a-z]' '[A-Z]')
+    eval "PR_TEST_MATRIX_EXTRAS_${GPU_T_UC}=$PR_TEST_MATRIX_EXTRAS_GPU"
+  done
 fi
 PR_TEST_MATRIX_EXTRAS_PROFILING=29834.21,13034.21
 PR_TEST_MATRIX_EXTRAS_HIGH_STATS=35034.0

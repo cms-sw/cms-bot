@@ -142,7 +142,7 @@ summaryLines += [
     '</td></tr><tr><td bgcolor="cyan">',
     "warn threshold -%0.2f" % error_threshold,
     "</td></tr>",
-    "<tr><td>metric:<BR>&lt;baseline&gt;<BR>&lt;pull request&gt;<BR>&lt;PR - baseline&gt; </td>",
+    "<tr><td>metric:<BR>&lt;baseline&gt;<BR>&lt;pull request&gt;<BR>&lt;baseline - PR&gt; </td>",
     "</tr></table>",
     "<table>",
     '<tr><td align="center">Type</td>',
@@ -157,30 +157,30 @@ summaryLines += [
     "<td>%s</td>" % prdata["total"]["label"],
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
-        prdata["total"]["time_real"],
         ibdata["total"]["time_real"],
+        prdata["total"]["time_real"],
         results["total"]["time_real_diff"],
     ),
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
-        prdata["total"]["time_thread"],
         ibdata["total"]["time_thread"],
+        prdata["total"]["time_thread"],
         results["total"]["time_thread_diff"],
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
-        prdata["total"]["mem_alloc"],
         ibdata["total"]["mem_alloc"],
+        prdata["total"]["mem_alloc"],
         results["total"]["mem_alloc_diff"],
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
-        prdata["total"]["mem_free"],
         ibdata["total"]["mem_free"],
+        prdata["total"]["mem_free"],
         results["total"]["mem_free_diff"],
     ),
     "<td>%i<br>%i<br>%i</td>"
-    % (prdata["total"]["events"], ibdata["total"]["events"], results["total"]["events"]),
+    % (ibdata["total"]["events"], prdata["total"]["events"], results["total"]["events"]),
     "</tr></table>",
     '<table><tr><td align="center">Module type</td>',
     '<td align="center">Module label</td>',

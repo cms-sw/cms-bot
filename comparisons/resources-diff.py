@@ -101,7 +101,7 @@ results["total"]["type"] = prdata["total"]["type"]
 results["total"]["label"] = prdata["total"]["label"]
 results["total"]["events"] = prdata["total"]["events"]
 diff_from(
-    metrics, prdata["total"], prdata["total"], ibdata["total"], ibdata["total"], results["total"]
+    metrics, ibdata["total"], ibdata["total"], prdata["total"], prdata["total"], results["total"]
 )
 
 results["modules"] = []
@@ -112,11 +112,11 @@ for module in prdata["modules"]:
     result["label"] = module["label"]
     result["events"] = module["events"]
     if key in datamapib:
-        diff_from(metrics, module, prdata["total"], datamapib[key], ibdata["total"], result)
+        diff_from(metrics, datamapib[key], ibdata["total"], module, prdata["total"], result)
         results["modules"].append(result)
     else:
         datamapib[key] = module
-        diff_from(metrics, module, prdata["total"], datamapib[key], ibdata["total"], result)
+        diff_from(metrics, datamapib[key], ibdata["total"], module, prdata["total"], result)
         results["modules"].append(result)
 
 datamapres = {module["type"] + "|" + module["label"]: module for module in results["modules"]}
@@ -142,7 +142,7 @@ summaryLines += [
     '</td></tr><tr><td bgcolor="cyan">',
     "warn threshold -%0.2f" % error_threshold,
     "</td></tr>",
-    "<tr><td>metric:<BR>&lt;baseline&gt;<BR>&lt;pull request&gt;<BR>&lt;baseline - PR&gt; </td>",
+    "<tr><td>metric:<BR>&lt;pull request&gt;<BR>&lt;baseline&gt;<BR>&lt;PR - baseline&gt; </td>",
     "</tr></table>",
     "<table>",
     '<tr><td align="center">Type</td>',
@@ -153,34 +153,34 @@ summaryLines += [
     '<td align="center">deallocated memory </td>',
     '<td align="center">events</td>',
     "</tr>",
-    "<td>%s</td>" % prdata["total"]["type"],
-    "<td>%s</td>" % prdata["total"]["label"],
+    "<td>%s</td>" % ibdata["total"]["type"],
+    "<td>%s</td>" % ibdata["total"]["label"],
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
-        ibdata["total"]["time_real"],
         prdata["total"]["time_real"],
+        ibdata["total"]["time_real"],
         results["total"]["time_real_diff"],
     ),
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
-        ibdata["total"]["time_thread"],
         prdata["total"]["time_thread"],
+        ibdata["total"]["time_thread"],
         results["total"]["time_thread_diff"],
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
-        ibdata["total"]["mem_alloc"],
         prdata["total"]["mem_alloc"],
+        ibdata["total"]["mem_alloc"],
         results["total"]["mem_alloc_diff"],
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
-        ibdata["total"]["mem_free"],
         prdata["total"]["mem_free"],
+        ibdata["total"]["mem_free"],
         results["total"]["mem_free_diff"],
     ),
     "<td>%i<br>%i<br>%i</td>"
-    % (ibdata["total"]["events"], prdata["total"]["events"], results["total"]["events"]),
+    % (prdata["total"]["events"], ibdata["total"]["events"], results["total"]["events"]),
     "</tr></table>",
     '<table><tr><td align="center">Module type</td>',
     '<td align="center">Module label</td>',
@@ -219,35 +219,35 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["time_thread_frac_diff
             "<td> %s</td>" % moduleres["label"],
             '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
-                moduleib["time_real"],
                 modulepr["time_real"],
+                moduleib["time_real"],
                 moduleres["time_real_diff"],
             ),
             '<td align="right"> %0.2f%%<br> %0.2f%%<br> %0.2f%%</td>'
             % (
-                moduleib["time_real_frac"],
                 modulepr["time_real_frac"],
+                moduleib["time_real_frac"],
                 moduleres["time_real_frac_diff"],
             ),
             '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
-                moduleib["time_thread"],
                 modulepr["time_thread"],
+                moduleib["time_thread"],
                 moduleres["time_thread_diff"],
             ),
             cellString
             + "%0.2f%%<br> %0.2f%%<br> %0.2f%%</td>"
             % (
-                moduleib["time_thread_frac"],
                 modulepr["time_thread_frac"],
+                moduleib["time_thread_frac"],
                 moduleres["time_thread_frac_diff"],
             ),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (moduleib["mem_alloc"], modulepr["mem_alloc"], moduleres["mem_alloc_diff"]),
+            % (modulepr["mem_alloc"], moduleib["mem_alloc"], moduleres["mem_alloc_diff"]),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (moduleib["mem_free"], modulepr["mem_free"], moduleres["mem_free_diff"]),
+            % (modulepr["mem_free"], moduleib["mem_free"], moduleres["mem_free_diff"]),
             "<td>%i<br>%i<br>%i</td>"
-            % (moduleib["events"], modulepr["events"], moduleres["events"]),
+            % (modulepr["events"], moduleib["events"], moduleres["events"]),
             "</tr>",
         ]
 

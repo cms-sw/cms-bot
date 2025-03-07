@@ -37,6 +37,7 @@ export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
 export PATH=$WORKSPACE/das-utils:$PATH
 which das_client
 mkdir $TEST_DIR/matrixTests
+rm -f $WORKSPACE/matrixTests.log
 pushd $TEST_DIR/matrixTests
   NCPU=$($WORKSPACE/common/get_cpu_number.sh)
   runTheMatrix.py -s -j $NCPU 2>&1 | tee -a $WORKSPACE/matrixTests.log

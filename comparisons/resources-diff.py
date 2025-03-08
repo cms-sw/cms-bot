@@ -101,7 +101,7 @@ results["total"]["type"] = prdata["total"]["type"]
 results["total"]["label"] = prdata["total"]["label"]
 results["total"]["events"] = prdata["total"]["events"]
 diff_from(
-    metrics, prdata["total"], prdata["total"], ibdata["total"], ibdata["total"], results["total"]
+    metrics, ibdata["total"], ibdata["total"], prdata["total"], prdata["total"], results["total"]
 )
 
 results["modules"] = []
@@ -112,11 +112,11 @@ for module in prdata["modules"]:
     result["label"] = module["label"]
     result["events"] = module["events"]
     if key in datamapib:
-        diff_from(metrics, module, prdata["total"], datamapib[key], ibdata["total"], result)
+        diff_from(metrics, datamapib[key], ibdata["total"], module, prdata["total"], result)
         results["modules"].append(result)
     else:
         datamapib[key] = module
-        diff_from(metrics, module, prdata["total"], datamapib[key], ibdata["total"], result)
+        diff_from(metrics, datamapib[key], ibdata["total"], module, prdata["total"], result)
         results["modules"].append(result)
 
 datamapres = {module["type"] + "|" + module["label"]: module for module in results["modules"]}
@@ -157,30 +157,30 @@ summaryLines += [
     "<td>%s</td>" % prdata["total"]["label"],
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
-        prdata["total"]["time_real"],
         ibdata["total"]["time_real"],
+        prdata["total"]["time_real"],
         results["total"]["time_real_diff"],
     ),
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
-        prdata["total"]["time_thread"],
         ibdata["total"]["time_thread"],
+        prdata["total"]["time_thread"],
         results["total"]["time_thread_diff"],
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
-        prdata["total"]["mem_alloc"],
         ibdata["total"]["mem_alloc"],
+        prdata["total"]["mem_alloc"],
         results["total"]["mem_alloc_diff"],
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
-        prdata["total"]["mem_free"],
         ibdata["total"]["mem_free"],
+        prdata["total"]["mem_free"],
         results["total"]["mem_free_diff"],
     ),
     "<td>%i<br>%i<br>%i</td>"
-    % (prdata["total"]["events"], ibdata["total"]["events"], results["total"]["events"]),
+    % (ibdata["total"]["events"], prdata["total"]["events"], results["total"]["events"]),
     "</tr></table>",
     '<table><tr><td align="center">Module type</td>',
     '<td align="center">Module label</td>',

@@ -47,6 +47,7 @@ for prof in ${PROFILES} ; do
       done
       cd -
     else
+      ONEDNN_MAX_CPU_ISA=AVX2
       runTheMatrix.py $WF --command " -n $EVENTS --profile $prof" > ./runTheMatrix.log 2>&1 || ERR=1
       mv runTheMatrix.log $(ls -d $WORKFLOW*)
     fi

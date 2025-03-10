@@ -150,6 +150,9 @@ que_cmd = (
 jque_res = subprocess.run(que_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 queue_json = json.loads(jque_res.stdout)
 
+with open("parse_jenkins_builds.json") as f:
+    config = json.load(f)
+
 jenkins_queue = dict()
 current_time = get_current_time()
 for element in queue_json["items"]:
@@ -172,9 +175,6 @@ for element in queue_json["items"]:
 
     kill_index = 0
 
-    with open("parse_jenkins_builds.json") as f:
-        config = json.load(f)
-
     # Abort stuck jobs
     if (
         job_name in config["whitelist"]
@@ -189,27 +189,38 @@ for element in queue_json["items"]:
         if "rocm" not in (params.get("GPU_FLAVOR"), params.get("TEST_FLAVOR")):
             continue
 
-        try:
-            pull_request = params["PULL_REQUEST"]
-            main_params = f"PULL_REQUEST={pull_request}"
-            release = params["RELEASE_FORMAT"]
-            context = params["CONTEXT_PREFIX"]
-            upload_unique_id = params["UPLOAD_UNIQ_ID"]
-        except KeyError:
-            continue
+        # Try to reconnect the node
+        node_name = reason.rsplit("-", 1)[0]
+        connect_node = os.environ.get("JENKINS_CLI_CMD") + " connect-node " + node_name + " -f"
+        try_count = 1
+        while try_count < 4:
+            try_count += 1
+            ret = os.system(connect_node)
+            if ret == 0:
+                break
 
-        other_params = ";".join(f"{k}={v}" for k, v in params if k != "PULL_REQUEST")
+        if try_count == 4:
+            try:
+                pull_request = params["PULL_REQUEST"]
+                main_params = f"PULL_REQUEST={pull_request}"
+                release = params["RELEASE_FORMAT"]
+                context = params["CONTEXT_PREFIX"]
+                upload_unique_id = params["UPLOAD_UNIQ_ID"]
+            except KeyError:
+                continue
 
-        with open(f"abort-{kill_index}.prop", "w") as f:
-            f.write(f"UPLOAD_UNIQ_ID={upload_unique_id}\n")
-            f.write(f"PULL_REQUEST={pull_request}\n")
-            f.write(f"CONTEXT={context}\n")
-            f.write(f"JENKINS_PROJECT_TO_KILL={job_name}\n")
-            f.write(f"JENKINS_PROJECT_PARAMS={main_params}\n")
-            f.write(f"EXTRA_PARAMS={other_params}\n")
-            f.write(f"RELEASE_FORMAT={release}\n")
+            other_params = ";".join(f"{k}={v}" for k, v in params if k != "PULL_REQUEST")
 
-        kill_index += 1
+            with open(f"abort-{kill_index}.prop", "w") as f:
+                f.write(f"UPLOAD_UNIQ_ID={upload_unique_id}\n")
+                f.write(f"PULL_REQUEST={pull_request}\n")
+                f.write(f"CONTEXT={context}\n")
+                f.write(f"JENKINS_PROJECT_TO_KILL={job_name}\n")
+                f.write(f"JENKINS_PROJECT_PARAMS={main_params}\n")
+                f.write(f"EXTRA_PARAMS={other_params}\n")
+                f.write(f"RELEASE_FORMAT={release}\n")
+
+            kill_index += 1
 
     unique_id = (
         JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id)

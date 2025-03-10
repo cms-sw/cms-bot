@@ -174,25 +174,23 @@ def compare_maxmem_summary(**kwargs):
             ]
 
         summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> max memory used:</th>']
-        summaryLine += [
-            '<tr><td style="border-bottom-style: hidden;">&lt;pull request (MB)&gt;</td>'
-        ]
+        summaryLine += ['<tr><td style="border-bottom-style: hidden;">&lt;baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style: hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["max memory pr"]),
+                "{:,.2f}".format(workflows[workflow][step]["max memory base"]),
                 "</td>",
             ]
         summaryLine += [
             "</tr>",
         ]
         summaryLine += [
-            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>'
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;pull request (MB)&gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["max memory base"]),
+                "{:,.2f}".format(workflows[workflow][step]["max memory pr"]),
                 "</td>",
             ]
         summaryLine += [
@@ -240,25 +238,23 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             '<tr><th rowspan="5" style="white-space:nowrap"> total memory request:</th>'
         ]
-        summaryLine += [
-            '<tr><td style="border-bottom-style:hidden;"> &lt;pull request (MB)&gt;</td>'
-        ]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;"> &lt;baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["req memory pr"]),
+                "{:,.2f}".format(workflows[workflow][step]["req memory base"]),
                 "</td>",
             ]
         summaryLine += [
             "</tr>",
         ]
         summaryLine += [
-            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>'
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;pull request (MB)&gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["req memory base"]),
+                "{:,.2f}".format(workflows[workflow][step]["req memory pr"]),
                 "</td>",
             ]
         summaryLine += [
@@ -292,23 +288,23 @@ def compare_maxmem_summary(**kwargs):
             "</tr>",
         ]
         summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> # allocation calls:</th>']
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;pull request &gt;</td>']
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;">',
-                "{:,}".format(workflows[workflow][step]["nallocated pr"]),
+                "{:,}".format(workflows[workflow][step]["nallocated base"]),
                 "</td>",
             ]
         summaryLine += [
             "</tr>",
         ]
         summaryLine += [
-            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline &gt;</td>'
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;pull request &gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
-                "{:,}".format(workflows[workflow][step]["nallocated base"]),
+                "{:,}".format(workflows[workflow][step]["nallocated pr"]),
                 "</td>",
             ]
         summaryLine += [
@@ -339,25 +335,23 @@ def compare_maxmem_summary(**kwargs):
             "</tr>",
         ]
         summaryLine += ['<tr><th rowspan="5" style="white-space:nowrap"> memory leaked:</th>']
-        summaryLine += [
-            '<tr><td style="border-bottom-style:hidden;">&lt;pull request (MB)&gt;</td>'
-        ]
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;baseline (MB)&gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["leak memory pr"]),
+                "{:,.2f}".format(workflows[workflow][step]["leak memory base"]),
                 "</td>",
             ]
         summaryLine += [
             "</tr>",
         ]
         summaryLine += [
-            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline (MB)&gt;</td>'
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;pull request (MB)&gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["leak memory base"]),
+                "{:,.2f}".format(workflows[workflow][step]["leak memory pr"]),
                 "</td>",
             ]
         summaryLine += [
@@ -390,23 +384,23 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             '<tr><th rowspan="5" style="white-space:nowrap"> # allocation calls leaked:</th>'
         ]
-        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;pull request &gt;</td>']
+        summaryLine += ['<tr><td style="border-bottom-style:hidden;">&lt;baseline &gt;</td>']
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;">',
-                "{:,}".format(workflows[workflow][step]["nallocated pr"]),
+                "{:,}".format(workflows[workflow][step]["nallocated base"]),
                 "</td>",
             ]
         summaryLine += [
             "</tr>",
         ]
         summaryLine += [
-            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;baseline &gt;</td>'
+            '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;pull request &gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
-                "{:,}".format(workflows[workflow][step]["nallocated base"]),
+                "{:,}".format(workflows[workflow][step]["nallocated pr"]),
                 "</td>",
             ]
         summaryLine += [

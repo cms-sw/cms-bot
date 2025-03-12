@@ -428,6 +428,9 @@ def writeProfilingScript(wfdir, runscript, cmdlist):
         fi.write("\n")
 
         fi.write("")
+        fi.write("ONEDNN_MAX_CPU_ISA=AVX2\n")
+        fi.write("\n")
+        fi.write("MALLOC_CONF=zero:true\n")
         fi.write("\n")
         for cmd in cmdlist:
             fi.write(cmd + "\n")

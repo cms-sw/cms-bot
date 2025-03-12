@@ -79,7 +79,7 @@ function prepare_upload_results (){
     else
       mkdir -p upload
     fi
-    for f in external_checks git-recent-commits.json cmssw.tar.gz unitTests gpuUnitTests dasqueries testsResults build-logs clang-logs runTheMatrix*-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget cmsset_default; do
+    for f in external_checks git-recent-commits.json cmssw.tar.gz unitTests *UnitTests dasqueries testsResults build-logs clang-logs runTheMatrix*-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget cmsset_default; do
       [ -e $f ] && mv $f upload/$f
     done
     if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi
@@ -119,4 +119,17 @@ function prepare_upload_results (){
     fi
     mkdir -p ${RESULTS_DIR}
   popd
+}
+
+function is_in_array() {
+    local value="$1"
+    shift
+    local array=("$@")
+
+    for item in "${array[@]}"; do
+        if [[ "$item" == "$value" ]]; then
+            return 0  # Found match
+        fi
+    done
+    return 1  # No match
 }

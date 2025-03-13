@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 source ${CMS_BOT_DIR}/jenkins-artifacts
 rm -f *.prop
 

@@ -11,7 +11,7 @@ PR_ID=$(echo ${PULL_REQUEST} | cut -d '#' -f 2)
 COMMIT_ID=$(grep ${ARTIFACT_BASE_DIR_MAIN}/pull-request-integration/${UPLOAD_UNIQUE_ID}/prs_commits.txt "^${PULL_REQUEST}=")
 if [ "X${COMMIT_ID}" = "X" ] ; then exit 0 ; fi
 
-./cms-bot/update-commit-statuses-matching.py -r ${REPOSITORY} -c ${COMMIT_ID} -p ${CONTEXT} rocm
+${CMS_BOT_DIR}/update-commit-statuses-matching.py -r ${REPOSITORY} -c ${COMMIT_ID} -p ${CONTEXT} rocm
 
 touch abort-jenkins-job.prop
 echo "JENKINS_PROJECT_TO_KILL=${JENKINS_PROJECT_TO_KILL}" >> abort-jenkins-job.prop

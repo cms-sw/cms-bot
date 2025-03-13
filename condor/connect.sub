@@ -3,6 +3,7 @@ universe                = @REQUEST_UNIVERSE@
 request_cpus            = @REQUEST_CPUS@
 executable              = @SCRIPT_NAME@.sh
 transfer_input_files    = @INPUT_FILES@
+transfer_output_files   = log.job
 should_transfer_files   = yes
 when_to_transfer_output = on_exit
 output                  = logs/log.stdout

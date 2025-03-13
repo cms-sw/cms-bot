@@ -8,7 +8,7 @@ if [ "X${PULL_REQUEST}" = "X" ] ; then exit 0 ; fi
 REPOSITORY=$(echo ${PULL_REQUEST} | cut -d '#' -f 1)
 PR_ID=$(echo ${PULL_REQUEST} | cut -d '#' -f 2)
 
-COMMIT_ID=$(grep ${ARTIFACT_BASE_DIR_MAIN}/pull-request-integration/${UPLOAD_UNIQUE_ID}/prs_commits.txt "^${PULL_REQUEST}=")
+COMMIT_ID=$(grep ${ARTIFACT_BASE_DIR_MAIN}/pull-request-integration/${UPLOAD_UNIQUE_ID}/prs_commits.txt -e "^${PULL_REQUEST}=")
 if [ "X${COMMIT_ID}" = "X" ] ; then exit 0 ; fi
 
 ${CMS_BOT_DIR}/update-commit-statuses-matching.py -r ${REPOSITORY} -c ${COMMIT_ID} -p ${CONTEXT} rocm

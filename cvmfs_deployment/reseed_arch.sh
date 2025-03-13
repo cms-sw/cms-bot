@@ -21,4 +21,5 @@ if [ -f ${INSTALL_PATH}/${SCRAM_ARCH}/cms/cms-common/1.0/etc/profile.d/init.sh ]
     source $(dirname $0)/../dockerrun.sh
     export CMSPKG_OS_COMMAND=""
     dockerrun "sh -ex ${INSTALL_PATH}/bootstrap.sh -a ${SCRAM_ARCH} ${OPTS} -repository ${RPMS_REPO} -path ${INSTALL_PATH} reseed"
+    dockerrun "sh -ex ${INSTALL_PATH}/common/cmspkg -a  ${SCRAM_ARCH} env -- rpm -q --provides system-base-import"
 fi

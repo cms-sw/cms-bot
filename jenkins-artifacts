@@ -110,3 +110,48 @@ function get_jenkins_artifacts ()
   echo "JA_STATUS=ERROR"
   return 1
 }
+
+function get_status_file_name () {
+  # get_status_file_name TEST_TYPE TEST_FLAVOR
+  [ $# -eq 2 ] || return 1
+
+  TEST_TYPE=$1; shift;
+  TEST_FLAVOR=$1; shift;
+
+  UC_TEST_FLAVOR=$(echo "${TEST_FLAVOR}" | tr 'a-z' 'A-Z')
+
+  case $TEST_TYPE in
+    relval)
+      echo "relval${UC_TEST_FLAVOR}.txt"
+      return 0
+      ;;
+    utest)
+      echo "unittest${TEST_FLAVOR}.txt"
+      return 0
+      ;;
+  esac
+  return 1
+}
+
+function get_result_file_name () {
+  # get_result_file_name TEST_TYPE TEST_FLAVOR SUFFIX
+  [ $# -eq 3 ] || return 1
+
+  TEST_TYPE=$1; shift;
+  TEST_FLAVOR=$1; shift;
+  SUFFIX=$1
+
+  UC_TEST_FLAVOR=$(echo "${TEST_FLAVOR}" | tr 'a-z' 'A-Z')
+
+  case $TEST_TYPE in
+    relval)
+      echo "12${UC_TEST_FLAVOR}-relvals-${SUFFIX}.res"
+      return 0
+      ;;
+    utest)
+      echo "14-${TEST_FLAVOR}-${SUFFIX}.res"
+      return 0
+      ;;
+  esac
+  return 1
+}

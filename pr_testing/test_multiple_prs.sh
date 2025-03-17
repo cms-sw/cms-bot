@@ -154,7 +154,7 @@ if [ "${CMSSW_BRANCH}" = "master" ] ; then
   CMSSW_BRANCH=${CMSSW_DEVEL_BRANCH}
   CMSSW_DEVEL_REL=true
 fi
-if [ "${ECMSBOT_SET_ENV_ENABLE_MEMORY_PROFILE}" = "true" ] ; then ENABLE_MEMORY_PROFILE=true ; fi
+if [ "${CMSBOT_SET_ENV_ENABLE_MEMORY_PROFILE}" = "true" ] ; then ENABLE_MEMORY_PROFILE=true ; fi
 if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
     PRODUCTION_RELEASE=true

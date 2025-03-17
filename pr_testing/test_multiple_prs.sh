@@ -134,6 +134,7 @@ DO_DAS_QUERY=false
 DO_CRAB_TESTS=false
 DO_HLT_P2_TIMING=false
 DO_HLT_P2_INTEGRATION=false
+ENABLE_MEMORY_PROFILE=false
 [ "${UPLOAD_TO_PACKAGE_STORE}" != "" ] || UPLOAD_TO_PACKAGE_STORE=true
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
@@ -153,9 +154,11 @@ if [ "${CMSSW_BRANCH}" = "master" ] ; then
   CMSSW_BRANCH=${CMSSW_DEVEL_BRANCH}
   CMSSW_DEVEL_REL=true
 fi
+if [ "${ECMSBOT_SET_ENV_ENABLE_MEMORY_PROFILE}" = "true" ] ; then ENABLE_MEMORY_PROFILE=true ; fi
 if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
     PRODUCTION_RELEASE=true
+    ENABLE_MEMORY_PROFILE=true
     if ${CMSSW_DEVEL_REL} ; then
       DO_DAS_QUERY=true
       TEST_RELVALS_INPUT=true
@@ -1459,7 +1462,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   WF_COMMON="-s $(get_pr_relval_args $DO_COMPARISON '')"
   [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF_COMMON="${WF_COMMON};-l ${WORKFLOWS_PR_LABELS}"
   echo "MATRIX_ARGS=${WF_COMMON}" >> $WORKSPACE/run-relvals.prop
-  if $PRODUCTION_RELEASE && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
+  if $ENABLE_MEMORY_PROFILE && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
     echo "RUN_THE_MATRIX_CMD_OPTS=--maxmem_profile ${EXTRA_MATRIX_COMMAND_ARGS}" >> $WORKSPACE/run-relvals.prop
   fi
 

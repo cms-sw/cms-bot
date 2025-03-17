@@ -1,4 +1,4 @@
-#! /bin/csh
+#!/bin/csh
 
 set campaignName = (\
     RunIII2024Summer24DRPremix \
@@ -115,7 +115,7 @@ foreach x ( $campaignName )
     endif
 
     # Copy to proper localtion
-    cp -f PREMIX-$x.txt /eos/cms/store/group/offcomp-prod/premixPUlist
+    #cp -f PREMIX-$x.txt /eos/cms/store/group/offcomp-prod/premixPUlist
 
     @ i = $i + 1
 end

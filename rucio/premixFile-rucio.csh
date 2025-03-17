@@ -77,6 +77,7 @@ foreach x ( $campaignName )
     endif
 	
     # Check no. of files at CERN for reference
+    echo "  +  Checking  /eos/cms"$physicalPathAtCERNDisk[$i]"/"
     set noFilesCERN = `ls -l /eos/"cms$physicalPathAtCERNDisk[$i]"/* | grep phedex | wc -l`
     echo " + No. of physical files at CERN: " $noFilesCERN
 

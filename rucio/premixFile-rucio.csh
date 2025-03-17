@@ -87,7 +87,7 @@ foreach x ( $campaignName )
 	cp PREMIX-$x-OLD.txt PREMIX-$x.txt
     else
 	echo " + start to dump PU file"
-	python3 get_files_on_disk.py -a T2_CH_CERN T1_US_FNAL_Disk -o PREMIX-$x.txt $dataset[$i]
+	python3 get_files_on_disk.py -u cmsbot -a T2_CH_CERN T1_US_FNAL_Disk -o PREMIX-$x.txt $dataset[$i]
 	#dasgoclient --query="file site=T2_CH_CERN dataset=$dataset[$i]" >! PREMIX-$x.txt
 	echo " + Convert format; use global redirector"    
 	sed s+'/store'+'root://cms-xrd-global.cern.ch///store'+ PREMIX-$x.txt >! temp

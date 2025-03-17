@@ -84,7 +84,7 @@ foreach x ( $campaignName )
     # To get list of file
     if ( $premixLineOLD >= $noFilesCERN && $noFilesCERN > 0 ) then
 	echo " + No need to dump new file"
-	cp PREMIX-$x-OLD.txt PREMIX-$x.txt
+	mv PREMIX-$x-OLD.txt PREMIX-$x.txt
     else
 	echo " + start to dump PU file"
 	python3 get_files_on_disk.py -u cmsbot -a T2_CH_CERN T1_US_FNAL_Disk -o PREMIX-$x.txt $dataset[$i]
@@ -103,7 +103,7 @@ foreach x ( $campaignName )
 	    echo "   - New PU file is validated."
 	else
 	    echo "   - Seem to have issue with file dump. Use the OLD one."
-	    cp PREMIX-$x-OLD.txt PREMIX-$x.txt
+	    mv PREMIX-$x-OLD.txt PREMIX-$x.txt
 	endif
     else
 	echo " + No OLD file"

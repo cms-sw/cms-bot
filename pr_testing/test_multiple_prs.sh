@@ -1493,7 +1493,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
       grep -v '^MATRIX_ARGS=' $WORKSPACE/run-relvals.prop > $WORKSPACE/run-relvals-${ex_type_lc}.prop
       echo "MATRIX_ARGS=$(get_pr_relval_args $DO_COMPARISON _${ex_type})" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
-      if [ "${ENABLE_MEMORY_PROFILE}" = "ture" -a "${ex_type}" = "ROCM" ] ; then
+      if [ "${ENABLE_MEMORY_PROFILE}" = "true" -a "${ex_type}" = "ROCM" ] ; then
         sed -i -e 's|RUN_THE_MATRIX_CMD_OPTS=\-\-maxmem_profile\s*|RUN_THE_MATRIX_CMD_OPTS=|' $WORKSPACE/run-relvals-${ex_type_lc}.prop
       fi
     done

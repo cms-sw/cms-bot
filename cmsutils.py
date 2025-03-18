@@ -1,6 +1,6 @@
 from __future__ import print_function
 from _py2with3compatibility import run_cmd
-from os import getcwd
+from os import getcwd, environ
 from time import asctime, time, strftime, gmtime
 import sys, re
 from sys import platform
@@ -36,6 +36,8 @@ def getHostName():
 
 
 def _getCPUCount():
+    if "JENKINS_AGENT_CORES" in os.environ:
+        return int(os.environ["JENKINS_AGENT_CORES"])
     cmd = "nproc"
     if platform == "darwin":
         cmd = "sysctl -n hw.ncpu"

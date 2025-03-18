@@ -30,6 +30,14 @@
       "start_date": 1729036800
     }
   ],
+  "BenjaminRS": [
+    {
+      "category": [
+        "l1"
+      ],
+      "start_date": 1742256000
+    }
+  ],
   "ChrisMisan": [
     {
       "category": [
@@ -276,6 +284,7 @@
       "category": [
         "l1"
       ],
+      "end_date": 1742256000,
       "start_date": 1676937600
     }
   ],
@@ -825,6 +834,7 @@
       "category": [
         "l1"
       ],
+      "end_date": 1742256000,
       "start_date": 1638748800
     }
   ],
@@ -2133,6 +2143,14 @@
       ],
       "end_date": 1661644800,
       "start_date": 1598572800
+    }
+  ],
+  "quinnanm": [
+    {
+      "category": [
+        "l1"
+      ],
+      "start_date": 1742256000
     }
   ],
   "rappoccio": [

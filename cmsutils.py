@@ -36,8 +36,8 @@ def getHostName():
 
 
 def _getCPUCount():
-    if "JENKINS_AGENT_CORES" in os.environ:
-        return int(os.environ["JENKINS_AGENT_CORES"])
+    if "JENKINS_AGENT_CORES" in environ:
+        return int(environ["JENKINS_AGENT_CORES"])
     cmd = "nproc"
     if platform == "darwin":
         cmd = "sysctl -n hw.ncpu"

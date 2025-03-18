@@ -10,7 +10,7 @@ cd $WORKSPACE/${CMSSW_VERSION}
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
 
-RESULT_FILE_NAME=$(get_status_file_name utest $TEST_FLAVOR)
+RESULT_FILE_NAME=$(get_status_file_name utest "$TEST_FLAVOR")
 rm -f ${RESULTS_DIR}/${RESULT_FILE_NAME}
 mark_commit_status_all_prs "unittests/${TEST_FLAVOR}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 echo '--------------------------------------'
@@ -34,8 +34,8 @@ TEST_ERRORS=`grep -ai "had errors" $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt` |
 GENERAL_ERRORS=`grep -a "ALL_OK" $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt` || true
 
 TEST_FLAVOR_UC=$(echo $TEST_FLAVOR | tr '[:lower:]' '[:upper:]')
-REPORT_FILE_NAME=$(get_result_file_name utest $TEST_FLAVOR report)
-FAILED_FILE_NAME=$(get_result_file_name utest $TEST_FLAVOR failed)
+REPORT_FILE_NAME=$(get_result_file_name utest "$TEST_FLAVOR" report)
+FAILED_FILE_NAME=$(get_result_file_name utest "$TEST_FLAVOR" failed)
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo "Errors in the ${TEST_FLAVOR} unit tests"
   echo "${TEST_FLAVOR_UC}_UNIT_TEST_RESULTS;ERROR,Unit Tests ${TEST_FLAVOR_UC},See Log,${TEST_FLAVOR}UnitTests" >> ${RESULTS_DIR}/${RESULT_FILE_NAME}

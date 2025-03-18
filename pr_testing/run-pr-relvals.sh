@@ -79,12 +79,12 @@ popd
 TEST_ERRORS=$(grep -ai -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR' | grep -v 'ERROR failed to parse X509 proxy') || true
 GENERAL_ERRORS=`grep -a "ALL_OK" ${LOG}` || true
 
-RESULT_FILE_NAME=$(get_result_file_name relval ${TEST_FLAVOR} results)
-FAILED_FILE_NAME=$(get_result_file_name relval ${TEST_FLAVOR} failed)
+RESULT_FILE_NAME=$(get_result_file_name relval "${TEST_FLAVOR}" results)
+FAILED_FILE_NAME=$(get_result_file_name relval "${TEST_FLAVOR}" failed)
 
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo "Errors in the RelVals"
-  echo "MATRIX${UC_TEST_FLAVOR}_TESTS;ERROR,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/$(get_status_file_name relval $TEST_FLAVOR)
+  echo "MATRIX${UC_TEST_FLAVOR}_TESTS;ERROR,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/$(get_status_file_name relval "$TEST_FLAVOR")
   ALL_OK=false
   RELVALS_OK=false
   $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/${RESULT_FILE_NAME} --report-url ${PR_RESULT_URL} $NO_POST
@@ -102,7 +102,7 @@ else
   touch ${RESULTS_DIR}/${FAILED_FILE_NAME}
   touch ${RESULTS_DIR}/${RESULT_FILE_NAME}
   echo "no errors in the RelVals!!"
-  echo "MATRIX${UC_TEST_FLAVOR}_TESTS;OK,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/$(get_status_file_name relval $TEST_FLAVOR)
+  echo "MATRIX${UC_TEST_FLAVOR}_TESTS;OK,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/$(get_status_file_name relval "$TEST_FLAVOR")
 
   if $DO_COMPARISON ; then
     echo "COMPARISON${UC_TEST_FLAVOR};QUEUED,Comparison ${UC_TEST_FLAVOR} with the baseline,See results,See results" >> ${RESULTS_DIR}/comparison${UC_TEST_FLAVOR}.txt

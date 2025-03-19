@@ -24,6 +24,7 @@ else
     ulimit -a
   fi
 fi
+SCRIPTPATH="$(cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
 if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
@@ -40,6 +41,9 @@ fi
 if [ -e ${py3or2_dir} ] ; then
   XPATH="${py3or2_dir}:"
   [ $(echo $PATH | tr ':' '\n' | grep "^${py3or2_dir}$" | wc -l) -eq 0 ] && export PATH="${py3or2_dir}:${PATH}"
+fi
+if [ "${JENKINS_AGENT_CORES}" != "" ] ; then
+  export PATH="${SCRIPTPATH}/system-tools/nproc:${PATH}"
 fi
 if [ "${USE_SINGULARITY}" != "false" ] ; then export USE_SINGULARITY=true; fi
 kinit -R || true

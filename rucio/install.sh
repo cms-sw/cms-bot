@@ -97,11 +97,6 @@ fi
 ln -sf setup-py3.sh ${INSTALL_DIR}/setup.sh
 
 if $RUN_TESTS ; then
-  if [ "${X509_USER_CERT}" != "" -a "${X509_USER_KEY}" != "" ] ; then
-    voms-proxy-init -voms cms -cert $X509_USER_CERT -key $X509_USER_KEY
-  else
-    voms-proxy-init -voms cms
-  fi
   export RUCIO_ACCOUNT=$(voms-proxy-info | grep '^subject' | sed 's|.*Users/CN=||;s|/.*||')
   rucio whoami
   rucio list-dataset-replicas cms:/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv5-Nano1June2019_102X_upgrade2018_realistic_v19-v1/NANOAODSIM

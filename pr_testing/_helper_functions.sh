@@ -134,7 +134,6 @@ function is_in_array() {
     return 1  # No match
 }
 
-
 function get_status_file_name () {
   # get_status_file_name TEST_TYPE TEST_FLAVOR
   [ $# -eq 2 ] || return 1
@@ -190,4 +189,13 @@ function get_result_file_name () {
       ;;
   esac
   return 1
+}
+
+function get_gpu_matrix_args() {
+  GPU_FLAG=""
+  if runTheMatrix.py --help | grep -q '\-\-gpu' ; then
+    GPU_FLAG="--gpu required"
+  fi
+  OPTS="-w gpu ${GPU_FLAG}"
+  echo ${OPTS}
 }

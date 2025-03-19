@@ -134,6 +134,7 @@ DO_DAS_QUERY=false
 DO_CRAB_TESTS=false
 DO_HLT_P2_TIMING=false
 DO_HLT_P2_INTEGRATION=false
+ENABLE_MEMORY_PROFILE=false
 [ "${UPLOAD_TO_PACKAGE_STORE}" != "" ] || UPLOAD_TO_PACKAGE_STORE=true
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
@@ -153,9 +154,11 @@ if [ "${CMSSW_BRANCH}" = "master" ] ; then
   CMSSW_BRANCH=${CMSSW_DEVEL_BRANCH}
   CMSSW_DEVEL_REL=true
 fi
+if [ "${CMSBOT_SET_ENV_ENABLE_MEMORY_PROFILE}" = "true" ] ; then ENABLE_MEMORY_PROFILE=true ; fi
 if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
     PRODUCTION_RELEASE=true
+    ENABLE_MEMORY_PROFILE=true
     if ${CMSSW_DEVEL_REL} ; then
       DO_DAS_QUERY=true
       TEST_RELVALS_INPUT=true
@@ -1459,8 +1462,16 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   WF_COMMON="-s $(get_pr_relval_args $DO_COMPARISON '')"
   [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF_COMMON="${WF_COMMON};-l ${WORKFLOWS_PR_LABELS}"
   echo "MATRIX_ARGS=${WF_COMMON}" >> $WORKSPACE/run-relvals.prop
-  if $PRODUCTION_RELEASE && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
-    echo "RUN_THE_MATRIX_CMD_OPTS=--maxmem_profile ${EXTRA_MATRIX_COMMAND_ARGS}" >> $WORKSPACE/run-relvals.prop
+  FULL_MATRIX_ARGS="${EXTRA_MATRIX_COMMAND_ARGS}"
+  if  $ENABLE_MEMORY_PROFILE ; then
+    if cmsDriver.py --help | grep -q '\-\-maxmem_profile' ; then
+      FULL_MATRIX_ARGS="--maxmem_profile ${FULL_MATRIX_ARGS}"
+    else
+      ENABLE_MEMORY_PROFILE=false
+    fi
+  fi
+  if [ "${FULL_MATRIX_ARGS}" != "" ] ; then
+    echo "RUN_THE_MATRIX_CMD_OPTS=${FULL_MATRIX_ARGS}" >> $WORKSPACE/run-relvals.prop
   fi
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
@@ -1482,6 +1493,9 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
       grep -v '^MATRIX_ARGS=' $WORKSPACE/run-relvals.prop > $WORKSPACE/run-relvals-${ex_type_lc}.prop
       echo "MATRIX_ARGS=$(get_pr_relval_args $DO_COMPARISON _${ex_type})" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
+      if [ "${ENABLE_MEMORY_PROFILE}" = "true" -a "${ex_type}" = "ROCM" ] ; then
+        sed -i -e 's|RUN_THE_MATRIX_CMD_OPTS=\-\-maxmem_profile\s*|RUN_THE_MATRIX_CMD_OPTS=|' $WORKSPACE/run-relvals-${ex_type_lc}.prop
+      fi
     done
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e

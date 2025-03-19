@@ -170,7 +170,9 @@ fi
 readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 
 declare -a ENABLE_GPU_FLAVORS
-for ex_type in ${ENABLE_BOT_TESTS} ; do
+OLDIFS=$IFS
+IFS=","
+for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
   ex_type_lc=$(echo $ex_type | tr '[A-Z]' '[a-z]')
   if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}" ; then
     ENABLE_GPU_FLAVORS+=( $ex_type )
@@ -180,6 +182,7 @@ for ex_type in ${ENABLE_BOT_TESTS} ; do
     fi
   fi
 done
+IFS=$OLDIFS
 
 # ----------
 # -- MAIN --

@@ -22,7 +22,7 @@ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
       high_stats ) ;;
       nano ) OPTS="-w nano" ;;
       * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-            OPTS="-w gpu"
+            OPTS="-w gpu --gpu required"
           fi
           ;;
     esac

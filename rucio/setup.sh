@@ -1,5 +1,5 @@
 SELECTED_VERSION=current
-[ "$1" != "" ] && SELECTED_VERSION="$1"
+[ "$BASH_ARGC" -eq 0 ] && [ "$1" != "" ] && SELECTED_VERSION="$1"
 ARCH=$(uname -m)/$(/cvmfs/cms.cern.ch/common/cmsos | cut -d_ -f1 | sed 's|^[a-z]*|rhel|')
 THISDIR=$(cd $(dirname ${BASH_SOURCE:-${(%):-%N}}) >/dev/null 2>&1; /bin/pwd)/${ARCH}/
 if [ ! -e ${THISDIR}/${SELECTED_VERSION}/bin/rucio ] ; then

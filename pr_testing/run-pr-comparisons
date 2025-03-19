@@ -592,8 +592,8 @@ sed -i "s/^COMPARISON${TEST_FLAVOR_STR};RUNNING,/COMPARISON${TEST_FLAVOR_STR};$B
 mv ${RESULTS_FILE} $WORKSPACE/testsResults/
 
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
-REPORT_FILE=$WORKSPACE/testsResults/$(get_result_file_name "comp" "${TEST_FLAVOR}")
-NANO_REPORT_FILE=$WORKSPACE/testsResults/$(get_result_file_name "compnano" "${TEST_FLAVOR}")
+REPORT_FILE=$WORKSPACE/testsResults/$(get_result_file_name "comp" "${TEST_FLAVOR}" "")
+NANO_REPORT_FILE=$WORKSPACE/testsResults/$(get_result_file_name "compnano" "${TEST_FLAVOR}" "")
 ${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-url ${PR_RESULT_URL} \
   -f $WORKSPACE/${ERRORS_FILE} --f2 $WORKSPACE/wf_non_consistent_das.txt \
   --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt  --report-file $REPORT_FILE

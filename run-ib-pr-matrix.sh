@@ -1,22 +1,10 @@
-#!/bin/sh -ex
-function is_in_array() {
-    local value="$1"
-    shift
-    local array=("$@")
-
-    for item in "${array[@]}"; do
-        if [[ "$item" == "$value" ]]; then
-            return 0  # Found match
-        fi
-    done
-    return 1  # No match
-}
-
+#!/bin/bash -ex
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(cd $(dirname $0) >/dev/null 2>&1; pwd -P)
 readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
 source $CMS_BOT_DIR/jenkins-artifacts
+source $CMS_BOT_DIR/pr_testing/_helper_functions.sh
 #Run on any machine to see which workflows should be run
 if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   echo "${WORKFLOWS}" > ${WORKSPACE}/workflows-${BUILD_ID}.log
@@ -26,7 +14,7 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     high_stats ) ;;
     nano ) OPTS="-w nano" ;;
     * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-          OPTS="-w gpu"
+          OPTS=$(get_gpu_matrix_args)
         fi
         ;;
   esac
@@ -74,7 +62,7 @@ pushd "$WORKSPACE/matrix-results"
     nano )       MATRIX_ARGS="-w nano -i all ${MATRIX_ARGS}" ;;
     input )      MATRIX_ARGS="-i all --maxSteps=2 ${MATRIX_ARGS}" ; CMD_OPTS="-n 1 --prefix ${CMS_BOT_DIR}/pr_testing/retry-command.sh" ; export CMS_BOT_RETRY_COUNT=3 ;;
     * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-          MATRIX_ARGS="-w gpu ${MATRIX_ARGS}"
+          MATRIX_ARGS="$(get_gpu_matrix_args) ${MATRIX_ARGS}"
         fi
         ;;
   esac

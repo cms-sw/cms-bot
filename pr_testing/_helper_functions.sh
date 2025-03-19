@@ -133,3 +133,12 @@ function is_in_array() {
     done
     return 1  # No match
 }
+
+function get_gpu_matrix_args() {
+  GPU_FLAG=""
+  if runTheMatrix.py --help | grep -q '\-\-gpu' ; then
+    GPU_FLAG="--gpu required"
+  fi
+  OPTS="-w gpu ${GPU_FLAG}"
+  echo ${OPTS}
+}

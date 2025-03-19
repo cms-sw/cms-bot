@@ -1,5 +1,6 @@
 #!/bin/bash -ex
 source ${CMS_BOT_DIR}/jenkins-artifacts
+source ${CMS_BOT_DIR}/pr_testing/_helper_functions.sh
 rm -f *.prop
 
 if [ "X${UPLOAD_UNIQUE_ID}" = "X" ] ; then exit 0 ; fi

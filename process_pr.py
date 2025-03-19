@@ -1597,7 +1597,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # Extract enabled GPU flavors and remove them from enable_tests
     new_enable_tests = []
     enabled_gpu_flavors = set()
-    for test in enable_tests.split():
+    for test in enable_tests.split(","):
         if test == "GPU":
             enabled_gpu_flavors.update([x.upper() for x in ALL_GPU_FLAVORS])
         elif test.lower() in ALL_GPU_FLAVORS:
@@ -1606,7 +1606,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             new_enable_tests.append(test)
 
     new_enable_tests.extend(list(enabled_gpu_flavors))
-    enable_tests = " ".join(new_enable_tests)
+    enable_tests = ",".join(new_enable_tests)
 
     # Check if it needs to be automatically closed.
     if mustClose:

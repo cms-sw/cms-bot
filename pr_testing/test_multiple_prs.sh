@@ -1203,7 +1203,7 @@ if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
-if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^MULTI-MICROARCHS$' | wc -l) -gt 0 ] ; then
+if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^MULTI_MICROARCHS$' | wc -l) -gt 0 ] ; then
   scram build enable-multi-targets || true
 fi
 COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS /usr/bin/time -v scram b ${BUILD_VERBOSE} -k -j ${NCPU}"

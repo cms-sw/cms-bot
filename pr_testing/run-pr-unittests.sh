@@ -10,7 +10,8 @@ cd $WORKSPACE/${CMSSW_VERSION}
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
 
-rm -f ${RESULTS_DIR}/unittest${TEST_FLAVOR}.txt
+RESULT_FILE_NAME=$(get_status_file_name utest "$TEST_FLAVOR")
+rm -f ${RESULTS_DIR}/${RESULT_FILE_NAME}
 mark_commit_status_all_prs "unittests/${TEST_FLAVOR}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 echo '--------------------------------------'
 mkdir -p $WORKSPACE/${TEST_FLAVOR}UnitTests
@@ -33,15 +34,17 @@ TEST_ERRORS=`grep -ai "had errors" $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt` |
 GENERAL_ERRORS=`grep -a "ALL_OK" $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt` || true
 
 TEST_FLAVOR_UC=$(echo $TEST_FLAVOR | tr '[:lower:]' '[:upper:]')
+REPORT_FILE_NAME=$(get_result_file_name utest "$TEST_FLAVOR" report)
+FAILED_FILE_NAME=$(get_result_file_name utest "$TEST_FLAVOR" failed)
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo "Errors in the ${TEST_FLAVOR} unit tests"
-  echo "${TEST_FLAVOR_UC}_UNIT_TEST_RESULTS;ERROR,Unit Tests ${TEST_FLAVOR_UC},See Log,${TEST_FLAVOR}UnitTests" >> ${RESULTS_DIR}/unittest${TEST_FLAVOR}.txt
+  echo "${TEST_FLAVOR_UC}_UNIT_TEST_RESULTS;ERROR,Unit Tests ${TEST_FLAVOR_UC},See Log,${TEST_FLAVOR}UnitTests" >> ${RESULTS_DIR}/${RESULT_FILE_NAME}
   ALL_OK=false
   UNIT_TESTS_OK=false
-  $CMS_BOT_DIR/report-pull-request-results PARSE_${TEST_FLAVOR_UC}_UNIT_TESTS_FAIL -f $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt --report-file ${RESULTS_DIR}/14-unittest${TEST_FLAVOR}-report.res ${REPORT_OPTS}
-  echo "${TEST_FLAVOR}UnitTests" > ${RESULTS_DIR}/14-${TEST_FLAVOR}-failed.res
+  $CMS_BOT_DIR/report-pull-request-results PARSE_${TEST_FLAVOR_UC}_UNIT_TESTS_FAIL -f $WORKSPACE/${TEST_FLAVOR}UnitTests/log.txt --report-file ${RESULTS_DIR}/${REPORT_FILE_NAME} ${REPORT_OPTS}
+  echo "${TEST_FLAVOR}UnitTests" > ${RESULTS_DIR}/${FAILED_FILE_NAME}
 else
-  echo "${TEST_FLAVOR_UC}_UNIT_TEST_RESULTS;OK,Unit Tests ${TEST_FLAVOR_UC},See Log,${TEST_FLAVOR}UnitTests" >> ${RESULTS_DIR}/unittest${TEST_FLAVOR}.txt
+  echo "${TEST_FLAVOR_UC}_UNIT_TEST_RESULTS;OK,Unit Tests ${TEST_FLAVOR_UC},See Log,${TEST_FLAVOR}UnitTests" >> ${RESULTS_DIR}/${RESULT_FILE_NAME}
 fi
 echo "<html><head></head><body>" > $WORKSPACE/${TEST_FLAVOR}UnitTests/success.html
 cp $WORKSPACE/${TEST_FLAVOR}UnitTests/success.html $WORKSPACE/${TEST_FLAVOR}UnitTests/failed.html

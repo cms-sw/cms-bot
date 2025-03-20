@@ -15,7 +15,7 @@ from . import Framework
 from .Framework import readLine
 
 actions = []
-record_actions = False
+record_actions = True
 
 
 # Utility function for recording calls and optionally calling the original function
@@ -550,12 +550,7 @@ class TestProcessPr(Framework.TestCase):
             self.replayData = json.load(f)
 
         self.process_pr(
-            self.repo_config,
-            self.g,
-            repo,
-            issue,
-            False,
-            self.repo_config.CMSBUILD_USER,
+            self.repo_config, self.g, repo, issue, False, self.repo_config.CMSBUILD_USER, True
         )
         self.processPrData = actions
         self.checkOrSaveTest()
@@ -732,3 +727,18 @@ class TestProcessPr(Framework.TestCase):
 
     def test_draft_pr_fully_signed(self):
         self.runTest(prId=21)
+
+    def test_enable_one_valid(self):
+        self.runTest(prId=24)
+
+    def test_enable_one_invalid(self):
+        self.runTest(prId=24)
+
+    def test_enable_mix_valid_invalid(self):
+        self.runTest(prId=24)
+
+    def test_enable_all(self):
+        self.runTest(prId=24)
+
+    def test_test_with_wf(self):
+        self.runTest(prId=24)

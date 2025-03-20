@@ -146,7 +146,7 @@ ALL_CHECK_FUNCTIONS = None
 ALL_GPU_FLAVORS = [
     x.strip() for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
 ]
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"] + ALL_GPU_FLAVORS
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"] + ALL_GPU_FLAVORS
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)

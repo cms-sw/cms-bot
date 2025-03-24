@@ -100,7 +100,7 @@ TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
 IGNORING_TESTS_MSG = "Ignoring test request."
-TESTS_RESULTS_MSG = r"^\s*([-|+]1|I had the issue.*)$"
+TESTS_RESULTS_MSG = r"^([-|+]1|I had the issue.*)$"
 FAILED_TESTS_MSG = "The jenkins tests job failed, please try again."
 PUSH_TEST_ISSUE_MSG = r"^\[Jenkins CI\] Testing commit: [0-9a-f]+$"
 HOLD_MSG = "^Pull request has been put on hold by (.+)$"
@@ -116,14 +116,14 @@ CMSSW_RELEASE_QUEUE_PATTERN = format(
     "(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)", cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN
 )
 RELVAL_OPTS = r"[-][a-zA-Z0-9_.,\s/'-]+"
-CLOSE_REQUEST = re.compile(r"^((@|)cmsbuild\s*[,]* |)(please\s*[,]* |)close$", re.I)
-REOPEN_REQUEST = re.compile(r"^((@|)cmsbuild\s*[,]* |)(please\s*[,]* |)(re|)open$", re.I)
+CLOSE_REQUEST = re.compile(r"^close$", re.I)
+REOPEN_REQUEST = re.compile(r"(re|)open$", re.I)
 CMS_PR_PATTERN = format(
     "(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)",
     cmsorgs="|".join(EXTERNAL_REPOS),
 )
 TEST_REGEXP = format(
-    r"^((@|)cmsbuild\s*[,]* |)(please\s*[,]* |)test( workflow(s|) (%(workflow)s(\s*,\s*%(workflow)s|)*)|)( with (%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)( for %(release_queue)s|)( using full cmssw| using (cms-|)addpkg (%(pkg)s(,%(pkg)s)*)|)$",
+    r"^test( workflow(s|) (%(workflow)s(,%(workflow)s|)*)|)( with (%(cms_pr)s(,%(cms_pr)s)*)|)( for %(release_queue)s|)( using full cmssw| using (cms-|)addpkg (%(pkg)s(,%(pkg)s)*)|)$",
     workflow=WF_PATTERN,
     cms_pr=CMS_PR_PATTERN,
     pkg=CMSSW_PACKAGE_PATTERN,
@@ -132,9 +132,9 @@ TEST_REGEXP = format(
 
 AUTO_TEST_REPOS = ["cms-sw/cmssw"]
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
-REGEX_TEST_ABORT = re.compile(r"^((@|)cmsbuild\s*[,]* |)(please\s*[,]* |)abort( test|)$", re.I)
+REGEX_TEST_ABORT = re.compile(r"^abort( test|)$", re.I)
 REGEX_TEST_IGNORE = re.compile(
-    r"^(?:(?:@|)cmsbuild\s*[,]* |)(?:please\s*[,]* |)ignore tests-rejected (?:with|)([a-z -]+)$",
+    r"^ignore tests-rejected (?:with|)([a-z -]+)$",
     re.I,
 )
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
@@ -157,9 +157,9 @@ JENKINS_NODES = r"[a-zA-Z0-9_|&\s()-]+"
 MULTILINE_COMMENTS_MAP = {
     "(workflow|relval)(s|)("
     + EXTRA_RELVALS_TESTS_OPTS
-    + "|)": [format(r"%(workflow)s(\s*,\s*%(workflow)s|)*", workflow=WF_PATTERN), "MATRIX_EXTRAS"],
+    + "|)": [format(r"%(workflow)s(,%(workflow)s|)*", workflow=WF_PATTERN), "MATRIX_EXTRAS"],
     "(workflow|relval)(s|)_profiling": [
-        format(r"%(workflow)s(\s*,\s*%(workflow)s|)*", workflow=WF_PATTERN),
+        format(r"%(workflow)s(,%(workflow)s|)*", workflow=WF_PATTERN),
         "PROFILING_WORKFLOWS",
     ],
     "pull_request(s|)": [
@@ -170,13 +170,13 @@ MULTILINE_COMMENTS_MAP = {
     "disable_poison": ["true|false", "DISABLE_POISON"],
     "use_ib_tag": ["true|false", "USE_IB_TAG"],
     "baseline": ["self|default", "USE_BASELINE"],
-    "set_env": [r"[A-Z][A-Z0-9_]+(\s*,\s*[A-Z][A-Z0-9_]+|)*", "CMSBOT_SET_ENV"],
-    "skip_test(s|)": [format(r"(%(tests)s)(\s*,\s*(%(tests)s))*", tests=SKIP_TESTS), "SKIP_TESTS"],
+    "set_env": [r"[A-Z][A-Z0-9_]+(,[A-Z][A-Z0-9_]+|)*", "CMSBOT_SET_ENV"],
+    "skip_test(s|)": [format(r"(%(tests)s)(,(%(tests)s))*", tests=SKIP_TESTS), "SKIP_TESTS"],
     "dry_run": ["true|false", "DRY_RUN"],
     "jenkins_(slave|node)": [JENKINS_NODES, "RUN_ON_SLAVE"],
     "(arch(itecture(s|))|release|release/arch)": [CMSSW_RELEASE_QUEUE_PATTERN, "RELEASE_FORMAT"],
     ENABLE_TEST_PTRN: [
-        format(r"(%(tests)s)(\s*,\s*(%(tests)s))*", tests=EXTRA_TESTS),
+        format(r"(%(tests)s)(,(%(tests)s))*", tests=EXTRA_TESTS),
         "ENABLE_BOT_TESTS",
     ],
     "ignore_test(s|)": ["build-warnings|clang-warnings", "IGNORE_BOT_TESTS"],
@@ -952,13 +952,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # Process Pull Request
     pkg_categories = set([])
     REGEX_TYPE_CMDS = (
-        r"^(type|(build-|)state) (([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
+        r"^(type|(build-|)state) (([-+]|)[a-z][a-z0-9_-]+)(,([-+]|)[a-z][a-z0-9_-]+)*$"
     )
     REGEX_EX_CMDS = r"^urgent$|^backport (of |)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (
         repo.full_name
     )
     known_ignore_tests = "%s" % MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
-    REGEX_EX_IGNORE_CHKS = r"^ignore ((%s)(\s*,\s*(%s))*|none)$" % (
+    REGEX_EX_IGNORE_CHKS = r"^ignore ((%s)(,(%s))*|none)$" % (
         known_ignore_tests,
         known_ignore_tests,
     )
@@ -1236,8 +1236,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
             continue
         comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
+        # collapse repeated whitespace
         comment_msg = re.sub("[\t ]+", " ", comment_msg)
+        # remove whitespace around commas
+        comment_msg = re.sub(r"\s*,\s*", ",", comment_msg)
+        # select first non-blank line
         first_line = "".join([l.strip() for l in comment_msg.split("\n") if l.strip()][0:1])
+        # remove "@cmsbuild please" prefix
+        first_line = re.sub(r"^((@|)cmsbuild\s*[,]* |)(please\s*[,]* |)", "", first_line)
         if (not already_seen) and re.match(ISSUE_SEEN_MSG, first_line):
             already_seen = comment
             if REGEX_COMMITS_CACHE.search(comment_msg):

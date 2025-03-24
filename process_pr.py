@@ -1236,14 +1236,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
             continue
         comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
-        # collapse repeated whitespace
-        comment_msg = re.sub("[\t ]+", " ", comment_msg)
-        # remove whitespace around commas
-        comment_msg = re.sub(r"\s*,\s*", ",", comment_msg)
         # select first non-blank line
         first_line = "".join([l.strip() for l in comment_msg.split("\n") if l.strip()][0:1])
-        # remove "@cmsbuild please" prefix
-        first_line = re.sub(r"^((@|)cmsbuild\s*[,]* |)(please\s*[,]* |)", "", first_line)
         if (not already_seen) and re.match(ISSUE_SEEN_MSG, first_line):
             already_seen = comment
             if REGEX_COMMITS_CACHE.search(comment_msg):
@@ -1273,11 +1267,19 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if (not valid_commenter) and (requestor != commenter):
             continue
         comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
+        # collapse repeated whitespace
+        comment_msg = re.sub("[\t ]+", " ", comment_msg)
+        # remove whitespace around commas
+        comment_msg = re.sub(r"\s*,\s*", ",", comment_msg)
+
         # The first line is an invariant.
         comment_lines = [
             re.sub("[\t ]+", " ", l.strip()) for l in comment_msg.split("\n") if l.strip()
         ]
         first_line = "".join(comment_lines[0:1])
+        # remove "@cmsbuild please" prefix
+        first_line = re.sub(r"^((@|)cmsbuild\s*[,]* |)(please\s*[,]* |)", "", first_line)
+
         if commenter == cmsbuild_user:
             if re.match(ISSUE_SEEN_MSG, first_line):
                 if not already_seen:

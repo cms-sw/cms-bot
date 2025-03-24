@@ -150,7 +150,7 @@ que_cmd = (
 jque_res = subprocess.run(que_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 queue_json = json.loads(jque_res.stdout)
 
-with open("parse_jenkins_builds.json") as f:
+with open(os.path.join(os.path.dirname(__file__), "parse_jenkins_builds.json")) as f:
     config = json.load(f)
 
 jenkins_queue = dict()

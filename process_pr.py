@@ -113,7 +113,9 @@ CMSSW_QUEUE_PATTERN = "CMSSW_[0-9]+_[0-9]+_(X|[A-Z][A-Z0-9]+_X|[0-9]+(_[a-zA-Z0-
 CMSSW_PACKAGE_PATTERN = "[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)"
 ARCH_PATTERN = "[a-z0-9]+_[a-z0-9]+_[a-z0-9]+"
 CMSSW_RELEASE_QUEUE_PATTERN = format(
-    "(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)", cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN
+    "(?P<queue>%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)",
+    cmssw=CMSSW_QUEUE_PATTERN,
+    arch=ARCH_PATTERN,
 )
 RELVAL_OPTS = r"[-][a-zA-Z0-9_.,\s/'-]+"
 CLOSE_REQUEST = re.compile(r"^close$", re.I)
@@ -123,7 +125,7 @@ CMS_PR_PATTERN = format(
     cmsorgs="|".join(EXTERNAL_REPOS),
 )
 TEST_REGEXP = format(
-    r"^test( workflow(s|) (%(workflow)s(,%(workflow)s|)*)|)( with (%(cms_pr)s(,%(cms_pr)s)*)|)( for %(release_queue)s|)( using full cmssw| using (cms-|)addpkg (%(pkg)s(,%(pkg)s)*)|)$",
+    r"^test( workflow(s|) (?P<wf>%(workflow)s(,%(workflow)s|)*)|)( with (?P<pr>%(cms_pr)s(,%(cms_pr)s)*)|)( for %(release_queue)s|)(?P<using> using full cmssw| using (cms-|)addpkg (?P<pkg>%(pkg)s(,%(pkg)s)*)|)$",
     workflow=WF_PATTERN,
     cms_pr=CMS_PR_PATTERN,
     pkg=CMSSW_PACKAGE_PATTERN,
@@ -668,21 +670,20 @@ def check_release_format(first_line, repo, params, *args):
 
 
 def check_test_cmd(first_line, repo, params):
-    m = REGEX_TEST_REG.match(first_line)
-    if m:
+    if m := REGEX_TEST_REG.match(first_line):
         wfs = ""
         prs = []
         cmssw_que = ""
         logging.debug("check_test_cmd: {0}".format(m.groups()))
-        if m.group(6):
-            wfs = ",".join(set(m.group(6).replace(" ", "").split(",")))
-        if m.group(11):
-            prs = get_prs_list_from_string(m.group(11), repo)
-        if m.group(20):
-            cmssw_que = m.group(20)
-        if m.group(25):
-            if "addpkg" in m.group(25):
-                params["EXTRA_CMSSW_PACKAGES"] = m.group(27).strip()
+        if tmp := m.group("wf"):
+            wfs = ",".join(set(tmp.replace(" ", "").split(",")))
+        if tmp := m.group("pr"):
+            prs = get_prs_list_from_string(tmp, repo)
+        if tmp := m.group("queue"):
+            cmssw_que = tmp
+        if m.group("using"):
+            if tmp := m.group("pkg"):
+                params["EXTRA_CMSSW_PACKAGES"] = tmp.strip()
             else:
                 params["BUILD_FULL_CMSSW"] = "true"
         return (True, " ".join(prs), wfs, cmssw_que)

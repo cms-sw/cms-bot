@@ -19,6 +19,7 @@
 # along with PyGithub. If not, see <http://www.gnu.org/licenses/>.             #
 #                                                                              #
 ################################################################################
+import argparse
 
 from . import Framework
 
@@ -26,15 +27,19 @@ collect_ignore = ["condor/tests"]
 
 
 def pytest_addoption(parser):
-    parser.addoption("--record", action="store_true", help="record mode")
-    parser.addoption("--auth_with_token", action="store_true", help="auth using a token")
-    parser.addoption("--auth_with_jwt", action="store_true", help="auth using JWT")
+    parser.addoption(
+        "--record", action="store_true", help="record github api requests and responses"
+    )
+    parser.addoption("--record_actions", action="store_true", help="record bot actions")
+    # dummy option, we always use token
+    parser.addoption("--auth_with_token", action="store_true", help=argparse.SUPPRESS)
 
 
 def pytest_configure(config):
     if config.getoption("record"):
         Framework.activateRecordMode()
-    if config.getoption("auth_with_token"):
-        Framework.activateTokenAuthMode()
-    if config.getoption("auth_with_jwt"):
-        Framework.activateJWTAuthMode()
+
+    if config.getoption("record_actions"):
+        Framework.activateActionRecordMode()
+
+    Framework.activateTokenAuthMode()

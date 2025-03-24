@@ -15,7 +15,6 @@ from . import Framework
 from .Framework import readLine
 
 actions = []
-record_actions = False
 
 
 # Utility function for recording calls and optionally calling the original function
@@ -491,7 +490,7 @@ class TestProcessPr(Framework.TestCase):
     def __closeEventReplayFileIfNeeded(self):
         if self.__eventFile is not None:
             if (
-                not record_actions
+                not self.actionRecordMode
             ):  # pragma no branch (Branch useful only when recording new tests, not used during automated tests)
                 self.assertEqual(readLine(self.__eventFile), "")
             self.__eventFile.close()
@@ -542,7 +541,7 @@ class TestProcessPr(Framework.TestCase):
         repo = self.g.get_repo("iarspider-cmssw/cmssw")
         issue = repo.get_issue(prId)
 
-        if record_actions:
+        if self.actionRecordMode:
             self.__openEventFile("w")
             self.replayData = None
         else:
@@ -562,7 +561,7 @@ class TestProcessPr(Framework.TestCase):
         self.__closeEventReplayFileIfNeeded()
 
     def checkOrSaveTest(self):
-        if record_actions:
+        if self.actionRecordMode:
             json.dump(self.processPrData, self.__eventFile, indent=4)
         else:
             TestProcessPr.compareActions(self.processPrData, self.replayData)

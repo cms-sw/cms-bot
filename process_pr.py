@@ -1561,7 +1561,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     and (test_sha != "UNKNOWN")
                     and (not "I had the issue " in first_line)
                 ):
-                    logger.warning("Ignoring test results for sha:", test_sha)
+                    logger.warning("Ignoring test results for sha: %s", test_sha)
                     continue
                 comparison_done = False
                 comparison_notrun = False

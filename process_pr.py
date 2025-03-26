@@ -881,6 +881,13 @@ def fetch_pr_result(url):
     return e, o
 
 
+def preprocess_comment_text(comment_msg):
+    comment_lines = [l.strip() for l in comment_msg.split("\n") if l.strip()]
+    # comment_lines = [re.sub(r"\s{2,}", " ", x) for x in comment_lines]
+    # comment_lines = [re.sub(r"^(?:@?cmsbuild\s*[,]*\s+)?(?:please\s*[,]*\s+)?", "", x) for x in comment_lines]
+    return comment_lines
+
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     global L2_DATA
     if (not force) and ignore_issue(repo_config, repo, issue):
@@ -1249,7 +1256,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             continue
         comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
         # The first line is an invariant.
-        comment_lines = [l.strip() for l in comment_msg.split("\n") if l.strip()]
+        comment_lines = preprocess_comment_text(comment_msg)
         first_line = "".join(comment_lines[0:1])
         if commenter == cmsbuild_user:
             if re.match(ISSUE_SEEN_MSG, first_line):

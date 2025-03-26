@@ -133,7 +133,7 @@ CMSSW_L2 = {
     "bellan": ["pf"],
     "kdlong": ["pf"],
     "swagata87": ["pf"],
-    "afiqaize": ["egamma-pog"],
+    "Raffaella07": ["egamma-pog"],
     "RSalvatico": ["egamma-pog"],
     "kirschen": ["jetmet-pog"],
     "alkaloge": ["jetmet-pog"],

@@ -140,6 +140,14 @@
       "start_date": 1687478400
     }
   ],
+  "Raffaella07": [
+    {
+      "category": [
+        "egamma-pog"
+      ],
+      "start_date": 1742774400
+    }
+  ],
   "SWuchterl": [
     {
       "category": [
@@ -224,6 +232,7 @@
       "category": [
         "egamma-pog"
       ],
+      "end_date": 1742774400,
       "start_date": 1713830400
     }
   ],

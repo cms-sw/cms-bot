@@ -1092,8 +1092,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             logger.info("This pull request requires ORP approval")
             signing_categories.add("orp")
 
-        logger.info("Following categories affected:")
-        logger.info("\n".join(signing_categories))
+        logger.info("Following categories affected: %s", ", ".join(signing_categories))
 
         if cmssw_repo:
             # If there is a new package, add also a dummy "new" category.
@@ -1143,7 +1142,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             watchers.remove(watcher)
             watchers.update(set(watchingGroups[watcher]))
         watchers = set([gh_user_char + u for u in watchers])
-        logger.info("Watchers %s", ", ".join(watchers))
+        logger.info("Watchers: %s", ", ".join(watchers))
 
         all_commits = get_pr_commits_reversed(pr)
         all_commit_shas = {commit.sha for commit in all_commits}

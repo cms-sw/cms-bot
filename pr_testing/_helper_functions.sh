@@ -134,6 +134,63 @@ function is_in_array() {
     return 1  # No match
 }
 
+function get_status_file_name () {
+  # get_status_file_name TEST_TYPE TEST_FLAVOR
+  [ $# -eq 2 ] || return 1
+
+  TEST_TYPE=$1; shift;
+  TEST_FLAVOR=$1; shift;
+
+  UC_TEST_FLAVOR=$(echo "${TEST_FLAVOR}" | tr 'a-z' 'A-Z')
+
+  case $TEST_TYPE in
+    relval)
+      echo "relval${UC_TEST_FLAVOR}.txt"
+      return 0
+      ;;
+    utest)
+      echo "unittest${TEST_FLAVOR}.txt"
+      return 0
+      ;;
+  esac
+  return 1
+}
+
+function get_result_file_name () {
+  # get_result_file_name TEST_TYPE TEST_FLAVOR SUFFIX
+  [ $# -eq 3 ] || return 1
+
+  TEST_TYPE=$1; shift;
+  TEST_FLAVOR=$1; shift;
+  SUFFIX=$1
+
+  UC_TEST_FLAVOR=$(echo "${TEST_FLAVOR}" | tr 'a-z' 'A-Z')
+
+  case $TEST_TYPE in
+    relval)
+      echo "12${UC_TEST_FLAVOR}-relvals-${SUFFIX}.res"
+      return 0
+      ;;
+    utest)
+      echo "14-${TEST_FLAVOR}-${SUFFIX}.res"
+      return 0
+      ;;
+    comp)
+      if [ "$TEST_FLAVOR" != "" ]; then
+        echo "20-${TEST_FLAVOR}-comparison-report.res"
+      else
+        echo "20-comparison-report.res"
+      fi
+      return 0
+      ;;
+    compnano)
+      echo "21-${TEST_FLAVOR}-comparison-report.res"
+      return 0
+      ;;
+  esac
+  return 1
+}
+
 function get_gpu_matrix_args() {
   GPU_FLAG=""
   if runTheMatrix.py --help | grep -q '\-\-gpu' ; then

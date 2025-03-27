@@ -1003,7 +1003,20 @@ def get_pr_commits_reversed(pr):
 
 
 def enable_github_loggin():
-    import logging
+    import logging, inspect, os
+
+    class CallsiteFormatter(logging.Formatter):
+        def format(self, record):
+            # Walk the call stack to find the first frame outside of PyGithub
+            for frame_info in inspect.stack():
+                filename = frame_info.filename
+                if "site-packages/github/" not in filename.replace(
+                    "\\", "/"
+                ) and "PyGithub/github/" not in filename.replace("\\", "/"):
+                    record.filename = os.path.basename(filename)
+                    record.lineno = frame_info.lineno
+                    break
+            return super().format(record)
 
     class MyHandler(logging.Handler):
         level = logging.DEBUG
@@ -1011,7 +1024,7 @@ def enable_github_loggin():
         def emit(self, record):
             try:
                 msg = self.format(record)
-                msg = " ".join(msg.split(" ", 2)[:2])
+                msg = " ".join(msg.split(" ", 4)[:4])
                 sys.stdout.write(msg + "\n")
                 sys.stdout.flush()
             except RecursionError:
@@ -1020,6 +1033,9 @@ def enable_github_loggin():
                 self.handleError(record)
 
     hd = MyHandler()
+    formatter = CallsiteFormatter("%(filename)s:%(lineno)d [PyGithub] %(message)s")
+    hd.setFormatter(formatter)
+
     logger = logging.getLogger("github")
     logger.setLevel(logging.DEBUG)
     if logger.hasHandlers():

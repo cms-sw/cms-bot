@@ -921,6 +921,10 @@ def preprocess_comment_text(comment_msg):
     return comment_lines
 
 
+def ensure_ascii(string):
+    return string.encode("ascii", "replace").decode("ascii", "replace")
+
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     global L2_DATA
     if (not force) and ignore_issue(repo_config, repo, issue):
@@ -991,7 +995,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     last_commit_date = None
     last_commit_obj = None
     push_test_issue = False
-    requestor = issue.user.login.encode("ascii", "ignore").decode()
+    requestor = ensure_ascii(issue.user.login)
     ignore_tests = ""
     enable_tests = ""
     commit_statuses = None
@@ -1167,12 +1171,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         logger.info(
             "Latest commit by %s at %s",
-            last_commit.committer.name.encode("ascii", "ignore").decode(),
+            ensure_ascii(last_commit.committer.name),
             last_commit_date,
         )
-        logger.info(
-            "Latest commit message: %s", last_commit.message.encode("ascii", "ignore").decode()
-        )
+        logger.info("Latest commit message: %s", ensure_ascii(last_commit.message))
         logger.info("Latest commit sha: %s", last_commit.sha)
         logger.info("PR update time: %s", pr.updated_at)
         logger.info("Time UTC: %s", datetime.utcnow())
@@ -1184,7 +1186,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             except:
                 pass
             if (not dryRun) and add_labels:
-                labels = [x.name.encode("ascii", "ignore").decode() for x in issue.labels]
+                labels = [ensure_ascii(x.name) for x in issue.labels]
                 if not "future-commit" in labels:
                     labels.append("future-commit")
                     issue.edit(labels=labels)
@@ -1251,15 +1253,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     code_check_apply_patch = False
     override_tests_failure = None
     bot_cache = {}
-    old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
+    old_labels = set(ensure_ascii(x.name) for x in issue.labels)
 
     # start of parsing comments to find the bot_cache
     # to use information during the actual comment loop
     for comment in issue.get_comments():
         all_comments.append(comment)
-        if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
+        if ensure_ascii(comment.user.login) != cmsbuild_user:
             continue
-        comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
+        comment_msg = ensure_ascii(comment.body) if comment.body else ""
         first_line = "".join([l.strip() for l in comment_msg.split("\n") if l.strip()][0:1])
         if (not already_seen) and re.match(ISSUE_SEEN_MSG, first_line):
             already_seen = comment
@@ -1280,7 +1282,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     for comment in all_comments:
         ack_comment = comment
-        commenter = comment.user.login.encode("ascii", "ignore").decode()
+        commenter = ensure_ascii(comment.user.login)
         commenter_categories = get_commenter_categories(
             commenter, int(comment.created_at.strftime("%s"))
         )
@@ -1289,7 +1291,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         )
         if (not valid_commenter) and (requestor != commenter):
             continue
-        comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
+        comment_msg = ensure_ascii(comment.body) if comment.body else ""
         # The first line is an invariant.
         comment_lines = preprocess_comment_text(comment_msg)
         first_line = "".join(comment_lines[0:1])
@@ -1977,7 +1979,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             dryRun = True
             break
 
-    old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
+    old_labels = set(ensure_ascii(x.name) for x in issue.labels)
     logger.info(
         "Stats: backport_pr_num=%s, extra_labels=%s, state_labels=%s",
         backport_pr_num,
@@ -2024,7 +2026,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     trigger_test = True
                     signatures["tests"] = "started"
                 desc = "requested by %s at %s UTC." % (
-                    test_comment.user.login.encode("ascii", "ignore").decode(),
+                    ensure_ascii(test_comment.user.login),
                     test_comment.created_at,
                 )
                 if not new_bot_tests:
@@ -2210,7 +2212,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     )
                 else:
                     new_msg = ""
-                    for l in already_seen.body.encode("ascii", "ignore").decode().split("\n"):
+                    for l in ensure_ascii(already_seen.body):
                         if BACKPORT_STR in l:
                             continue
                         new_msg += l + "\n"
@@ -2653,7 +2655,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if commentMsg and dryRun:
         logger.debug("The following comment will be made:")
         try:
-            logger.debug(commentMsg.encode("ascii", "replace").decode("ascii", "replace"))
+            logger.debug(ensure_ascii(commentMsg))
         except:
             pass
     for pre_check in pre_checks + extra_pre_checks:
@@ -2747,7 +2749,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         state = get_status(bot_ack_name, commit_statuses)
         if (not state) or (state.target_url != ack_comment.html_url):
             desc = "Comment by %s at %s UTC processed." % (
-                ack_comment.user.login.encode("ascii", "ignore").decode(),
+                ensure_ascii(ack_comment.user.login),
                 ack_comment.created_at,
             )
             logger.debug("Create bot/ack status: %s", desc)

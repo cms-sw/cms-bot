@@ -666,6 +666,7 @@ def check_matrix_extras(first_line, repo, params, mkey, param, *args):
     )
     if kitem[-1] in EXTRA_RELVALS_TESTS:
         param = param + "_" + kitem[-1].upper().replace("-", "_")
+    first_line = ",".join(sorted(first_line.split(",")))
     logger.debug("check_extra_matrix_args: first_line=%s, param=%s", first_line, param)
     return first_line, param
 
@@ -1604,7 +1605,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     test_comment = comment
                     abort_test = None
                     cmssw_prs = v2
-                    extra_wfs = v3
+                    extra_wfs = ",".join(sorted(v3.split(",")))
                     release_queue = v4
                     release_arch = ""
                     if "/" in release_queue:
@@ -1652,7 +1653,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             new_enable_tests.append(test)
 
     new_enable_tests.extend(list(enabled_gpu_flavors))
-    enable_tests = ",".join(new_enable_tests)
+    enable_tests = ",".join(sorted(new_enable_tests))
 
     # Check if it needs to be automatically closed.
     if mustClose:

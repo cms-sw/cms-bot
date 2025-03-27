@@ -325,7 +325,7 @@ def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
         if old_body == new_body:
             continue
 
-        logger.info("Saving bot cache ({0}/{1})".format(i + 1, len(data)))
+        logger.info("Saving bot cache (%s/%s)", i + 1, len(data))
         if not dryRun:
             if cache_comment:
                 cache_comment.edit(new_body)
@@ -342,9 +342,9 @@ def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
     if len(data) < len(cache_comments):
         for i in range(len(data), len(cache_comments)):
             logger.debug(
-                "Deleting bot cache comment ({0}/{1})".format(
-                    i + 1 - len(data), len(cache_comments) - len(data)
-                )
+                "Deleting bot cache comment (%s/%s)",
+                i + 1 - len(data),
+                len(cache_comments) - len(data),
             )
             if not dryRun:
                 cache_comments[i].delete()
@@ -422,9 +422,9 @@ def create_properties_file_tests(
 
 def create_property_file(out_file_name, parameters, dryRun):
     if dryRun:
-        logger.info("Not creating properties file (dry-run): %s" % out_file_name)
+        logger.info("Not creating properties file (dry-run): %s", out_file_name)
         return
-    logger.info("Creating properties file %s" % out_file_name)
+    logger.info("Creating properties file %s", out_file_name)
     out_file = open(out_file_name, "w")
     for k in parameters:
         out_file.write("%s=%s\n" % (k, parameters[k]))
@@ -459,7 +459,7 @@ def find_last_comment(issue, user, match):
         ):
             continue
         last_comment = comment
-        logger.debug(f"Matched comment from {comment.user.login} with comment id {comment.id}")
+        logger.debug("Matched comment from %s with comment id %s", comment.user.login, comment.id)
     return last_comment
 
 
@@ -692,7 +692,7 @@ def check_test_cmd(first_line, repo, params):
         wfs = ""
         prs = []
         cmssw_que = ""
-        logger.debug("check_test_cmd: {0}".format(m.groups()))
+        logger.debug("check_test_cmd: %s", m.groups())
         if m.group(6):
             wfs = ",".join(set(m.group(6).replace(" ", "").split(",")))
         if m.group(11):
@@ -790,7 +790,7 @@ def multiline_check_function(first_line, comment_lines, repository):
     if first_line.lower() not in ["test parameters", "test parameters:"]:
         return False, {}, ""
     extra_params = parse_extra_params(comment_lines, repository)
-    logger.debug(f"multiline_check_function: extra_params=%s", extra_params)
+    logger.debug("multiline_check_function: extra_params=%s", extra_params)
     if "errors" in extra_params:
         return False, {}, extra_params["errors"]
     return True, extra_params, ""
@@ -808,25 +808,22 @@ def get_changed_files(repo, pr, use_gh_patch=False):
                 pass
         logger.info("PR Files: %s", pr_files)
         return pr_files
+    diff_url = "https://patch-diff.githubusercontent.com/raw/{}/pull/{}.diff".format(
+        repo.full_name, pr.number
+    )
     cmd = (
-        "curl -s -L https://patch-diff.githubusercontent.com/raw/%s/pull/%s.diff | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq"
-        % (repo.full_name, pr.number)
+        "curl -s -L %s | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq"
+        % diff_url
     )
     e, o = run_cmd(cmd)
     if e:
-        logger.error(
-            "Request to https://patch-diff.githubusercontent.com/raw/%s/pull/%s.diff failed"
-            % (repo.full_name, pr.number)
-        )
+        logger.error("Request to %s failed", diff_url)
         logger.error(e)
         exit(1)
     if o:
         return o.split("\n")
     else:
-        logger.error(
-            "Request to https://patch-diff.githubusercontent.com/raw/%s/pull/%s.diff did not return any changes, is the PR too big?"
-            % (repo.full_name, pr.number)
-        )
+        logger.error("Request to %s did not return any changes, is the PR too big?", diff_url)
         exit(1)
 
 
@@ -950,7 +947,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         pass
     if not cmsbuild_user:
         cmsbuild_user = repo_config.CMSBUILD_USER
-    logger.info(f"Working on {repo.full_name} for PR/Issue {prId} with admin user {cmsbuild_user}")
+    logger.info(
+        "Working on %s for PR/Issue %s with admin user %s", repo.full_name, prId, cmsbuild_user
+    )
     logger.info("Notify User: %s", gh_user_char)
     update_CMSSW_LABELS(repo_config)
     set_gh_user(cmsbuild_user)
@@ -1075,8 +1074,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             except:
                 pass
 
-        logger.info("Following packages affected:")
-        logger.info("\n".join(packages))
+        logger.info("Following packages affected: %s", ", ".join(packages))
         for package in packages:
             package_categories[package] = set([])
             for category in get_package_categories(package):
@@ -1131,7 +1129,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         for user, cats in list(catWatchers.items()):
             for cat in cats:
                 if (cat in signing_categories) or (cat in non_block_cats):
-                    logger.debug(f"Added {user} to watch due to cat {cat}")
+                    logger.debug("Added %s to watch due to cat %s", user, cat)
                     watchers.add(user)
 
         # Handle watchers
@@ -1164,18 +1162,20 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         code_checks_status = [
             s for s in commit_statuses if s.context == "%s/code-checks" % cms_status_prefix
         ]
-        logger.info(f"PR Statuses:{len(commit_statuses)}: {commit_statuses}")
+        logger.info("PR Statuses (%s total): %s", len(commit_statuses), commit_statuses)
         last_commit_date = last_commit.committer.date
 
         logger.info(
-            f"Latest commit by {last_commit.committer.name.encode('ascii', 'ignore').decode()} at {last_commit_date}"
+            "Latest commit by %s at %s",
+            last_commit.committer.name.encode("ascii", "ignore").decode(),
+            last_commit_date,
         )
         logger.info(
-            f"Latest commit message: {last_commit.message.encode('ascii', 'ignore').decode()}"
+            "Latest commit message: %s", last_commit.message.encode("ascii", "ignore").decode()
         )
-        logger.info(f"Latest commit sha: {last_commit.sha}")
-        logger.info(f"PR update time: {pr.updated_at}")
-        logger.info(f"Time UTC: {datetime.utcnow()}")
+        logger.info("Latest commit sha: %s", last_commit.sha)
+        logger.info("PR update time: %s", pr.updated_at)
+        logger.info("Time UTC: %s", datetime.utcnow())
         if last_commit_date > datetime.utcnow():
             logger.warning("==== Future commit found ====")
             add_labels = True
@@ -1220,7 +1220,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             pre_checks_state[pre_check] = get_status_state(
                 "%s/%s" % (cms_status_prefix, pre_check), commit_statuses
             )
-        logger.debug(f"Pre check status: {pre_checks_state}")
+        logger.debug("Pre check status: %s", pre_checks_state)
     already_seen = None
     technical_comments = []
     pull_request_updated = False
@@ -1389,7 +1389,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if issue.state == "open":
                     mustClose = True
                 comment_emoji = "+1"
-                logger.info(f"==> Closing request received from {commenter}")
+                logger.info("==> Closing request received from %s", commenter)
         elif REOPEN_REQUEST.match(first_line):
             comment_emoji = "-1"
             if (commenter_categories or (commenter in releaseManagers)) or (
@@ -1399,7 +1399,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if (issue.state == "closed") and (comment.created_at >= issue.closed_at):
                     reOpen = True
                 comment_emoji = "+1"
-                logger.info(f"==> Reopen request received from {commenter}")
+                logger.info("==> Reopen request received from %s", commenter)
         elif re.match(r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line):
             comment_emoji = "-1"
             if commenter in CMSSW_ISSUES_TRACKERS:
@@ -1496,7 +1496,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             elif pre_checks_state["code-checks"] in ["pending"]:
                 continue
             pre_checks_state["code-checks"] = ""
-            logger.info(f"Found: Code Checks request {code_checks_tools}")
+            logger.info("Found: Code Checks request %s", code_checks_tools)
             continue
 
         # Check for cmsbuild_user comments and tests requests only for pull requests
@@ -1578,7 +1578,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 else:
                     signatures["tests"] = "pending"
                 logger.debug(
-                    "Previous tests already finished, resetting test request state to ",
+                    "Previous tests already finished, resetting test request state to %s",
                     signatures["tests"],
                 )
 
@@ -1611,7 +1611,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         release_arch = release_queue
                         release_queue = ""
                     logger.info(
-                        f"Tests requested: {commenter} asked to test this PR with cmssw_prs=%s, release_queue=%s, arch=%s and workflows=%s",
+                        "Tests requested: %s asked to test this PR with cmssw_prs=%s, release_queue=%s, arch=%s and workflows=%s",
+                        commenter,
                         cmssw_prs,
                         release_queue,
                         release_arch,
@@ -1746,7 +1747,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if sha in bot_cache["commits"] and bot_cache["commits"][sha].get("squashed", False)
         ]:
             bot_cache["commits"][commit_sha]["squashed"] = False
-            logger.info("A squashed commit {0} is added back.".format(commit_sha))
+            logger.warning("A squashed commit %s was unsquashed", commit_sha)
 
         # "Squashed" flag is used to avoid finding missing commits after we have actually
         # handled the squash
@@ -1776,9 +1777,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             new_head_commit_sha = pr.head.sha
             base_commit_sha = pr.base.sha
             logger.debug(
-                "Base sha {0}, New head sha {1}, last_seen_sha {2}".format(
-                    base_commit_sha, new_head_commit_sha, last_seen_commit_sha
-                )
+                "Base sha %s, New head sha %s, last_seen_sha %s",
+                base_commit_sha,
+                new_head_commit_sha,
+                last_seen_commit_sha,
             )
 
             changes_before_squash = repo.compare(base_commit_sha, last_seen_commit_sha)
@@ -1803,7 +1805,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
             # Mark removed commits in cache as squashed
             for commit_sha in missing_commits:
-                logger.debug("Marked commit {0} as squashed".format(commit_sha))
+                logger.debug("Marked commit %s as squashed", commit_sha)
                 bot_cache["commits"][commit_sha]["squashed"] = True
 
         bot_cache["last_seen_sha"] = pr.head.sha
@@ -1836,7 +1838,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         # Inject events from cached commits
         for commit_sha, cache_entry in bot_cache["commits"].items():
             if cache_entry.get("squashed", False):
-                logger.debug("Adding back cached commit {0}".format(commit_sha))
+                logger.debug("Adding back cached commit %s", commit_sha)
                 events[datetime.fromtimestamp(cache_entry["time"])].append(
                     {
                         "type": "commit",
@@ -1861,10 +1863,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             cached_signed_commit_sha = bot_cache["signatures"].get(comment_id)
             if cached_signed_commit_sha and cached_signed_commit_sha != signed_commit_sha:
                 logger.warning(
-                    "Comment {0}, cached commit {1} doesn't match the present commit {2}. "
-                    "This comment will be ignored.".format(
-                        comment_id, cached_signed_commit_sha, signed_commit_sha
-                    )
+                    "Comment %s, cached commit %s doesn't match the present commit %s. "
+                    "This comment will be ignored.",
+                    comment_id,
+                    cached_signed_commit_sha,
+                    signed_commit_sha,
                 )
                 continue
 
@@ -1889,9 +1892,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         signatures[sign] = "rejected"
             else:
                 logger.warning(
-                    "Ignoring event: {0} includes none of {1}".format(
-                        selected_cats, signing_categories
-                    )
+                    "Ignoring signature event: %s includes none of %s",
+                    selected_cats,
+                    signing_categories,
                 )
         elif event["type"] == "commit":
             auto_test_comment = None
@@ -1912,7 +1915,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             else:
                 for cat in signing_categories:
                     signatures[cat] = "pending"
-            logger.debug("Signatures:", signatures)
+            logger.debug("Signatures: %s", signatures)
 
     # if (
     #     issue.pull_request
@@ -1964,7 +1967,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     logger.info("Newly assigned cats: %s", ",".join(new_assign_cats))
     logger.info("Ignore tests: %s", ignore_tests)
     logger.info("Enable tests: %s", enable_tests)
-    logger.info("Tests: %s" % (cmssw_prs))
+    logger.info("Tests: %s", cmssw_prs)
     logger.info("Abort: %s", abort_test)
     logger.info("Test comment: %s, bot status %s", test_comment, bot_status)
 
@@ -2028,7 +2031,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     desc = "Old style tests %s" % desc
                 else:
                     desc = "Tests %s" % desc
-                logger.debug(f'Create status "{desc}"')
+                logger.debug('Create status "%s"', desc)
                 if not dryRun:
                     last_commit_obj.create_status(
                         "success", description=desc, target_url=turl, context=bot_status_name
@@ -2633,7 +2636,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     commentMsg = ""
     logger.debug(
-        "Status: already_seen=%s, pull_request_updated=%s" % (already_seen, pull_request_updated)
+        "Status: already_seen=%s, pull_request_updated=%s", already_seen, pull_request_updated
     )
     if is_closed_branch(pr.base.ref) and (pr.state != "closed"):
         commentMsg = messageBranchClosed
@@ -2646,7 +2649,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     elif not missingApprovals:
         logger.debug("Pull request is already fully signed. Not sending message.")
     else:
-        logger.debug("Already notified L2 about " + str(pr.number))
+        logger.debug("Already notified L2 about %s", pr.number)
     if commentMsg and dryRun:
         logger.debug("The following comment will be made:")
         try:
@@ -2667,7 +2670,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if pre_checks_state[pre_check] in ["pending", ""]:
                 state = "success" if signatures[pre_check] == "approved" else "error"
                 url = pre_checks_url[pre_check]
-                logger.info(f"Setting status: pre_check=%s,state=%s,url=%s", pre_check, state, url)
+                logger.info(
+                    "Setting status: pre_check=%s, state=%s, url=%s", pre_check, state, url
+                )
                 if not dryRunOrig:
                     last_commit_obj.create_status(
                         state,

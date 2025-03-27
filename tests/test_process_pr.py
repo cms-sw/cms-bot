@@ -732,3 +732,30 @@ class TestProcessPr(Framework.TestCase):
 
     def test_draft_pr_fully_signed(self):
         self.runTest(prId=21)
+
+    def test_test_workflow(self):
+        self.runTest(prId=24)
+
+    def test_test_using_addpkg(self):
+        self.runTest(prId=24)
+
+    def test_test_using_full(self):
+        self.runTest(prId=24)
+
+    def test_test_with_pr(self):
+        self.runTest(prId=24)
+
+    def test_test_for_queue(self):
+        self.runTest(prId=24)
+
+    def test_test_for_arch(self):
+        self.runTest(prId=24)
+
+    def test_test_for_quearch(self):
+        self.runTest(prId=24)
+
+    def test_test_all_params(self):
+        self.runTest(prId=24)
+
+    def test_testparams_all_params(self):
+        self.runTest(prId=24)

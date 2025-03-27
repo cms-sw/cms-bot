@@ -1,0 +1,96 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "72cc05e17ee74e5ace3c4e5d5d066de49e364edb": {
+                    "files": [
+                        "Validation/README"
+                    ],
+                    "squashed": false,
+                    "time": 1742466110
+                }
+            },
+            "emoji": {
+                "2740067147": "+1",
+                "2740383001": "+1"
+            },
+            "last_seen_sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
+            "signatures": {}
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2740067147,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2740383001",
+            "description": "Tests requested by iarspider at 2025-03-20 13:01:47 UTC.",
+            "context": "bot/24/jenkins"
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2740383001,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "tests-started"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "tests-pending"
+        ]
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-tests-iarspider-cmssw-cmssw-24.properties",
+            "data": {
+                "RELEASE_FORMAT": "CMSSW_12_6_X",
+                "PULL_REQUESTS": "iarspider-cmssw/cmssw#24",
+                "ENABLE_BOT_TESTS": "CUDA,HIGH_STATS,NANO,PROFILING,ROCM,THREADING",
+                "ARCHITECTURE_FILTER": "slc7_amd64_gcc930",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
+                "CONTEXT_PREFIX": "cms/24"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2740383001,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\":{\"files\":[\"Validation/README\"],\"squashed\":false,\"time\":1742466110}},\"emoji\":{\"2740067147\":\"+1\",\"2740383001\":\"+1\"},\"last_seen_sha\":\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\",\"signatures\":{}} -->"
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2740383001",
+            "description": "Comment by iarspider at 2025-03-20 13:01:47 UTC processed.",
+            "context": "bot/24/ack"
+        }
+    }
+]

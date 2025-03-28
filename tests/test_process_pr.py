@@ -32,10 +32,21 @@ def hook_and_call_original(hook, original_function, call_original, self, *args, 
 
 def on_issuecomment_edit(self, *args, **kwargs):
     kwargs.pop("res")
-    assert len(kwargs) == 0, "IssueComment.edit signature has changed"
-    assert len(args) == 1, "IssueComment.edit signature has changed"
 
-    body = args[0]
+    good_signature = False
+    body = ""
+
+    if len(args) == 1 and len(kwargs) == 0:
+        body = args[0]
+        good_signature = True
+    else:
+        if len(args) == 0 and set(kwargs.keys()) == {"body"}:
+            good_signature = True
+            body = kwargs["body"]
+
+    if not good_signature:
+        assert False, "IssueComment.edit signature has changed"
+
     actions.append({"type": "edit-comment", "data": body})
     print("DRY RUN: Updating existing comment with text")
     print(body.encode("ascii", "ignore").decode())
@@ -759,3 +770,9 @@ class TestProcessPr(Framework.TestCase):
 
     def test_testparams_all_params(self):
         self.runTest(prId=24)
+
+    def test_backport(self):
+        self.runTest(prId=26)
+
+    def test_backport_already_seen(self):
+        self.runTest(prId=26)

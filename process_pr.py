@@ -2213,7 +2213,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     )
                 else:
                     new_msg = ""
-                    for l in ensure_ascii(already_seen.body):
+                    for l in ensure_ascii(already_seen.body).split("\n"):
                         if BACKPORT_STR in l:
                             continue
                         new_msg += l + "\n"

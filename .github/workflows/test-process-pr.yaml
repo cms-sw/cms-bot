@@ -26,7 +26,9 @@ jobs:
           sparse-checkout: tests/Framework.py
           sparse-checkout-cone-mode: false
       - run: mv tmp/tests/Framework.py tests/
-      - run: sed -i -e 's/pool_size=self.pool_size/per_page=100/g' tests/Framework.py
+      - run: |
+          cd tests
+          patch -p0 < Framework.patch
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:

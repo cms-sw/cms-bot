@@ -1,0 +1,37 @@
+--- Framework.py.orig	2025-04-03 10:01:22.739783757 +0200
++++ Framework.py	2025-04-03 10:03:32.558079128 +0200
+@@ -241,6 +241,7 @@
+ 
+ class BasicTestCase(unittest.TestCase):
+     recordMode = False
++    recordActionMode = False
+     tokenAuthMode = False
+     jwtAuthMode = False
+     retry = None
+@@ -349,15 +350,15 @@
+ 
+         if self.tokenAuthMode:
+             self.g = github.Github(
+-                self.oauth_token, retry=self.retry, pool_size=self.pool_size
++                self.oauth_token, retry=self.retry, per_page=100
+             )
+         elif self.jwtAuthMode:
+             self.g = github.Github(
+-                jwt=self.jwt, retry=self.retry, pool_size=self.pool_size
++                jwt=self.jwt, retry=self.retry, per_page=100
+             )
+         else:
+             self.g = github.Github(
+-                self.login, self.password, retry=self.retry, pool_size=self.pool_size
++                self.login, self.password, retry=self.retry, per_page=100
+             )
+ 
+ 
+@@ -379,3 +380,7 @@
+ 
+ def setPoolSize(pool_size):
+     BasicTestCase.pool_size = pool_size
++
++
++def activateRecordActionMode():  # pragma no cover (Function useful only when recording new tests, not used during automated tests)
++    BasicTestCase.recordActionMode = True

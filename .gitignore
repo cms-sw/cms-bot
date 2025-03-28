@@ -2,5 +2,10 @@
 .idea
 *.properties
 tests/Framework.py
-venv
+venv*
 GithubCredentials.py
+.coverage
+htmlcov
+/tests/ReplayData/TestProcessPr.test_mark_rejected.txt
+/tests/ReplayData/TestProcessPr.test_mark_passed.txt
+/tests/*.log

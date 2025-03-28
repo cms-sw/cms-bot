@@ -88,6 +88,33 @@
         "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"28ce3f5888b5433dcae409ee336b2ad422595246\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733495641},\"9138474754099798ff50cb07287e7caa4786f247\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733482192}},\"emoji\":{\"2523442237\":\"+1\",\"2532358732\":\"+1\"},\"last_seen_sha\":\"28ce3f5888b5433dcae409ee336b2ad422595246\",\"signatures\":{}} -->"
     },
     {
+        "type": "save-bot-cache",
+        "data": {
+            "commits": {
+                "28ce3f5888b5433dcae409ee336b2ad422595246": {
+                    "files": [
+                        "FWCore/Utilities/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1733495641
+                },
+                "9138474754099798ff50cb07287e7caa4786f247": {
+                    "files": [
+                        "FWCore/Utilities/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1733482192
+                }
+            },
+            "emoji": {
+                "2523442237": "+1",
+                "2532358732": "+1"
+            },
+            "last_seen_sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
+            "signatures": {}
+        }
+    },
+    {
         "type": "status",
         "data": {
             "commit": "28ce3f5888b5433dcae409ee336b2ad422595246",

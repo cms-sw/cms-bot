@@ -130,6 +130,60 @@
         "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711538467},\"79752f053efecad55dde17732259737e621a1f3f\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1712828239},\"dae848e38b8e387d7283a3e35818121487d9d76b\":{\"files\":[\"DQMServices/Components/test/dqmiofilecopy.sh\"],\"squashed\":false,\"time\":1712829250},\"e4d069b76c464274bf6e7d7cf9bac2153ed9a903\":{\"files\":[\"DQMServices/Components/test/dqmiofilecopy.sh\"],\"squashed\":false,\"time\":1712819089}},\"emoji\":{\"2049242908\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\",\"2056796593\":\"+1\",\"2056801055\":\"+1\",\"2056820593\":\"+1\",\"2056903278\":\"+1\",\"2056930228\":\"+1\",\"2056934192\":\"+1\",\"2056935714\":\"+1\",\"2056946596\":\"-1\"},\"last_seen_sha\":\"dae848e38b8e387d7283a3e35818121487d9d76b\",\"signatures\":{\"2049242908\":\"2a9454e30606b17e52000110972998326ce9e428\"}} -->"
     },
     {
+        "type": "save-bot-cache",
+        "data": {
+            "commits": {
+                "2a9454e30606b17e52000110972998326ce9e428": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1711538467
+                },
+                "79752f053efecad55dde17732259737e621a1f3f": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1712828239
+                },
+                "dae848e38b8e387d7283a3e35818121487d9d76b": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1712829250
+                },
+                "e4d069b76c464274bf6e7d7cf9bac2153ed9a903": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1712819089
+                }
+            },
+            "emoji": {
+                "2049242908": "+1",
+                "2049536626": "+1",
+                "2056736344": "+1",
+                "2056739513": "+1",
+                "2056740892": "+1",
+                "2056796593": "+1",
+                "2056801055": "+1",
+                "2056820593": "+1",
+                "2056903278": "+1",
+                "2056930228": "+1",
+                "2056934192": "+1",
+                "2056935714": "+1",
+                "2056946596": "-1"
+            },
+            "last_seen_sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
+            "signatures": {
+                "2049242908": "2a9454e30606b17e52000110972998326ce9e428"
+            }
+        }
+    },
+    {
         "type": "status",
         "data": {
             "commit": "dae848e38b8e387d7283a3e35818121487d9d76b",

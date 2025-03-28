@@ -34,7 +34,6 @@ from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
 from github_utils import (
-    edit_pr,
     api_rate_limits,
     get_pr_commits_reversed,
     get_commit,
@@ -49,19 +48,19 @@ import sys
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
+except ImportError:  # pragma: no cover
     from yaml import Loader, Dumper
 try:
     from categories import CATS_TO_APPROVE_ON_TEST
-except:
+except:  # pragma: no cover
     CATS_TO_APPROVE_ON_TEST = []
 try:
     from categories import CMSSW_LABELS
-except:
+except:  # pragma: no cover
     CMSSW_LABELS = {}
 try:
     from categories import get_dpg_pog
-except:
+except:  # pragma: no cover
 
     def get_dpg_pog(*args):
         return {}
@@ -69,7 +68,7 @@ except:
 
 try:
     from categories import external_to_package
-except:
+except:  # pragma: no cover
 
     def external_to_package(*args):
         return ""
@@ -77,7 +76,7 @@ except:
 
 try:
     from releases import get_release_managers, is_closed_branch
-except:
+except:  # pragma: no cover
 
     def get_release_managers(*args):
         return []
@@ -211,19 +210,76 @@ L2_DATA = {}
 logger: logging.Logger
 
 
+def addLoggingLevel(levelName, levelNum, methodName=None):
+    """
+    Comprehensively adds a new logging level to the `logging` module and the
+    currently configured logging class.
+
+    `levelName` becomes an attribute of the `logging` module with the value
+    `levelNum`. `methodName` becomes a convenience method for both `logging`
+    itself and the class returned by `logging.getLoggerClass()` (usually just
+    `logging.Logger`). If `methodName` is not specified, `levelName.lower()` is
+    used.
+
+    To avoid accidental clobberings of existing attributes, this method will
+    raise an `AttributeError` if the level name is already an attribute of the
+    `logging` module or if the method name is already present
+
+    Example
+    -------
+    >>> addLoggingLevel('TRACE', logging.DEBUG - 5)
+    >>> logging.getLogger(__name__).setLevel("TRACE")
+    >>> logging.getLogger(__name__).trace('that worked')
+    >>> logging.trace('so did this')
+    >>> logging.TRACE
+    5
+
+    """
+    if not methodName:
+        methodName = levelName.lower()
+
+    if hasattr(logging, levelName):
+        return
+    if hasattr(logging, methodName):
+        return
+    if hasattr(logging.getLoggerClass(), methodName):
+        return
+
+    # This method was inspired by the answers to Stack Overflow post
+    # http://stackoverflow.com/q/2183233/2988730, especially
+    # http://stackoverflow.com/a/13638084/2988730
+    def logForLevel(self, message, *args, **kwargs):
+        if self.isEnabledFor(levelNum):
+            self._log(levelNum, message, args, **kwargs)
+
+    def logToRoot(message, *args, **kwargs):
+        logging.log(levelNum, message, *args, **kwargs)
+
+    logging.addLevelName(levelNum, levelName)
+    setattr(logging, levelName, levelNum)
+    setattr(logging.getLoggerClass(), methodName, logForLevel)
+    setattr(logging, methodName, logToRoot)
+
+
 def setup_logging(loglevel):
-    numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError(f"Invalid log level: {loglevel}")
+    addLoggingLevel("TRACE", logging.DEBUG - 5)
+
+    if isinstance(loglevel, int):
+        numeric_level = loglevel
+    else:
+        numeric_level = getattr(logging, loglevel.upper(), None)
+        if numeric_level is None:
+            raise ValueError(f"Invalid log level: {loglevel}")
 
     global logger
     logger = logging.getLogger(__name__)
-    logger.setLevel(numeric_level)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(numeric_level)
-    formatter = logging.Formatter("%(filename)s:%(lineno)d [%(levelname)s] %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    if not len(logger.handlers):
+        logger.setLevel(numeric_level)
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(numeric_level)
+        formatter = logging.Formatter("%(filename)s:%(lineno)d [%(levelname)s] %(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
 
 try:
@@ -237,7 +293,7 @@ try:
             original__create_status(*args, **kwargs)
 
     Commit.Commit.create_status = my_create_status
-except ImportError as e:
+except ImportError as e:  # pragma: no cover
     print("[WARNING] Failed to import Commit from github", file=sys.stderr)
     pass
 
@@ -277,6 +333,7 @@ def collect_commit_cache(bot_cache):
     REGEX_COMMIT_SHA = re.compile("^[a-f0-9]{40}$", re.IGNORECASE)
     commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
     if commit_cache:
+        logger.info("Found old commit cache, upgrading")
         for k in commit_cache:
             del bot_cache[k]
         bot_cache["commits"] = commit_cache
@@ -306,7 +363,7 @@ def extract_bot_cache(comment_msgs):
 
     if data:
         res = read_bot_cache(data)
-        logger.debug("Loaded bot cache:\n%s", dumps(res))
+        logger.trace("Loaded bot cache:\n%s", dumps(res))
         return res
 
     return {}
@@ -328,7 +385,7 @@ def prepare_bot_cache(bot_cache):
 
 
 def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
-    logger.debug("Save bot cache: %s", dumps(bot_cache))
+    logger.trace("Save bot cache: %s", dumps(bot_cache))
     data = prepare_bot_cache(bot_cache)
     for i, part in enumerate(data):
         try:
@@ -347,7 +404,7 @@ def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
                 cache_comment.edit(new_body)
             else:
                 issue.create_comment(new_body)
-        else:
+        else:  # pragma: no cover
             if cache_comment:
                 logger.info("DRY RUN: Updating existing comment with text")
             else:
@@ -436,7 +493,7 @@ def create_properties_file_tests(
     create_property_file(out_file_name, parameters, dryRun)
 
 
-def create_property_file(out_file_name, parameters, dryRun):
+def create_property_file(out_file_name, parameters, dryRun):  # pragma: no cover
     if dryRun:
         logger.info("Not creating properties file (dry-run): %s", out_file_name)
         return
@@ -460,43 +517,20 @@ def updateMilestone(repo, issue, pr, dryRun):
         return
     milestone = repo.get_milestone(milestoneId)
     logger.info("Setting milestone to %s", milestone.title)
-    if dryRun:
+    if dryRun:  # pragma: no cover
         return
     issue.edit(milestone=milestone)
-
-
-def find_last_comment(issue, user, match):
-    last_comment = None
-    for comment in issue.get_comments():
-        if (user != comment.user.login) or (not comment.body):
-            continue
-        if not re.match(
-            match, comment.body.encode("ascii", "ignore").decode().strip("\n\t\r "), re.MULTILINE
-        ):
-            continue
-        last_comment = comment
-        logger.debug("Matched comment from %s with comment id %s", comment.user.login, comment.id)
-    return last_comment
-
-
-def modify_comment(comment, match, replace, dryRun):
-    comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
-    if match:
-        new_comment_msg = re.sub(match, replace, comment_msg)
-    else:
-        new_comment_msg = comment_msg + "\n" + replace
-    if new_comment_msg != comment_msg:
-        if not dryRun:
-            comment.edit(new_comment_msg)
-            logger.info("Message updated")
-    return 0
 
 
 # github_utils.set_issue_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L569
 # github_utils.set_comment_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L149
 # github_utils.delete_issue_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L587
 # github_utils.delete_comment_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L168
-def set_emoji(repository, comment, emoji, reset_other):
+
+
+def set_emoji(
+    repository, comment, emoji, reset_other
+):  # pragma: no cover (Function replaced with no-op during tests for historical reasons)
     if reset_other:
         for e in comment.get_reactions():
             login = e.user.login.encode("ascii", "ignore").decode()
@@ -507,7 +541,7 @@ def set_emoji(repository, comment, emoji, reset_other):
 
 
 def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
-    if dryRun:
+    if dryRun:  # pragma: no cover
         return
     comment_id = str(comment.id)
     if (
@@ -813,6 +847,24 @@ def multiline_check_function(first_line, comment_lines, repository):
     return True, extra_params, ""
 
 
+# Hooked by test code
+def fetch_diff(diff_url):
+    cmd = (
+        "curl -s -L %s | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq"
+        % diff_url
+    )
+    e, o = run_cmd(cmd)
+    if e:
+        logger.error("Request to %s failed", diff_url)
+        logger.error(e)
+        exit(1)
+    if o:
+        return o.split("\n")
+    else:
+        logger.error("Request to %s did not return any changes, is the PR too big?", diff_url)
+        exit(1)
+
+
 def get_changed_files(repo, pr, use_gh_patch=False):
     if (not use_gh_patch) and (pr.changed_files <= CHANGED_FILES_FROM_DIFF_THRESHOLD):
         pr_files = []
@@ -828,20 +880,9 @@ def get_changed_files(repo, pr, use_gh_patch=False):
     diff_url = "https://patch-diff.githubusercontent.com/raw/{}/pull/{}.diff".format(
         repo.full_name, pr.number
     )
-    cmd = (
-        "curl -s -L %s | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq"
-        % diff_url
-    )
-    e, o = run_cmd(cmd)
-    if e:
-        logger.error("Request to %s failed", diff_url)
-        logger.error(e)
-        exit(1)
-    if o:
-        return o.split("\n")
-    else:
-        logger.error("Request to %s did not return any changes, is the PR too big?", diff_url)
-        exit(1)
+
+    o = fetch_diff(diff_url)
+    return o
 
 
 def get_backported_pr(msg):
@@ -908,7 +949,7 @@ def add_nonblocking_labels(chg_files, extra_labels):
                     if not "mtype" in extra_labels:
                         extra_labels["mtype"] = []
                     extra_labels["mtype"].append(ex_lab)
-                    logger.debug("Non-Blocking label:%s:%s:%s", ex_lab, regex.pattern, pkg_file)
+                    logger.trace("Non-Blocking label:%s:%s:%s", ex_lab, regex.pattern, pkg_file)
                     break
     if ("mtype" in extra_labels) and (not extra_labels["mtype"]):
         del extra_labels["mtype"]
@@ -917,16 +958,16 @@ def add_nonblocking_labels(chg_files, extra_labels):
 
 
 # TODO: remove once we update pygithub
-def get_commit_files(repo_, commit):
+def get_commit_files(repo_, commit):  # pragma: no cover
     return (x["filename"] for x in get_commit(repo_.full_name, commit.sha)["files"])
 
 
-def on_labels_changed(added_labels, removed_labels):
+def on_labels_changed(added_labels, removed_labels):  # pragma: no cover
     # Placeholder function replaced during testing
     pass
 
 
-def fetch_pr_result(url):
+def fetch_pr_result(url):  # pragma: no cover
     e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
     return e, o
 
@@ -942,12 +983,14 @@ def ensure_ascii(string):
     return string.encode("ascii", "ignore").decode("ascii", "ignore")
 
 
-def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
+def process_pr(
+    repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, enableTraceLog=True
+):
     global L2_DATA, create_status
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
 
-    setup_logging("debug")
+    setup_logging("trace" if enableTraceLog else "debug")
 
     gh_user_char = "@"
 
@@ -1049,7 +1092,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if pr.state != "closed":
                 logger.error("This pull request must go in to master branch")
                 if not dryRun:
-                    edit_pr(repo.full_name, prId, base="master")
+                    pr.edit(base="master")
                     msg = format(
                         "%(gh_user_char)s%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
                         "In future, please use cmssw master branch to submit your changes.\n",
@@ -1148,6 +1191,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             ]
         )
         # Handle category watchers
+
         catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
         non_block_cats = [] if not "mtype" in extra_labels else extra_labels["mtype"]
         for user, cats in list(catWatchers.items()):
@@ -1229,8 +1273,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         except:
             pass
         if repository == CMSSW_REPO_NAME and re.match(CREATE_REPO, issue.title):
-            with open("query-new-data-repo-issues-" + str(issue.number) + ".properties", "w") as f:
-                f.write("ISSUE_NUMBER=" + str(issue.number) + "\n")
+            create_property_file(
+                "query-new-data-repo-issues-" + str(issue.number) + ".properties",
+                {"ISSUE_NUMBER": str(issue.number)},
+                dryRun,
+            )
 
     # Process the issue comments
     signatures = dict([(x, "pending") for x in signing_categories])
@@ -1736,7 +1783,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         "{2}, to re-enable processing of this PR, you can write `+file-count` in a comment. Thanks.".format(
                             pr.changed_files,
                             TOO_MANY_FILES_WARN_THRESHOLD,
-                            ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS]),
+                            ", ".join(
+                                sorted([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
+                            ),
                         )
                     )
             else:
@@ -1876,7 +1925,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     auto_test_comment = None
     for event in flattened_eventlist:
-        logger.debug("Event: %s", event)
+        logger.trace("Event: %s", event)
         if event["type"] == "sign":
             if (not signed_commit_sha) and issue.pull_request:
                 continue
@@ -2026,6 +2075,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     #    if not extra_labels[ltype]:
     #        del extra_labels[ltype]
 
+    create_status = True
     if bot_status is None and issue.pull_request and issue.state != "open":
         create_status = False
 

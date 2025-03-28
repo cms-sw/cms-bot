@@ -15,7 +15,17 @@ from . import Framework
 from .Framework import readLine
 
 actions = []
-record_actions = False
+skip_watchers = False
+
+
+class SkipWatchers:
+    def __enter__(self):
+        global skip_watchers
+        skip_watchers = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        global skip_watchers
+        skip_watchers = False
 
 
 # Utility function for recording calls and optionally calling the original function
@@ -32,10 +42,21 @@ def hook_and_call_original(hook, original_function, call_original, self, *args, 
 
 def on_issuecomment_edit(self, *args, **kwargs):
     kwargs.pop("res")
-    assert len(kwargs) == 0, "IssueComment.edit signature has changed"
-    assert len(args) == 1, "IssueComment.edit signature has changed"
 
-    body = args[0]
+    good_signature = False
+    body = ""
+
+    if len(args) == 1 and len(kwargs) == 0:
+        body = args[0]
+        good_signature = True
+    else:
+        if len(args) == 0 and set(kwargs.keys()) == {"body"}:
+            good_signature = True
+            body = kwargs["body"]
+
+    if not good_signature:
+        assert False, "IssueComment.edit signature has changed"
+
     actions.append({"type": "edit-comment", "data": body})
     print("DRY RUN: Updating existing comment with text")
     print(body.encode("ascii", "ignore").decode())
@@ -76,8 +97,16 @@ def on_issue_edit(self, *args, **kwargs):
         )
 
 
+def on_pr_edit(self, *args, **kwargs):
+    actions.append({"type": "edit-pr", "data": kwargs})
+
+
+def on_pr_merge(self, *args, **kwargs):
+    actions.append({"type": "merge-pr", "data": None})
+
+
 def on_commit_create_status(self, *args, **kwargs):
-    assert len(args) == 1, "Commit.Commit.create_status signature has chagned"
+    assert len(args) == 1, "Commit.Commit.create_status signature has changed"
 
     state = args[0]
     target_url = kwargs.get("target_url")
@@ -191,6 +220,15 @@ def on_read_bot_cache(*args, **kwargs):
     return res
 
 
+def on_write_bot_cache(*args, **kwargs):
+    assert "res" in kwargs
+    res = kwargs.pop("res")
+    assert len(args) == 4, "Signature of process_pr.write_bot_cache changed"
+    assert len(kwargs) == 0, "Signature of process_pr.write_bot_cache changed"
+    actions.append({"type": "save-bot-cache", "data": args[0]})
+    return res
+
+
 def on_create_property_file(*args, **kwargs):
     kwargs.pop("res")
     assert len(args) == 3, "Signature of process_pr.create_property_file changed"
@@ -206,7 +244,7 @@ def on_create_property_file(*args, **kwargs):
 
 def on_set_comment_emoji_cache(*args, **kwargs):
     kwargs.pop("res")
-    assert len(args) == 4
+    assert len(args) in range(4, 7)
     assert len(kwargs) <= 2
     comment = args[2]
 
@@ -239,8 +277,48 @@ def dummy_fetch_pr_result(*args, **kwargs):
 
 def on_github_init(original_function, self, *args, **kwargs):
     kwargs["per_page"] = 100
-    # raise RuntimeError()
     original_function(self, *args, **kwargs)
+
+
+def hook_read_repo_file(repo_config, repo_file, *args, **kwargs):
+    res = kwargs.pop("res")
+    if "watchers" in repo_file and skip_watchers:
+        return {}
+
+    return res
+
+
+def hook_fetch_diff(diff_url, *args, **kwargs):
+
+    fileName = ""
+    for _, _, functionName, _ in traceback.extract_stack():
+        if (
+            functionName.startswith("test")
+            # or functionName == "setUp"
+            # or functionName == "tearDown"
+        ):
+            if (
+                functionName != "test"
+            ):  # because in class Hook(Framework.TestCase), method testTest calls Hook.test
+                fileName = os.path.join(
+                    os.path.dirname(__file__),
+                    kwargs["replayDataFolder"],
+                    f"{functionName}.json",
+                )
+    if not fileName:
+        raise RuntimeError("Could not determine event file name!")
+
+    res = kwargs.pop("res")
+    record = kwargs.pop("record")
+
+    if record:
+        with open(fileName, "w") as f:
+            json.dump(res, f)
+    else:
+        with open(fileName) as f:
+            res = json.load(f)
+
+    return res
 
 
 class TestProcessPr(Framework.TestCase):
@@ -248,6 +326,9 @@ class TestProcessPr(Framework.TestCase):
         super().__init__(*args, **kwargs)
         self.process_pr_module = None
         self.prId = -1
+
+        global skip_watchers
+        skip_watchers = False
 
     def setUpReactions(self):
         patcher_1 = patch(
@@ -301,6 +382,20 @@ class TestProcessPr(Framework.TestCase):
                 "call_original": False,
             },
             {
+                "module_path": "github.PullRequest",
+                "class_name": "PullRequest",
+                "function_name": "edit",
+                "hook_function": on_pr_edit,
+                "call_original": False,
+            },
+            {
+                "module_path": "github.PullRequest",
+                "class_name": "PullRequest",
+                "function_name": "merge",
+                "hook_function": on_pr_merge,
+                "call_original": False,
+            },
+            {
                 "module_path": "github.Commit",
                 "class_name": "Commit",
                 "function_name": "create_status",
@@ -319,7 +414,7 @@ class TestProcessPr(Framework.TestCase):
                 "class_name": None,
                 "function_name": "create_property_file",
                 "hook_function": on_create_property_file,
-                "call_original": True,
+                "call_original": False,
             },
             # Make this function no-op
             {
@@ -335,6 +430,14 @@ class TestProcessPr(Framework.TestCase):
                 "class_name": None,
                 "function_name": "read_bot_cache",
                 "hook_function": on_read_bot_cache,
+                "call_original": True,
+            },
+            # on_write_bot_cache
+            {
+                "module_path": "process_pr",
+                "class_name": None,
+                "function_name": "write_bot_cache",
+                "hook_function": on_write_bot_cache,
                 "call_original": True,
             },
             # Actual handling of emoji cache
@@ -391,6 +494,22 @@ class TestProcessPr(Framework.TestCase):
                 "hook_function": github__issue___useAttributes,
                 "call_original": True,
             },
+            {
+                "module_path": "process_pr",
+                "class_name": None,
+                "function_name": "read_repo_file",
+                "hook_function": hook_read_repo_file,
+                "call_original": True,
+            },
+            {
+                "module_path": "process_pr",
+                "class_name": None,
+                "function_name": "fetch_diff",
+                "hook_function": functools.partial(
+                    hook_fetch_diff, record=self.recordMode, replayDataFolder=self.replayDataFolder
+                ),
+                "call_original": self.recordMode,
+            },
         ]
 
         for func in functions_to_patch:
@@ -428,13 +547,25 @@ class TestProcessPr(Framework.TestCase):
         self.process_pr_module = None
 
     @staticmethod
-    def compareActions(res_, expected_):
+    def compareActions(res_, expected_, skip_missing_write_cache):
         def normalize_data(data):
             if isinstance(data, dict):
                 return frozenset((key, normalize_data(value)) for key, value in data.items())
             elif isinstance(data, list):
+                if data and all(isinstance(x, str) for x in data):
+                    return tuple(sorted(str(x) for x in data))
                 return tuple(normalize_data(item) for item in data)
             else:
+                # Notice: can't compare b64 encoded zlib compressed data
+                # directly, rely on load_cache and write_cache actions
+                # Reason: different versions of zlib can create different bytestrings
+                # due to different heuristics
+                if (
+                    isinstance(data, str)
+                    and data.startswith("cms-bot internal usage<!-- bot cache:")
+                    and not data.startswith("cms-bot internal usage<!-- bot cache: {")
+                ):
+                    data = "cms-bot internal usage<!-- bot cache: blob-->"
                 return data
 
         def normalize_action(action):
@@ -454,9 +585,16 @@ class TestProcessPr(Framework.TestCase):
         res = set([normalize_action(action) for action in res_])
         expected = set([normalize_action(action) for action in expected_])
 
+        if skip_missing_write_cache:
+            write_cache_action = normalize_action(
+                {"type": "edit-comment", "data": "cms-bot internal usage<!-- bot cache: blob-->"}
+            )
+            if (write_cache_action in res) and not (write_cache_action in expected):
+                expected.add(write_cache_action)
+
         if res.symmetric_difference(expected):
             for itm in res - expected:
-                print("New action", denormalize_action(itm))
+                print("New     action", denormalize_action(itm))
 
             for itm in expected - res:
                 print("Missing action", denormalize_action(itm))
@@ -491,7 +629,7 @@ class TestProcessPr(Framework.TestCase):
     def __closeEventReplayFileIfNeeded(self):
         if self.__eventFile is not None:
             if (
-                not record_actions
+                not self.recordActionMode
             ):  # pragma no branch (Branch useful only when recording new tests, not used during automated tests)
                 self.assertEqual(readLine(self.__eventFile), "")
             self.__eventFile.close()
@@ -538,11 +676,13 @@ class TestProcessPr(Framework.TestCase):
         global actions
         actions = []
 
-    def runTest(self, prId=17, testName=""):
-        repo = self.g.get_repo("iarspider-cmssw/cmssw")
-        issue = repo.get_issue(prId)
+    def runTest(
+        self, repo="cmssw", pr_id=17, enable_trace_log=True, skip_missing_write_cache=False
+    ):
+        repo = self.g.get_repo(f"iarspider-cmssw/{repo}")
+        issue = repo.get_issue(pr_id)
 
-        if record_actions:
+        if self.recordActionMode:
             self.__openEventFile("w")
             self.replayData = None
         else:
@@ -554,21 +694,26 @@ class TestProcessPr(Framework.TestCase):
             self.g,
             repo,
             issue,
-            False,
-            self.repo_config.CMSBUILD_USER,
+            dryRun=False,
+            cmsbuild_user=self.repo_config.CMSBUILD_USER,
+            force=False,
+            enableTraceLog=enable_trace_log,
         )
         self.processPrData = actions
-        self.checkOrSaveTest()
+        self.checkOrSaveTest(skip_missing_write_cache)
         self.__closeEventReplayFileIfNeeded()
 
-    def checkOrSaveTest(self):
-        if record_actions:
+    def checkOrSaveTest(self, skip_missing_write_cache=False):
+        if self.recordActionMode:
             json.dump(self.processPrData, self.__eventFile, indent=4)
         else:
-            TestProcessPr.compareActions(self.processPrData, self.replayData)
+            TestProcessPr.compareActions(
+                self.processPrData, self.replayData, skip_missing_write_cache
+            )
 
     def mark_tests(
         self,
+        *,
         dryRun,
         arch="el8_amd64_gcc12",
         queue="_X",
@@ -589,43 +734,43 @@ class TestProcessPr(Framework.TestCase):
         if not dryRun:
             commit.create_status(
                 "success" if all((unittest, addon, relvals, input_, comparision)) else "error",
-                "https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/38669/",
+                target_url="https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/38669/",
                 context="{0}".format(prefix, "required" if required else "optional"),
             )
             commit.create_status(
                 "success",
-                "https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/38669/",
+                target_url="https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/38669/",
                 context="{0}/{1}".format(prefix, "required" if required else "optional"),
                 description="Finished",
             )
             commit.create_status(
                 "success" if unittest else "error",
-                "https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/38669/",
+                target_url="https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/38669/",
                 context="{0}/unittest".format(prefix),
             )
             commit.create_status(
                 "success" if addon else "error",
-                "https://cmssdt.cern.ch/jenkins/job/ib-run-pr-addon/22833/",
+                target_url="https://cmssdt.cern.ch/jenkins/job/ib-run-pr-addon/22833/",
                 context="{0}/addon".format(prefix),
             )
             commit.create_status(
                 "success" if relvals else "error",
-                "https://cmssdt.cern.ch/jenkins/job/ib-run-pr-relvals/43002/",
+                target_url="https://cmssdt.cern.ch/jenkins/job/ib-run-pr-relvals/43002/",
                 context="{0}/relvals".format(prefix),
             )
             commit.create_status(
                 "success" if input_ else "error",
-                "https://cmssdt.cern.ch/jenkins/job/ib-run-pr-relvals/43000/",
+                target_url="https://cmssdt.cern.ch/jenkins/job/ib-run-pr-relvals/43000/",
                 context="{0}/relvals/input".format(prefix),
             )
             commit.create_status(
                 "success" if comparision else "error",
-                "https://cmssdt.cern.ch/jenkins/job/compare-root-files-short-matrix/62168/",
+                target_url="https://cmssdt.cern.ch/jenkins/job/compare-root-files-short-matrix/62168/",
                 context="{0}/comparision".format(prefix),
             )
 
     def test_new_pr(self):
-        self.runTest(testName="new_pr")
+        self.runTest()
 
     def test_code_check_approved(self):
         self.runTest()
@@ -647,10 +792,11 @@ class TestProcessPr(Framework.TestCase):
 
     # # Dummy test
     # def test_mark_rejected(self):
-    #     self.mark_tests(False, unittest=False)
+    #     self.mark_tests(dryRun=False, unittest=False)
     #
     # def test_mark_passed(self):
-    #     self.mark_tests(False)
+    #     self.prId = 36
+    #     self.mark_tests(dryRun=False)
 
     def test_tests_rejected(self):
         self.runTest()
@@ -698,64 +844,199 @@ class TestProcessPr(Framework.TestCase):
         self.runTest()
 
     def test_partial_reset_dirty_squash(self):
-        self.runTest(prId=23)
+        self.runTest(pr_id=23)
 
     def test_sign_reject(self):
         self.runTest()
 
     def test_many_commits_warn(self):
-        self.runTest(prId=18)
+        self.runTest(pr_id=18)
 
     def test_many_commits_ok(self):
-        self.runTest(prId=18)
+        self.runTest(pr_id=18)
 
     def test_too_many_commits(self):
-        self.runTest(prId=18)
+        self.runTest(pr_id=18)
 
     def test_draft_pr_opened(self):
-        self.runTest(prId=21)
+        self.runTest(pr_id=21)
 
     def test_draft_pr_assign(self):
-        self.runTest(prId=21)
+        self.runTest(pr_id=21)
 
     def test_draft_pr_updated(self):
-        self.runTest(prId=21)
+        self.runTest(pr_id=21)
 
     def test_draft_pr_start_test(self):
-        self.runTest(prId=21)
+        self.runTest(pr_id=21)
 
     def test_draft_pr_ready(self):
-        self.runTest(prId=21)
+        self.runTest(pr_id=21)
 
     def test_draft_pr_ask_ready(self):
-        self.runTest(prId=21)
+        self.runTest(pr_id=21)
 
     def test_draft_pr_fully_signed(self):
-        self.runTest(prId=21)
+        self.runTest(pr_id=21)
 
     def test_test_workflow(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
 
     def test_test_using_addpkg(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
 
     def test_test_using_full(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
 
     def test_test_with_pr(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
 
     def test_test_for_queue(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
 
     def test_test_for_arch(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
 
     def test_test_for_quearch(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
 
     def test_test_all_params(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
 
     def test_testparams_all_params(self):
-        self.runTest(prId=24)
+        self.runTest(pr_id=24)
+
+    def test_backport(self):
+        self.runTest(pr_id=26)
+
+    def test_backport_already_seen(self):
+        self.runTest(pr_id=26)
+
+    def test_new_issue(self):
+        self.runTest(pr_id=27)
+
+    def test_assign_from(self):
+        self.runTest(pr_id=27)
+
+    def test_assign_from_invalid(self):
+        self.runTest(pr_id=27)
+
+    def test_assign_from_with_label(self):
+        self.runTest(pr_id=27)
+
+    def test_convert_cache(self):
+        self.runTest(pr_id=25)
+
+    def test_cache_add_missing_items(self):
+        self.runTest(pr_id=25)
+
+    def test_ignore_rejected_invalid(self):
+        self.runTest(pr_id=25)
+
+    def test_ignore_rejected_valid(self):
+        self.runTest(pr_id=25)
+
+    def test_type_invalid(self):
+        self.runTest(pr_id=25)
+
+    def test_type_valid(self):
+        self.runTest(pr_id=25)
+
+    def test_remove_type(self):
+        self.runTest(pr_id=25)
+
+    def test_invalid_test_params(self):
+        self.runTest(pr_id=25)
+
+    def test_pr_develop_branch(self):
+        self.runTest(pr_id=28)
+
+    def test_future_commit(self):
+        self.runTest(pr_id=29)
+
+    def test_create_repo(self):
+        self.runTest(pr_id=30)
+
+    def test_ignore_smth(self):
+        self.runTest(pr_id=25)
+
+    def test_grant(self):
+        self.runTest(pr_id=25)
+
+    def test_code_checks_with(self):
+        self.runTest(pr_id=25)
+
+    def test_check_release_format(self):
+        func = self.process_pr_module.check_release_format
+        params = {}
+        ret = func("CMSSW_15_1_X", "", params)
+        assert ret[0] == "CMSSW_15_1_X"
+        assert params == {"ARCHITECTURE_FILTER": ""}
+
+        params = {}
+        ret = func("el8_amd64_gcc12", "", params)
+        assert ret[0] == ""
+        assert params == {"ARCHITECTURE_FILTER": "el8_amd64_gcc12"}
+
+        params = {}
+        ret = func("CMSSW_15_1_X/el8_amd64_gcc12", "", params)
+        assert ret[0] == "CMSSW_15_1_X"
+        assert params == {"ARCHITECTURE_FILTER": "el8_amd64_gcc12"}
+
+    def test_create_compressed_cache(self):
+        with SkipWatchers():
+            self.runTest(pr_id=37, enable_trace_log=False)
+
+    def test_read_compressed_cache(self):
+        with SkipWatchers():
+            self.runTest(pr_id=37, enable_trace_log=False, skip_missing_write_cache=True)
+
+    def test_create_split_cache(self):
+        with SkipWatchers():
+            self.runTest(pr_id=37, enable_trace_log=False)
+
+    def test_read_split_cache(self):
+        with SkipWatchers():
+            self.runTest(pr_id=31, enable_trace_log=False, skip_missing_write_cache=True)
+
+    def test_get_backported_pr(self):
+        self.runTest(pr_id=25)
+
+    def test_empty_pr(self):
+        self.runTest(pr_id=33)
+
+    def test_new_cmsdist_pr(self):
+        self.runTest(repo="cmsdist", pr_id=1)
+
+    def test_cmsdist_start_tests(self):
+        self.runTest(repo="cmsdist", pr_id=1)
+
+    def test_warn_many_files(self):
+        with SkipWatchers():
+            self.runTest(pr_id=38, enable_trace_log=False)
+
+    def test_ack_many_files(self):
+        with SkipWatchers():
+            self.runTest(pr_id=38, enable_trace_log=False)
+
+    def test_too_many_files(self):
+        with SkipWatchers():
+            self.runTest(pr_id=38, enable_trace_log=False)
+
+    def test_merge_pr(self):
+        self.runTest(pr_id=36)
+
+    def test_urgent(self):
+        self.runTest(pr_id=9)
+
+    def test_enable_none(self):
+        self.runTest(pr_id=9)
+
+    def test_ignore_sign(self):
+        self.runTest(pr_id=9)
+
+    def test_orp_issue(self):
+        self.runTest(pr_id=39)
+
+    def test_backport_ok(self):
+        self.runTest(pr_id=9)

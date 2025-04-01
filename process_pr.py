@@ -49,19 +49,19 @@ import sys
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
+except ImportError:  # pragma: no cover
     from yaml import Loader, Dumper
 try:
     from categories import CATS_TO_APPROVE_ON_TEST
-except:
+except:  # pragma: no cover
     CATS_TO_APPROVE_ON_TEST = []
 try:
     from categories import CMSSW_LABELS
-except:
+except:  # pragma: no cover
     CMSSW_LABELS = {}
 try:
     from categories import get_dpg_pog
-except:
+except:  # pragma: no cover
 
     def get_dpg_pog(*args):
         return {}
@@ -69,7 +69,7 @@ except:
 
 try:
     from categories import external_to_package
-except:
+except:  # pragma: no cover
 
     def external_to_package(*args):
         return ""
@@ -77,7 +77,7 @@ except:
 
 try:
     from releases import get_release_managers, is_closed_branch
-except:
+except:  # pragma: no cover
 
     def get_release_managers(*args):
         return []
@@ -213,7 +213,7 @@ logger: logging.Logger
 
 def setup_logging(loglevel):
     numeric_level = getattr(logging, loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
+    if not isinstance(numeric_level, int):  # pragma: no cover
         raise ValueError(f"Invalid log level: {loglevel}")
 
     global logger
@@ -491,7 +491,7 @@ def set_emoji(repository, comment, emoji, reset_other):
 
 
 def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
-    if dryRun:
+    if dryRun:  # pragma: no cover
         return
     comment_id = str(comment.id)
     if (

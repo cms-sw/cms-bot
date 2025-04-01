@@ -776,3 +776,15 @@ class TestProcessPr(Framework.TestCase):
 
     def test_backport_already_seen(self):
         self.runTest(prId=26)
+
+    def test_new_issue(self):
+        self.runTest(prId=27)
+
+    def test_assign_from(self):
+        self.runTest(prId=27)
+
+    def test_assign_from_invalid(self):
+        self.runTest(prId=27)
+
+    def test_assign_from_with_label(self):
+        self.runTest(prId=27)

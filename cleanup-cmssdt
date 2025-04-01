@@ -37,7 +37,7 @@ for type in "" $(cat "gpu_flavors.txt" | tr '[:lower:]' '[:upper:]' | tr '\n' ' 
   done
 done
 
-JOBS_TO_KEEP=100
+JOBS_TO_KEEP=500
 for dir in hlt-p2-timing ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"

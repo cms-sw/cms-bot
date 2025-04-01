@@ -28,7 +28,9 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   mkdir -p $WORKSPACE/upload/profiling/
   echo "<html><head></head><title>Profiling wf $PROFILING_WORKFLOW' results</title><body><ul>" > $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
+  LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
   PROF_RES="OK"
+  $CMS_BOT_DIR/das-utils/use-ibeos-sort || true
   export PROFILING_WORKFLOW
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   export RUNALLSTEPS=1

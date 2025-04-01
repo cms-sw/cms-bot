@@ -26,7 +26,7 @@ done
 
 RUNS_TO_KEEP=1
 #Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
-for type in "" $(cat "gpu_flavors.txt" | tr '[:lower:]' '[:upper:]' | tr '\n' ' ') $(PYTHONPATH=${CMS_BOT_DIR} python3 -c 'from process_pr import EXTRA_RELVALS_TESTS;print(" ".join([x.upper().replace("-","_") for x in EXTRA_RELVALS_TESTS if x]))') ; do
+for type in "" $(cat "${CMS_BOT_DIR}/gpu_flavors.txt" | tr '[:lower:]' '[:upper:]' | tr '\n' ' ') $(PYTHONPATH=${CMS_BOT_DIR} python3 -c 'from process_pr import EXTRA_RELVALS_TESTS;print(" ".join([x.upper().replace("-","_") for x in EXTRA_RELVALS_TESTS if x]))') ; do
   dir=baseLineComparisons${type}
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"

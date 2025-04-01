@@ -9,7 +9,7 @@ fi
 
 JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
 CVMFS_JENKINS_ARTIFACTS=/cvmfs/cms-ib.cern.ch/jenkins-artifacts
-DIRS_PROCESSED="hlt-p2-timing"
+DIRS_PROCESSED=""
 JOBS_TO_KEEP=100
 RUNS_TO_KEEP=4
 #Keep $JOBS_TO_KEEP of these
@@ -35,6 +35,14 @@ for type in "" $(cat "gpu_flavors.txt" | tr '[:lower:]' '[:upper:]' | tr '\n' ' 
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
   done
+done
+
+JOBS_TO_KEEP=100
+for dir in hlt-p2-timing ; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 JOBS_TO_KEEP=10

@@ -13,7 +13,8 @@ fi
 
 if [ ! -e Framework.py ]; then
   curl -L https://github.com/PyGithub/PyGithub/raw/v1.54/tests/Framework.py > Framework.py
-  sed -i -e 's/self\.retry/self.retry, per_page=100/g' Framework.py
+  #sed -i -e 's/self\.retry/self.retry, per_page=100/g' Framework.py
+  patch -p1 < Framework.patch
 fi
 
 if [ $# -ge 1 ]; then

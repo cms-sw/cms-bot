@@ -261,6 +261,7 @@ def collect_commit_cache(bot_cache):
     REGEX_COMMIT_SHA = re.compile("^[a-f0-9]{40}$", re.IGNORECASE)
     commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
     if commit_cache:
+        logger.info("Found old commit cache, upgrading")
         for k in commit_cache:
             del bot_cache[k]
         bot_cache["commits"] = commit_cache
@@ -331,7 +332,7 @@ def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
                 cache_comment.edit(new_body)
             else:
                 issue.create_comment(new_body)
-        else:
+        else:  # pragma: no cover
             if cache_comment:
                 logger.info("DRY RUN: Updating existing comment with text")
             else:
@@ -421,7 +422,7 @@ def create_properties_file_tests(
 
 
 def create_property_file(out_file_name, parameters, dryRun):
-    if dryRun:
+    if dryRun:  # pragma: no cover
         logger.info("Not creating properties file (dry-run): %s", out_file_name)
         return
     logger.info("Creating properties file %s", out_file_name)
@@ -449,38 +450,15 @@ def updateMilestone(repo, issue, pr, dryRun):
     issue.edit(milestone=milestone)
 
 
-def find_last_comment(issue, user, match):
-    last_comment = None
-    for comment in issue.get_comments():
-        if (user != comment.user.login) or (not comment.body):
-            continue
-        if not re.match(
-            match, comment.body.encode("ascii", "ignore").decode().strip("\n\t\r "), re.MULTILINE
-        ):
-            continue
-        last_comment = comment
-        logger.debug("Matched comment from %s with comment id %s", comment.user.login, comment.id)
-    return last_comment
-
-
-def modify_comment(comment, match, replace, dryRun):
-    comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
-    if match:
-        new_comment_msg = re.sub(match, replace, comment_msg)
-    else:
-        new_comment_msg = comment_msg + "\n" + replace
-    if new_comment_msg != comment_msg:
-        if not dryRun:
-            comment.edit(new_comment_msg)
-            logger.info("Message updated")
-    return 0
-
-
 # github_utils.set_issue_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L569
 # github_utils.set_comment_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L149
 # github_utils.delete_issue_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L587
 # github_utils.delete_comment_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L168
-def set_emoji(repository, comment, emoji, reset_other):
+
+
+def set_emoji(
+    repository, comment, emoji, reset_other
+):  # pragma: no cover (Function replaced with no-op during tests for historical reasons)
     if reset_other:
         for e in comment.get_reactions():
             login = e.user.login.encode("ascii", "ignore").decode()

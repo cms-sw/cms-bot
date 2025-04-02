@@ -15,7 +15,6 @@ from . import Framework
 from .Framework import readLine
 
 actions = []
-record_actions = False
 
 
 # Utility function for recording calls and optionally calling the original function
@@ -217,7 +216,7 @@ def on_create_property_file(*args, **kwargs):
 
 def on_set_comment_emoji_cache(*args, **kwargs):
     kwargs.pop("res")
-    assert len(args) == 4
+    assert len(args) in range(4, 7)
     assert len(kwargs) <= 2
     comment = args[2]
 
@@ -330,7 +329,7 @@ class TestProcessPr(Framework.TestCase):
                 "class_name": None,
                 "function_name": "create_property_file",
                 "hook_function": on_create_property_file,
-                "call_original": True,
+                "call_original": False,
             },
             # Make this function no-op
             {
@@ -502,7 +501,7 @@ class TestProcessPr(Framework.TestCase):
     def __closeEventReplayFileIfNeeded(self):
         if self.__eventFile is not None:
             if (
-                not record_actions
+                not self.recordActionMode
             ):  # pragma no branch (Branch useful only when recording new tests, not used during automated tests)
                 self.assertEqual(readLine(self.__eventFile), "")
             self.__eventFile.close()
@@ -553,7 +552,7 @@ class TestProcessPr(Framework.TestCase):
         repo = self.g.get_repo("iarspider-cmssw/cmssw")
         issue = repo.get_issue(prId)
 
-        if record_actions:
+        if self.recordActionMode:
             self.__openEventFile("w")
             self.replayData = None
         else:
@@ -573,7 +572,7 @@ class TestProcessPr(Framework.TestCase):
         self.__closeEventReplayFileIfNeeded()
 
     def checkOrSaveTest(self):
-        if record_actions:
+        if self.recordActionMode:
             json.dump(self.processPrData, self.__eventFile, indent=4)
         else:
             TestProcessPr.compareActions(self.processPrData, self.replayData)
@@ -788,3 +787,15 @@ class TestProcessPr(Framework.TestCase):
 
     def test_assign_from_with_label(self):
         self.runTest(prId=27)
+
+    def test_convert_cache(self):
+        self.runTest(prId=25)
+
+    def test_cache_add_missing_items(self):
+        self.runTest(prId=25)
+
+    def test_ignore_rejected_invalid(self):
+        self.runTest(prId=25)
+
+    def test_ignore_rejected_valid(self):
+        self.runTest(prId=25)

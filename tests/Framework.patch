@@ -1,0 +1,33 @@
+--- Framework.py.orig	2025-03-25 14:47:35.282485270 +0100
++++ Framework.py	2025-03-25 14:48:05.591317360 +0100
+@@ -246,6 +246,7 @@
+     tokenAuthMode = False
+     jwtAuthMode = False
+     retry = None
++    recordActionMode = False
+     replayDataFolder = os.path.join(os.path.dirname(__file__), "ReplayData")
+ 
+     def setUp(self):
+@@ -354,11 +355,11 @@
+         github.Requester.Requester.setOnCheckMe(self.getFrameChecker())
+ 
+         if self.tokenAuthMode:
+-            self.g = github.Github(self.oauth_token, retry=self.retry)
++            self.g = github.Github(self.oauth_token, retry=self.retry, per_page=100)
+         elif self.jwtAuthMode:
+-            self.g = github.Github(jwt=self.jwt, retry=self.retry)
++            self.g = github.Github(jwt=self.jwt, retry=self.retry, per_page=100)
+         else:
+-            self.g = github.Github(self.login, self.password, retry=self.retry)
++            self.g = github.Github(self.login, self.password, retry=self.retry, per_page=100)
+ 
+ 
+ def activateRecordMode():  # pragma no cover (Function useful only when recording new tests, not used during automated tests)
+@@ -375,3 +376,7 @@
+ 
+ def enableRetry(retry):
+     BasicTestCase.retry = retry
++
++
++def activateRecordActionMode():  # pragma no cover (Function useful only when recording new tests, not used during automated tests)
++    BasicTestCase.recordActionMode = True

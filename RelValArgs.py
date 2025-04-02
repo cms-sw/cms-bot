@@ -61,6 +61,7 @@ RELVAL_KEYS["WORKFLOWS"].append(
     ]
 )
 RELVAL_KEYS["WORKFLOWS"].append(["_(GPU|ROCM)_", "-w gpu"])
+RELVAL_KEYS["WORKFLOWS"].append(["CMSSW_(1[6-9]_.+|[2-9][0-9]_.+|15_[1-9]_|15_[2-9][0-9]+_)(GPU|ROCM)_", "--gpu required"])
 RELVAL_KEYS["enableIMT"].append(
     [THREADED_ROOT, "--customise FWCore/Concurrency/enableIMT.enableIMT"]
 )

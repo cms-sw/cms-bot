@@ -175,7 +175,7 @@ def checkJobs(thrds, resources):
         for pram in ["rss", "cpu"]:
             resources["available"][pram] = resources["available"][pram] + job[pram]
         if ("gpu" in job) and (job["gpu"] >= 0):
-            resources["available"]["gpu"].append(job["job"])
+            resources["available"]["gpu"].append(job["gpu"])
         if not simulation:
             print(
                 "Done",

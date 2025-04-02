@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.6", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - uses: MathRobin/timezone-action@v1.1
@@ -28,7 +28,7 @@ jobs:
       - run: mv tmp/tests/Framework.py tests/
       - run: |
           cd tests
-          patch -p1 < Framework.patch
+          patch -p0 < Framework.patch
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:

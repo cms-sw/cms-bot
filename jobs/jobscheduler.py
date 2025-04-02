@@ -69,7 +69,10 @@ def runJob(job):
         os.remove(job["jobid"])
         job["exit_code"] = 0
     else:
-        p = Popen(job["command"], shell=True)
+        cmd = job["command"]
+        if ("gpu" in job) and (job["gpu"] >= 0):
+            cmd = cmd.replace("HIP_VISIBLE_DEVICES=0", "HIP_VISIBLE_DEVICES=%s" % job["gpu"])
+        p = Popen(cmd, shell=True)
         job["exit_code"] = os.waitpid(p.pid, 0)[1]
 
 
@@ -101,8 +104,10 @@ def getJob(jobs, resources, order):
             return True, getFinalCommand(group, jobs, resources)
         for job in group["commands"]:
             if job["state"] == "Pending":
-                if (job["rss"] <= resources["available"]["rss"]) and (
-                    job["cpu"] <= resources["available"]["cpu"]
+                if (
+                    (job["rss"] <= resources["available"]["rss"])
+                    and (job["cpu"] <= resources["available"]["cpu"])
+                    and ((not "gpu" in job) or resources["available"]["gpu"])
                 ):
                     pending_jobs.append(job)
                 break
@@ -125,6 +130,8 @@ def startJob(job, resources, thrds):
     job["start_time"] = gettime()
     for pram in ["rss", "cpu"]:
         resources["available"][pram] = resources["available"][pram] - job[pram]
+    if "gpu" in job:
+        job["gpu"] = resources["available"]["gpu"].pop(0)
     t = threading.Thread(target=runJob, args=(job,))
     thrds[t] = job
     if not simulation:
@@ -136,6 +143,7 @@ def startJob(job, resources, thrds):
             job["cpu"],
             job["time"],
             resources["available"],
+            "GPU: %s" % (job["gpu"] if "gpu" in job else "-"),
         )
     t.start()
 
@@ -166,6 +174,8 @@ def checkJobs(thrds, resources):
         resources["done_jobs"] = resources["done_jobs"] + 1
         for pram in ["rss", "cpu"]:
             resources["available"][pram] = resources["available"][pram] + job[pram]
+        if ("gpu" in job) and (job["gpu"] >= 0):
+            resources["available"]["gpu"].append(job["job"])
         if not simulation:
             print(
                 "Done",
@@ -203,6 +213,8 @@ def initJobs(jobs, resources, otype):
             total_jobs += 1
             job = group["commands"][i]
             job["origtime"] = job["time"]
+            if "HIP_VISIBLE_DEVICES=0" in job["command"]:
+                job["gpu"] = -1
             if simulation:
                 job["time2finish"] = job["time"]
             job_time += job["time"]
@@ -335,6 +347,7 @@ if __name__ == "__main__":
                 if (opts.maxmemory > 0)
                 else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory)
             ),
+            "gpu": list(range(8)),
         },
         "total_groups": 0,
         "total_jobs": 0,

@@ -73,6 +73,7 @@ def runJob(job):
         if ("gpu" in job) and (job["gpu"] >= 0):
             cmd = cmd.replace("HIP_VISIBLE_DEVICES=0", "HIP_VISIBLE_DEVICES=%s" % job["gpu"])
             job["command"] = cmd
+            print("Running command:", cmd)
         p = Popen(cmd, shell=True)
         job["exit_code"] = os.waitpid(p.pid, 0)[1]
 

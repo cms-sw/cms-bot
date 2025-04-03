@@ -108,9 +108,7 @@ if __name__ == "__main__":
     else:
         print("Force running all workflows")
 
-    if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$", cmssw_ver) and (
-        not "_ROCM_X" in cmssw_ver
-    ):
+    if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$", cmssw_ver):
         e = 0
         if opts.workflow:
             stime = time()

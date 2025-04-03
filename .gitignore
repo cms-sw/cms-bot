@@ -4,3 +4,4 @@
 tests/Framework.py
 venv
 GithubCredentials.py
+.coverage

@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 import subprocess
 from es_utils import send_payload, get_payload, resend_payload, get_payload_wscroll
 from cmsutils import epoch2week
+import json
 
 JENKINS_PREFIX = "jenkins"
 try:
@@ -149,25 +150,80 @@ que_cmd = (
 jque_res = subprocess.run(que_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 queue_json = json.loads(jque_res.stdout)
 
+with open(os.path.join(os.path.dirname(__file__), "parse_jenkins_builds.json")) as f:
+    config = json.load(f)
+
 jenkins_queue = dict()
 current_time = get_current_time()
 for element in queue_json["items"]:
-    payload = dict()
-
     job_name = element["task"]["name"]
     queue_id = int(element["id"])
     queue_time = int(element["inQueueSince"])
     labels = element["why"].encode("ascii", "ignore").decode("ascii", "ignore")
     reason = process_queue_reason(labels)
 
-    payload["jenkins_server"] = JENKINS_PREFIX
-    payload["in_queue_since"] = queue_time
-    payload["queue_id"] = queue_id
-    payload["job_name"] = job_name
-    payload["node_labels"] = reason
-    payload["in_queue"] = 1
-    payload["wait_time"] = current_time - queue_time
-    payload["start_time"] = 0
+    payload = {
+        "jenkins_server": JENKINS_PREFIX,
+        "in_queue_since": queue_time,
+        "queue_id": queue_id,
+        "job_name": job_name,
+        "node_labels": reason,
+        "in_queue": 1,
+        "wait_time": current_time - queue_time,
+        "start_time": 0,
+    }
+
+    kill_index = 0
+
+    # Abort stuck jobs
+    if (
+        job_name in config["whitelist"]
+        and reason.endswith("-offline")
+        and reason != "multiple-offline"
+        and (payload["wait_time"] / 1000 > config["custom"].get(job_name, config["timeout"]))
+    ):
+        params = dict(
+            line.split("=", 1) for line in element["params"].strip().splitlines() if "=" in line
+        )
+
+        if "rocm" not in (params.get("GPU_FLAVOR"), params.get("TEST_FLAVOR")):
+            continue
+
+        # Try to reconnect the node
+        node_name = reason.rsplit("-", 1)[0]
+        connect_node = os.environ.get("JENKINS_CLI_CMD") + " connect-node " + node_name + " -f"
+        try_count = 1
+        while try_count < 4:
+            try_count += 1
+            ret = os.system(connect_node)
+            if ret == 0:
+                break
+
+        if try_count == 4:
+            try:
+                pull_request = params.pop("PULL_REQUEST")
+                release = params["RELEASE_FORMAT"]
+                context = params["CONTEXT_PREFIX"]
+                upload_unique_id = params["UPLOAD_UNIQ_ID"]
+                test_flavor = params["TEST_FLAVOR"]
+            except KeyError as e:
+                print("ERROR: param", e.args[0], "not found, skipping job")
+                continue
+
+            main_params = "PULL_REQUEST={0}".format(pull_request)
+            other_params = ";".join("{0}={1}".format(k, v) for k, v in params)
+
+            with open("abort-{0}.prop".format(kill_index), "w") as f:
+                f.write("UPLOAD_UNIQ_ID={0}\n".format(upload_unique_id))
+                f.write("PULL_REQUEST={0}\n".format(pull_request))
+                f.write("CONTEXT={0}\n".format(context))
+                f.write("JENKINS_PROJECT_TO_KILL={0}\n".format(job_name))
+                f.write("JENKINS_PROJECT_PARAMS={0}\n".format(main_params))
+                f.write("EXTRA_PARAMS={0}\n".format(other_params))
+                f.write("RELEASE_FORMAT={0}\n".format(release))
+                f.write("TEST_FLAVOR={0}\n".format(test_flavor))
+
+            kill_index += 1
 
     unique_id = (
         JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id)

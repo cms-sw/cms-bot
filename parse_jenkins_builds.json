@@ -1,0 +1,5 @@
+{
+"whitelist": ["ib-run-pr-unittests", "ib-run-pr-relvals", "ib-run-baseline"],
+"timeout": 3600,
+"custom": {}
+}

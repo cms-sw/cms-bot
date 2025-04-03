@@ -27,28 +27,16 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   fi
   mkdir -p $WORKSPACE/upload/profiling/
   echo "<html><head></head><title>Profiling wf $PROFILING_WORKFLOW' results</title><body><ul>" > $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-  LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
+  export LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-  export WORKING_DIR=${WORKSPACE}/${CMSSW_VERSION}
   PROF_RES="OK"
+  $CMS_BOT_DIR/das-utils/use-ibeos-sort || true
   export PROFILING_WORKFLOW
-  mkdir -p $WORKSPACE/IB
-  cd $WORKSPACE/IB
-  scram project ${CMSSW_VERSION}
-  cd $CMSSW_VERSION
-  eval `scram run -sh`
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   export RUNALLSTEPS=1
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
-  eval `scram unsetenv -sh`
-  cd $WORKING_DIR
-  eval `scram run -sh`
-  cd $WORKSPACE
-  for f in $(find $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW -name step*.json);do
-	  b=$(basename $f)
-	  cp -v $f $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW/$CMSSW_VERSION-$b || true
-  done
-  $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
+  unset RUNALLSTEPS
+  $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_VERSION || true
   if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Error: failed to run profiling"
     echo "<li>$PROFILING_WORKFLOW: No such directory</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
@@ -56,6 +44,8 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     continue
   fi
   pushd $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW
+  $WORKSPACE/profiling/Gen_tool/profile_igpp.sh $CMSSW_VERSION || true
+
   cp $WORKSPACE/cms-bot/comparisons/compareProducts.* ./
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/step3_sizes_${PROFILING_WORKFLOW}.txt  step3_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt || true
   if [ $(ls -d step3_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ]; then
@@ -80,6 +70,16 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   fi #DEBUG
   popd
   pushd $WORKSPACE/$CMSSW_VERSION || true
+  for f in $(find $PROFILING_WORKFLOW -type f -name '*.sql3') ; do
+    d=$(dirname $f)
+    mkdir -p $WORKSPACE/upload/profiling/$d || true
+    cp -p $f $WORKSPACE/upload/profiling/$d/ || true
+    mkdir -p $LOCALREL/igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
+    BASENAME=$(basename $f)
+    ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}/profiling/$d/$BASENAME $LOCALREL/igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/$BASENAME || true
+    ls -l $WORKSPACE/igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/$BASENAME || true
+    echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.sql3/}\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  done
   for f in $(find $PROFILING_WORKFLOW -type f -name '*step*_cpu.resources.json' ) ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
@@ -94,7 +94,8 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' ) ; do
     BASENAME=$(basename $f)
-    $CMS_BOT_DIR/comparisons/resources-diff.py $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME $f >$f.log || true
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
+    $CMS_BOT_DIR/comparisons/resources-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html') ; do

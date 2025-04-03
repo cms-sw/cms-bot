@@ -421,8 +421,8 @@ def create_properties_file_tests(
     create_property_file(out_file_name, parameters, dryRun)
 
 
-def create_property_file(out_file_name, parameters, dryRun):
-    if dryRun:  # pragma: no cover
+def create_property_file(out_file_name, parameters, dryRun):  # pragma: no cover
+    if dryRun:
         logger.info("Not creating properties file (dry-run): %s", out_file_name)
         return
     logger.info("Creating properties file %s", out_file_name)
@@ -445,7 +445,7 @@ def updateMilestone(repo, issue, pr, dryRun):
         return
     milestone = repo.get_milestone(milestoneId)
     logger.info("Setting milestone to %s", milestone.title)
-    if dryRun:
+    if dryRun:  # pragma: no cover
         return
     issue.edit(milestone=milestone)
 

@@ -17,7 +17,7 @@ from os.path import abspath, dirname
 import sys
 
 sys.path.append(dirname(dirname(abspath(sys.argv[0]))))
-from cmsutils import MachineCPUCount, MachineMemoryGB
+from cmsutils import MachineCPUCount, MachineMemoryGB, CUDAGPUCount, ROCMGPUCount
 
 global simulation_time
 global simulation
@@ -70,10 +70,17 @@ def runJob(job):
         job["exit_code"] = 0
     else:
         cmd = job["command"]
-        if ("gpu" in job) and (job["gpu"] >= 0):
-            cmd = cmd.replace("HIP_VISIBLE_DEVICES=0", "HIP_VISIBLE_DEVICES=%s" % job["gpu"])
-            job["command"] = cmd
-            print("Running command:", cmd)
+        cuda_cnt = job.get("cuda", 0)
+        rocm_cnt = job.get("rocm", 0)
+
+        if cuda_cnt >= 0:
+            cmd = cmd.replace("HIP_VISIBLE_DEVICES=0", "HIP_VISIBLE_DEVICES= CUDA_VISIBLE_DEVICES=%s" % cuda_cnt)
+
+        if rocm_cnt >= 0:
+            cmd = cmd.replace("HIP_VISIBLE_DEVICES=0", "HIP_VISIBLE_DEVICES=%s CUDA_VISIBLE_DEVICES=" % rocm_cnt)
+
+        job["command"] = cmd
+        print("Running command:", cmd)
         p = Popen(cmd, shell=True)
         job["exit_code"] = os.waitpid(p.pid, 0)[1]
 
@@ -109,7 +116,8 @@ def getJob(jobs, resources, order):
                 if (
                     (job["rss"] <= resources["available"]["rss"])
                     and (job["cpu"] <= resources["available"]["cpu"])
-                    and ((not "gpu" in job) or resources["available"]["gpu"])
+                    and ((not "cuda" in job) or resources["available"]["cuda"])
+                    and ((not "rocm" in job) or resources["available"]["rocm"])
                 ):
                     pending_jobs.append(job)
                 break
@@ -132,8 +140,11 @@ def startJob(job, resources, thrds):
     job["start_time"] = gettime()
     for pram in ["rss", "cpu"]:
         resources["available"][pram] = resources["available"][pram] - job[pram]
-    if "gpu" in job:
-        job["gpu"] = resources["available"]["gpu"].pop(0)
+    if "cuda" in job:
+        job["cuda"] = resources["available"]["cuda"].pop(0)
+    if "rocm" in job:
+        job["rocm"] = resources["available"]["rocm"].pop(0)
+
     t = threading.Thread(target=runJob, args=(job,))
     thrds[t] = job
     if not simulation:
@@ -145,7 +156,8 @@ def startJob(job, resources, thrds):
             job["cpu"],
             job["time"],
             resources["available"],
-            "GPU: %s" % (job["gpu"] if "gpu" in job else "-"),
+            "CUDA: %s" % (job.get("cuda", "-")),
+            "ROCm: %s" % (job.get("rocm", "-")),
         )
     t.start()
 
@@ -176,8 +188,10 @@ def checkJobs(thrds, resources):
         resources["done_jobs"] = resources["done_jobs"] + 1
         for pram in ["rss", "cpu"]:
             resources["available"][pram] = resources["available"][pram] + job[pram]
-        if ("gpu" in job) and (job["gpu"] >= 0):
-            resources["available"]["gpu"].append(job["gpu"])
+        if ("cuda" in job) and (job["cuda"] >= 0):
+            resources["available"]["cuda"].append(job["cuda"])
+        if ("rocm" in job) and (job["rocm"] >= 0):
+            resources["available"]["rocm"].append(job["rocm"])
         if not simulation:
             print(
                 "Done",
@@ -341,6 +355,7 @@ if __name__ == "__main__":
         parser.error("Invalid -o|--order value '%s' provided." % opts.order)
     if opts.maxJobs <= 0:
         opts.maxJobs = MachineCPUCount
+
     resources = {
         "total": {
             "cpu": opts.maxcpu if (opts.maxcpu > 0) else MachineCPUCount * opts.cpu,
@@ -349,7 +364,8 @@ if __name__ == "__main__":
                 if (opts.maxmemory > 0)
                 else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory)
             ),
-            "gpu": list(range(8)),
+            "cuda": list(range(CUDAGPUCount)),
+            "rocm": list(range(ROCMGPUCount)),
         },
         "total_groups": 0,
         "total_jobs": 0,

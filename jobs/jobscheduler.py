@@ -15,9 +15,10 @@ from optparse import OptionParser
 from subprocess import Popen
 from os.path import abspath, dirname
 import sys
+import re
 
 sys.path.append(dirname(dirname(abspath(sys.argv[0]))))
-from cmsutils import MachineCPUCount, MachineMemoryGB
+from cmsutils import MachineCPUCount, MachineMemoryGB, CUDAGPUCount, ROCMGPUCount
 
 global simulation_time
 global simulation
@@ -70,8 +71,23 @@ def runJob(job):
         job["exit_code"] = 0
     else:
         cmd = job["command"]
-        if ("gpu" in job) and (job["gpu"] >= 0):
-            cmd = cmd.replace("HIP_VISIBLE_DEVICES=0", "HIP_VISIBLE_DEVICES=%s" % job["gpu"])
+        if job.get("gpu", -1) >= 0:
+            maker, idx = job["gpu"].split(":", 1)
+            # Remove assignment of GPUs if it exists
+            cmd = re.sub(r"HIP_VISIBLE_DEVICES=\S+", "", cmd)
+            cmd = re.sub(r"CUDA_VISIBLE_DEVICES=\S+", "", cmd)
+
+            if maker == "cuda":
+                cmd = cmd.replace(
+                    "cmsDriver.py",
+                    "CUDA_VISIBLE_DEVICES=%s HIP_VISIBLE_DEVICES=0 cmsDriver.py" % idx,
+                )
+            elif maker == "rocm":
+                cmd = cmd.replace(
+                    "cmsDriver.py",
+                    "HIP_VISIBLE_DEVICES=%s CUDA_VISIBLE_DEVICES=0 cmsDriver.py" % idx,
+                )
+
             job["command"] = cmd
             print("Running command:", cmd)
         p = Popen(cmd, shell=True)
@@ -215,8 +231,7 @@ def initJobs(jobs, resources, otype):
             total_jobs += 1
             job = group["commands"][i]
             job["origtime"] = job["time"]
-            if "HIP_VISIBLE_DEVICES=0" in job["command"]:
-                job["gpu"] = -1
+            job["gpu"] = 1 if "-w gpu" in job["command"] else -1
             if simulation:
                 job["time2finish"] = job["time"]
             job_time += job["time"]
@@ -349,7 +364,8 @@ if __name__ == "__main__":
                 if (opts.maxmemory > 0)
                 else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory)
             ),
-            "gpu": list(range(8)),
+            "gpu": ["cuda:{0}".format(i) for i in range(CUDAGPUCount)]
+            + ["rocm:{0}".format(i) for i in range(ROCMGPUCount)],
         },
         "total_groups": 0,
         "total_jobs": 0,

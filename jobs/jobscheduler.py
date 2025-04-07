@@ -80,12 +80,12 @@ def runJob(job):
             if maker == "cuda":
                 cmd = cmd.replace(
                     "cmsDriver.py",
-                    "CUDA_VISIBLE_DEVICES=%s HIP_VISIBLE_DEVICES=0 cmsDriver.py" % idx,
+                    "CUDA_VISIBLE_DEVICES=%s HIP_VISIBLE_DEVICES= cmsDriver.py" % idx,
                 )
             elif maker == "rocm":
                 cmd = cmd.replace(
                     "cmsDriver.py",
-                    "HIP_VISIBLE_DEVICES=%s CUDA_VISIBLE_DEVICES=0 cmsDriver.py" % idx,
+                    "HIP_VISIBLE_DEVICES=%s CUDA_VISIBLE_DEVICES= cmsDriver.py" % idx,
                 )
 
             job["command"] = cmd

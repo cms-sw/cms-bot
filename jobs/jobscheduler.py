@@ -18,7 +18,7 @@ import sys
 import re
 
 sys.path.append(dirname(dirname(abspath(sys.argv[0]))))
-from cmsutils import MachineCPUCount, MachineMemoryGB, CUDAGPUCount, ROCMGPUCount
+from cmsutils import MachineCPUCount, MachineMemoryGB, CUDAGPUList, ROCMGPUList
 
 global simulation_time
 global simulation
@@ -74,8 +74,8 @@ def runJob(job):
         if job.get("gpu", -1) >= 0:
             maker, idx = job["gpu"].split(":", 1)
             # Remove assignment of GPUs if it exists
-            cmd = re.sub(r"HIP_VISIBLE_DEVICES=\S+", "", cmd)
-            cmd = re.sub(r"CUDA_VISIBLE_DEVICES=\S+", "", cmd)
+            cmd = re.sub(r"HIP_VISIBLE_DEVICES=\S* ", " ", cmd)
+            cmd = re.sub(r"CUDA_VISIBLE_DEVICES=\S* ", " ", cmd)
 
             if maker == "cuda":
                 cmd = cmd.replace(
@@ -231,7 +231,10 @@ def initJobs(jobs, resources, otype):
             total_jobs += 1
             job = group["commands"][i]
             job["origtime"] = job["time"]
-            job["gpu"] = 1 if "-w gpu" in job["command"] else -1
+            job["gpu"] = -1
+            if "HIP_VISIBLE_DEVICES" in job["command"] or "CUDA_VISIBLE_DEVICES" in job["command"]:
+                job["gpu"] = 1
+
             if simulation:
                 job["time2finish"] = job["time"]
             job_time += job["time"]
@@ -364,8 +367,7 @@ if __name__ == "__main__":
                 if (opts.maxmemory > 0)
                 else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory)
             ),
-            "gpu": ["cuda:{0}".format(i) for i in range(CUDAGPUCount)]
-            + ["rocm:{0}".format(i) for i in range(ROCMGPUCount)],
+            "gpu": CUDAGPUList + ROCMGPUList,
         },
         "total_groups": 0,
         "total_jobs": 0,

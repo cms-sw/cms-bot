@@ -60,7 +60,7 @@ RELVAL_KEYS["WORKFLOWS"].append(
         "-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861",
     ]
 )
-RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", "-w gpu"])
+RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", "-w gpu --gpu required"])
 RELVAL_KEYS["WORKFLOWS"].append(["_ROCM_", "-w gpu --gpu required"])
 RELVAL_KEYS["enableIMT"].append(
     [THREADED_ROOT, "--customise FWCore/Concurrency/enableIMT.enableIMT"]

@@ -87,7 +87,7 @@ def _gpuList(gpu_type):
     e, o = run_cmd(cmd)
 
     if e != 0:
-        return 0
+        return []
 
     supported_lines = [
         "{0}:{1}".format(gpu_type, i)

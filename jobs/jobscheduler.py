@@ -71,7 +71,7 @@ def runJob(job):
         job["exit_code"] = 0
     else:
         cmd = job["command"]
-        if job.get("gpu", -1) >= 0:
+        if job.get("gpu") is not None:
             maker, idx = job["gpu"].split(":", 1)
             # Remove assignment of GPUs if it exists
             cmd = re.sub(r"HIP_VISIBLE_DEVICES=\S* ", " ", cmd)
@@ -192,7 +192,7 @@ def checkJobs(thrds, resources):
         resources["done_jobs"] = resources["done_jobs"] + 1
         for pram in ["rss", "cpu"]:
             resources["available"][pram] = resources["available"][pram] + job[pram]
-        if ("gpu" in job) and (job["gpu"] >= 0):
+        if job.get("gpu") is not None:
             resources["available"]["gpu"].append(job["gpu"])
         if not simulation:
             print(
@@ -231,7 +231,7 @@ def initJobs(jobs, resources, otype):
             total_jobs += 1
             job = group["commands"][i]
             job["origtime"] = job["time"]
-            job["gpu"] = -1
+            # job["gpu"] = -1
             if "HIP_VISIBLE_DEVICES" in job["command"] or "CUDA_VISIBLE_DEVICES" in job["command"]:
                 job["gpu"] = 1
 
@@ -376,6 +376,8 @@ if __name__ == "__main__":
     }
     print(MachineCPUCount, MachineMemoryGB, resources)
     jobs = initJobs(json.load(open(opts.jobs)), resources, opts.type)
+    if any(j.get("gpu") for j in jobs) and not resources["total"]["gpu"]:
+        raise RuntimeError("One or more jobs require GPU, but no usable GPUs found")
     thrds = {}
     wait_for_jobs = False
     has_jobs = True

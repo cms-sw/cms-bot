@@ -1079,6 +1079,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             except:
                 pass
 
+        if pr.state == "closed":
+            create_test_property = False
+
         logger.info("Following packages affected: %s", ", ".join(packages))
         for package in packages:
             package_categories[package] = set([])

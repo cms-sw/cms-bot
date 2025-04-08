@@ -923,7 +923,7 @@ def preprocess_comment_text(comment_msg):
 
 
 def ensure_ascii(string):
-    return string.encode("ascii", "replace").decode("ascii", "replace")
+    return string.encode("ascii", "ignore").decode("ascii", "ignore")
 
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):

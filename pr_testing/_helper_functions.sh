@@ -5,6 +5,7 @@ WORKSPACE=${WORKSPACE}                # Needs to be exported in master script
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metadata etc are kept
 BUILD_DIR=testBuildDir
 RESULTS_DIR=$WORKSPACE/testsResults
+PR_TESTING_DIR=$(dirname $BASH_SOURCE)
 export PYTHONUNBUFFERED=1
 export CMSBOT_PYTHON_CMD=$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 # -----
@@ -192,10 +193,6 @@ function get_result_file_name () {
 }
 
 function get_gpu_matrix_args() {
-  GPU_FLAG=""
-  if runTheMatrix.py --help | grep -q '\-\-gpu' ; then
-    GPU_FLAG="--gpu required"
-  fi
-  OPTS="-w gpu ${GPU_FLAG}"
+  OPTS=$(PYTHONPATH=${PR_TESTING_DIR}/.. ${CMSBOT_PYTHON_CMD} -c 'from RelValArgs import GPU_RELVALS_FLAGS;print(GPU_RELVALS_FLAGS)')
   echo ${OPTS}
 }

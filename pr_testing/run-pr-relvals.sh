@@ -79,7 +79,7 @@ popd
 TEST_ERRORS=$(grep -ai -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR' | grep -v 'ERROR failed to parse X509 proxy') || true
 GENERAL_ERRORS=`grep -a "ALL_OK" ${LOG}` || true
 
-RESULT_FILE_NAME=$(get_result_file_name relval "${TEST_FLAVOR}" results)
+RESULT_FILE_NAME=$(get_result_file_name relval "${TEST_FLAVOR}" report)
 FAILED_FILE_NAME=$(get_result_file_name relval "${TEST_FLAVOR}" failed)
 
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then

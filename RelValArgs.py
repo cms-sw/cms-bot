@@ -31,6 +31,7 @@ RELVAL_KEYS = {
     "WORKFLOWS": [],
     "TIMEOUT": [],
 }
+GPU_RELVALS_FLAGS = "-w gpu --gpu required"
 THREADED_ROOT = "NON_THREADED_CMSSW"
 THREADED_IBS = "NON_THREADED_CMSSW"
 if not "CMSSW_NON_THREADED" in environ:
@@ -60,8 +61,12 @@ RELVAL_KEYS["WORKFLOWS"].append(
         "-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861",
     ]
 )
-RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", "-w gpu --gpu required"])
-RELVAL_KEYS["WORKFLOWS"].append(["_ROCM_", "-w gpu --gpu required"])
+if environ.get("IB_TEST_TYPE", "") in ["rocm", "cuda", "gpu"]:
+    RELVAL_KEYS["WORKFLOWS"].append([".+", GPU_RELVALS_FLAGS])
+else:
+    RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", GPU_RELVALS_FLAGS])
+    RELVAL_KEYS["WORKFLOWS"].append(["_ROCM_", GPU_RELVALS_FLAGS])
+
 RELVAL_KEYS["enableIMT"].append(
     [THREADED_ROOT, "--customise FWCore/Concurrency/enableIMT.enableIMT"]
 )

@@ -31,6 +31,7 @@ FORCE_FULL_IB_DEFAULT="${FORCE_FULL_IB}"
 for QUEUE in $RELEASE_QUEUES; do
   for IB_INFO in $(cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;") ;  do
     CMS_BOT_BRANCH=${DEFAULT_CMS_BOT_BRANCH}
+    unset IB_TEST_TYPE
     unset DEBUG_EXTERNALS
     unset RELEASE_BRANCH
     unset BUILD_HOUR
@@ -93,6 +94,7 @@ for QUEUE in $RELEASE_QUEUES; do
     echo "SKIP_TESTS=$SKIP_TESTS" >> $WORKSPACE/properties
     echo "DEBUG_EXTERNALS=$DEBUG_EXTERNALS" >> $WORKSPACE/properties
     echo "BUILD_OPTS=$BUILD_OPTS" >> $WORKSPACE/properties
+    echo "IB_TEST_TYPE=${IB_TEST_TYPE}" >> $WORKSPACE/properties
     if [ "X$ALWAYS_BUILD" = X ]; then
       echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr '\n' ' '`" >> $WORKSPACE/properties
     else

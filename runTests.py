@@ -117,12 +117,20 @@ class UnitTester(IBThreadBase):
             return
         precmd = ""
         paralleJobs = MachineCPUCount
+        user_tests = os.environ.get("IB_TEST_TYPE", "")
+        if self.xType == "GPU":
+            user_tests = "cuda"
+        elif self.xType == "ROCM":
+            user_tests = "rocm"
         if ("ASAN" in os.environ["CMSSW_VERSION"]) or ("UBSAN" in os.environ["CMSSW_VERSION"]):
             paralleJobs = int(MachineCPUCount / 2)
-        if (self.xType == "GPU") or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
-            precmd = "export USER_UNIT_TESTS=cuda ;"
-        if (self.xType == "ROCM") or ("_ROCM_X" in os.environ["CMSSW_VERSION"]):
-            precmd = "export USER_UNIT_TESTS=rocm ;"
+        if user_tests == "":
+            if "_GPU_X" in os.environ["CMSSW_VERSION"]:
+                user_tests = "cuda"
+            elif "_ROCM_X" in os.environ["CMSSW_VERSION"]:
+                user_tests = "rocm"
+        if user_tests != "":
+            precmd = "export USER_UNIT_TESTS=%s ;" % user_tests
         skiptests = ""
         if "lxplus" in getHostName():
             skiptests = "SKIP_UNITTESTS=ExpressionEvaluatorUnitTest"
@@ -431,6 +439,10 @@ class ReleaseTester(object):
         if only and "gpu_unit" in only:
             print("\n" + 80 * "-" + " gpu_unit \n")
             self.threadList["gpu_unit"] = self.runUnitTests([], "GPU")
+
+        if only and "rocm_unit" in only:
+            print("\n" + 80 * "-" + " rocm_unit \n")
+            self.threadList["rocm_unit"] = self.runUnitTests([], "ROCM")
 
         if not only or "codeRules" in only:
             print("\n" + 80 * "-" + " codeRules \n")

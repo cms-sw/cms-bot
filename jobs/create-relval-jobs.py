@@ -78,14 +78,20 @@ for t in thrds:
 # Get Workflow stats from ES
 print("Getting Workflow stats from ES.....")
 stats = {}
+release_cycles = []
 if "_X_" in cmssw_ver:
-    release_cycle = str.lower(cmssw_ver.split("_X_")[0] + "_X")
+    release_cycles.append(str.lower(cmssw_ver.split("_X_")[0] + "_X"))
+    if "_cudartgpu_" in release_cycles[0]:
+        release_cycles.append(release_cycles[0].replace("_cudartgpu_", "_gpu_"))
+    release_cycles.append("_".join(release_cycles[0].split("_", 4)[0:3]) + "_X")
 else:
-    release_cycle = str.lower("_".join(cmssw_ver.split("_")[:3]) + "_X")
+    release_cycles.append(tr.lower("_".join(cmssw_ver.split("_")[:3]) + "_X"))
+
 days_history = 10
 # if ('_ppc64le_' in arch) or ('_aarch64_' in arch) or ('cc8_' in arch) or ('gcc10' in arch):
 #  days_history=3
-while True:
+while release_cycles:
+    release_cycle = release_cycles.pop(0)
     print("Searching for last %s days data for %s/%s" % (days_history, release_cycle, arch))
     stats = es_query(
         index="relvals_stats_*",
@@ -100,11 +106,7 @@ while True:
         scroll=True,
     )
     if (not "hits" in stats) or (not "hits" in stats["hits"]) or (not stats["hits"]["hits"]):
-        xrelease_cycle = str.lower("_".join(cmssw_ver.split("_", 4)[0:3]) + "_X")
-        if xrelease_cycle != release_cycle:
-            release_cycle = xrelease_cycle
-            print("Retry: Setting release cycle to ", release_cycle)
-            continue
+        continue
     break
 
 dump(stats, open("all.json", "w"), sort_keys=True, indent=2)

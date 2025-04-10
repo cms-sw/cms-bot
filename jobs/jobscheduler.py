@@ -377,7 +377,7 @@ if __name__ == "__main__":
     print(MachineCPUCount, MachineMemoryGB, resources)
     jobs = initJobs(json.load(open(opts.jobs)), resources, opts.type)
 
-    needGPU = any("_VISIBLE_DEVICES" in c["command"] for j in jobs["jobs"] for c in j["commands"])
+    needGPU = any(j.get("gpu", False) for j in jobs["jobs"])
 
     if needGPU and not resources["total"]["gpu"]:
         raise RuntimeError("One or more jobs require GPU, but no usable GPUs found")

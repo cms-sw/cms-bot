@@ -32,7 +32,7 @@ for prof in ${PROFILES} ; do
       runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --customise Validation/Performance/IgProfInfo.customise --no_exec" > ./runTheMatrix.log 2>&1
       cd $WORKFLOW*
       for f in $(ls *GEN_SIM.py); do
-         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f > ${f//.py/.log} 2>&1
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f > ${f//.py/.log} 2>&1 || ERR=1
          for g in $(ls -1 IgProf*.gz);do
            mv $g ${g/IgProf/igprofMEM_GC_step1}
          done
@@ -48,12 +48,6 @@ for prof in ${PROFILES} ; do
       cd -
     else
       scram tool info tensorflow
-      case $SCRAM_ARCH in
-              el*)
-		scram setup $( ls -1 /cvmfs/cms-ib.cern.ch/sw/x86_64/latest/$SCRAM_ARCH/cms/cmssw/CMSSW_*_MKLDNN0_*/config/toolbox/$SCRAM_ARCH/tools/selected/tensorflow.xml | tail -1 ) || ERR=1;;
-      esac
-      scram b ToolUpdated
-      scram tool info tensorflow
       export TF_ENABLE_ZENDNN_OPTS=1
       export OMP_NUM_THREADS=1
       export MALLOC_CONF=zero:true
@@ -62,7 +56,7 @@ for prof in ${PROFILES} ; do
       runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --customise Validation/Performance/IgProfInfo.customise --no_exec" > ./runTheMatrix.log 2>&1
       cd $WORKFLOW*
       for f in $(ls *GEN_SIM.py); do
-         igprof -pp -d -t cmsRun -- cmsRun $f > ${f//.py/.log} 2>&1
+         igprof -pp -d -t cmsRun -- cmsRun $f > ${f//.py/.log} 2>&1 || ERR=1
          for g in $(ls -1 IgProf*.gz);do
            mv $g ${g/IgProf/igprofCPU_step1}
          done
@@ -115,3 +109,4 @@ for prof in ${PROFILES} ; do
     fi
   done
 done
+exit $ERR

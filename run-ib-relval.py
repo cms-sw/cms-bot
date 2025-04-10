@@ -9,7 +9,7 @@ exec ${python_cmd} $0 ${1+"$@"}
 from __future__ import print_function
 from sys import exit, argv
 from optparse import OptionParser
-from os import environ, system, waitpid
+from os import environ, system, waitpid, waitstatus_to_exitcode
 from runPyRelValThread import PyRelValsThread
 from RelValArgs import GetMatrixOptions, isThreaded
 from logUpdater import LogUpdater
@@ -129,13 +129,13 @@ if __name__ == "__main__":
                 shell=True,
             )
             e = waitpid(p.pid, 0)[1]
-            print("Time took to create jobs:", int(time() - stime), "sec")
+            print("Time took to run jobs:", int(time() - stime), "sec")
         else:
             print("No workflow to run.")
         system("touch " + cmssw_base + "/done." + opts.jobid)
         if logger:
             logger.updateRelValMatrixPartialLogs(cmssw_base, "done." + opts.jobid)
-        exit(e)
+        exit(waitstatus_to_exitcode(e))
 
     if isThreaded(cmssw_ver, arch):
         print("Threaded IB Found")

@@ -234,7 +234,6 @@ def initJobs(jobs, resources, otype):
             # job["gpu"] = -1
             if "HIP_VISIBLE_DEVICES" in job["command"] or "CUDA_VISIBLE_DEVICES" in job["command"]:
                 job["gpu"] = 1
-
             if simulation:
                 job["time2finish"] = job["time"]
             job_time += job["time"]
@@ -376,7 +375,10 @@ if __name__ == "__main__":
     }
     print(MachineCPUCount, MachineMemoryGB, resources)
     jobs = initJobs(json.load(open(opts.jobs)), resources, opts.type)
-    if any(j.get("gpu") for j in jobs["jobs"]) and not resources["total"]["gpu"]:
+
+    needGPU = any("_VISIBLE_DEVICES" in c["command"] for j in jobs["jobs"] for c in j["commands"])
+
+    if needGPU and not resources["total"]["gpu"]:
         raise RuntimeError("One or more jobs require GPU, but no usable GPUs found")
     thrds = {}
     wait_for_jobs = False

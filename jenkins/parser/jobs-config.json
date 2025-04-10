@@ -6,17 +6,6 @@
     "jobsConfig": {
         "jenkinsJobs": [
             {
-                "jobName": "jenkins-test-dummyjob",
-                "errorType": [
-                    "hudsonConnection",
-                    "timedOut",
-                    "busError",
-                    "workspaceFailure"
-                ],
-                "maxTime": "1",
-                "retryTime": "5"
-            },
-            {
                 "jobName": "ib-run-igprof",
                 "errorType": [
                     "hudsonConnection",

@@ -9,7 +9,21 @@ exec ${python_cmd} $0 ${1+"$@"}
 from __future__ import print_function
 from sys import exit, argv
 from optparse import OptionParser
-from os import environ, system, waitpid, waitstatus_to_exitcode
+from os import environ, system, waitpid
+
+try:
+    from os import waitstatus_to_exitcode
+except ImportError:
+
+    def waitstatus_to_exitcode(status):
+        if os.WIFEXITED(status):
+            return os.WEXITSTATUS(status)
+        elif os.WIFSIGNALED(status):
+            return -os.WTERMSIG(status)
+        else:
+            return 255
+
+
 from runPyRelValThread import PyRelValsThread
 from RelValArgs import GetMatrixOptions, isThreaded
 from logUpdater import LogUpdater

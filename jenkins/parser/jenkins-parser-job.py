@@ -326,7 +326,7 @@ if __name__ == "__main__":
 
             # print("[" + job_to_retry + "] Processing ...")
             job_dir = os.path.join(builds_dir, job_to_retry)
-            if not os.exists(job_dir):
+            if not os.path.exists(job_dir):
                 continue
             error_list, force_retry_regex = helpers.get_errors_list(jobs_object, job_id)
 

@@ -47,7 +47,6 @@ for prof in ${PROFILES} ; do
       done
       cd -
     else
-      scram tool info tensorflow
       export TF_ENABLE_ZENDNN_OPTS=1
       export OMP_NUM_THREADS=1
       export MALLOC_CONF=zero:true

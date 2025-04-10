@@ -18,7 +18,7 @@ import sys
 import re
 
 sys.path.append(dirname(dirname(abspath(sys.argv[0]))))
-from cmsutils import MachineCPUCount, MachineMemoryGB, CUDAGPUList, ROCMGPUList
+from cmsutils import MachineCPUCount, MachineMemoryGB, gpuList
 
 global simulation_time
 global simulation
@@ -358,6 +358,7 @@ if __name__ == "__main__":
         parser.error("Invalid -o|--order value '%s' provided." % opts.order)
     if opts.maxJobs <= 0:
         opts.maxJobs = MachineCPUCount
+
     resources = {
         "total": {
             "cpu": opts.maxcpu if (opts.maxcpu > 0) else MachineCPUCount * opts.cpu,
@@ -366,7 +367,7 @@ if __name__ == "__main__":
                 if (opts.maxmemory > 0)
                 else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory)
             ),
-            "gpu": CUDAGPUList + ROCMGPUList,
+            "gpu": gpuList("cuda") + gpuList("rocm"),
         },
         "total_groups": 0,
         "total_jobs": 0,

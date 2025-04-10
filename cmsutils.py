@@ -70,7 +70,7 @@ def _memorySizeGB():
     return count
 
 
-def _gpuList(gpu_type):
+def gpuList(gpu_type):
     """
     Returns the number of supported GPUs for the given type ('cuda' or 'rocm').
 
@@ -97,8 +97,6 @@ def _gpuList(gpu_type):
     return supported_lines
 
 
-CUDAGPUList = _gpuList("cuda")
-ROCMGPUList = _gpuList("rocm")
 MachineMemoryGB = _memorySizeGB()
 MachineCPUCount = _getCPUCount()
 

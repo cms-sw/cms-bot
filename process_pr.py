@@ -2299,6 +2299,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             labels.append("fully-signed-draft")
     if need_external:
         labels.append("requires-external")
+
+    if (not bot_status) and issue.state != "open":
+        labels = [l for l in labels if not l.startswith("tests-")]
+        labels.extend(l for l in old_labels if l.startswith("tests-"))
+
     labels = set(labels)
     logger.info("New Labels: %s", sorted(labels))
 

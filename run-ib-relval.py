@@ -10,20 +10,6 @@ from __future__ import print_function
 from sys import exit, argv
 from optparse import OptionParser
 from os import environ, system, waitpid
-
-try:
-    from os import waitstatus_to_exitcode
-except ImportError:
-
-    def waitstatus_to_exitcode(status):
-        if os.WIFEXITED(status):
-            return os.WEXITSTATUS(status)
-        elif os.WIFSIGNALED(status):
-            return -os.WTERMSIG(status)
-        else:
-            return 255
-
-
 from runPyRelValThread import PyRelValsThread
 from RelValArgs import GetMatrixOptions, isThreaded
 from logUpdater import LogUpdater
@@ -130,7 +116,7 @@ if __name__ == "__main__":
             e = waitpid(p.pid, 0)[1]
             print("Time took to create jobs:", int(time() - stime), "sec")
             if e:
-                exit(e)
+                exit(0 if e == 0 else 1)
 
             p = None
             stime = time()
@@ -149,7 +135,7 @@ if __name__ == "__main__":
         system("touch " + cmssw_base + "/done." + opts.jobid)
         if logger:
             logger.updateRelValMatrixPartialLogs(cmssw_base, "done." + opts.jobid)
-        exit(waitstatus_to_exitcode(e))
+        exit(0 if e == 0 else 1)
 
     if isThreaded(cmssw_ver, arch):
         print("Threaded IB Found")

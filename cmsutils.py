@@ -70,6 +70,33 @@ def _memorySizeGB():
     return count
 
 
+def gpuList(gpu_type):
+    """
+    Returns the number of supported GPUs for the given type ('cuda' or 'rocm').
+
+    :param gpu_type: Type of GPU to check ('cuda' or 'rocm')
+    :return: Number of supported GPUs
+    """
+    if gpu_type == "cuda":
+        cmd = "cudaComputeCapabilities"
+    elif gpu_type == "rocm":
+        cmd = "rocmComputeCapabilities"
+    else:
+        raise ValueError("Unsupported GPU type: {0}".format(gpu_type))
+
+    e, o = run_cmd(cmd)
+
+    if e != 0:
+        return []
+
+    supported_lines = [
+        "{0}:{1}".format(gpu_type, i)
+        for i, line in enumerate(o.strip().splitlines())
+        if "unsupported" not in line
+    ]
+    return supported_lines
+
+
 MachineMemoryGB = _memorySizeGB()
 MachineCPUCount = _getCPUCount()
 

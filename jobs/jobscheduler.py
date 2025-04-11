@@ -15,9 +15,10 @@ from optparse import OptionParser
 from subprocess import Popen
 from os.path import abspath, dirname
 import sys
+import re
 
 sys.path.append(dirname(dirname(abspath(sys.argv[0]))))
-from cmsutils import MachineCPUCount, MachineMemoryGB
+from cmsutils import MachineCPUCount, MachineMemoryGB, gpuList
 
 global simulation_time
 global simulation
@@ -70,8 +71,23 @@ def runJob(job):
         job["exit_code"] = 0
     else:
         cmd = job["command"]
-        if ("gpu" in job) and (job["gpu"] >= 0):
-            cmd = cmd.replace("HIP_VISIBLE_DEVICES=0", "HIP_VISIBLE_DEVICES=%s" % job["gpu"])
+        if job.get("gpu") is not None:
+            maker, idx = job["gpu"].split(":", 1)
+            # Remove assignment of GPUs if it exists
+            cmd = re.sub(r"HIP_VISIBLE_DEVICES=\S* ", " ", cmd)
+            cmd = re.sub(r"CUDA_VISIBLE_DEVICES=\S* ", " ", cmd)
+
+            if maker == "cuda":
+                cmd = cmd.replace(
+                    "cmsDriver.py",
+                    "CUDA_VISIBLE_DEVICES=%s HIP_VISIBLE_DEVICES= cmsDriver.py" % idx,
+                )
+            elif maker == "rocm":
+                cmd = cmd.replace(
+                    "cmsDriver.py",
+                    "HIP_VISIBLE_DEVICES=%s CUDA_VISIBLE_DEVICES= cmsDriver.py" % idx,
+                )
+
             job["command"] = cmd
             print("Running command:", cmd)
         p = Popen(cmd, shell=True)
@@ -176,7 +192,7 @@ def checkJobs(thrds, resources):
         resources["done_jobs"] = resources["done_jobs"] + 1
         for pram in ["rss", "cpu"]:
             resources["available"][pram] = resources["available"][pram] + job[pram]
-        if ("gpu" in job) and (job["gpu"] >= 0):
+        if job.get("gpu") is not None:
             resources["available"]["gpu"].append(job["gpu"])
         if not simulation:
             print(
@@ -215,8 +231,9 @@ def initJobs(jobs, resources, otype):
             total_jobs += 1
             job = group["commands"][i]
             job["origtime"] = job["time"]
-            if "HIP_VISIBLE_DEVICES=0" in job["command"]:
-                job["gpu"] = -1
+            # job["gpu"] = -1
+            if "HIP_VISIBLE_DEVICES" in job["command"] or "CUDA_VISIBLE_DEVICES" in job["command"]:
+                job["gpu"] = 1
             if simulation:
                 job["time2finish"] = job["time"]
             job_time += job["time"]
@@ -341,6 +358,7 @@ if __name__ == "__main__":
         parser.error("Invalid -o|--order value '%s' provided." % opts.order)
     if opts.maxJobs <= 0:
         opts.maxJobs = MachineCPUCount
+
     resources = {
         "total": {
             "cpu": opts.maxcpu if (opts.maxcpu > 0) else MachineCPUCount * opts.cpu,
@@ -349,7 +367,7 @@ if __name__ == "__main__":
                 if (opts.maxmemory > 0)
                 else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory)
             ),
-            "gpu": list(range(8)),
+            "gpu": gpuList("cuda") + gpuList("rocm"),
         },
         "total_groups": 0,
         "total_jobs": 0,
@@ -358,6 +376,11 @@ if __name__ == "__main__":
     }
     print(MachineCPUCount, MachineMemoryGB, resources)
     jobs = initJobs(json.load(open(opts.jobs)), resources, opts.type)
+
+    needGPU = any(c.get("gpu") for j in jobs["jobs"] for c in j["commands"])
+
+    if needGPU and not resources["total"]["gpu"]:
+        raise RuntimeError("One or more jobs require GPU, but no usable GPUs found")
     thrds = {}
     wait_for_jobs = False
     has_jobs = True

@@ -116,7 +116,7 @@ if __name__ == "__main__":
             e = waitpid(p.pid, 0)[1]
             print("Time took to create jobs:", int(time() - stime), "sec")
             if e:
-                exit(e)
+                exit(0 if e == 0 else 1)
 
             p = None
             stime = time()
@@ -129,13 +129,13 @@ if __name__ == "__main__":
                 shell=True,
             )
             e = waitpid(p.pid, 0)[1]
-            print("Time took to create jobs:", int(time() - stime), "sec")
+            print("Time took to run jobs:", int(time() - stime), "sec")
         else:
             print("No workflow to run.")
         system("touch " + cmssw_base + "/done." + opts.jobid)
         if logger:
             logger.updateRelValMatrixPartialLogs(cmssw_base, "done." + opts.jobid)
-        exit(e)
+        exit(0 if e == 0 else 1)
 
     if isThreaded(cmssw_ver, arch):
         print("Threaded IB Found")

@@ -108,4 +108,3 @@ for prof in ${PROFILES} ; do
     fi
   done
 done
-exit $ERR

@@ -37,7 +37,6 @@ def createJob(workflow, cmssw_ver, arch):
     e, o = run_cmd(cmd)
     if e:
         print("ERROR:%s:%s" % (workflow, o))
-        exit(1)
     try:
         workflow_dir = glob.glob(format("%(workflow)s/%(workflow)s_*", workflow=workflow))[0]
         run_cmd(

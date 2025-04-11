@@ -226,6 +226,20 @@ def setup_logging(loglevel):
     logger.addHandler(handler)
 
 
+from github import Commit
+
+create_status = True
+original__create_status = Commit.Commit.create_status
+
+
+def my_create_status(*args, **kwargs):
+    if create_status:
+        original__create_status(*args, **kwargs)
+
+
+Commit.Commit.create_status = my_create_status
+
+
 def update_CMSSW_LABELS(repo_config):
     try:
         check_dpg_pog = repo_config.CHECK_DPG_POG
@@ -927,7 +941,7 @@ def ensure_ascii(string):
 
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
-    global L2_DATA
+    global L2_DATA, create_status
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
 
@@ -1019,7 +1033,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     ok_too_many_files = False
     warned_too_many_files = False
     is_draft_pr = False
-    create_status = True
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
@@ -2106,7 +2119,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                 "Some test might have been restarted for %s. Resetting the status",
                                 status.context,
                             )
-                            if create_status and not dryRun:
+                            if not dryRun:
                                 last_commit_obj.create_status(
                                     "success",
                                     description="OK",
@@ -2148,7 +2161,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                     res = "-1"
                                 res = "%s\n\n%s" % (res, o)
                                 issue.create_comment(res)
-                        if create_status and not dryRun:
+                        if not dryRun:
                             last_commit_obj.create_status(
                                 "success",
                                 description="Finished",
@@ -2164,7 +2177,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     if "error" in lab_stats[lab_state]:
                         signatures["tests"] = "rejected"
         elif not bot_status:
-            if create_status and not dryRun:
+            if not dryRun:
                 last_commit_obj.create_status(
                     "pending",
                     description="Waiting for authorized user to issue the test command.",
@@ -2413,7 +2426,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     repository, prId, global_test_params, dryRun, abort=True
                 )
                 set_comment_emoji_cache(dryRun, bot_cache, abort_test, repository)
-                if create_status and not dryRun:
+                if not dryRun:
                     last_commit_obj.create_status(
                         "pending",
                         description="Aborted, waiting for authorized user to issue the test command.",
@@ -2683,7 +2696,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 logger.info(
                     "Setting status: pre_check=%s, state=%s, url=%s", pre_check, state, url
                 )
-                if create_status and not dryRunOrig:
+                if not dryRunOrig:
                     last_commit_obj.create_status(
                         state,
                         target_url=url,
@@ -2699,12 +2712,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             create_properties_file_tests(
                 repository, prId, params, dryRunOrig, abort=False, req_type=pre_check
             )
-            if create_status:
-                last_commit_obj.create_status(
-                    "pending",
-                    description="%s requested" % pre_check,
-                    context="%s/%s" % (cms_status_prefix, pre_check),
-                )
+            last_commit_obj.create_status(
+                "pending",
+                description="%s requested" % pre_check,
+                context="%s/%s" % (cms_status_prefix, pre_check),
+            )
         else:
             logger.debug("Dryrun: Setting pending status for %s", pre_check)
 
@@ -2744,13 +2756,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if not dryRun:
                 emoji = "-1" if "ERRORS: " in test_params_msg else "+1"
                 state = "success" if emoji == "+1" else "error"
-                if create_status:
-                    last_commit_obj.create_status(
-                        state,
-                        description=test_params_msg,
-                        target_url=test_params_comment.html_url,
-                        context=bot_test_param_name,
-                    )
+                last_commit_obj.create_status(
+                    state,
+                    description=test_params_msg,
+                    target_url=test_params_comment.html_url,
+                    context=bot_test_param_name,
+                )
                 set_comment_emoji_cache(
                     dryRun, bot_cache, test_params_comment, repository, emoji=emoji
                 )
@@ -2763,7 +2774,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 ack_comment.created_at,
             )
             logger.debug("Create bot/ack status: %s", desc)
-            if create_status and not dryRun:
+            if not dryRun:
                 last_commit_obj.create_status(
                     "success",
                     description=desc,

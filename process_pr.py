@@ -226,6 +226,20 @@ def setup_logging(loglevel):
     logger.addHandler(handler)
 
 
+from github import Commit
+
+create_status = True
+original__create_status = Commit.Commit.create_status
+
+
+def my_create_status(*args, **kwargs):
+    if create_status:
+        original__create_status(*args, **kwargs)
+
+
+Commit.Commit.create_status = my_create_status
+
+
 def update_CMSSW_LABELS(repo_config):
     try:
         check_dpg_pog = repo_config.CHECK_DPG_POG
@@ -927,7 +941,7 @@ def ensure_ascii(string):
 
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
-    global L2_DATA
+    global L2_DATA, create_status
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
 
@@ -1078,6 +1092,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     add_nonblocking_labels(chg_files, extra_labels)
             except:
                 pass
+
+        if pr.state == "closed":
+            create_test_property = False
 
         logger.info("Following packages affected: %s", ", ".join(packages))
         for package in packages:
@@ -2007,6 +2024,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     #    if not extra_labels[ltype]:
     #        del extra_labels[ltype]
 
+    if bot_status is None and issue.state != "open":
+        create_status = False
+
     # Always set test pending label
     if "tests" in signatures:
         if test_comment is not None:
@@ -2279,6 +2299,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             labels.append("fully-signed-draft")
     if need_external:
         labels.append("requires-external")
+
+    if (not bot_status) and issue.state != "open":
+        labels = [l for l in labels if not l.startswith("tests-")]
+        labels.extend(l for l in old_labels if l.startswith("tests-"))
+
     labels = set(labels)
     logger.info("New Labels: %s", sorted(labels))
 
@@ -2330,7 +2355,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             add_labels = repo_config.ADD_LABELS
         except:
             pass
-        if add_labels:
+        if add_labels and create_status:
             issue.edit(labels=list(labels))
 
     if not issue.pull_request:

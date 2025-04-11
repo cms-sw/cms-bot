@@ -32,7 +32,7 @@ for prof in ${PROFILES} ; do
       runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --customise Validation/Performance/IgProfInfo.customise --no_exec" > ./runTheMatrix.log 2>&1
       cd $WORKFLOW*
       for f in $(ls *GEN_SIM.py); do
-         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f > ${f//.py/.log} 2>&1
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f > ${f//.py/.log} 2>&1 || ERR=1
          for g in $(ls -1 IgProf*.gz);do
            mv $g ${g/IgProf/igprofMEM_GC_step1}
          done
@@ -47,8 +47,28 @@ for prof in ${PROFILES} ; do
       done
       cd -
     else
-      runTheMatrix.py $WF --command " -n $EVENTS --profile $prof" > ./runTheMatrix.log 2>&1 || ERR=1
-      mv runTheMatrix.log $(ls -d $WORKFLOW*)
+      export TF_ENABLE_ZENDNN_OPTS=1
+      export OMP_NUM_THREADS=1
+      export MALLOC_CONF=zero:true
+      export TF_ENABLE_ONEDNN_OPTS=0
+
+      runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --customise Validation/Performance/IgProfInfo.customise --no_exec" > ./runTheMatrix.log 2>&1
+      cd $WORKFLOW*
+      for f in $(ls *GEN_SIM.py); do
+         igprof -pp -d -t cmsRun -- cmsRun $f > ${f//.py/.log} 2>&1 || ERR=1
+         for g in $(ls -1 IgProf*.gz);do
+           mv $g ${g/IgProf/igprofCPU_step1}
+         done
+      done
+      s=1
+      for f in $(ls -1 step*.py| sort); do
+         igprof -pp -d -t cmsRun -- cmsRun $f > ${f//.py/.log} 2>&1 || ERR=1
+         s=$((++s))
+         for g in $(ls -1 IgProf*.gz);do
+           mv $g ${g/IgProf/igprofCPU_step$s}
+         done
+      done
+      cd -
     fi
   done
   for hpwf in $PROFILING_WORKFLOWS; do

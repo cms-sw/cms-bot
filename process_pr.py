@@ -2350,7 +2350,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             add_labels = repo_config.ADD_LABELS
         except:
             pass
-        if add_labels:
+        if add_labels and create_status:
             issue.edit(labels=list(labels))
 
     if not issue.pull_request:

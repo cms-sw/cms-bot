@@ -131,9 +131,12 @@ class UnitTester(IBThreadBase):
                 user_tests = "rocm"
         if user_tests != "":
             precmd = "export USER_UNIT_TESTS=%s ;" % user_tests
-        skiptests = ""
+        skipped = []
         if "lxplus" in getHostName():
-            skiptests = "SKIP_UNITTESTS=ExpressionEvaluatorUnitTest"
+            skipped.append("ExpressionEvaluatorUnitTest")
+        skipped += [t for t in os.environ.get("SKIP_UNITTESTS", "").split(" ") if t]
+        skiptests = " ".join(["skiptest_%s" % t for t in skipped])
+        print("Skipped tests> %s" % skiptests)
         TEST_PATH = os.environ["CMSSW_RELEASE_BASE"] + "/test/" + arch
         err, cmd = run_cmd(
             "cd "

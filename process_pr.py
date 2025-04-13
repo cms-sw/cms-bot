@@ -226,18 +226,20 @@ def setup_logging(loglevel):
     logger.addHandler(handler)
 
 
-from github import Commit
+try:
+    from github import Commit
 
-create_status = True
-original__create_status = Commit.Commit.create_status
+    create_status = True
+    original__create_status = Commit.Commit.create_status
 
+    def my_create_status(*args, **kwargs):
+        if create_status:
+            original__create_status(*args, **kwargs)
 
-def my_create_status(*args, **kwargs):
-    if create_status:
-        original__create_status(*args, **kwargs)
-
-
-Commit.Commit.create_status = my_create_status
+    Commit.Commit.create_status = my_create_status
+except ImportError as e:
+    print("[WARNING] Failed to import Commit from github")
+    pass
 
 
 def update_CMSSW_LABELS(repo_config):

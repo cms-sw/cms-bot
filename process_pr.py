@@ -2026,7 +2026,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     #    if not extra_labels[ltype]:
     #        del extra_labels[ltype]
 
-    if bot_status is None and issue.state != "open":
+    if bot_status is None and issue.pull_request and issue.state != "open":
         create_status = False
 
     # Always set test pending label
@@ -2302,7 +2302,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if need_external:
         labels.append("requires-external")
 
-    if (not bot_status) and issue.state != "open":
+    # Keep old tests state for closed PRs (workaround for missing commit statuses in old PRs)
+    if not create_status:
         labels = [l for l in labels if not l.startswith("tests-")]
         labels.extend(l for l in old_labels if l.startswith("tests-"))
 
@@ -2357,7 +2358,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             add_labels = repo_config.ADD_LABELS
         except:
             pass
-        if add_labels and create_status:
+        if add_labels:
             issue.edit(labels=list(labels))
 
     if not issue.pull_request:

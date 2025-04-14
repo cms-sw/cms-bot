@@ -238,7 +238,7 @@ try:
 
     Commit.Commit.create_status = my_create_status
 except ImportError as e:
-    print("[WARNING] Failed to import Commit from github")
+    print("[WARNING] Failed to import Commit from github", file=sys.stderr)
     pass
 
 

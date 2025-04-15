@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 INSTALL_REQS=0
 if [ ! -d venv ];  then
-  python3.6 -m venv venv
+  python3.9 -m venv venv
   INSTALL_REQS=1
 fi
 

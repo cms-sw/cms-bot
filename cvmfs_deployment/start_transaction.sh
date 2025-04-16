@@ -19,4 +19,4 @@ if [ "$LOCK_CVMFS" != "false" ] ; then
   done
 fi
 
-cvmfs_server transaction || ((cvmfs_server abort -f  ${CVMFS_REPOSITORY} || rm -fR /var/spool/cvmfs/${cvmfs_repo}/is_publishing.lock) && cvmfs_server transaction)
+cvmfs_server transaction ${CVMFS_REPOSITORY} || ((cvmfs_server abort -f  ${CVMFS_REPOSITORY} || rm -fR /var/spool/cvmfs/${cvmfs_repo}/is_publishing.lock) && cvmfs_server transaction ${CVMFS_REPOSITORY})

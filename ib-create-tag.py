@@ -106,11 +106,20 @@ if __name__ == "__main__":
 
         HEAD_SHA = head["sha"]
         if not opts.dryRun:
-            create_git_tag(
-                repo,
-                RELEASE_NAME,
-                HEAD_SHA,
-            )
+            try:
+                create_git_tag(
+                    repo,
+                    RELEASE_NAME,
+                    HEAD_SHA,
+                )
+            except HTTPError as e:
+                error_body = e.read().decode("ascii", errors="replace")
+                print(
+                    "create_git_tag({0}, {1}, {2}) failed: {3}\nResponse: {4}".format(
+                        repo, RELEASE_NAME, HEAD_SHA, e, error_body
+                    )
+                )
+                sys.exit(1)
         else:
             print("Tag head: ", HEAD_SHA)
 

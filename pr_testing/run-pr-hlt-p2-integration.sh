@@ -18,26 +18,25 @@ pushd $WORKSPACE/rundir
   timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) 2>&1 | tee -a ${WORKSPACE}/hlt-p2-integration.log
 popd
 
-# Check for errors or failures in the log
-if grep -iE 'Error|failure' "${WORKSPACE}/hlt-p2-integration.log"; then
-  echo "Detected 'Error' or 'failure' in hlt-p2-integration.log"
-  echo "HLTP2Integration" > ${RESULTS_DIR}/15-hlt-p2-integration-failed.res
-  echo "HLT_P2_INTEGRATION;ERROR,HLT Phase 2 integration Test,See Logs,hlt-p2-integration.log" >> ${RESULTS_DIR}/hlt-p2-integration.txt
-  mark_commit_status_all_prs 'hlt-p2-integration' 'error' -u "${BUILD_URL}" -d "HLT Phase2 integration log contains errors"
-  rm -rf $WORKSPACE/json_upload $WORKSPACE/rundir
-  prepare_upload_results
-fi
+HLT_P2_RES="SUCCESS"
 
 # Upload results
 source $WORKSPACE/cms-bot/jenkins-artifacts
 touch ${RESULTS_DIR}/15-hlt-p2-integration-failed.res
-if [ -f $WORKSPACE/rundir/Phase2Timing_resources.json ] ; then
-    echo "HLT_P2_INTEGRATION;SUCCESS,HLT Phase 2 integration Test,See Logs,hlt-p2-integration.log" >> ${RESULTS_DIR}/hlt-p2-integration.txt
+
+if grep -iE 'Error|failure' "${WORKSPACE}/hlt-p2-integration.log"; then
+  HLT_P2_RES="ERROR"
+elif [ ! -f $WORKSPACE/rundir/Phase2Timing_resources.json ] ; then
+  HLT_P2_RES="ERROR"
+fi
+echo "HLT_P2_INTEGRATION;${HLT_P2_RES},HLT Phase 2 integration Test,See Logs,hlt-p2-integration.log" >> ${RESULTS_DIR}/hlt-p2-integration.txt
+
+if [ "${HLT_P2_RES}" = "SUCCESS" ] ; then
     mark_commit_status_all_prs 'hlt-p2-integration' 'success' -u "${BUILD_URL}" -d "HLT Phase2 integration data collected"
 else
-  echo "HLT_P2_INTEGRATION;ERROR,HLT Phase 2 integration Test,See Logs,hlt-p2-integration.log" >> ${RESULTS_DIR}/hlt-p2-integration.txt
   echo "HLTP2Integration" > ${RESULTS_DIR}/15-hlt-p2-integration-failed.res
   mark_commit_status_all_prs 'hlt-p2-integration' 'error' -u "${BUILD_URL}" -d "HLT Phase2 integration script failed"
 fi
+
 rm -rf $WORKSPACE/json_upload $WORKSPACE/rundir
 prepare_upload_results

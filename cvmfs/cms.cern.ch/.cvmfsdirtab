@@ -32,5 +32,4 @@
 /el*gcc*/lcg/root
 /el*gcc*/cms/coral
 /el*gcc*/cms/*-tool-conf
-/el*gcc*/cms/data-MagneticField-Interpolation
 /offcomp-prod/premixPUlist

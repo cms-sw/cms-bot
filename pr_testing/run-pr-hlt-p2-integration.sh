@@ -18,6 +18,16 @@ pushd $WORKSPACE/rundir
   timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) 2>&1 | tee -a ${WORKSPACE}/hlt-p2-integration.log
 popd
 
+# Check for errors or failures in the log
+if grep -iE 'Error|failure' "${WORKSPACE}/hlt-p2-integration.log"; then
+  echo "Detected 'Error' or 'failure' in hlt-p2-integration.log"
+  echo "HLTP2Integration" > ${RESULTS_DIR}/15-hlt-p2-integration-failed.res
+  echo "HLT_P2_INTEGRATION;ERROR,HLT Phase 2 integration Test,See Logs,hlt-p2-integration.log" >> ${RESULTS_DIR}/hlt-p2-integration.txt
+  mark_commit_status_all_prs 'hlt-p2-integration' 'error' -u "${BUILD_URL}" -d "HLT Phase2 integration log contains errors"
+  rm -rf $WORKSPACE/json_upload $WORKSPACE/rundir
+  prepare_upload_results
+fi
+
 # Upload results
 source $WORKSPACE/cms-bot/jenkins-artifacts
 touch ${RESULTS_DIR}/15-hlt-p2-integration-failed.res

@@ -18,11 +18,14 @@ if [ "\$(systemctl is-system-running 2>/dev/null || true)" = "offline" ] ; then
     unset DBUS_SESSION_BUS_ADDRESS
   fi
 fi
+if [ -e $WORKSPACE/cms-bot ] ; then
+  export CMS_BOT_DIR=$WORKSPACE/cms-bot
+fi
 export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
 export SCRAM_ARCH=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
-export SCRAM_PREFIX_PATH=$WORKSPACE/cms-bot/das-utils
+export SCRAM_PREFIX_PATH=\$CMS_BOT_DIR/das-utils
 export LC_ALL=C
 if [ ! -d ${CMSSW_BASE}/lib/${ARCHITECTURE} ] ; then
   UNAME=$(echo ${ARCHITECTURE} | cut -d_ -f2)
@@ -48,7 +51,7 @@ set +x
 #Check for syste commands to override e.g. ps hangs in ASAN env
 case ${RELEASE_FORMAT} in
   *ASAN* )
-   $WORKSPACE/cms-bot/system-overrides.sh $WORKSPACE/system-overrides
+   \$CMS_BOT_DIR/system-overrides.sh $WORKSPACE/system-overrides
    export SCRAM_PREFIX_PATH=$WORKSPACE/system-overrides:\${SCRAM_PREFIX_PATH}
    ;;
 esac
@@ -65,9 +68,9 @@ fi
 export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/\$CMS_SITE_OVERRIDE
 export CMSBOT_PYTHON_CMD=\$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
-  cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py
-  $WORKSPACE/cms-bot/das-utils/use-ibeos-sort
-  export PATH=$WORKSPACE/cms-bot/das-utils:\$PATH
+  cp \$CMS_BOT_DIR/das-utils/das_client \$CMS_BOT_DIR/das-utils/das_client.py
+  \$CMS_BOT_DIR/das-utils/use-ibeos-sort
+  export PATH=\$CMS_BOT_DIR/das-utils:\$PATH
   which dasgoclient
   grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true
 fi

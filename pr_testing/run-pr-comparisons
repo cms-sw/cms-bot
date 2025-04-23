@@ -32,7 +32,7 @@ function process_nano(){
       WF_DIR=$(dirname $r)
       [ -e ${WF_DIR}/JobReport2.xml ] || continue
       while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
-      WF=$(basename ${WF_DIR} | cut -d_ -f1)
+      WF=$(basename ${WF_DIR})
       CMD=inspectNanoFile.py
       [ -e ${NANO_TEST_DIR}/inspectNanoFile.py ] && CMD=${NANO_TEST_DIR}/inspectNanoFile.py
       ${CMD} $r -j ${WF}-size.json &

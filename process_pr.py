@@ -2280,7 +2280,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         x
         for x in labels
         if not x.endswith("-approved")
-        and not x.startswith("orp")
         and not x.startswith("tests")
         and not x.startswith("pending-assignment")
         and not x.startswith("comparison")
@@ -2288,6 +2287,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         and not x.startswith("allow-")
         and not x in xlabs
     ]
+
+    # ORPs signature is not needed to mark PR fully signed (it is needed for issues)
+    if issue.pull_request:
+        missingApprovals = [x for x in missingApprovals if not x.startswith("orp")]
 
     logger.info("Missing Approvals: %s", missingApprovals)
     if not missingApprovals:

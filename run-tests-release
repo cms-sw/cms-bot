@@ -40,6 +40,8 @@ mkdir $TEST_DIR/matrixTests
 rm -f $WORKSPACE/matrixTests.log
 pushd $TEST_DIR/matrixTests
   NCPU=$($WORKSPACE/common/get_cpu_number.sh)
+  #FIXME: Use 75% of c[u for aarch64 to avoid build-release test failing due to memory issues
+  if [ "$(uname -m)" = "aarch64" -a $NCPU -gt 16 ] ; then let NCPU=($NCPU*75)/100 ; fi
   runTheMatrix.py -s -j $NCPU 2>&1 | tee -a $WORKSPACE/matrixTests.log
 popd
 

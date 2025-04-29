@@ -133,3 +133,4 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_1_X/rootmaster"] = ["IB/CMSSW_15_1_X/ro
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_1_X/rootmaster"].append("IB/CMSSW_15_1_X/g13r6")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_1_X/g13"] = ["IB/CMSSW_15_1_X/g13r6"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_1_X/tf"] = ["IB/CMSSW_15_1_X/py312"]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_1_X/g14"] = ["IB/CMSSW_15_1_X/el10"]

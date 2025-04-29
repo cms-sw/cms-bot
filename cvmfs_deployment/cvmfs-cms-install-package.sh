@@ -5,6 +5,7 @@ SCRAM_ARCH=$2
 RPMS_REPO=$3
 PACKAGE_NAME=$4
 REINSTALL=$5
+CMSPKG_USER_OPTS="$6"
 export LC_ALL=C
 export LC_CTYPE=C
 export LANG=C
@@ -19,7 +20,7 @@ ${CMS_BOT_DIR}/cvmfs_deployment/bootstrap_dir_for_arch.sh ${INSTALL_PATH} ${SCRA
 
 export SCRAM_ARCH
 export CMSPKG_OS_COMMAND="source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
-CMSPKG="${INSTALL_PATH}/common/cmspkg -a ${SCRAM_ARCH}"
+CMSPKG="${INSTALL_PATH}/common/cmspkg -a ${SCRAM_ARCH} ${CMSPKG_USER_OPTS}"
 ${CMSPKG} update
 ${CMSPKG} -y --upgrade-packages upgrade
 if [ $(echo "${SCRAM_ARCH}" | grep '^slc' | wc -l) -gt 0 ] ; then

@@ -16,14 +16,16 @@ function cmsbuild_args()
     BLD_OPTS=""
     for x in $(echo "$1" | tr ',' ' ') ; do
       case $x in
-        upload_store ) echo "ignoring upload_store" ;;
+        upload_store ) ;;
+        without:* )    arg="${arg} --build-without=$(echo $x    | sed 's|^without:||;s|:|,|g')" ;;
+        system:* )     arg="${arg} --use-system-tools=$(echo $x | sed 's|^system:||;s|:|,|g')" ;;
+        microarchs:* ) arg="${arg} --vectorization=$(echo $x    | sed 's|^microarchs:||;s|:|,|g')" ;;
         * ) BLD_OPTS="${BLD_OPTS},$x" ;;
       esac
     done
-    [ "$BLD_OPTS" != "" ] && arg="${arg} --build-options $(echo ${BLD_OPTS} | sed 's|^,||')"
+    [ "$BLD_OPTS" != "" ]  && arg="${arg} --build-options $(echo ${BLD_OPTS} | sed 's|^,||')"
   fi
-  [ "$2" != "" ] && arg="${arg} --vectorization $2"
-  [[ "$3" =~ "riscv64" ]] && arg="${arg} --use-system-tools=gcc,autotools --build-without=cuda,rocm,tensorflow,openloops,valgrind"
+  [ "$2" != "" ] && arg="${arg} --vectorization=$2"
   [ "${arg}" = "" ] || echo "${arg}"
 }
 

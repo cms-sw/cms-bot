@@ -666,7 +666,7 @@ def main():
             temp_dir = tempfile.mkdtemp()
         else:
             temp_dir = args.temp_dir
-            os.makedirs(temp_dir)
+            os.makedirs(temp_dir, exist_ok=True)
 
         # Installation directory
         if args.install_dir is None:

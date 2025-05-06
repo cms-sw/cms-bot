@@ -88,7 +88,14 @@ if __name__ == "__main__":
     try:
         ref = get_git_tag(repo, RELEASE_NAME)
         HEAD_SHA = ref["object"]["sha"]
-    except HTTPError:
+    except HTTPError as e1:
+        if e1.code != 404:
+            error_body = e1.read().decode("ascii", errors="replace")
+            print(
+                "Unexpected HTTPError: {0}\nResponse: {1}".format(e1, error_body), file=sys.stderr
+            )
+            sys.exit(1)
+
         commits_ = get_commits(repo, RELEASE_BRANCH, until=ib_date, per_page=100)
         if not commits_:
             sys.exit(1)
@@ -117,7 +124,8 @@ if __name__ == "__main__":
                 print(
                     "create_git_tag({0}, {1}, {2}) failed: {3}\nResponse: {4}".format(
                         repo, RELEASE_NAME, HEAD_SHA, e, error_body
-                    )
+                    ),
+                    file=sys.stderr,
                 )
                 sys.exit(1)
         else:

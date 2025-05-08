@@ -27,6 +27,7 @@ from cms_static import (
 from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
+import forward_ports_map
 import re, time
 from collections import defaultdict
 import zlib, base64
@@ -1066,7 +1067,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         # signatures it requires.
         if cmssw_repo or not external_repo:
             if cmssw_repo:
-                if pr.base.ref == "master":
+                if pr.base.ref == "master" or pr.base.ref in forward_ports_map.GIT_REPO_FWPORTS[
+                    "cmssw"
+                ].get(CMSSW_DEVEL_BRANCH, []):
                     signing_categories.add("code-checks")
                 updateMilestone(repo, issue, pr, dryRun)
             chg_files = get_changed_files(repo, pr)

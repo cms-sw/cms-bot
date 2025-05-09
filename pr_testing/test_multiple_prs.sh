@@ -145,6 +145,10 @@ else
   BUILD_VERBOSE=""
 fi
 
+if [ "${BUILD_ONLY}" = "true" ]; then
+  DO_COMPARISON=false
+fi
+
 PRODUCTION_RELEASE=false
 CMSSW_BRANCH=$(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
 CMSSW_DEVEL_BRANCH=$(cd $CMS_BOT_DIR; ${CMSBOT_PYTHON_CMD} -c 'from releases import CMSSW_DEVEL_BRANCH; print(CMSSW_DEVEL_BRANCH)')
@@ -1020,7 +1024,7 @@ fi
 #Do QA checks
 #Code Rules
 QA_RES="NOTRUN"
-if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" -a "$SKIP_STATIC_CHECKS" = "false" ]; then # If a CMSSW specific PR was specified
+if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" -a "$SKIP_STATIC_CHECKS" = "false" -a "$BUILD_ONLY" = "false" ]; then # If a CMSSW specific PR was specified
   mkdir $WORKSPACE/codeRules
   cmsCodeRulesChecker.py -s $WORKSPACE/codeRules -r 1,3 || true
   QA_RES="OK"
@@ -1050,6 +1054,9 @@ if $IS_DEV_BRANCH ; then
     DO_PYTHON3=true
   fi
 fi
+if [ "${BUILD_ONLY}" = "true" ]; then
+  DO_PYTHON3=false
+fi
 if $DO_PYTHON3 ; then
   PYTHON3_RES="OK"
   CMD_python=$(which python3) scram b -r -k -j ${NCPU} CompilePython > $WORKSPACE/python3.log 2>&1 || true
@@ -1065,7 +1072,7 @@ fi
 #
 # Static checks
 #
-if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" -a "$SKIP_STATIC_CHECKS" = "false" ]; then
+if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" -a "$SKIP_STATIC_CHECKS" = "false"  -a "$BUILD_ONLY" = "false" ]; then
   echo 'STATIC_CHECKS;OK,Static checks outputs,See Static Checks,llvm-analysis' >> ${RESULTS_DIR}/static.txt
   echo '--------------------------------------'
   pushd $WORKSPACE/$CMSSW_IB
@@ -1112,7 +1119,7 @@ grep -R -l 'To the DQM GUI' $LOCALRT/src/Utilities/RelMon | grep -v '\.pyc$' | x
 ############################################
 # Force the run of DQM tests if necessary
 ############################################
-if [ "X$DQM_TESTS" = "Xtrue" ] ; then
+if [ "X$DQM_TESTS" = "Xtrue" -a "$BUILD_ONLY" = "false" ] ; then
   if ls $WORKSPACE/$CMSSW_IB/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
     echo "I will make sure that DQM tests will be run"
     if ls $WORKSPACE/$CMSSW_IB/src/| grep "DQMServices"; then
@@ -1139,7 +1146,7 @@ fi
 # ############################################
 CHK_HEADER_OK=true
 if $IS_DEV_BRANCH ; then
-  if [ "X${CHECK_HEADER_TESTS}" = "Xtrue" -a -f $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.chk_headers ] ; then
+  if [ "X${CHECK_HEADER_TESTS}" = "Xtrue" -a -f $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.chk_headers -a "$BUILD_ONLY" = "false" ] ; then
     IGNORE_HDRS="%.i"
     if [ -e "$WORKSPACE/$RELEASE_FORMAT/src/TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h" ] ; then
       IGNORE_HDRS="TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i"
@@ -1314,6 +1321,11 @@ if [ -f $WORKSPACE/buildClang.log ] ; then
       CLANG_BUILD_OK=false
     fi
   fi
+fi
+
+if [ "${BUILD_ONLY}" = "true" ]; then
+  mark_commit_status_all_prs '' 'success' -u "${BUILD_URL}" -d "Tests skipped" || true
+  exit 0
 fi
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true

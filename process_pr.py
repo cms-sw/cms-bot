@@ -131,9 +131,16 @@ TEST_REGEXP = format(
     pkg=CMSSW_PACKAGE_PATTERN,
     release_queue=CMSSW_RELEASE_QUEUE_PATTERN,
 )
+BUILD_REGEXP = format(
+    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)build(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
+    cms_pr=CMS_PR_PATTERN,
+    pkg=CMSSW_PACKAGE_PATTERN,
+    release_queue=CMSSW_RELEASE_QUEUE_PATTERN,
+)
 
 AUTO_TEST_REPOS = ["cms-sw/cmssw"]
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
+REGEX_BUILD_REG = re.compile(BUILD_REGEXP)
 REGEX_TEST_ABORT = re.compile(
     r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I
 )
@@ -720,6 +727,26 @@ def check_test_cmd(first_line, repo, params):
         if m.group(25):
             if "addpkg" in m.group(25):
                 params["EXTRA_CMSSW_PACKAGES"] = m.group(27).strip()
+            else:
+                params["BUILD_FULL_CMSSW"] = "true"
+        return (True, " ".join(prs), wfs, cmssw_que)
+    return (False, "", "", "")
+
+
+def check_build_cmd(first_line, repo, params):
+    m = REGEX_BUILD_REG.match(first_line)
+    if m:
+        wfs = ""
+        prs = []
+        cmssw_que = ""
+        logger.debug("check_test_cmd: %s", m.groups())
+        if m.group(5):
+            prs = get_prs_list_from_string(m.group(5), repo)
+        if m.group(14):
+            cmssw_que = m.group(14)
+        if m.group(19):
+            if "addpkg" in m.group(19):
+                params["EXTRA_CMSSW_PACKAGES"] = m.group(19).strip()
             else:
                 params["BUILD_FULL_CMSSW"] = "true"
         return (True, " ".join(prs), wfs, cmssw_que)
@@ -1660,6 +1687,29 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     if reason:
                         override_tests_failure = reason
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
+                else:
+                    ok, v2, v3, v4 = check_build_cmd(first_line, repository, global_test_params)
+                    if ok:
+                        build_comment = comment
+                        abort_test = None
+                        cmssw_prs = v2
+                        release_queue = v4
+                        release_arch = ""
+                        if "/" in release_queue:
+                            release_queue, release_arch = release_queue.split("/", 1)
+                        elif re.match("^" + ARCH_PATTERN + "$", release_queue):
+                            release_arch = release_queue
+                            release_queue = ""
+                        logger.info(
+                            "Build requested: %s asked to build this PR with cmssw_prs=%s, release_queue=%s, arch=%s",
+                            commenter,
+                            cmssw_prs,
+                            release_queue,
+                            release_arch,
+                        )
+                        logger.debug("Comment message: %s", first_line)
+                        signatures["tests"] = "pending"
+                        continue
 
     # end of parsing comments section
 

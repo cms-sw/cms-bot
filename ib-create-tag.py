@@ -38,6 +38,9 @@ def currenttz():
 
 
 IBS_WITH_HEAD_COMMITS = ["CMSSW_5_3_HI_X"]
+MAX_RETRY_COUNT = 5  # Try resolving git tag at most this number of times
+RETRY_DELAY = 10  # Delay (in s) between retries
+
 if __name__ == "__main__":
     from optparse import OptionParser
 
@@ -85,43 +88,69 @@ if __name__ == "__main__":
     repo = "%s/%s" % (GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO)
     commit_url = "https://api.github.com/repos/%s/commits/" % repo
 
-    try:
-        ref = get_git_tag(repo, RELEASE_NAME)
-        HEAD_SHA = ref["object"]["sha"]
-    except HTTPError:
-        commits_ = get_commits(repo, RELEASE_BRANCH, until=ib_date, per_page=100)
-        if not commits_:
-            sys.exit(1)
-
-        head = None
-        for commit_ in commits_:
-            if (len(commit_["parents"]) == 1) and (not QUEUE in IBS_WITH_HEAD_COMMITS):
-                continue
-            if commit_["url"].startswith(commit_url):
-                head = commit_
-                break
-
-        if head is None:
-            sys.exit(1)
-
-        HEAD_SHA = head["sha"]
-        if not opts.dryRun:
-            try:
-                create_git_tag(
-                    repo,
-                    RELEASE_NAME,
-                    HEAD_SHA,
-                )
-            except HTTPError as e:
-                error_body = e.read().decode("ascii", errors="replace")
+    for _ in range(MAX_RETRY_COUNT):
+        HEAD_SHA = None
+        try:
+            ref = get_git_tag(repo, RELEASE_NAME)
+            HEAD_SHA = ref["object"]["sha"]
+        except HTTPError as e1:
+            if e1.code != 404:
+                error_body = e1.read().decode("ascii", errors="replace")
                 print(
-                    "create_git_tag({0}, {1}, {2}) failed: {3}\nResponse: {4}".format(
-                        repo, RELEASE_NAME, HEAD_SHA, e, error_body
-                    )
+                    "Unexpected HTTPError when calling get_git_tag: {0}\nResponse: {1}".format(
+                        e1, error_body
+                    ),
+                    file=sys.stderr,
                 )
-                sys.exit(1)
+            else:
+                commits_ = get_commits(repo, RELEASE_BRANCH, until=ib_date, per_page=100)
+                if not commits_:
+                    print("get_commits failed", file=sys.stderr)
+                    sys.exit(1)
+
+                head = None
+                for commit_ in commits_:
+                    if (len(commit_["parents"]) == 1) and (not QUEUE in IBS_WITH_HEAD_COMMITS):
+                        continue
+                    if commit_["url"].startswith(commit_url):
+                        head = commit_
+                        break
+
+                if head is None:
+                    sys.exit(1)
+
+                HEAD_SHA = head["sha"]
+                if not opts.dryRun:
+                    try:
+                        create_git_tag(
+                            repo,
+                            RELEASE_NAME,
+                            HEAD_SHA,
+                        )
+                    except HTTPError as e:
+                        HEAD_SHA = None
+                        error_body = e.read().decode("ascii", errors="replace")
+                        if not (e.code == 422 and "already exists" in error_body.lower()):
+                            print(
+                                "Unexpected HTTPError when creating git reference: {0}\nResponse: {1}".format(
+                                    e, error_body
+                                ),
+                                file=sys.stderr,
+                            )
+                else:
+                    print("Tag head: ", HEAD_SHA)
+
+        if HEAD_SHA is None:
+            time.sleep(RETRY_DELAY)
         else:
-            print("Tag head: ", HEAD_SHA)
+            break
+
+    if HEAD_SHA is None:
+        print(
+            "Could not get HEAD_SHA after {0} retries, quitting".format(MAX_RETRY_COUNT),
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     tags = find_tags(repo, QUEUE + "_20")
     RELEASE_LIST = [

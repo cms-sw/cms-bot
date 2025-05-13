@@ -7,9 +7,38 @@ from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 import sys
 from socket import setdefaulttimeout
+import re
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
+
+
+def find_last_comment(issue, user, match):
+    last_comment = None
+    for comment in issue.get_comments():
+        if (user != comment.user.login) or (not comment.body):
+            continue
+        if not re.match(
+            match, comment.body.encode("ascii", "ignore").decode().strip("\n\t\r "), re.MULTILINE
+        ):
+            continue
+        last_comment = comment
+        print("Matched comment from %s with comment id %s" % (comment.user.login, comment.id))
+    return last_comment
+
+
+def modify_comment(comment, match, replace, dryRun):
+    comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
+    if match:
+        new_comment_msg = re.sub(match, replace, comment_msg)
+    else:
+        new_comment_msg = comment_msg + "\n" + replace
+    if new_comment_msg != comment_msg:
+        if not dryRun:
+            comment.edit(new_comment_msg)
+            print("Message updated")
+    return 0
+
 
 valid_types = {}
 valid_types["JENKINS_TEST_URL"] = ["", None]
@@ -68,7 +97,6 @@ if __name__ == "__main__":
     if exists(join(repo_dir, "repo_config.py")):
         sys.path.insert(0, repo_dir)
     import repo_config
-    from process_pr import modify_comment, find_last_comment
     from process_pr import TRIGERING_TESTS_MSG, TRIGERING_STYLE_TEST_MSG
 
     valid_types["JENKINS_TEST_URL"] = ["^\\s*" + TRIGERING_TESTS_MSG + ".*$", None]

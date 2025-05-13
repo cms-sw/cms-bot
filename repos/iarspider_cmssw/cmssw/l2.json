@@ -1128,7 +1128,9 @@
         "upgrade",
         "dqm",
         "db",
-        "core"
+        "core",
+        "alca",
+        "orp"
       ], 
       "start_date": 1620000000
     }

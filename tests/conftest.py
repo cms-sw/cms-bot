@@ -27,14 +27,13 @@ collect_ignore = ["condor/tests"]
 
 def pytest_addoption(parser):
     parser.addoption("--record", action="store_true", help="record mode")
-    parser.addoption("--auth_with_token", action="store_true", help="auth using a token")
-    parser.addoption("--auth_with_jwt", action="store_true", help="auth using JWT")
+    parser.addoption("--record_action", action="store_true", help="record actions mode")
+    parser.addoption("--auth_with_token", action="store_true", help="legacy option, does nothing")
 
 
 def pytest_configure(config):
     if config.getoption("record"):
         Framework.activateRecordMode()
-    if config.getoption("auth_with_token"):
-        Framework.activateTokenAuthMode()
-    if config.getoption("auth_with_jwt"):
-        Framework.activateJWTAuthMode()
+    if config.getoption("record_action"):
+        Framework.activateRecordActionMode()
+    Framework.activateTokenAuthMode()

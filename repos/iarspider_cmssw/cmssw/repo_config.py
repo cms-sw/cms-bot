@@ -9,7 +9,7 @@ GH_TOKEN_READONLY = "~/.github-token-readonly"
 CONFIG_DIR = dirname(abspath(__file__))
 # GH bot user: Use default cmsbot
 CMSBUILD_USER = "iarspider"
-GH_REPO_ORGANIZATION = basename(dirname(CONFIG_DIR))
+GH_REPO_ORGANIZATION = "iarspider-cmssw"
 GH_REPO_FULLNAME = "iarspider-cmssw/cmssw"
 CREATE_EXTERNAL_ISSUE = False
 # Jenkins CI server: User default http://cms-jenkins.cern.ch:8080/cms-jenkins
@@ -31,3 +31,5 @@ CMS_STANDARD_TESTS = True
 CMS_BRANCH_MAP = {}
 # Valid Web hooks e.g. '.+' to match all event
 VALID_WEB_HOOKS = [".+"]
+NONBLOCKING_LABELS = True
+CHECK_DPG_POG = True

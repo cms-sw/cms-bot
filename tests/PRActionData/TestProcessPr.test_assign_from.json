@@ -1,0 +1,51 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {},
+            "emoji": {
+                "2769192218": "+1"
+            },
+            "signatures": {}
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2769192218,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "create-comment",
+        "data": "New categories assigned: core\n\nDr15Jones,makortel,smuzaffar you have been requested to review this Pull request/Issue and eventually sign? Thanks"
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "core-pending",
+            "pending-signatures"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "pending-assignment"
+        ]
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{},\"emoji\":{\"2769192218\":\"+1\"},\"signatures\":{}} -->"
+    },
+    {
+        "type": "save-bot-cache",
+        "data": {
+            "commits": {},
+            "emoji": {
+                "2769192218": "+1"
+            },
+            "signatures": {}
+        }
+    }
+]

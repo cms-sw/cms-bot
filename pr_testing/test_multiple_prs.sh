@@ -6,7 +6,7 @@
 # ---
 #common function
 function order_workflow_list(){
-  echo ${1} | tr ' ' '\n' | tr ',' '\n' | grep '^[0-9]\|^all$' | sort -n | uniq | tr '\n' ',' | sed 's|,*$||'
+  echo ${1} | tr ' ' '\n' | tr ',' '\n' | grep '^[a-z0-9]\|^all$' | sort -n | uniq | tr '\n' ',' | sed 's|,*$||'
 }
 
 function get_pr_baseline_worklflow() {
@@ -344,7 +344,6 @@ if $DO_COMPARISON ; then
 
     PR_LABELS=$(curl -s https://api.github.com/repos/${PR_REPO}/issues/${PR_NUMBER}/labels | grep '"name":' | sed 's|.*: *||;s|"||g;s|-pending||;s|-approved||;s|-rejected||' | tr ',\n' '  ' | tr '[a-z-]' '[A-Z_]')
     EX_WFS=""
-    set +x
     for l in ${PR_LABELS} ; do
        EX_WFS="${EX_WFS},$(get_pr_baseline_worklflow _LAB_${l})"
     done
@@ -376,7 +375,6 @@ if $DO_COMPARISON ; then
         echo "WORKFLOWS=-l ${WORKFLOWS_PR_LABELS}" >> run-baseline-${BUILD_ID}-03.default
       fi
     fi
-    set -x
     if [ "${MATRIX_EXTRAS}" != "" ] ; then
       WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default

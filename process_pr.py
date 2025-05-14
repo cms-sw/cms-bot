@@ -109,7 +109,7 @@ HOLD_MSG = "Pull request has been put on hold by "
 CODE_CHECKS_REGEXP = re.compile(
     r"code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)(\s+and\s+apply\s+patch|)$"
 )
-WF_PATTERN = r"[1-9][0-9]*(\.[0-9]+|)"
+WF_PATTERN = r"(?:[a-z][a-z0-9_]+|[1-9][0-9]*(\.[0-9]+|))"
 CMSSW_QUEUE_PATTERN = "CMSSW_[0-9]+_[0-9]+_(X|[A-Z][A-Z0-9]+_X|[0-9]+(_[a-zA-Z0-9_]+|))"
 CMSSW_PACKAGE_PATTERN = "[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)"
 ARCH_PATTERN = "[a-z0-9]+_[a-z0-9]+_[a-z0-9]+"

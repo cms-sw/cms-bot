@@ -24,6 +24,6 @@ function cvmfs_transaction()
       sleep 10
     done
   else
-    cvmfs_server transaction || ((cvmfs_server abort -f ${CVMFS_REPOSITORY} || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction)
+    cvmfs_server transaction ${CVMFS_REPOSITORY} || ((cvmfs_server abort -f ${CVMFS_REPOSITORY} || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction ${CVMFS_REPOSITORY})
   fi
 }

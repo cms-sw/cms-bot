@@ -941,6 +941,7 @@ CMSSW_CATEGORIES = {
         "HLTrigger/JSONMonitoring",
         "HLTrigger/JetMET",
         "HLTrigger/Muon",
+        "HLTrigger/NGTScouting",
         "HLTrigger/Timer",
         "HLTrigger/Tools",
         "HLTrigger/btau",

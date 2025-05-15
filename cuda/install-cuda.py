@@ -548,7 +548,7 @@ def main():
         "-o",
         "--os",
         metavar="OS",
-        choices=["rhel7", "rhel8", "rhel9"],
+        choices=["rhel7", "rhel8", "rhel9", "rhel10"],
         default="rhel9",
         help="the operating system to download the components for; currently this is ignored, because a single set of components supports all recent Linux versions",
     )

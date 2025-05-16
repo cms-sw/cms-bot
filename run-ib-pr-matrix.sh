@@ -26,7 +26,27 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     ALL_WFS=$(runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' | tr '\n' ',' | sed 's|,$||')
     WORKFLOWS=$(echo "${WORKFLOWS}" | sed "s|all|${ALL_WFS}|")
   fi
-  runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+  WFLISTS_CNT=$(echo ${WORKFLOWS} | tr ',' '\n'  | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)
+  WFS_CNT=$(echo ${WORKFLOWS} | tr ',' '\n'  | wc -l)
+  OFILE="workflows.out"
+  BADLIST_CNT=$(grep $OFILE -e "is not a possible selected entry" | wc -l)
+  runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} > $OFILE
+  if [ $BADLIST_CNT -gt 0 ]; then
+    if [ $WFLISTS_CNT -ne $WFS_CNT ]; then
+      echo "WARNING : some workflow lists were not recognized"
+    else
+      if [ $BADLIST_CNT -eq $WFS_CNT ]; then
+        echo "ERROR : all workflow lists were not recognized, and no additional workflows were requested"
+        rm $OFILE
+        exit 1
+      else
+        echo "WARNING : none of the workflow lists were recognized, only running explicitly requested workflows"
+      fi
+    fi
+  fi
+  
+  grep $OFILE -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+  rm $OFILE
   for wf in $(cat $WORKSPACE/req.wfs) ; do
     [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
     WFS="${wf},${WFS}"

@@ -1394,6 +1394,11 @@ else
     fi
     mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed: ${TESTS_FAILED}"
 fi
+if [ -e ${RESULTS_DIR}/static.txt ]; then
+  if [ $(grep ${RESULTS_DIR}/static.txt -e 'EDM_ML_DEBUG_CHECKS;OK' | wc -l) -eq 0 ]; then
+    echo "* Static analyzer reported errors, please check" >> ${RESULTS_DIR}/10-report.res
+  fi 
+fi
 $CMS_BOT_DIR/das-utils/use-ibeos-sort || true
 
 pushd $WORKSPACE

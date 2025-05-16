@@ -110,24 +110,22 @@ PUSH_TEST_ISSUE_MSG = "^\\[Jenkins CI\\] Testing commit: [0-9a-f]+$"
 HOLD_MSG = "Pull request has been put on hold by "
 # Regexp to match the test requests
 CODE_CHECKS_REGEXP = re.compile(
-    r"code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)(\s+and\s+apply\s+patch|)$"
+    r"code-checks( with cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)( and apply patch|)$"
 )
 WF_PATTERN = r"(?:[a-z][a-z0-9_]+|[1-9][0-9]*(\.[0-9]+|))"
 CMSSW_QUEUE_PATTERN = "CMSSW_[0-9]+_[0-9]+_(X|[A-Z][A-Z0-9]+_X|[0-9]+(_[a-zA-Z0-9_]+|))"
-CMSSW_PACKAGE_PATTERN = "[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)"
+CMSSW_PACKAGE_PATTERN = "[A-Z][a-zA-Z0-9]+(?:/[a-zA-Z0-9]+|)"
 ARCH_PATTERN = "[a-z0-9]+_[a-z0-9]+_[a-z0-9]+"
-CMSSW_RELEASE_QUEUE_PATTERN = format(
-    "(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)", cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN
+CMSSW_RELEASE_QUEUE_PATTERN = "(?P<queue>{cmssw}|{arch}|{cmssw}/{arch})".format(
+    cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN
 )
 RELVAL_OPTS = r"[-][a-zA-Z0-9_.,\s/'-]+"
-CLOSE_REQUEST = re.compile(r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$", re.I)
-REOPEN_REQUEST = re.compile(r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)(re|)open\s*$", re.I)
-CMS_PR_PATTERN = format(
-    "(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)",
+CLOSE_REQUEST = re.compile(r"^close$", re.I)
+REOPEN_REQUEST = re.compile(r"^(?:re|)open$", re.I)
+CMS_PR_PATTERN = "(?:#[1-9][0-9]*|(?:{cmsorgs})/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(?:{cmsorgs})/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)".format(
     cmsorgs="|".join(EXTERNAL_REPOS),
 )
-TEST_REGEXP = format(
-    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)(test|build)(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
+TEST_REGEXP = r"^(?P<verb>test|build)(?: workflow(?:s|) (?P<wf>{workflow}(,{workflow}|)*)|)(?: with (?P<pr>{cms_pr}(,{cms_pr})*)|)( for {release_queue}|)(?P<using> using full cmssw| using (?:cms-|)addpkg (?P<pkg>{pkg}(?:,{pkg})*)|)$".format(
     workflow=WF_PATTERN,
     cms_pr=CMS_PR_PATTERN,
     pkg=CMSSW_PACKAGE_PATTERN,
@@ -136,11 +134,9 @@ TEST_REGEXP = format(
 
 AUTO_TEST_REPOS = ["cms-sw/cmssw"]
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
-REGEX_TEST_ABORT = re.compile(
-    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I
-)
+REGEX_TEST_ABORT = re.compile(r"^abort(?: test|)$", re.I)
 REGEX_TEST_IGNORE = re.compile(
-    r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
+    r"^ignore tests-rejected (?:with|)([a-z -]+)$",
     re.I,
 )
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
@@ -171,26 +167,26 @@ JENKINS_NODES = r"[a-zA-Z0-9_|&\s()-]+"
 MULTILINE_COMMENTS_MAP = {
     "(workflow|relval)(s|)("
     + EXTRA_RELVALS_TESTS_OPTS
-    + "|)": [format(r"%(workflow)s(\s*,\s*%(workflow)s|)*", workflow=WF_PATTERN), "MATRIX_EXTRAS"],
+    + "|)": [r"{workflow}(,{workflow}|)*".format(workflow=WF_PATTERN), "MATRIX_EXTRAS"],
     "(workflow|relval)(s|)_profiling": [
-        format(r"%(workflow)s(\s*,\s*%(workflow)s|)*", workflow=WF_PATTERN),
+        r"{workflow}(,{workflow}|)*".format(workflow=WF_PATTERN),
         "PROFILING_WORKFLOWS",
     ],
     "pull_request(s|)": [
-        format("%(cms_pr)s(,%(cms_pr)s)*", cms_pr=CMS_PR_PATTERN),
+        "{cms_pr}(,{cms_pr})*".format(cms_pr=CMS_PR_PATTERN),
         "PULL_REQUESTS",
     ],
     "full_cmssw|full": ["true|false", "BUILD_FULL_CMSSW"],
     "disable_poison": ["true|false", "DISABLE_POISON"],
     "use_ib_tag": ["true|false", "USE_IB_TAG"],
     "baseline": ["self|default", "USE_BASELINE"],
-    "set_env": [r"[A-Z][A-Z0-9_]+(\s*,\s*[A-Z][A-Z0-9_]+|)*", "CMSBOT_SET_ENV"],
-    "skip_test(s|)": [format(r"(%(tests)s)(\s*,\s*(%(tests)s))*", tests=SKIP_TESTS), "SKIP_TESTS"],
+    "set_env": [r"[A-Z][A-Z0-9_]+(,[A-Z][A-Z0-9_]+|)*", "CMSBOT_SET_ENV"],
+    "skip_test(s|)": [r"({tests})(,{tests})*".format(tests=SKIP_TESTS), "SKIP_TESTS"],
     "dry_run": ["true|false", "DRY_RUN"],
     "jenkins_(slave|node)": [JENKINS_NODES, "RUN_ON_SLAVE"],
     "(arch(itecture(s|))|release|release/arch)": [CMSSW_RELEASE_QUEUE_PATTERN, "RELEASE_FORMAT"],
     ENABLE_TEST_PTRN: [
-        format(r"(%(tests)s)(\s*,\s*(%(tests)s))*", tests=EXTRA_TESTS),
+        r"({tests})(,({tests}))*".format(tests=EXTRA_TESTS),
         "ENABLE_BOT_TESTS",
     ],
     "ignore_test(s|)": ["build-warnings|clang-warnings", "IGNORE_BOT_TESTS"],
@@ -199,7 +195,7 @@ MULTILINE_COMMENTS_MAP = {
         "DOCKER_IMGAGE",
     ],
     "cms-addpkg|addpkg": [
-        format("%(pkg)s(,%(pkg)s)*", pkg=CMSSW_PACKAGE_PATTERN),
+        "{pkg}(?:,{pkg})*".format(pkg=CMSSW_PACKAGE_PATTERN),
         "EXTRA_CMSSW_PACKAGES",
     ],
     "build_verbose": ["true|false", "BUILD_VERBOSE"],
@@ -765,16 +761,16 @@ def check_test_cmd(first_line, repo, params):
         prs = []
         cmssw_que = ""
         logger.debug("check_test_cmd: %s", m.groups())
-        build_only = m.group(4) == "build"
-        if m.group(7):
-            wfs = ",".join(set(m.group(7).replace(" ", "").split(",")))
-        if m.group(12):
-            prs = get_prs_list_from_string(m.group(12), repo)
-        if m.group(21):
-            cmssw_que = m.group(21)
-        if m.group(26):
-            if "addpkg" in m.group(26):
-                params["EXTRA_CMSSW_PACKAGES"] = m.group(28).strip()
+        build_only = m.group("verb") == "build"
+        if m.group("wf"):
+            wfs = ",".join(set(m.group("wf").replace(" ", "").split(",")))
+        if m.group("pr"):
+            prs = get_prs_list_from_string(m.group("pr"), repo)
+        if m.group("queue"):
+            cmssw_que = m.group("queue")
+        if m.group("using"):
+            if "addpkg" in m.group("using"):
+                params["EXTRA_CMSSW_PACKAGES"] = m.group("pkg").strip()
             else:
                 params["BUILD_FULL_CMSSW"] = "true"
         return (True, " ".join(prs), wfs, cmssw_que, build_only)
@@ -996,8 +992,10 @@ def fetch_pr_result(url):  # pragma: no cover
 
 def preprocess_comment_text(comment_msg):
     comment_lines = [l.strip() for l in comment_msg.split("\n") if l.strip()]
-    # comment_lines = [re.sub(r"\s{2,}", " ", x) for x in comment_lines]
-    # comment_lines = [re.sub(r"^(?:@?cmsbuild\s*[,]*\s+)?(?:please\s*[,]*\s+)?", "", x) for x in comment_lines]
+    comment_lines = [re.sub(r"\s{2,}", " ", x) for x in comment_lines]
+    comment_lines = [
+        re.sub(r"^(?:@?cmsbuild\s*[,]*\s+)?(?:please\s*[,]*\s+)?", "", x) for x in comment_lines
+    ]
     return comment_lines
 
 

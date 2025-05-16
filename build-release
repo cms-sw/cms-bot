@@ -103,16 +103,16 @@ pushd $BUILD_DIR
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
   [ -e CMSDIST/gcc-fixincludes.spec ] && TOOL_CONF_PACKAGES="gcc-fixincludes ${TOOL_CONF_PACKAGES}"
   EXT_FAILED=false
-  PYTHONPATH= $CMSBUILD_CMD --builders 4 build $TOOL_CONF_PACKAGES || EXT_FAILED=true
+  PYTHONPATH= $CMSBUILD_CMD --builders 2 build $TOOL_CONF_PACKAGES || EXT_FAILED=true
   echo DATE=`date`
   if $EXT_FAILED ; then
     BLD_PKGS=$(ls RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
-    if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload ${BLD_PKGS} ; fi
+    if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --builders 2 --sync-back upload ${BLD_PKGS} ; fi
     rm -rf  tmp
     exit 1
   fi
   if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-    PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD --builders 2 --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`

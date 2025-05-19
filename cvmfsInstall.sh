@@ -4,7 +4,9 @@ function install_package() {
   rm -f ${WORKSPACE}/inst.log
   ${CMSPKG} install -y $@ 2>&1 | tee -a ${WORKSPACE}/inst.log 2>&1 || true
   if [ $(grep 'cannot open Packages index using db6' ${WORKSPACE}/inst.log | wc -l) -gt 0 ] ; then
+    echo "ERROR: RPM DB error found"
     if [ "${USE_LOCAL_RPMDB}" = "true" ] ; then
+      echo "  Trying local DB"
       rm -rf ${WORKSPACE}/rpm
       mv $WORKDIR/${SCRAM_ARCH}/var/lib/rpm  ${WORKSPACE}/rpm
       ln -d ${WORKSPACE}/rpm $WORKDIR/${SCRAM_ARCH}/var/lib/rpm
@@ -12,7 +14,9 @@ function install_package() {
       ${CMSPKG} install -y $@ 2>&1 | tee -a ${WORKSPACE}/inst.log 2>&1 || true
       rm -f $WORKDIR/${SCRAM_ARCH}/var/lib/rpm
       mv ${WORKSPACE}/rpm $WORKDIR/${SCRAM_ARCH}/var/lib/rpm
+      echo "Copr RPM DB back"
       if [ $(grep 'cannot open Packages index using db6' ${WORKSPACE}/inst.log | wc -l) -gt 0 ] ; then
+        echo "Still has RPM DB error"
         touch ${WORKSPACE}/err.txt
       fi
     else
@@ -181,6 +185,7 @@ for REPOSITORY in $REPOSITORIES; do
         fi
       fi
     ) || true
+
 if [ -e ${WORKSPACE}/err.txt ] ; then
   cvmfs_server abort -f
   exit 1

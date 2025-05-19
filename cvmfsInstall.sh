@@ -9,7 +9,7 @@ function install_package() {
       echo "  Trying local DB"
       rm -rf ${WORKSPACE}/rpm
       mv $WORKDIR/${SCRAM_ARCH}/var/lib/rpm  ${WORKSPACE}/rpm
-      ln -d ${WORKSPACE}/rpm $WORKDIR/${SCRAM_ARCH}/var/lib/rpm
+      ln -s ${WORKSPACE}/rpm $WORKDIR/${SCRAM_ARCH}/var/lib/rpm
       rm -f ${WORKSPACE}/inst.log
       ${CMSPKG} install -y $@ 2>&1 | tee -a ${WORKSPACE}/inst.log 2>&1 || true
       rm -f $WORKDIR/${SCRAM_ARCH}/var/lib/rpm

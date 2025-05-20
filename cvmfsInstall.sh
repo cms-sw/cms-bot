@@ -1,4 +1,29 @@
 #!/bin/sh -ex
+
+function install_package() {
+  rm -f ${WORKSPACE}/inst.log
+  ${CMSPKG} install -y $@ 2>&1 | tee -a ${WORKSPACE}/inst.log 2>&1 || true
+  if [ $(grep 'cannot open Packages index using db6' ${WORKSPACE}/inst.log | wc -l) -gt 0 ] ; then
+    echo "ERROR: RPM DB error found"
+    if [ "${USE_LOCAL_RPMDB}" = "true" ] ; then
+      echo "  Trying local DB"
+      mv $WORKDIR/${SCRAM_ARCH}/var/lib/rpm/Packages  ${WORKSPACE}/Packages
+      ln -s ${WORKSPACE}/Packages $WORKDIR/${SCRAM_ARCH}/var/lib/rpm/Packages
+      rm -f ${WORKSPACE}/inst.log
+      ${CMSPKG} install -y $@ 2>&1 | tee -a ${WORKSPACE}/inst.log 2>&1 || true
+      rm -f $WORKDIR/${SCRAM_ARCH}/var/lib/rpm/Packages
+      mv ${WORKSPACE}/Packages $WORKDIR/${SCRAM_ARCH}/var/lib/rpm/Packages
+      echo "Copr RPM DB back"
+      if [ $(grep 'cannot open Packages index using db6' ${WORKSPACE}/inst.log | wc -l) -gt 0 ] ; then
+        echo "Still has RPM DB error"
+        touch ${WORKSPACE}/err.txt
+      fi
+    else
+      touch ${WORKSPACE}/err.txt
+    fi
+  fi
+}
+
 source $(dirname $0)/cmsrep.sh
 CMS_BOT_DIR=$(dirname $(realpath $0))
 source ${CMS_BOT_DIR}/cvmfs_deployment/utils.sh
@@ -24,6 +49,7 @@ TEST_INSTALL=$7
 NUM_WEEKS=$8
 REINSTALL_ARGS=$9
 INSTALL_PACKAGES="${10}"
+USE_LOCAL_RPMDB="${11}"
 
 CVMFS_PUBLISH_PATH=""
 USE_DEV=""
@@ -144,9 +170,9 @@ for REPOSITORY in $REPOSITORIES; do
       if [ "X$RELEASE_NAME" != "X" ] ; then
         x="cms+cmssw-ib+$RELEASE_NAME"
         ${CMSPKG} clean
-        ${CMSPKG} install -y $x || true
-        time ${CMSPKG} install ${REINSTALL_ARGS} --ignore-size -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true
-        time ${CMSPKG} install ${REINSTALL_ARGS} --ignore-size -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
+        install_package $x
+        time install_package ${REINSTALL_ARGS} --ignore-size `echo $x | sed -e 's/cmssw-ib/cmssw/'`
+        time install_package ${REINSTALL_ARGS} --ignore-size `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'`
         relname=`echo $x | awk -F + '{print $NF}'`
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'`
         if [ "X$timestamp" != "X" ] ; then
@@ -158,6 +184,11 @@ for REPOSITORY in $REPOSITORIES; do
         fi
       fi
     ) || true
+
+if [ -e ${WORKSPACE}/err.txt ] ; then
+  cvmfs_server abort -f
+  exit 1
+fi
 rm -rf $WORKDIR/*/var/cmspkg/rpms || true
 done #End week repository
 

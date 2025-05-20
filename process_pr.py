@@ -2832,6 +2832,10 @@ def process_pr(
     write_bot_cache(bot_cache, technical_comments, issue, dryRunOrig)
     if ack_comment:
         state = get_status(bot_ack_name, commit_statuses)
+        logger.debug("Has state: %s", "yes" if state else "no")
+        if state:
+            logger.debug("State   url: %s", state.target_url)
+            logger.debug("Somment url: %s", ack_comment.html_url)
         if (not state) or (state.target_url != ack_comment.html_url):
             desc = "Comment by %s at %s UTC processed." % (
                 ensure_ascii(ack_comment.user.login),

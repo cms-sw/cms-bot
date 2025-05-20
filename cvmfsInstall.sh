@@ -7,13 +7,12 @@ function install_package() {
     echo "ERROR: RPM DB error found"
     if [ "${USE_LOCAL_RPMDB}" = "true" ] ; then
       echo "  Trying local DB"
-      rm -rf ${WORKSPACE}/rpm
-      mv $WORKDIR/${SCRAM_ARCH}/var/lib/rpm  ${WORKSPACE}/rpm
-      ln -s ${WORKSPACE}/rpm $WORKDIR/${SCRAM_ARCH}/var/lib/rpm
+      mv $WORKDIR/${SCRAM_ARCH}/var/lib/rpm/Packages  ${WORKSPACE}/Packages
+      ln -s ${WORKSPACE}/Packages $WORKDIR/${SCRAM_ARCH}/var/lib/rpm/Packages
       rm -f ${WORKSPACE}/inst.log
       ${CMSPKG} install -y $@ 2>&1 | tee -a ${WORKSPACE}/inst.log 2>&1 || true
-      rm -f $WORKDIR/${SCRAM_ARCH}/var/lib/rpm
-      mv ${WORKSPACE}/rpm $WORKDIR/${SCRAM_ARCH}/var/lib/rpm
+      rm -f $WORKDIR/${SCRAM_ARCH}/var/lib/rpm/Packages
+      mv ${WORKSPACE}/Packages $WORKDIR/${SCRAM_ARCH}/var/lib/rpm/Packages
       echo "Copr RPM DB back"
       if [ $(grep 'cannot open Packages index using db6' ${WORKSPACE}/inst.log | wc -l) -gt 0 ] ; then
         echo "Still has RPM DB error"
@@ -171,9 +170,9 @@ for REPOSITORY in $REPOSITORIES; do
       if [ "X$RELEASE_NAME" != "X" ] ; then
         x="cms+cmssw-ib+$RELEASE_NAME"
         ${CMSPKG} clean
-        install_package $x || true
-        time install_package ${REINSTALL_ARGS} --ignore-size `echo $x | sed -e 's/cmssw-ib/cmssw/'`       || true
-        time install_package ${REINSTALL_ARGS} --ignore-size `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
+        install_package $x
+        time install_package ${REINSTALL_ARGS} --ignore-size `echo $x | sed -e 's/cmssw-ib/cmssw/'`
+        time install_package ${REINSTALL_ARGS} --ignore-size `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'`
         relname=`echo $x | awk -F + '{print $NF}'`
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'`
         if [ "X$timestamp" != "X" ] ; then

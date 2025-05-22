@@ -15,6 +15,7 @@ fi
 mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
 touch ${LOG}
+touch $WORKSPACE/bad-workflow-lists.txt
 echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
   if [ $(echo "${args}" | sed 's|.*-l ||;s| .*||' | tr ',' '\n' | grep '^all$' | wc -l) -gt 0 ] ; then
     OPTS=""
@@ -58,6 +59,8 @@ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
     done
   popd
 done
+
+mv $WORKSPACE/bad-workflow-lists.txt ${RESULTS_DIR}
 
 pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
   $DO_COMPARISON && WORKFLOW_TO_COMPARE=$(grep -a '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | sort | uniq | tr '\n' ',' | sed 's|,$||')

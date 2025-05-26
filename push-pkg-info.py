@@ -100,13 +100,14 @@ def extract_and_upload(directory):
 
         for package in packages:
             payload = {
-                "name": name,
+                "release": name,
                 "release_cycle": release_cycle,
                 "flavor": flavor,
                 "date": date,
                 "architecture": architecture,
                 "@timestamp": get_current_time(),
-                package: packages[package],
+                "package_name": package,
+                "package_version": packages[package],
             }
 
             unique_id = f"{release_cycle}_{flavor}_{date}_{architecture}_{package}"

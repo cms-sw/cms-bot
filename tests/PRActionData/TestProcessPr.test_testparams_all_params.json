@@ -117,15 +117,5 @@
             "last_seen_sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
             "signatures": {}
         }
-    },
-    {
-        "type": "status",
-        "data": {
-            "commit": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
-            "state": "success",
-            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2750911403",
-            "description": "Comment by iarspider at 2025-03-25 11:11:58 UTC processed.",
-            "context": "bot/24/ack"
-        }
     }
 ]

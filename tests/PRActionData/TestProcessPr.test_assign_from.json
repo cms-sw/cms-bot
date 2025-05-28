@@ -3,9 +3,7 @@
         "type": "load-bot-cache",
         "data": {
             "commits": {},
-            "emoji": {
-                "2769192218": "+1"
-            },
+            "emoji": {},
             "signatures": {}
         }
     },

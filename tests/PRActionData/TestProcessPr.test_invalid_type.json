@@ -181,15 +181,5 @@
                 "2049242908": "2a9454e30606b17e52000110972998326ce9e428"
             }
         }
-    },
-    {
-        "type": "status",
-        "data": {
-            "commit": "dae848e38b8e387d7283a3e35818121487d9d76b",
-            "state": "success",
-            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2056946596",
-            "description": "Comment by iarspider at 2024-04-15 14:05:24 UTC processed.",
-            "context": "bot/17/ack"
-        }
     }
 ]

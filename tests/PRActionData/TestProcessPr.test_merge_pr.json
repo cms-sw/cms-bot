@@ -79,15 +79,5 @@
                 "2838556276": "eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48"
             }
         }
-    },
-    {
-        "type": "status",
-        "data": {
-            "commit": "eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48",
-            "state": "success",
-            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/36#issuecomment-2838557035",
-            "description": "Comment by iarspider at 2025-04-29 12:03:51 UTC processed.",
-            "context": "bot/36/ack"
-        }
     }
 ]

@@ -1,3 +1,4 @@
+import copy
 import functools
 import importlib
 import json
@@ -216,7 +217,7 @@ def on_read_bot_cache(*args, **kwargs):
     res = kwargs.pop("res")
     assert len(args) == 1, "Signature of process_pr.read_bot_cache changed"
     assert len(kwargs) == 0, "Signature of process_pr.read_bot_cache changed"
-    actions.append({"type": "load-bot-cache", "data": res})
+    actions.append({"type": "load-bot-cache", "data": copy.deepcopy(res)})
     return res
 
 

@@ -9,13 +9,8 @@
     {
         "type": "load-bot-cache",
         "data": {
-            "emoji": {
-                "2857856131": "+1",
-                "1852068434": "+1"
-            },
-            "signatures": {
-                "1852068434": "17338beb185f1d28fdda4387ac6251c84c927eea"
-            },
+            "emoji": {},
+            "signatures": {},
             "commits": {
                 "17338beb185f1d28fdda4387ac6251c84c927eea": {
                     "files": [
@@ -41,8 +36,7 @@
                     ],
                     "time": 1702385827
                 }
-            },
-            "last_seen_sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4"
+            }
         }
     },
     {

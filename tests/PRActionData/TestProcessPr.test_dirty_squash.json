@@ -12,7 +12,7 @@
                 },
                 "35f9a4c06b006029da40ed8858e0dae4abd52cb3": {
                     "files": [],
-                    "squashed": true,
+                    "squashed": false,
                     "time": 1712829250
                 },
                 "79752f053efecad55dde17732259737e621a1f3f": {
@@ -35,13 +35,6 @@
                     ],
                     "squashed": true,
                     "time": 1712819089
-                },
-                "1d7419a436293c0337ca346fe868cb50cfdedc18": {
-                    "time": 1713255947,
-                    "squashed": false,
-                    "files": [
-                        "Utilities/ReleaseScripts/test/BuildFile.xml"
-                    ]
                 }
             },
             "emoji": {
@@ -60,7 +53,7 @@
                 "2056946596": "-1",
                 "2056966759": "+1"
             },
-            "last_seen_sha": "1d7419a436293c0337ca346fe868cb50cfdedc18",
+            "last_seen_sha": "35f9a4c06b006029da40ed8858e0dae4abd52cb3",
             "signatures": {
                 "2049242908": "2a9454e30606b17e52000110972998326ce9e428"
             }

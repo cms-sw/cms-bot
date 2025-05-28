@@ -155,6 +155,9 @@ CMSSW_L2 = {
     # ML
     "valsdav": ["ml"],
     "y19y19": ["ml"],
+    # L1Track
+    "tomalin": ["l1track"],
+    "aehart": ["l1track"],
 }
 
 # Automatically sign these categories if tests are passed

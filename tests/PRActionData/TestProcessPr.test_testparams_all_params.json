@@ -64,7 +64,8 @@
                 "RUN_ON_SLAVE": "cmssdt",
                 "EXTRA_MATRIX_ARGS_CUDA": "-t 1",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
-                "CONTEXT_PREFIX": "cms/24"
+                "CONTEXT_PREFIX": "cms/24",
+                "BUILD_ONLY": false
             }
         }
     },

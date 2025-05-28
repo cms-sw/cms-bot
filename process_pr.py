@@ -124,7 +124,7 @@ CMS_PR_PATTERN = format(
     cmsorgs="|".join(EXTERNAL_REPOS),
 )
 TEST_REGEXP = format(
-    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
+    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)(test|build)(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
     workflow=WF_PATTERN,
     cms_pr=CMS_PR_PATTERN,
     pkg=CMSSW_PACKAGE_PATTERN,
@@ -198,6 +198,7 @@ MULTILINE_COMMENTS_MAP = {
     "(workflow|relval)(s|)_command_opt(ion|)(s|)("
     + EXTRA_RELVALS_TESTS_OPTS
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
+    "build_only": ["true|false", "BUILD_ONLY"],
 }
 
 BOT_CACHE_CHUNK_SIZE = 55000
@@ -745,19 +746,20 @@ def check_test_cmd(first_line, repo, params):
         prs = []
         cmssw_que = ""
         logger.debug("check_test_cmd: %s", m.groups())
-        if m.group(6):
-            wfs = ",".join(set(m.group(6).replace(" ", "").split(",")))
-        if m.group(11):
-            prs = get_prs_list_from_string(m.group(11), repo)
-        if m.group(20):
-            cmssw_que = m.group(20)
-        if m.group(25):
-            if "addpkg" in m.group(25):
-                params["EXTRA_CMSSW_PACKAGES"] = m.group(27).strip()
+        build_only = m.group(4) == "build"
+        if m.group(7):
+            wfs = ",".join(set(m.group(7).replace(" ", "").split(",")))
+        if m.group(12):
+            prs = get_prs_list_from_string(m.group(12), repo)
+        if m.group(21):
+            cmssw_que = m.group(21)
+        if m.group(26):
+            if "addpkg" in m.group(26):
+                params["EXTRA_CMSSW_PACKAGES"] = m.group(28).strip()
             else:
                 params["BUILD_FULL_CMSSW"] = "true"
-        return (True, " ".join(prs), wfs, cmssw_que)
-    return (False, "", "", "")
+        return (True, " ".join(prs), wfs, cmssw_que, build_only)
+    return (False, "", "", "", "")
 
 
 def get_prs_list_from_string(pr_string="", repo_string=""):
@@ -1324,6 +1326,7 @@ def process_pr(
     override_tests_failure = None
     bot_cache = {}
     old_labels = set(ensure_ascii(x.name) for x in issue.labels)
+    build_only = False
 
     # start of parsing comments to find the bot_cache
     # to use information during the actual comment loop
@@ -1669,7 +1672,7 @@ def process_pr(
 
             # Check if the someone asked to trigger the tests
             if valid_commenter:
-                ok, v2, v3, v4 = check_test_cmd(first_line, repository, global_test_params)
+                ok, v2, v3, v4, v5 = check_test_cmd(first_line, repository, global_test_params)
                 if ok:
                     test_comment = comment
                     abort_test = None
@@ -1682,13 +1685,15 @@ def process_pr(
                     elif re.match("^" + ARCH_PATTERN + "$", release_queue):
                         release_arch = release_queue
                         release_queue = ""
+                    build_only = v5
                     logger.info(
-                        "Tests requested: %s asked to test this PR with cmssw_prs=%s, release_queue=%s, arch=%s and workflows=%s",
+                        "Tests requested: %s asked to test this PR with cmssw_prs=%s, release_queue=%s, arch=%s and workflows=%s; build_only=%s",
                         commenter,
                         cmssw_prs,
                         release_queue,
                         release_arch,
                         extra_wfs,
+                        build_only,
                     )
                     logger.debug("Comment message: %s", first_line)
                     signatures["tests"] = "pending"
@@ -2114,7 +2119,30 @@ def process_pr(
                     last_commit_obj.create_status(
                         "success", description=desc, target_url=turl, context=bot_status_name
                     )
+                    build_only_status = get_status(
+                        cms_status_prefix + "/build-only", commit_statuses
+                    )
+                    if build_only:
+                        if (not build_only_status) or (
+                            build_only_status.description != "Only build"
+                        ):
+                            last_commit_obj.create_status(
+                                "success",
+                                description="Only build",
+                                target_url=turl,
+                                context=cms_status_prefix + "/build-only",
+                            )
+                    else:
+                        if build_only_status and build_only_status.description != "Build and test":
+                            last_commit_obj.create_status(
+                                "success",
+                                description="Build and test",
+                                target_url=turl,
+                                context=cms_status_prefix + "/build-only",
+                            )
+
                     set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
+
             if bot_status:
                 logger.debug(
                     "bot_status.target_url=%s, turl=%s, signatures['tests']=%s, bot_status.description=%s",
@@ -2227,10 +2255,14 @@ def process_pr(
                 lab_state = "required"
                 if lab_state not in lab_stats:
                     lab_state = "optional"
-                if (lab_state in lab_stats) and ("pending" not in lab_stats[lab_state]):
-                    signatures["tests"] = "approved"
-                    if "error" in lab_stats[lab_state]:
-                        signatures["tests"] = "rejected"
+                build_only_status = get_status(cms_status_prefix + "/build-only", commit_statuses)
+                if not (build_only_status and build_only_status.description == "Only build"):
+                    if (lab_state in lab_stats) and ("pending" not in lab_stats[lab_state]):
+                        signatures["tests"] = "approved"
+                        if "error" in lab_stats[lab_state]:
+                            signatures["tests"] = "rejected"
+                else:
+                    signatures["tests"] = "pending"
         elif not bot_status:
             if not dryRun:
                 last_commit_obj.create_status(
@@ -2474,6 +2506,7 @@ def process_pr(
     global_test_params["EXTRA_RELVALS_TESTS"] = " ".join(
         [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS]
     )
+    global_test_params["BUILD_ONLY"] = build_only
 
     logger.debug("All Parameters: %s", global_test_params)
     # For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist

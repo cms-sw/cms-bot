@@ -63,7 +63,8 @@
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#24 cms-sw/cmssw#543210",
                 "ENABLE_BOT_TESTS": "CUDA,HIGH_STATS,NANO,PROFILING,ROCM,THREADING",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
-                "CONTEXT_PREFIX": "cms/24"
+                "CONTEXT_PREFIX": "cms/24",
+                "BUILD_ONLY": false
             }
         }
     },

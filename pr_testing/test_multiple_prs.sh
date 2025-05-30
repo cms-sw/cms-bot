@@ -181,6 +181,7 @@ for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
   fi
 done
 
+[ ${BUILD_ONLY} = "true" ] && DO_COMPARISON=false
 # ----------
 # -- MAIN --
 # ----------
@@ -1315,6 +1316,10 @@ if [ -f $WORKSPACE/buildClang.log ] ; then
 fi
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
+
+if [ "$BUILD_ONLY" = "true" ]; then
+  RUN_TESTS=false
+fi
 
 DO_PROFILING=false
 DO_GPU_TESTS=false

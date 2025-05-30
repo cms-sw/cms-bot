@@ -1,0 +1,112 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "06336c8884bcfbc516cc69fd99b0a161bb3a14d5": {
+                    "files": [
+                        "RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc"
+                    ],
+                    "squashed": false,
+                    "time": 1747049040
+                }
+            },
+            "emoji": {},
+            "last_seen_sha": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+            "signatures": {}
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/40#issuecomment-2872583904",
+            "description": "Tests requested by iarspider at 2025-05-12 13:27:39 UTC.",
+            "context": "bot/40/jenkins"
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/40#issuecomment-2872583904",
+            "description": "Only build",
+            "context": "cms/40/build-only"
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2872583904,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "tests-started"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "tests-pending"
+        ]
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-tests-iarspider-cmssw-cmssw-40.properties",
+            "data": {
+                "PULL_REQUESTS": "iarspider-cmssw/cmssw#40",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
+                "BUILD_ONLY": true,
+                "CONTEXT_PREFIX": "cms/40"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2872583904,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"06336c8884bcfbc516cc69fd99b0a161bb3a14d5\":{\"files\":[\"RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc\"],\"squashed\":false,\"time\":1747049040}},\"emoji\":{\"2872583904\":\"+1\"},\"last_seen_sha\":\"06336c8884bcfbc516cc69fd99b0a161bb3a14d5\",\"signatures\":{}} -->"
+    },
+    {
+        "type": "save-bot-cache",
+        "data": {
+            "commits": {
+                "06336c8884bcfbc516cc69fd99b0a161bb3a14d5": {
+                    "files": [
+                        "RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc"
+                    ],
+                    "squashed": false,
+                    "time": 1747049040
+                }
+            },
+            "emoji": {
+                "2872583904": "+1"
+            },
+            "last_seen_sha": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+            "signatures": {}
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/40#issuecomment-2872583904",
+            "description": "Comment by iarspider at 2025-05-12 13:27:39 UTC processed.",
+            "context": "bot/40/ack"
+        }
+    }
+]

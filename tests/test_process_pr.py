@@ -1041,3 +1041,6 @@ class TestProcessPr(Framework.TestCase):
 
     def test_backport_ok(self):
         self.runTest(pr_id=9)
+
+    def test_build_only(self):
+        self.runTest(pr_id=40)

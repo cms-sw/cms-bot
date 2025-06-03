@@ -70,7 +70,13 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   echo '--------------------------------------'
   mkdir -p $WORKSPACE/unitTests
   let UT_TIMEOUT=7200+${CMSSW_PKG_COUNT}*20
-  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  runtests "
+  NUMTEST=${NCPU}
+  case $CMSSW_IB in
+    *_ASAN_*|*_UBSAN_*) let NUMTEST=${NCPU}/2+1 ;;
+    *) NUMTEST=${NCPU};;
+  esac
+  echo "Ruuning ${NUMTEST} unit tests in parallel"
+  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -v -k -j ${NUMTEST}  runtests "
   if ${RUN_FULL_UNITTEST} ; then
     set +x
     curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/${CMSSW_IB}.tar.gz
@@ -92,7 +98,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
     TEST_PATH="${CMSSW_RELEASE_BASE}/test/${SCRAM_ARCH}"
     rpath=$(scram tool info cmssw 2>&1 | grep CMSSW_BASE | sed 's|^CMSSW_BASE=||')
     if [ "${rpath}" != "" ] ; then TEST_PATH="${TEST_PATH}:${rpath}/test/${SCRAM_ARCH}"; fi
-    UTESTS_CMD="PATH=${TEST_PATH}:${PATH} timeout 10800 scram b -k -j ${NCPU} unittests "
+    UTESTS_CMD="PATH=${TEST_PATH}:${PATH} timeout 10800 scram b -k -j ${NUMTEST} unittests "
     set -x
   fi
   echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"

@@ -178,6 +178,10 @@ for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
     if [ -z "${!VAR_NAME}" ]; then
       eval "$VAR_NAME=${MATRIX_EXTRAS_GPU}"
     fi
+    VAR_NAME="EXTRA_MATRIX_ARGS_${ex_type}"
+    if [ -z "${!VAR_NAME}" ]; then
+      eval "$VAR_NAME=${EXTRA_MATRIX_ARGS_GPU}"
+    fi
   fi
 done
 

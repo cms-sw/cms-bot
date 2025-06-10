@@ -54,7 +54,7 @@ if [ "X$TOOL" = "X" ] ; then echo -e "Missing tool name\nUsage: $0 <cmsdist-bran
 
 case $(whoami) in 
   cmsbuild|cmsbld) GITHUB_USER="cms-sw" ;;
-  *) GITHUB_USER=$(git config --get github.user) ;;
+  *) GITHUB_USER=$(git config --get user.github) ;;
 esac
 if [ "X$GITHUB_USER" = "X" ] ; then
   echo "Error: Unable to find the github user name"

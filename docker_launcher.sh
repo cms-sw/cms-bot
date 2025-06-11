@@ -53,9 +53,10 @@ for repo in cms cms-ib grid projects unpacked ; do
 done
 RUN_NATIVE=
 if [ "${RUCIO_ACCOUNT}" = "" ] ; then export RUCIO_ACCOUNT="cmsbot" ; fi
-if [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then DOCKER_IMG=$DOCKER_IMG_HOST ; fi
-if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
-  RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
+if [ "$CMSCI_RUN_ON_HOST" = "true" ] ; then
+  RUN_NATIVE=true
+elif [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then
+  DOCKER_IMG=$DOCKER_IMG_HOST
 fi
 UNAME_M=$(uname -m)
 export CMSBOT_CI_TESTS=true

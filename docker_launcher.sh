@@ -191,6 +191,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
         EX_OPTIONS="--no-home $EX_OPTIONS"
       fi
     fi
+    if [ "${CMSCI_CONTAINER_OPTS_SCRIPT}" != "" ] ; then
+      EX_OPTIONS="${EX_OPTIONS} $(${SCRIPTPATH}/${CMSCI_CONTAINER_OPTS_SCRIPT} ${CONTAINER_CMD})"
+    fi
     PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR

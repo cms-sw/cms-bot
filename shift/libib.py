@@ -223,7 +223,7 @@ def extract_relval_error(release_name, arch, rvItem):
         if not m:
             return False, None
         else:
-            if "cms/cmssw" not in m.group(2):
+            if ("cms/cmssw" not in m.group(2)) and ("at src/" not in m.group(2)):
                 return False, None
             return True, remove_templates(m.group(1).strip())
 

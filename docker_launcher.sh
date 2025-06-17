@@ -61,7 +61,18 @@ fi
 UNAME_M=$(uname -m)
 export CMSBOT_CI_TESTS=true
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
-  if [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
+  if [ "$DOCKER_IMG" = "cmssw" ] ; then
+    xarch=""
+    if [ "${ARCHITECTURE}" != "" ] ; then
+      xarch="${ARCHITECTURE}"
+    elif [ "${SCRAM_ARCH}" != "" ] ; then
+      xarch="${SCRAM_ARCH}"
+    else
+      echo "ERROR: DOCKER_IMG cmssw used without providing valid ARCHITECTURE/SCRAM_ARCH"
+      exit 1
+    fi
+    DOCKER_IMG=cmssw/$(echo ${xarch} | sed 's|_.*||;s|slc|el|'):${UNAME_M}
+  elif [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
     if [ $(echo "${DOCKER_IMG}" | grep ':' | wc -l) -eq 0 ] ; then
       export DOCKER_IMG="${DOCKER_IMG}:${UNAME_M}"
     fi

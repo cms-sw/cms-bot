@@ -2391,7 +2391,8 @@ def process_pr(
         labels.append("requires-external")
 
     # Keep old tests state for closed PRs (workaround for missing commit statuses in old PRs)
-    if not create_status:
+    # Do not change tests label in build-only mode
+    if build_only or not create_status:
         labels = [l for l in labels if not l.startswith("tests-")]
         labels.extend(l for l in old_labels if l.startswith("tests-"))
 

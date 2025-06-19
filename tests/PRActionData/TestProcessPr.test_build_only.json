@@ -46,15 +46,11 @@
     },
     {
         "type": "add-label",
-        "data": [
-            "tests-started"
-        ]
+        "data": []
     },
     {
         "type": "remove-label",
-        "data": [
-            "tests-pending"
-        ]
+        "data": []
     },
     {
         "type": "create-property-file",

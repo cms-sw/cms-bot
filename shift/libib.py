@@ -150,6 +150,7 @@ def fetch(url, content_type=ContentType.JSON, payload=None):
             return content.decode("utf-8")
         else:
             return content
+    return None
 
 
 def get_exitcodes():
@@ -219,11 +220,12 @@ def extract_relval_error(release_name, arch, rvItem):
 
         if line.startswith("Thread") or (not line.strip()) or line.startswith("Current Modules:"):
             return True, "?"
-        m = re.match(r"^#\d+\s+0x[0-9a-f]{16,16} in ([^?].+) from (.+)$", line)
+        m = re.match(r"^#\d+\s+0x[0-9a-f]{16,16} in ([^?].+) (?:from|at) (.+)$", line)
+
         if not m:
             return False, None
         else:
-            if ("cms/cmssw" not in m.group(2)) and ("at src/" not in m.group(2)):
+            if not (("cms/cmssw" in m.group(2)) or (m.group(2).startswith("src/"))):
                 return False, None
             return True, remove_templates(m.group(1).strip())
 
@@ -618,6 +620,8 @@ def get_ib_results(ib_date, flavor, ib_data=None):
         comp_ib_date = comp["ib_date"].rsplit("-", 1)[0]
         if short_ib_date == comp_ib_date and comp["isIB"]:
             return comp
+
+    return None
 
 
 def get_ib_comparision(ib_date, series):

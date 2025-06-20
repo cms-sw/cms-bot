@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import time
+import re
 
 import es_utils
 
@@ -23,10 +24,9 @@ def main():
         print("ERROR: Please specify issue number")
         exit(1)
 
-    try:
-        issue_no = int(issue_no)
-    except ValueError:
-        print(f"ERROR: Invalid issue number {issue_no}")
+    m = re.fullmatch("(?:[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)?#\d+")
+    if not m:
+        print("ERROR: invalid issue format!")
         exit(1)
 
     data = base64.b64decode(data.replace("@", "\n").encode()).decode()

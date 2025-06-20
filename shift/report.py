@@ -8,11 +8,12 @@ import sys
 import urllib
 import urllib.error
 
-try:
-    import github
-except ImportError:
-    print("WARNING: module github not available, will not check issue/PR status")
-    github = None
+#
+# try:
+#     import github
+# except ImportError:
+#     print("WARNING: module github not available, will not check issue/PR status")
+#     github = None
 
 import libib
 
@@ -111,7 +112,7 @@ def main():
 
                             print(
                                 f"| [{error.name}]({error.url}) | {error.data[1]}x "
-                                f"{error.data[0]} | {issue_data} | `build`, {failure_data} |",
+                                f"{error.data[0]} | {issue_data} | {failure_data} |",
                                 file=f,
                             )
 
@@ -136,7 +137,7 @@ def main():
                                 failure_data = "known"
 
                             print(
-                                f"| [{error.name}]({error.url}) | TBD | {issue_data} | `utest`, {failure_data} |",
+                                f"| [{error.name}]({error.url}) | TBD | {issue_data} | {failure_data} |",
                                 file=f,
                             )
 
@@ -168,7 +169,7 @@ def main():
                             else:
                                 failure_data = "known"
                             print(
-                                f"| [{error.name}]({error.url}) | {desc} | {issue_data} | `relval`, {failure_data} |",
+                                f"| [{error.name}]({error.url}) | {desc} | {issue_data} | {failure_data} |",
                                 file=f,
                             )
 

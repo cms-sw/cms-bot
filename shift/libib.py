@@ -15,6 +15,7 @@ from enum import Enum
 import github
 
 import es_utils
+import github_utils
 
 
 # Borrowed from https://github.com/cms-sw/cmssdt-web
@@ -62,7 +63,6 @@ logger = logging.Logger("libib", logging.INFO)
 date_rex = re.compile(r"(\d{4})-(\d{2})-(\d{2})-(\d{2})00")
 
 g = None
-repo_cache = {}
 issue_cache = {}
 localtz = None
 
@@ -119,7 +119,8 @@ def make_url(url):
         return url_root + url
 
 
-def fetch(url, content_type=ContentType.JSON, payload=None):
+def fetch(url, content_type=None, payload=None):
+    content_type = content_type or ContentType.JSON
     url = make_url(url)
     # print("Fetching", url)
     try:
@@ -233,8 +234,8 @@ def extract_relval_error(release_name, arch, rvItem):
         if not hasattr(parse_missing_product, "state"):
             parse_missing_product.state = {"state": 0}
         if (
-            line.strip() == "An exception of category 'ProductNotFound' occurred while"
-            and parse_missing_product.state["state"] == 0
+                line.strip() == "An exception of category 'ProductNotFound' occurred while"
+                and parse_missing_product.state["state"] == 0
         ):
             parse_missing_product.state = {"state": 1}
         else:
@@ -310,7 +311,7 @@ def extract_relval_error(release_name, arch, rvItem):
                             "exit_code_name": "TimeOut",
                             "workflow": rvItem["id"],
                             "step": i,
-                            "details": f"TimeOut in step {i+1}",
+                            "details": f"TimeOut in step {i + 1}",
                         },
                     )
 
@@ -452,7 +453,7 @@ def extract_relval_error(release_name, arch, rvItem):
                         )
                 else:
                     return LogEntry(
-                        name=f"Relval {rvItem['id']} step {i+1}",
+                        name=f"Relval {rvItem['id']} step {i + 1}",
                         url=webURL,
                         data={
                             "exit_code_name": exitcodeName,
@@ -577,7 +578,7 @@ def check_ib(data, compilation_only=False):
                                 continue
                             for obj in ctl["list"]:
                                 if obj["control_type"] == "Issues" and re.match(
-                                    r".* failed at line #\d+", obj["name"]
+                                        r".* failed at line #\d+", obj["name"]
                                 ):
                                     webURL = webURL_t.format(**obj)
                                     # print("\t\t" + obj["name"])
@@ -726,10 +727,10 @@ def get_expected_ibs(series, ib_date):
         for line in f:
             data = parse_config_line(line)
             if (
-                data["CMSDIST_TAG"].startswith("IB/" + series)
-                and data.get("DISABLED", 0) == 0
-                and h in data.get("BUILD_HOUR", (11, 23))
-                and wd in data.get("BUILD_DAY", (0, 1, 2, 3, 4, 5, 6))
+                    data["CMSDIST_TAG"].startswith("IB/" + series)
+                    and data.get("DISABLED", 0) == 0
+                    and h in data.get("BUILD_HOUR", (11, 23))
+                    and wd in data.get("BUILD_DAY", (0, 1, 2, 3, 4, 5, 6))
             ):
                 res.append((data["RELEASE_QUEUE"], data["SCRAM_ARCH"]))
 
@@ -757,7 +758,26 @@ def search_es(index, **kwargs):
 
 
 def is_issue_closed(ib_date, issue):
-    global repo_cache
+    def from_isoformat(date_str):
+        rex = (
+            r"(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})"
+            r"T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})Z"
+        )
+        m = re.match(rex, date_str)
+        if not m:
+            return None
+
+        return datetime.datetime(
+            year=int(m.group("year")),
+            month=int(m.group("month")),
+            day=int(m.group("day")),
+            hour=int(m.group("hour")),
+            minute=int(m.group("minute")),
+            second=int(m.group("second")),
+            tzinfo=datetime.timezone.utc
+        )
+
+    global issue_cache
 
     y, m, d, h = [int(x) for x in ib_date.split("-", 5)[:-1] if x]
     h = h // 100
@@ -781,22 +801,17 @@ def is_issue_closed(ib_date, issue):
     if isinstance(issue_id, str):
         issue_id = int(issue_id)
 
-    repo = repo_cache.get(repo_name, None)
-    if not repo:
-        repo = g.get_repo(repo_name)
-        repo_cache[repo_name] = repo
-
     issue = issue_cache.get(issue_id)
     if not issue:
-        issue = repo.get_issue(issue_id)
+        issue = github_utils.get_issue(repo_name, issue_id)
         issue_cache[issue_id] = issue
 
-    if issue.closed_at:
-        closed_at = issue.closed_at.replace(tzinfo=datetime.timezone.utc).astimezone(localtz)
+    if issue.get("closed_at"):
+        closed_at = from_isoformat(issue.get("closed_at")).astimezone(localtz)
     else:
         closed_at = datetime.datetime.now(tz=localtz)
 
-    return issue.state == "closed" and (closed_at < ib_datetime)
+    return issue["state"] == "closed" and (closed_at < ib_datetime)
     # return False
 
 
@@ -809,12 +824,13 @@ def get_known_failure(failure_type, **kwargs):
 
 
 def setup_github():
-    global g, localtz
+    # global g, localtz
+    global localtz
     localtz = currenttz()
-
-    if github:
-        g = github.Github(
-            login_or_token=open(os.path.expanduser("~/.github-token")).read().strip()
-        )
-    else:
-        g = None
+#
+#     if github:
+#         g = github.Github(
+#             login_or_token=open(os.path.expanduser("~/.github-token")).read().strip()
+#         )
+#     else:
+#         g = None

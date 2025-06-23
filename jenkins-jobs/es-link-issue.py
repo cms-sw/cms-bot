@@ -24,7 +24,7 @@ def main():
         print("ERROR: Please specify issue number")
         exit(1)
 
-    m = re.fullmatch("(?:[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)?#\d+")
+    m = re.fullmatch("(?:[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+)?#\d+", issue_no)
     if not m:
         print("ERROR: invalid issue format!")
         exit(1)

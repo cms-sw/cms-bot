@@ -1318,7 +1318,11 @@ fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 
 if [ "$BUILD_ONLY" = "true" ]; then
-  RUN_TESTS=false
+  DO_SHORT_MATRIX=false
+  DISABLE_GPU_TESTS=true
+  DO_ADDON_TESTS=false
+  DO_CRAB_TESTS=false
+  ENABLE_BOT_TESTS=$(echo $ENABLE_BOT_TESTS | sed -e 's/HLT_P2_TIMING//;s/HLT_P2_INTEGRATION//;s/PROFILING//')
 fi
 
 DO_PROFILING=false

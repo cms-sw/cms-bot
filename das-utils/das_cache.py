@@ -186,13 +186,14 @@ def run_das_client(
                 if not res in xresults:
                     xresults.append(res)
     total_results = results + xresults
-    print("  Results:", sha, len(total_results))
-    if (total_results > default_max_limit) and (limit != default_max_limit):
+    results_count = len(total_results)
+    print("  Results:", sha, results_count)
+    if (results_count > default_max_limit) and (limit != default_max_limit):
         print("  Retrying with limit ", default_max_limit)
         return run_das_client(
             outfile, query, override, dasclient, options, threshold, retry, limit=default_max_limit
         )
-    if (len(total_results) == 0) and ("site=T2_CH_CERN" in query):
+    if (results_count == 0) and ("site=T2_CH_CERN" in query):
         query = query.replace("site=T2_CH_CERN", "").strip()
         lmt = 0
         if "file" in fields:

@@ -2119,28 +2119,6 @@ def process_pr(
                     last_commit_obj.create_status(
                         "success", description=desc, target_url=turl, context=bot_status_name
                     )
-                    build_only_status = get_status(
-                        cms_status_prefix + "/build-only", commit_statuses
-                    )
-                    if build_only:
-                        if (not build_only_status) or (
-                            build_only_status.description != "Only build"
-                        ):
-                            last_commit_obj.create_status(
-                                "success",
-                                description="Only build",
-                                target_url=turl,
-                                context=cms_status_prefix + "/build-only",
-                            )
-                    else:
-                        if build_only_status and build_only_status.description != "Build and test":
-                            last_commit_obj.create_status(
-                                "success",
-                                description="Build and test",
-                                target_url=turl,
-                                context=cms_status_prefix + "/build-only",
-                            )
-
                     set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
 
             if bot_status:
@@ -2255,14 +2233,10 @@ def process_pr(
                 lab_state = "required"
                 if lab_state not in lab_stats:
                     lab_state = "optional"
-                build_only_status = get_status(cms_status_prefix + "/build-only", commit_statuses)
-                if not (build_only_status and build_only_status.description == "Only build"):
-                    if (lab_state in lab_stats) and ("pending" not in lab_stats[lab_state]):
-                        signatures["tests"] = "approved"
-                        if "error" in lab_stats[lab_state]:
-                            signatures["tests"] = "rejected"
-                else:
-                    signatures["tests"] = "pending"
+                if (lab_state in lab_stats) and ("pending" not in lab_stats[lab_state]):
+                    signatures["tests"] = "approved"
+                    if "error" in lab_stats[lab_state]:
+                        signatures["tests"] = "rejected"
         elif not bot_status:
             if not dryRun:
                 last_commit_obj.create_status(

@@ -27,16 +27,6 @@
         }
     },
     {
-        "type": "status",
-        "data": {
-            "commit": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
-            "state": "success",
-            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/40#issuecomment-2872583904",
-            "description": "Only build",
-            "context": "cms/40/build-only"
-        }
-    },
-    {
         "type": "emoji",
         "data": [
             2872583904,

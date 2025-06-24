@@ -29,9 +29,10 @@ ignore_lfn = [
     "/store/data/Run2012D/SingleMu/RAW-RECO/ZMu-15Apr2014-v1/00000/0A3BFB8B-0DCD-E311-A6C5-485B39800C2D.root",
     "/store/relval/CMSSW_12_3_0_pre5/RelValTTbar_14TeV/GEN-SIM/123X_mcRun4_realistic_v4_2026D88noPU-v1/10000/49e54274-4298-4576-b47b-866e2247eab5.root",
 ]
+default_max_limit = 10000
 override_limit = {
-    "55976934e0a2dbd0b6e99d9f64e1edc5840aaf3648204589f76e15ba933764b5": 10000,
-    "fdf9e08774bbca514fbe4de4dc65585eb4807291e8283d0c7420c1ba5928b9ef": 10000,
+    "55976934e0a2dbd0b6e99d9f64e1edc5840aaf3648204589f76e15ba933764b5": default_max_limit,
+    "fdf9e08774bbca514fbe4de4dc65585eb4807291e8283d0c7420c1ba5928b9ef": default_max_limit,
 }
 
 
@@ -84,7 +85,7 @@ def run_das_client(
     retry_str = ""
     if "das_client" in dasclient:
         retry_str = "--retry=%s" % retry
-    if sha in override_limit:
+    if (limit <= 0) and (sha in override_limit):
         limit = override_limit[sha]
     das_cmd = "%s --format=json --limit=%s --query '%s%s' %s --threshold=%s %s" % (
         dasclient,
@@ -186,6 +187,11 @@ def run_das_client(
                     xresults.append(res)
     total_results = results + xresults
     print("  Results:", sha, len(total_results))
+    if (total_results > default_max_limit) and (limit != default_max_limit):
+        print("  Retrying with limit ", default_max_limit)
+        return run_das_client(
+            outfile, query, override, dasclient, options, threshold, retry, limit=default_max_limit
+        )
     if (len(total_results) == 0) and ("site=T2_CH_CERN" in query):
         query = query.replace("site=T2_CH_CERN", "").strip()
         lmt = 0

@@ -189,7 +189,7 @@ def run_das_client(
     results_count = len(total_results)
     print("  Results:", sha, results_count)
     if (results_count > default_max_limit) and (limit != default_max_limit):
-        print("  Retrying with limit ", default_max_limit)
+        print("  Retrying with limit:", sha, default_max_limit)
         return run_das_client(
             outfile, query, override, dasclient, options, threshold, retry, limit=default_max_limit
         )

@@ -1,3 +1,4 @@
+import collections
 import copy
 
 from categories import (
@@ -2104,7 +2105,8 @@ def process_pr(
                 if bot_status or (signatures["tests"] == "pending"):
                     new_bot_tests = True
                     trigger_test = True
-                    signatures["tests"] = "started"
+                    if not build_only:
+                        signatures["tests"] = "started"
                 desc = "requested by %s at %s UTC." % (
                     ensure_ascii(test_comment.user.login),
                     test_comment.created_at,
@@ -2133,6 +2135,7 @@ def process_pr(
                 and bot_status.target_url == turl
                 and signatures["tests"] == "pending"
                 and (" requested by " in bot_status.description)
+                and not build_only
             ):
                 signatures["tests"] = "started"
             if (
@@ -2141,26 +2144,30 @@ def process_pr(
             ):
                 signatures["tests"] = "pending"
             if signatures["tests"] == "started" and new_bot_tests:
-                lab_stats = {}
+                lab_stats = collections.defaultdict(list)
+                reporting_build_only = False
+                build_only_prefixes = []
                 for status in commit_statuses:
                     if not status.context.startswith(cms_status_prefix + "/"):
                         continue
-                    cdata = status.context.split("/")
-                    if cdata[-1] not in ["optional", "required"]:
+                    prefix, suffix = status.context.rsplit("/", 1)
+                    if suffix == "build_only" and status.description == "Only build":
+                        logger.info("Adding prefix %s to build_only_prefixes", prefix)
+                        build_only_prefixes.append(prefix)
+
+                    if suffix not in ["optional", "required"]:
                         continue
-                    if (cdata[-1] not in lab_stats) or (cdata[-1] == "required"):
-                        lab_stats[cdata[-1]] = []
-                    lab_stats[cdata[-1]].append("pending")
+                    if suffix == "required":
+                        lab_stats[suffix] = []
+                    lab_stats[suffix].append("pending")
                     if status.state == "pending":
                         continue
-                    scontext = "/".join(cdata[:-1])
                     all_states = {}
                     result_url = ""
-                    for s in [
-                        i
-                        for i in commit_statuses
-                        if ((i.context == scontext) or (i.context.startswith(scontext + "/")))
-                    ]:
+                    for s in commit_statuses:
+                        if not ((s.context == prefix) or (s.context.startswith(prefix + "/"))):
+                            continue
+
                         if (not result_url) and ("/jenkins-artifacts/" in s.target_url):
                             xdata = s.target_url.split("/")
                             while xdata and (not xdata[-2].startswith("PR-")):
@@ -2188,18 +2195,19 @@ def process_pr(
                                 )
                         continue
                     if "success" in all_states:
-                        lab_stats[cdata[-1]][-1] = "success"
+                        lab_stats[suffix][-1] = "success"
                     if "error" in all_states:
                         if [c for c in all_states["error"] if ("/opt/" not in c)]:
-                            lab_stats[cdata[-1]][-1] = "error"
+                            lab_stats[suffix][-1] = "error"
                     logger.info(
-                        "Final Status: status.context=%s cdata[-1]=%s lab_stats[cdata[-1]][-1]=%s status.description=%s",
+                        "Final Status: status.context=%s suffix=%s lab_stats[%s][-1]=%s status.description=%s",
                         status.context,
-                        cdata[-1],
-                        lab_stats[cdata[-1]][-1],
+                        suffix,
+                        suffix,
+                        lab_stats[suffix][-1],
                         status.description,
                     )
-                    if (lab_stats[cdata[-1]][-1] != "pending") and (
+                    if (lab_stats[suffix][-1] != "pending") and (
                         not status.description.startswith("Finished")
                     ):
                         if result_url:
@@ -2217,10 +2225,11 @@ def process_pr(
                                 raise Exception("System-error: unable to get PR result")
                             if o and (not dryRun):
                                 res = "+1"
-                                if lab_stats[cdata[-1]][-1] == "error":
+                                if lab_stats[suffix][-1] == "error":
                                     res = "-1"
                                 res = "%s\n\n%s" % (res, o)
                                 issue.create_comment(res)
+                                reporting_build_only = prefix in build_only_prefixes
                         if not dryRun:
                             last_commit_obj.create_status(
                                 "success",
@@ -2229,10 +2238,15 @@ def process_pr(
                                 context=status.context,
                             )
                     logger.info("Lab Status %s", lab_stats)
+                # End of loop over all statuses
                 lab_state = "required"
                 if lab_state not in lab_stats:
                     lab_state = "optional"
-                if (lab_state in lab_stats) and ("pending" not in lab_stats[lab_state]):
+                if (
+                    (lab_state in lab_stats)
+                    and ("pending" not in lab_stats[lab_state])
+                    and not reporting_build_only
+                ):
                     signatures["tests"] = "approved"
                     if "error" in lab_stats[lab_state]:
                         signatures["tests"] = "rejected"
@@ -2365,7 +2379,7 @@ def process_pr(
 
     # Keep old tests state for closed PRs (workaround for missing commit statuses in old PRs)
     # Do not change tests label in build-only mode
-    if build_only or not create_status:
+    if not create_status:
         labels = [l for l in labels if not l.startswith("tests-")]
         labels.extend(l for l in old_labels if l.startswith("tests-"))
 

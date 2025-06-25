@@ -1323,6 +1323,9 @@ if [ "$BUILD_ONLY" = "true" ]; then
   DO_ADDON_TESTS=false
   DO_CRAB_TESTS=false
   ENABLE_BOT_TESTS=$(echo $ENABLE_BOT_TESTS | sed -e 's/HLT_P2_TIMING//;s/HLT_P2_INTEGRATION//;s/PROFILING//')
+  mark_commit_status_all_prs 'build_only' 'success' -u "" -d "Only build"
+else
+  mark_commit_status_all_prs 'build_only' 'success' -u "" -d "Build and test"
 fi
 
 DO_PROFILING=false

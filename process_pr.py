@@ -198,7 +198,6 @@ MULTILINE_COMMENTS_MAP = {
     "(workflow|relval)(s|)_command_opt(ion|)(s|)("
     + EXTRA_RELVALS_TESTS_OPTS
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
-    "build_only": ["true|false", "BUILD_ONLY"],
 }
 
 BOT_CACHE_CHUNK_SIZE = 55000

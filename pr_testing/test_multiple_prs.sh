@@ -452,35 +452,39 @@ CMSSW_ORG='cms-sw'
 BUILD_EXTERNAL=false
 CMSDIST_ONLY=true # asume cmsdist only
 CHECK_HEADER_TESTS=false
+CMSSW_DATA_PKGS=""
 for U_REPO in ${UNIQ_REPOS}; do
     PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
-	cmssw)
-          CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
-          CMSDIST_ONLY=false
-          CHECK_HEADER_TESTS=true
-	;;
+        cmssw)
+            CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
+            CMSDIST_ONLY=false
+            CHECK_HEADER_TESTS=true
+        ;;
         cms-bot)
-          # do nothing
-	;;
-	cmsdist|pkgtools)
-	  BUILD_EXTERNAL=true
-	;;
-	*)
-	  PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
-	  SPEC_NAMES=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
-	  BUILD_EXTERNAL=true
-          for SPEC_NAME in ${SPEC_NAMES} ; do
-	    if ! ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ; then
-              echo "ERROR: There was an issue generating parameters for cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo." > ${RESULTS_DIR}/10-report.res
-              prepare_upload_results
-              mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}"
-              exit 0
+            # do nothing
+        ;;
+        cmsdist|pkgtools)
+            BUILD_EXTERNAL=true
+        ;;
+        *)
+            PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
+            SPEC_NAMES=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
+            BUILD_EXTERNAL=true
+            for SPEC_NAME in ${SPEC_NAMES} ; do
+                if ! ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ; then
+                    echo "ERROR: There was an issue generating parameters for cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo." > ${RESULTS_DIR}/10-report.res
+                    prepare_upload_results
+                    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}"
+                    exit 0
+                fi
+            done
+            if [ "${PKG_REPO}" = "cms-data" ] ; then
+                CMSSW_DATA_PKGS="${CMSSW_DATA_PKGS} $(echo ${PKG_NAME} | tr - /)"
             fi
-          done
-	;;
-	esac
+	      ;;
+	  esac
 done
 if $CMSDIST_ONLY ; then
   DO_DAS_QUERY=false
@@ -798,6 +802,7 @@ if ${BUILD_EXTERNAL} ; then
           CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
           CMSSW_DEP=$(echo ${CMSSW_DEP} ${CMSSW_DEPx} | tr ' ' '\n' | sort | uniq)
         fi
+        if [ "${CMSSW_DATA_PKGS}" != "" ] ; then CMSSW_DEP="${CMSSW_DEP} ${CMSSW_DATA_PKGS}"; fi
         echo "Final CMSSW_DEP=${CMSSW_DEP}"
         if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
       fi

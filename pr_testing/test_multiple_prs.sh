@@ -456,9 +456,10 @@ CMSSW_DATA_PKGS=""
 for U_REPO in ${UNIQ_REPOS}; do
     PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
+    PKG_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
         cmssw)
-            CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
+            CMSSW_ORG="${PKG_ORG}"
             CMSDIST_ONLY=false
             CHECK_HEADER_TESTS=true
         ;;
@@ -480,7 +481,7 @@ for U_REPO in ${UNIQ_REPOS}; do
                     exit 0
                 fi
             done
-            if [ "${PKG_REPO}" = "cms-data" ] ; then
+            if [ "${PKG_ORG}" = "cms-data" ] ; then
                 CMSSW_DATA_PKGS="${CMSSW_DATA_PKGS} $(echo ${PKG_NAME} | tr - /)"
             fi
 	      ;;

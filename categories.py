@@ -149,6 +149,7 @@ CMSSW_L2 = {
     "mbluj": ["tau-pog"],
     "kskovpen": ["tracking-pog"],
     "mmasciov": ["tracking-pog"],
+    "elusian": ["tracking-pog"],
     # PPD
     "malbouis": ["ppd"],
     "vlimant": ["ppd"],

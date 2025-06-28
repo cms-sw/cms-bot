@@ -3,7 +3,7 @@ check_invalid_wf_lists () {
   WORKFLOWS=$1
   WFLISTS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)
   WFS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | wc -l)
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} -n 2>&1 | grep "is not a possible selected entry" > bad-workflow-lists.txt || true
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS:-1} ${WORKFLOWS} -n 2>&1 | grep "is not a possible selected entry" > bad-workflow-lists.txt || true
   BADLIST_CNT=$(wc -l < bad-workflow-lists.txt)
   if [ "$BADLIST_CNT" -gt 0 ]; then
     cat bad-workflow-lists.txt >> $WORKSPACE/bad-workflow-lists.txt
@@ -52,7 +52,7 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     WORKFLOWS=$(echo "${WORKFLOWS}" | sed "s|all|${ALL_WFS}|")
   fi
   # Check for invalid wf lists
-  check_invalid_wf_lists $WORKFLOWS || exit 1
+  check_invalid_wf_lists "$WORKFLOWS" || exit 1
   runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
   for wf in $(cat $WORKSPACE/req.wfs) ; do
     [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
@@ -108,7 +108,7 @@ pushd "$WORKSPACE/matrix-results"
 
   # Check what workflows will be ran
   WORKFLOWS=$(echo "$MATRIX_ARGS" | sed 's|.*-l ||;s| .*||' )
-  check_invalid_wf_lists $WORKFLOWS || exit 1
+  check_invalid_wf_lists "$WORKFLOWS" || exit 1
 
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log

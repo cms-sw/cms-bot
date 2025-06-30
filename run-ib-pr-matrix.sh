@@ -1,29 +1,4 @@
 #!/bin/bash -ex
-check_invalid_wf_lists () {
-  WORKFLOWS=$1
-  WFLISTS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)
-  WFS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | wc -l)
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS:-1} ${WORKFLOWS} -n 2>&1 | grep "is not a possible selected entry" > bad-workflow-lists.txt || true
-  BADLIST_CNT=$(wc -l < bad-workflow-lists.txt)
-  if [ "$BADLIST_CNT" -gt 0 ]; then
-    cat bad-workflow-lists.txt >> $WORKSPACE/bad-workflow-lists.txt
-    if [ "$WFLISTS_CNT" -ne "$WFS_CNT" ]; then
-      echo "WARNING : some workflow lists were not recognized"
-    else
-      if [ "$BADLIST_CNT" -eq "$WFS_CNT" ]; then
-        echo "ERROR : all workflow lists were not recognized, and no additional workflows were requested"
-        send_jenkins_artifacts $WORKSPACE/bad-workflow-lists.txt
-        rm bad-workflow-lists.txt
-        return 1
-      else
-        echo "WARNING : none of the workflow lists were recognized, only running explicitly requested workflows"
-      fi
-    fi
-  fi
-  rm bad-workflow-lists.txt
-  return 0
-}
-
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(cd $(dirname $0) >/dev/null 2>&1; pwd -P)
 readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt

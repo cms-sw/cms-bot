@@ -452,7 +452,6 @@ CMSSW_ORG='cms-sw'
 BUILD_EXTERNAL=false
 CMSDIST_ONLY=true # asume cmsdist only
 CHECK_HEADER_TESTS=false
-CMSSW_DATA_PKGS=""
 for U_REPO in ${UNIQ_REPOS}; do
     PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
@@ -481,9 +480,6 @@ for U_REPO in ${UNIQ_REPOS}; do
                     exit 0
                 fi
             done
-            if [ "${PKG_ORG}" = "cms-data" ] ; then
-                CMSSW_DATA_PKGS="${CMSSW_DATA_PKGS} $(echo ${PKG_NAME} | tr - /)"
-            fi
 	      ;;
 	  esac
 done
@@ -708,7 +704,14 @@ if ${BUILD_EXTERNAL} ; then
     touch $WORKSPACE/cmsswtoolconf.log
     CTOOLS=$WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected
     BTOOLS=${CTOOLS}.backup
+    diff -u ${CTOOLS}/cmsswdata.xml ${BTOOLS}/cmsswdata.xml | grep 'CMSSW_DATA_PACKAGE=' |  grep -E '^[-+]' | sed 's|.*CMSSW_DATA_PACKAGE="||;s|=.*||' | sort | uniq
     mv ${CTOOLS} ${BTOOLS}
+    if [ "$BUILD_FULL_CMSSW" != "true" ] ; then
+      CMSSW_DATA_PKGS=""
+      if [ -e ${BTOOLS}/cmsswdata.xml ] ; then
+        CMSSW_DATA_PKGS=$(diff -u ${CTOOLS}/cmsswdata.xml ${BTOOLS}/cmsswdata.xml | grep 'CMSSW_DATA_PACKAGE=' |  grep -E '^[-+]' | sed 's|.*CMSSW_DATA_PACKAGE="||;s|=.*||' | sort | uniq)
+      fi
+    fi
     TOOL_CONF_VERSION=$(ls -d $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/* | sed 's|.*/||')
     echo "${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${TOOL_CONF_VERSION}" > $WORKSPACE/cmssw-tool-conf.txt
     echo "CMSSWTOOLCONF_VERSION;OK,External tool conf,See log,cmssw-tool-conf.txt" >> ${RESULTS_DIR}/toolconf.txt

@@ -705,12 +705,6 @@ if ${BUILD_EXTERNAL} ; then
     CTOOLS=$WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected
     BTOOLS=${CTOOLS}.backup
     mv ${CTOOLS} ${BTOOLS}
-    if [ "$BUILD_FULL_CMSSW" != "true" ] ; then
-      CMSSW_DATA_PKGS=""
-      if [ -e ${BTOOLS}/cmsswdata.xml ] ; then
-        CMSSW_DATA_PKGS=$(diff -u ${CTOOLS}/cmsswdata.xml ${BTOOLS}/cmsswdata.xml | grep 'CMSSW_DATA_PACKAGE=' |  grep -E '^[-+]' | sed 's|.*CMSSW_DATA_PACKAGE="||;s|=.*||' | sort | uniq)
-      fi
-    fi
     TOOL_CONF_VERSION=$(ls -d $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/* | sed 's|.*/||')
     echo "${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${TOOL_CONF_VERSION}" > $WORKSPACE/cmssw-tool-conf.txt
     echo "CMSSWTOOLCONF_VERSION;OK,External tool conf,See log,cmssw-tool-conf.txt" >> ${RESULTS_DIR}/toolconf.txt
@@ -805,7 +799,10 @@ if ${BUILD_EXTERNAL} ; then
           CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
           CMSSW_DEP=$(echo ${CMSSW_DEP} ${CMSSW_DEPx} | tr ' ' '\n' | sort | uniq)
         fi
-        if [ "${CMSSW_DATA_PKGS}" != "" ] ; then CMSSW_DEP="${CMSSW_DEP} ${CMSSW_DATA_PKGS}"; fi
+        if [ -e ${BTOOLS}/cmsswdata.xml ] ; then
+          CMSSW_DATA_PKGS=$(diff -u ${CTOOLS}/cmsswdata.xml ${BTOOLS}/cmsswdata.xml | grep 'CMSSW_DATA_PACKAGE=' |  grep -E '^[-+]' | sed 's|.*CMSSW_DATA_PACKAGE="||;s|=.*||' | sort | uniq)
+          if [ "${CMSSW_DATA_PKGS}" != "" ] ; then CMSSW_DEP="${CMSSW_DEP} ${CMSSW_DATA_PKGS}"; fi
+        fi
         echo "Final CMSSW_DEP=${CMSSW_DEP}"
         if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
       fi

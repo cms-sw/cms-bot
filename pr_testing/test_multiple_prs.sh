@@ -452,7 +452,6 @@ CMSSW_ORG='cms-sw'
 BUILD_EXTERNAL=false
 CMSDIST_ONLY=true # asume cmsdist only
 CHECK_HEADER_TESTS=false
-CMSSW_DATA_PKGS=""
 for U_REPO in ${UNIQ_REPOS}; do
     PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
@@ -481,9 +480,6 @@ for U_REPO in ${UNIQ_REPOS}; do
                     exit 0
                 fi
             done
-            if [ "${PKG_ORG}" = "cms-data" ] ; then
-                CMSSW_DATA_PKGS="${CMSSW_DATA_PKGS} $(echo ${PKG_NAME} | tr - /)"
-            fi
 	      ;;
 	  esac
 done
@@ -803,7 +799,10 @@ if ${BUILD_EXTERNAL} ; then
           CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
           CMSSW_DEP=$(echo ${CMSSW_DEP} ${CMSSW_DEPx} | tr ' ' '\n' | sort | uniq)
         fi
-        if [ "${CMSSW_DATA_PKGS}" != "" ] ; then CMSSW_DEP="${CMSSW_DEP} ${CMSSW_DATA_PKGS}"; fi
+        if [ -e ${BTOOLS}/cmsswdata.xml ] ; then
+          CMSSW_DATA_PKGS=$(diff -u ${CTOOLS}/cmsswdata.xml ${BTOOLS}/cmsswdata.xml | grep 'CMSSW_DATA_PACKAGE=' |  grep -E '^[-+]' | sed 's|.*CMSSW_DATA_PACKAGE="||;s|=.*||' | sort | uniq)
+          if [ "${CMSSW_DATA_PKGS}" != "" ] ; then CMSSW_DEP="${CMSSW_DEP} ${CMSSW_DATA_PKGS}"; fi
+        fi
         echo "Final CMSSW_DEP=${CMSSW_DEP}"
         if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
       fi

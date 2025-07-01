@@ -704,7 +704,6 @@ if ${BUILD_EXTERNAL} ; then
     touch $WORKSPACE/cmsswtoolconf.log
     CTOOLS=$WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected
     BTOOLS=${CTOOLS}.backup
-    diff -u ${CTOOLS}/cmsswdata.xml ${BTOOLS}/cmsswdata.xml | grep 'CMSSW_DATA_PACKAGE=' |  grep -E '^[-+]' | sed 's|.*CMSSW_DATA_PACKAGE="||;s|=.*||' | sort | uniq
     mv ${CTOOLS} ${BTOOLS}
     if [ "$BUILD_FULL_CMSSW" != "true" ] ; then
       CMSSW_DATA_PKGS=""

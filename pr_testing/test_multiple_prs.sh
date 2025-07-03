@@ -119,6 +119,7 @@ PR_REPO=$(echo ${PULL_REQUEST} | sed 's|#.*||')
 PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 UPLOAD_UNIQ_ID=PR-${PR_NUM}/${BUILD_NUMBER}
 PR_RESULT_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}"
+PR_COMMENT_TEXT_URL="https://cmssdt.cern.ch/SDT/cgi-bin/get_pr_results/${JENKINS_PREFIX}-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}/pr-result"
 NCPU=$(${COMMON}/get_cpu_number.sh)
 if [[  $NODE_NAME == *"cms-cmpwg-0"* ]]; then
    let NCPU=${NCPU}/2
@@ -184,6 +185,8 @@ for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
     fi
   fi
 done
+
+[ ${BUILD_ONLY} = "true" ] && DO_COMPARISON=false
 
 # ----------
 # -- MAIN --
@@ -1325,6 +1328,14 @@ fi
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 
+if [ "$BUILD_ONLY" = "true" ]; then
+  DO_SHORT_MATRIX=false
+  DISABLE_GPU_TESTS=true
+  DO_ADDON_TESTS=false
+  DO_CRAB_TESTS=false
+  ENABLE_BOT_TESTS=$(echo $ENABLE_BOT_TESTS | sed -e 's/HLT_P2_TIMING//;s/HLT_P2_INTEGRATION//;s/PROFILING//')
+fi
+
 DO_PROFILING=false
 DO_GPU_TESTS=false
 if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
@@ -1407,6 +1418,16 @@ if [ -e ${RESULTS_DIR}/static.txt ]; then
   if [ $(grep ${RESULTS_DIR}/static.txt -e 'EDM_ML_DEBUG_CHECKS;OK' | wc -l) -eq 0 ]; then
     echo "* Static analyzer reported errors, please check" >> ${RESULTS_DIR}/10-report.res
   fi 
+fi
+if [ "${BUILD_ONLY}" = "true" ]; then
+  if ${ALL_OK} ; then
+    echo "+1" > comment.txt
+  else
+    echo "-1" > comment.txt
+  fi
+  echo "" >> comment.txt
+  curl -L ${PR_COMMENT_TEXT_URL} >> comment.txt
+  $WORKSPACE/cms-bot/comment-gh-pr --repository ${PR_REPO} --pullrequest ${PR_NUM} --report-file comment.txt
 fi
 $CMS_BOT_DIR/das-utils/use-ibeos-sort || true
 

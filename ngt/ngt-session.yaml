@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: ngt-session-@SESSION_ID@
+  name: ngt-session-@GPU_TYPE@-@SESSION_ID@
   labels:
     home-afs: "true" 
     mount-cvmfs: "true" 
@@ -13,6 +13,6 @@ spec:
     command: ["sleep", "infinity"] 
     resources:
       limits:
-        nvidia.com/gpu: @GPU_COUNT@
+        @GPU_TYPE@.com/gpu: @GPU_COUNT@
   nodeSelector:
-    nvidia.com/gpu.product: @NVIDIA_GPU@
+    @GPU_TYPE@.com/gpu.product: @GPU@

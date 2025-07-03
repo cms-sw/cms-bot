@@ -27,4 +27,4 @@ if [ "${GPU_TYPE}" = "" ] || [ "${GPU_COUNT}" = "" ] || [ "${GPU}" = "" ] ; then
   usage "Error: Missing option" 1
 fi
 
-sed -e "s|@GPU@|${GPU}|;s|@GPU_TYPE@|${GPU_TYPE}|;s|@GPU_COUNT@|${GPU_COUNT}|;s|@SESSION_ID@|${SESSION_ID}|" ${THISDIR}/ngt-session.yaml 
+sed -e "s|@GPU@|${GPU}|;s|@GPU_TYPE@|${GPU_TYPE}|;s|@GPU_COUNT@|${GPU_COUNT}|;s|@SESSION_ID@|${SESSION_ID}|" ${THISDIR}/ngt-session.yaml

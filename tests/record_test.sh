@@ -17,4 +17,4 @@ case $2 in
 esac
 
 pytest -Wignore::DeprecationWarning --log-disable=github.Requester --log-cli-level=DEBUG -k $1 $FLAGS --auth_with_token test_process_pr.py
-./verify_load_cache.py
+python3 verify-load-cache.py

@@ -14,7 +14,7 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     high_stats ) ;;
     nano ) OPTS="-w nano" ;;
     * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-          OPTS=$(get_gpu_matrix_args | sed -r 's|--gpu  *[a-z_-]+||')
+          OPTS=$(get_gpu_matrix_args)
         fi
         ;;
   esac
@@ -26,8 +26,6 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     ALL_WFS=$(runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' | tr '\n' ',' | sed 's|,$||')
     WORKFLOWS=$(echo "${WORKFLOWS}" | sed "s|all|${ALL_WFS}|")
   fi
-  # Check for invalid wf lists
-  check_invalid_wf_lists "$WORKFLOWS" || exit 1
   runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
   for wf in $(cat $WORKSPACE/req.wfs) ; do
     [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
@@ -80,11 +78,6 @@ pushd "$WORKSPACE/matrix-results"
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
     CMS_SITE_OVERRIDE="local"
   fi
-
-  # Check what workflows will be ran
-  WORKFLOWS=$(echo "$MATRIX_ARGS" | sed 's|.*-l ||;s| .*||' )
-  check_invalid_wf_lists "$WORKFLOWS" || exit 1
-
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}.txt

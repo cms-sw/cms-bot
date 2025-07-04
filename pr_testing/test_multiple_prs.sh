@@ -342,8 +342,6 @@ if $DO_COMPARISON ; then
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
     echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
     echo "PRODUCTION_RELEASE=true"       >> run-baseline-${BUILD_ID}-01.default
-    # Temporary, remove before merging
-    echo "CMS_BOT_BRANCH=run-ib-pr-matrix-list" >> run-baseline-${BUILD_ID}-01.default
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
@@ -384,14 +382,14 @@ if $DO_COMPARISON ; then
     if [ "${MATRIX_EXTRAS}" != "" ] ; then
       WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
-      set +x
+      set +e
       check_invalid_wf_lists ${WF_LIST}
-      exit_code=$?
-      set -x
-      if [ $exit_code != 0 ]; then
+      ret=$?
+      set -e
+      if [ $ret -ne 0 ]; then
         DO_COMPARISON=false
         rm -f run-baseline-${BUILD_ID}-02.default
-        echo "No valid workflow lists requested - comparison skipped" >> ${RESULTS_DIR}/09-report.res
+        echo "`${WF_LIST}` does not contain any valid workflows - comparison skipped" >> ${RESULTS_DIR}/09-report.res
       else
         echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
         echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default

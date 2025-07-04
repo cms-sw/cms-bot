@@ -108,7 +108,8 @@ touch ${UP_DIR}/code-checks.patch
 if $CODE_CHECKS ; then
   if [ -s ${UP_DIR}/code-checks-files.txt ] ; then
     ERR=false
-    scram build -k -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="${UP_DIR}/code-checks-files.txt" > ${UP_DIR}/code-checks.log 2>&1 || ERR=true
+    xargs="--gcc-toolchain=$(scram tool tag gcc-cxxcompiler GCC_CXXCOMPILER_BASE)"
+    scram build -k -j $NUM_PROC code-checks USER_CXXFLAGS="${xargs}" USER_CODE_CHECKS_FILE="${UP_DIR}/code-checks-files.txt" > ${UP_DIR}/code-checks.log 2>&1 || ERR=true
     if $ERR ; then
       echo '-code-checks' > ${UP_DIR}/code-checks.md
       echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md

@@ -77,6 +77,8 @@ export PATH=$CMS_BOT_DIR/das-utils:$PATH
 which dasgoclient
 which ibeos-lfn-sort
 cudaComputeCapabilities || true
+rocmComputeCapabilities || true
+[ -e /.singularity.d/libs ] && ls -l /.singularity.d/libs
 CMSSW_IB=${CMSSW_VERSION}
 CMSSW_QUEUE=$(echo ${CMSSW_VERSION} | sed 's|_X.*|_X|')
 if [ "${UPLOAD_UNIQ_ID}" != "" ] ; then

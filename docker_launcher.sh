@@ -53,14 +53,26 @@ for repo in cms cms-ib grid projects unpacked ; do
 done
 RUN_NATIVE=
 if [ "${RUCIO_ACCOUNT}" = "" ] ; then export RUCIO_ACCOUNT="cmsbot" ; fi
-if [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then DOCKER_IMG=$DOCKER_IMG_HOST ; fi
-if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
-  RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
+if [ "$CMSCI_RUN_ON_HOST" = "true" ] ; then
+  RUN_NATIVE=true
+elif [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then
+  DOCKER_IMG=$DOCKER_IMG_HOST
 fi
 UNAME_M=$(uname -m)
 export CMSBOT_CI_TESTS=true
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
-  if [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
+  if [ "$DOCKER_IMG" = "cmssw" ] ; then
+    xarch=""
+    if [ "${ARCHITECTURE}" != "" ] ; then
+      xarch="${ARCHITECTURE}"
+    elif [ "${SCRAM_ARCH}" != "" ] ; then
+      xarch="${SCRAM_ARCH}"
+    else
+      echo "ERROR: DOCKER_IMG cmssw used without providing valid ARCHITECTURE/SCRAM_ARCH"
+      exit 1
+    fi
+    DOCKER_IMG=cmssw/$(echo ${xarch} | sed 's|_.*||;s|slc|el|'):${UNAME_M}
+  elif [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
     if [ $(echo "${DOCKER_IMG}" | grep ':' | wc -l) -eq 0 ] ; then
       export DOCKER_IMG="${DOCKER_IMG}:${UNAME_M}"
     fi
@@ -189,6 +201,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       if [ $(${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c 'echo $HOME' 2>&1 | grep "container creation failed: mount $HOME->" | wc -l) -gt 0 ]  ; then
         EX_OPTIONS="--no-home $EX_OPTIONS"
       fi
+    fi
+    if [ "${CMSCI_CONTAINER_OPTS_SCRIPT}" != "" ] ; then
+      EX_OPTIONS="${EX_OPTIONS} $(${SCRIPTPATH}/${CMSCI_CONTAINER_OPTS_SCRIPT} ${CONTAINER_CMD})"
     fi
     PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi

@@ -1061,7 +1061,6 @@ def process_pr(
     enable_tests = ""
     commit_statuses = None
     bot_status_name = "bot/jenkins"
-    bot_ack_name = "bot/ack"
     bot_test_param_name = "bot/test_parameters"
     cms_status_prefix = "cms"
     bot_status = None
@@ -1226,7 +1225,6 @@ def process_pr(
         bot_status = get_status(bot_status_name, commit_statuses)
         if not bot_status:
             bot_status_name = "bot/%s/jenkins" % prId
-            bot_ack_name = "bot/%s/ack" % prId
             bot_test_param_name = "bot/%s/test_parameters" % prId
             cms_status_prefix = "cms/%s" % prId
             bot_status = get_status(bot_status_name, commit_statuses)
@@ -1317,7 +1315,6 @@ def process_pr(
     new_bot_tests = True
     test_comment = None
     trigger_test = False
-    ack_comment = None
     test_params_msg = ""
     test_params_comment = None
     code_check_apply_patch = False
@@ -1351,7 +1348,6 @@ def process_pr(
             bot_cache[k] = copy.deepcopy(v)
 
     for comment in all_comments:
-        ack_comment = comment
         commenter = ensure_ascii(comment.user.login)
         commenter_categories = get_commenter_categories(
             commenter, int(comment.created_at.strftime("%s"))
@@ -2830,18 +2826,3 @@ def process_pr(
                     dryRun, bot_cache, test_params_comment, repository, emoji=emoji
                 )
     write_bot_cache(bot_cache, technical_comments, issue, dryRunOrig)
-    if ack_comment:
-        state = get_status(bot_ack_name, commit_statuses)
-        if (not state) or (state.target_url != ack_comment.html_url):
-            desc = "Comment by %s at %s UTC processed." % (
-                ensure_ascii(ack_comment.user.login),
-                ack_comment.created_at,
-            )
-            logger.debug("Create bot/ack status: %s", desc)
-            if not dryRun:
-                last_commit_obj.create_status(
-                    "success",
-                    description=desc,
-                    target_url=ack_comment.html_url,
-                    context=bot_ack_name,
-                )

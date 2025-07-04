@@ -14,7 +14,7 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     high_stats ) ;;
     nano ) OPTS="-w nano" ;;
     * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-          OPTS=$(get_gpu_matrix_args)
+          OPTS=$(get_gpu_matrix_args | sed -r 's|--gpu  *[a-z_-]+||')
         fi
         ;;
   esac

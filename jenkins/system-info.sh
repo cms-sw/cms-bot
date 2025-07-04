@@ -223,7 +223,7 @@ fi
 echo "DATA_ROCM_VERSION=$ROCM_VERSION"
 if [ "$ROCM_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} rocm rocm-$ROCM_VERSION" ; fi
 
-if [ $(hostname | grep 'lxplus' | wc -l) -gt 0 ] ; then
+if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
   hname=$(hostname -s)
   case ${HOST_CMS_ARCH} in
     slc6_*) lxplus_type="lxplus6";;

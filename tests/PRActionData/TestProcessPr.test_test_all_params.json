@@ -11,10 +11,7 @@
                     "time": 1742466110
                 }
             },
-            "emoji": {
-                "2740067147": "+1",
-                "2740383001": "+1"
-            },
+            "emoji": {},
             "last_seen_sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
             "signatures": {}
         }
@@ -104,16 +101,6 @@
             },
             "last_seen_sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
             "signatures": {}
-        }
-    },
-    {
-        "type": "status",
-        "data": {
-            "commit": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
-            "state": "success",
-            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2740383001",
-            "description": "Comment by iarspider at 2025-03-20 13:01:47 UTC processed.",
-            "context": "bot/24/ack"
         }
     }
 ]

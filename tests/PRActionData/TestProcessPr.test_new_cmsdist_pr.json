@@ -51,15 +51,5 @@
             },
             "last_seen_sha": "97b8e6b89e86de19afb3a428f54f08313457374e"
         }
-    },
-    {
-        "type": "status",
-        "data": {
-            "commit": "97b8e6b89e86de19afb3a428f54f08313457374e",
-            "state": "success",
-            "target_url": "https://github.com/iarspider-cmssw/cmsdist/pull/1",
-            "description": "Comment by iarspider at 2025-04-28 10:04:41 UTC processed.",
-            "context": "bot/1/ack"
-        }
     }
 ]

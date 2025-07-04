@@ -8,6 +8,12 @@ function get_env ()
 {
   grep ">$1<" -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1 | sed 's|[^>]*>||;s|<.*||'
 }
+function copy_file_to_remote()
+{
+  if ! rsync -L -e "ssh $SSH_OPTS" "${1}" "${2}" ; then
+    scp -p $SSH_OPTS "${1}" "${2}"
+  fi
+}
 
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 TARGET=$1
@@ -34,7 +40,7 @@ if [ "${REMOTE_USER}" = "cmsbld" ] ; then
 fi
 #ssh -n $SSH_OPTS $TARGET aklog || true
 SYS_SCRIPT="system-${REMOTE_USER}-$(hostname -s).sh"
-scp -p $SSH_OPTS ${SCRIPT_DIR}/system-info.sh "$TARGET:/tmp/${SYS_SCRIPT}"
+copy_file_to_remote ${SCRIPT_DIR}/system-info.sh "$TARGET:/tmp/${SYS_SCRIPT}"
 
 SYSENV=""
 [ "${AGENT_CORES}"  != "" ] && SYSENV="JENKINS_AGENT_CORES=${AGENT_CORES}"
@@ -74,7 +80,8 @@ if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^no_label$' | wc -l) -eq 0 ] ; t
     slave_labels="auto-label $(get_data SLAVE_LABELS)"
     case ${SLAVE_TYPE} in
       cmsbuild*|vocms*|arm-cmsbuild* ) slave_labels="${slave_labels} cloud cmsbuild release-build";;
-      cmsdev*   )        slave_labels="${slave_labels} cloud cmsdev profiling cmsprofile";;
+      cmsprofile*) slave_labels="${slave_labels} cloud  profiling cmsprofile";;
+      cmsdev*   )        slave_labels="${slave_labels} cloud cmsdev";;
       * ) if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^release-build$' | wc -l) -gt 0 ] ; then slave_labels="${slave_labels} release-build"; fi ;;
     esac
     case $(get_data HOST_CMS_ARCH) in
@@ -98,10 +105,10 @@ if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
      *) ;;
    esac
 fi
-if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar ; fi
+if [ $(get_data SLAVE_JAR) = "false" ] ; then copy_file_to_remote "${HOME}/slave.jar" "$TARGET:$WORKSPACE/slave.jar" ; fi
 if $SET_KRB5CCNAME ; then
   KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
-  scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
+  copy_file_to_remote "${KRB5_FILENAME}" "$TARGET:/tmp/krb5cc_${REMOTE_USER_ID}"
 fi
 
 pre_cmd=""

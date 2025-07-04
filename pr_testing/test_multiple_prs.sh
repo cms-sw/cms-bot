@@ -176,7 +176,11 @@ for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
     ENABLE_GPU_FLAVORS+=( $ex_type )
     VAR_NAME="MATRIX_EXTRAS_${ex_type}"
     if [ -z "${!VAR_NAME}" ]; then
-      eval "$VAR_NAME=${MATRIX_EXTRAS_GPU}"
+      eval "$VAR_NAME=\"${MATRIX_EXTRAS_GPU}\""
+    fi
+    VAR_NAME="EXTRA_MATRIX_ARGS_${ex_type}"
+    if [ -z "${!VAR_NAME}" ]; then
+      eval "$VAR_NAME=\"${EXTRA_MATRIX_ARGS_GPU}\""
     fi
   fi
 done
@@ -337,7 +341,7 @@ if $DO_COMPARISON ; then
     echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
     echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
-    echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> run-baseline-${BUILD_ID}-01.default
+    echo "PRODUCTION_RELEASE=true"       >> run-baseline-${BUILD_ID}-01.default
     # Temporary, remove before merging
     echo "CMS_BOT_BRANCH=run-ib-pr-matrix-list" >> run-baseline-${BUILD_ID}-01.default
     WF_LIST=$(get_pr_baseline_worklflow)
@@ -466,32 +470,33 @@ CHECK_HEADER_TESTS=false
 for U_REPO in ${UNIQ_REPOS}; do
     PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
+    PKG_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
-	cmssw)
-          CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
-          CMSDIST_ONLY=false
-          CHECK_HEADER_TESTS=true
-	;;
+        cmssw)
+            CMSSW_ORG="${PKG_ORG}"
+            CMSDIST_ONLY=false
+            CHECK_HEADER_TESTS=true
+        ;;
         cms-bot)
-          # do nothing
-	;;
-	cmsdist|pkgtools)
-	  BUILD_EXTERNAL=true
-	;;
-	*)
-	  PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
-	  SPEC_NAMES=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
-	  BUILD_EXTERNAL=true
-          for SPEC_NAME in ${SPEC_NAMES} ; do
-	    if ! ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ; then
-              echo "ERROR: There was an issue generating parameters for cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo." > ${RESULTS_DIR}/10-report.res
-              prepare_upload_results
-              mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}"
-              exit 0
-            fi
-          done
-	;;
-	esac
+            # do nothing
+        ;;
+        cmsdist|pkgtools)
+            BUILD_EXTERNAL=true
+        ;;
+        *)
+            PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
+            SPEC_NAMES=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
+            BUILD_EXTERNAL=true
+            for SPEC_NAME in ${SPEC_NAMES} ; do
+                if ! ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ; then
+                    echo "ERROR: There was an issue generating parameters for cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo." > ${RESULTS_DIR}/10-report.res
+                    prepare_upload_results
+                    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}"
+                    exit 0
+                fi
+            done
+	      ;;
+	  esac
 done
 if $CMSDIST_ONLY ; then
   DO_DAS_QUERY=false
@@ -572,7 +577,7 @@ if ${BUILD_EXTERNAL} ; then
 
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
-        ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
+        ${CMSBUILD_ARGS} --builders 2 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     if [ -e cmsdist/cmssw-tool-conf.spec ] ; then
@@ -808,6 +813,10 @@ if ${BUILD_EXTERNAL} ; then
         if [ "${DEP_NAMES}" != "" ] ; then
           CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
           CMSSW_DEP=$(echo ${CMSSW_DEP} ${CMSSW_DEPx} | tr ' ' '\n' | sort | uniq)
+        fi
+        if [ -e ${BTOOLS}/cmsswdata.xml ] ; then
+          CMSSW_DATA_PKGS=$(diff -u ${CTOOLS}/cmsswdata.xml ${BTOOLS}/cmsswdata.xml | grep 'CMSSW_DATA_PACKAGE=' |  grep -E '^[-+]' | sed 's|.*CMSSW_DATA_PACKAGE="||;s|=.*||' | sort | uniq)
+          if [ "${CMSSW_DATA_PKGS}" != "" ] ; then CMSSW_DEP="${CMSSW_DEP} ${CMSSW_DATA_PKGS}"; fi
         fi
         echo "Final CMSSW_DEP=${CMSSW_DEP}"
         if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
@@ -1408,6 +1417,11 @@ else
       $CMS_BOT_DIR/report-pull-request-results PYTHON3_FAIL -f $WORKSPACE/python3.log ${REPORT_GEN_OPTS}
     fi
     mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed: ${TESTS_FAILED}"
+fi
+if [ -e ${RESULTS_DIR}/static.txt ]; then
+  if [ $(grep ${RESULTS_DIR}/static.txt -e 'EDM_ML_DEBUG_CHECKS;OK' | wc -l) -eq 0 ]; then
+    echo "* Static analyzer reported errors, please check" >> ${RESULTS_DIR}/10-report.res
+  fi 
 fi
 $CMS_BOT_DIR/das-utils/use-ibeos-sort || true
 

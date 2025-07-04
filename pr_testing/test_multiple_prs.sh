@@ -383,7 +383,7 @@ if $DO_COMPARISON ; then
       WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
       set +e
-      check_invalid_wf_lists ${WF_LIST}
+      check_invalid_wf_lists "-l ${WF_LIST}"
       ret=$?
       set -e
       if [ $ret -ne 0 ]; then

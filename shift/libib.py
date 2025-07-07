@@ -119,17 +119,17 @@ def make_url(url):
         return url_root + url
 
 
-def fetch(url, content_type=None, payload=None):
+def fetch(url, content_type=None, payload=None, timeout=None):
     content_type = content_type or ContentType.JSON
     url = make_url(url)
     # print("Fetching", url)
     try:
-        response = urllib.request.urlopen(url, timeout=10)
+        response = urllib.request.urlopen(url, timeout=timeout or 10)
     except urllib.error.HTTPError as e:
         logger.fatal(
             f"Request to {url if isinstance(url, str) else url.full_url} failed with code {e.code}"
         )
-        if e.code != 404:
+        if e.code != 404 and e.code != 500:
             logger.fatal(f"{e.read()}")
         raise
     except urllib.error.URLError as e:
@@ -234,8 +234,8 @@ def extract_relval_error(release_name, arch, rvItem):
         if not hasattr(parse_missing_product, "state"):
             parse_missing_product.state = {"state": 0}
         if (
-                line.strip() == "An exception of category 'ProductNotFound' occurred while"
-                and parse_missing_product.state["state"] == 0
+            line.strip() == "An exception of category 'ProductNotFound' occurred while"
+            and parse_missing_product.state["state"] == 0
         ):
             parse_missing_product.state = {"state": 1}
         else:
@@ -578,7 +578,7 @@ def check_ib(data, compilation_only=False):
                                 continue
                             for obj in ctl["list"]:
                                 if obj["control_type"] == "Issues" and re.match(
-                                        r".* failed at line #\d+", obj["name"]
+                                    r".* failed at line #\d+", obj["name"]
                                 ):
                                     webURL = webURL_t.format(**obj)
                                     # print("\t\t" + obj["name"])
@@ -727,10 +727,10 @@ def get_expected_ibs(series, ib_date):
         for line in f:
             data = parse_config_line(line)
             if (
-                    data["CMSDIST_TAG"].startswith("IB/" + series)
-                    and data.get("DISABLED", 0) == 0
-                    and h in data.get("BUILD_HOUR", (11, 23))
-                    and wd in data.get("BUILD_DAY", (0, 1, 2, 3, 4, 5, 6))
+                data["CMSDIST_TAG"].startswith("IB/" + series)
+                and data.get("DISABLED", 0) == 0
+                and h in data.get("BUILD_HOUR", (11, 23))
+                and wd in data.get("BUILD_DAY", (0, 1, 2, 3, 4, 5, 6))
             ):
                 res.append((data["RELEASE_QUEUE"], data["SCRAM_ARCH"]))
 
@@ -774,7 +774,7 @@ def is_issue_closed(ib_date, issue):
             hour=int(m.group("hour")),
             minute=int(m.group("minute")),
             second=int(m.group("second")),
-            tzinfo=datetime.timezone.utc
+            tzinfo=datetime.timezone.utc,
         )
 
     global issue_cache
@@ -827,6 +827,8 @@ def setup_github():
     # global g, localtz
     global localtz
     localtz = currenttz()
+
+
 #
 #     if github:
 #         g = github.Github(

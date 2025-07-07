@@ -111,7 +111,8 @@ def main():
             old_data = None
             try:
                 old_data = libib.fetch(
-                    f"https://github.com/cms-sw/cms-sw.github.io/raw/{oldest_parent_sha}/data%2F{rel}.json"
+                    f"https://github.com/cms-sw/cms-sw.github.io/raw/{oldest_parent_sha}/data%2F{rel}.json",
+                    timeout=60,
                 )
             except HTTPError as e:
                 if e.code != 404:
@@ -124,7 +125,8 @@ def main():
 
             try:
                 new_data = libib.fetch(
-                    f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/data%2F{rel}.json"
+                    f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/data%2F{rel}.json",
+                    timeout=60,
                 )
             except HTTPError as e:
                 if e.code == 404:

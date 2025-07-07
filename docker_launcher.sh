@@ -170,7 +170,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
         EX_OPTIONS="${EX_OPTIONS} --nv"
         rm -rf ~/.nv || true
       fi
-    else
+    elif [ $(echo " ${NODE_LABELS} " | grep " rocm\|lumi " |wc -l) -eq 0 ] ; then
       export CUDA_VISIBLE_DEVICES=""
     fi
     for m in $(echo "$MOUNT_POINTS" | tr ',' '\n' | grep -v '^$') ; do

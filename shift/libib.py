@@ -12,8 +12,6 @@ import urllib.request
 from collections import namedtuple
 from enum import Enum
 
-import github
-
 import es_utils
 import github_utils
 

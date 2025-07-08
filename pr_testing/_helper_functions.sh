@@ -196,3 +196,33 @@ function get_gpu_matrix_args() {
   OPTS=$(PYTHONPATH=${PR_TESTING_DIR}/.. ${CMSBOT_PYTHON_CMD} -c 'from RelValArgs import GPU_RELVALS_FLAGS;print(GPU_RELVALS_FLAGS)')
   echo ${OPTS}
 }
+
+check_invalid_wf_lists () {
+  WORKFLOWS=$1
+  WFLISTS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)
+  WFS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | wc -l)
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS:-1} -l ${WORKFLOWS} -n 2>&1 > tmp123.tmp
+  if [ $? -ne 0 ]; then
+    echo "ERROR : runTheMatrix returned non-zero exit code"
+    return 1
+  fi
+  grep tmp123.tmp -e "is not a possible selected entry" > bad-workflow-lists.txt || true
+  BADLIST_CNT=$(wc -l < bad-workflow-lists.txt)
+  if [ "$BADLIST_CNT" -gt 0 ]; then
+    cat bad-workflow-lists.txt >> $WORKSPACE/bad-workflow-lists.txt
+    if [ "$WFLISTS_CNT" -ne "$WFS_CNT" ]; then
+      echo "WARNING : some workflow lists were not recognized"
+    else
+      if [ "$BADLIST_CNT" -eq "$WFS_CNT" ]; then
+        echo "ERROR : all workflow lists were not recognized, and no additional workflows were requested"
+        send_jenkins_artifacts $WORKSPACE/bad-workflow-lists.txt ib-baseline-tests/
+        rm bad-workflow-lists.txt
+        return 1
+      else
+        echo "WARNING : none of the workflow lists were recognized, only running explicitly requested workflows"
+      fi
+    fi
+  fi
+  rm bad-workflow-lists.txt
+  return 0
+}

@@ -198,7 +198,7 @@ function get_gpu_matrix_args() {
 }
 
 check_invalid_wf_lists () {
-  WORKFLOWS=$1
+  WORKFLOWS=$(echo $1 | sed -i -e 's/^-l//')
   WFLISTS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)
   WFS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | wc -l)
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS:-1} -l ${WORKFLOWS} -n 2>&1 > tmp123.tmp

@@ -78,6 +78,11 @@ pushd "$WORKSPACE/matrix-results"
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
     CMS_SITE_OVERRIDE="local"
   fi
+
+  # Check what workflows will be ran
+  WORKFLOWS=$(echo "$MATRIX_ARGS" | sed 's|.*-l ||;s| .*||' )
+  check_invalid_wf_lists "$WORKFLOWS" || exit 1
+
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}.txt

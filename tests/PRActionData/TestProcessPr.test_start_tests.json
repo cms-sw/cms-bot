@@ -88,7 +88,8 @@
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#17",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
-                "CONTEXT_PREFIX": "cms/17"
+                "CONTEXT_PREFIX": "cms/17",
+                "BUILD_ONLY": false
             }
         }
     },

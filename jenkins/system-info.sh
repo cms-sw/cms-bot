@@ -208,8 +208,13 @@ else
     NVIDIA_VERSION=`modinfo "$NVIDIA_MODULE" | grep '^version:' | sed 's|.*:\s*||;s|\s*$||'`
   fi
 fi
-echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
-if [ "$NVIDIA_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda" ; fi
+if [ "$NVIDIA_VERSION" ]; then
+  gpu_type=$(nvidia-smi -L | grep '^GPU [0-9]' | head -1 | sed -e 's|(.*||' | sed 's|.*:\s*||;s|\s*$||;s| |-|g' | tr A-Z a-z)
+  if [ "${gpu_type}" != "" ] ; then
+    echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
+    SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda nvidia-${gpu_type}"
+  fi
+fi
 
 if [ -f /sys/module/amdgpu/version ]; then
   ROCM_VERSION=$(cat /sys/module/amdgpu/version)

@@ -209,10 +209,10 @@ else
   fi
 fi
 if [ "$NVIDIA_VERSION" ]; then
-  gpu_type=$(nvidia-smi -L | grep '^GPU [0-9]' | head -1 | sed -e 's|(.*||' | sed 's|.*:\s*||;s|\s*$||;s| |-|g' | tr A-Z a-z)
+  gpu_type=$(nvidia-smi -L | grep '^GPU [0-9]' | head -1 | sed -e 's|(.*||;s|NVIDIA\s*||ig' | sed 's|.*:\s*||;s|\s*$||;s| |-|g' | tr A-Z a-z )
   if [ "${gpu_type}" != "" ] ; then
     echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
-    SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda nvidia-${gpu_type}"
+    SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda cuda-${gpu_type}"
   fi
 fi
 

@@ -34,9 +34,10 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   WFS=$(echo ${WFS} | sed 's|,$||')
 
   set +e
-  check_invalid_wf_lists ${WORKFLOWS}
+  check_invalid_wf_lists ${WORKFLOWS} false
   if [ $? -ne 0 ]; then
     WFS=""
+    cat $WORKSPACE/bad-workflow-lists.txt >> ${WORKSPACE}/workflows-${BUILD_ID}.log
   fi
   set -e
 

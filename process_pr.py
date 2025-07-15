@@ -146,9 +146,11 @@ REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 ALL_GPU_FLAVORS = [
-    x.strip() for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
+    x.strip()
+    for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
+    if x.strip()
 ]
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"] + ALL_GPU_FLAVORS
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano", "cuda", "rocm"] + ALL_GPU_FLAVORS
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)
@@ -1714,6 +1716,14 @@ def process_pr(
             enabled_gpu_flavors.update([x.upper() for x in ALL_GPU_FLAVORS])
         elif test.lower() in ALL_GPU_FLAVORS:
             enabled_gpu_flavors.add(test)
+        elif test.lower() == "cuda":
+            enabled_gpu_flavors.update(
+                [x.upper() for x in ALL_GPU_FLAVORS if x.startswith("cuda_")]
+            )
+        elif test.lower() == "rocm":
+            enabled_gpu_flavors.update(
+                [x.upper() for x in ALL_GPU_FLAVORS if x.startswith("rocm_")]
+            )
         else:
             new_enable_tests.append(test)
 

@@ -209,10 +209,10 @@ else
   fi
 fi
 if [ "$NVIDIA_VERSION" ]; then
-  gpu_type=$(nvidia-smi -L | grep '^GPU [0-9]' | head -1 | sed -e 's|(.*||;s|NVIDIA\s*||ig' | sed 's|.*:\s*||;s|\s*$||;s| |-|g' | tr A-Z a-z )
+  gpu_type=$(nvidia-smi -L | grep '^GPU [0-9]' | head -1 | sed -E -e 's/\(.*//;s/NVIDIA\s*//ig;s/\s*(NVL|Tesla)//ig' | sed 's/.*:\s*//;s/\s*$//;s/ /_/g' | tr 'A-Z' 'a-z')
   if [ "${gpu_type}" != "" ] ; then
     echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
-    SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda cuda-${gpu_type}"
+    SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda cuda_${gpu_type}"
   fi
 fi
 
@@ -225,8 +225,13 @@ else
   fi
 fi
 
-echo "DATA_ROCM_VERSION=$ROCM_VERSION"
-if [ "$ROCM_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} rocm rocm-$ROCM_VERSION" ; fi
+if [ "$ROCM_VERSION" ]; then
+  gpu_type=$(rocm-smi -i | grep 'Device Name:' | head -1 | sed -E -e 's/\s*$//;s/.*Device Name:\s*//;s/.* //;s/ /_/g' | tr 'A-Z' 'a-z')
+  if [ "${gpu_type}" != "" ] ; then
+    echo "DATA_ROCM_VERSION=$ROCM_VERSION"
+    SLAVE_LABELS="${SLAVE_LABELS} rocm rocm-$ROCM_VERSION rocm_${gpu_type}"
+  fi
+fi
 
 if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
   hname=$(hostname -s)
@@ -258,4 +263,4 @@ case $(hostname -s) in
   cmsecal* ) SLAVE_LABELS="cmsecal ${SLAVE_LABELS}";;
 esac
 SLAVE_LABELS="disk-free-$(df -BG $WORKSPACE | tail -1 | awk '{print $4"-of-"$2}') ${SLAVE_LABELS}"
-echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"
+echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort

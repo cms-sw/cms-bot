@@ -263,4 +263,4 @@ case $(hostname -s) in
   cmsecal* ) SLAVE_LABELS="cmsecal ${SLAVE_LABELS}";;
 esac
 SLAVE_LABELS="disk-free-$(df -BG $WORKSPACE | tail -1 | awk '{print $4"-of-"$2}') ${SLAVE_LABELS}"
-echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort
+echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"

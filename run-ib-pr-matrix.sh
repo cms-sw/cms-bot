@@ -32,6 +32,15 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     WFS="${wf},${WFS}"
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
+
+  set +e
+  check_invalid_wf_lists ${WORKFLOWS} false
+  if [ $? -ne 0 ]; then
+    WFS=""
+    cat $WORKSPACE/bad-workflow-lists.txt >> ${WORKSPACE}/workflows-${BUILD_ID}.log
+  fi
+  set -e
+
   if [ "${WFS}" = "" ] ; then
     mv ${WORKSPACE}/workflows-${BUILD_ID}.log ${WORKSPACE}/workflows-${BUILD_ID}.done
     send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.done ${ARTIFACT_DIR}/workflows-${BUILD_ID}.done
@@ -78,6 +87,9 @@ pushd "$WORKSPACE/matrix-results"
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
     CMS_SITE_OVERRIDE="local"
   fi
+
+  # Check what workflows will be ran
+  WORKFLOWS=$(echo "$MATRIX_ARGS" | sed 's|.*-l ||;s| .*||' )
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}.txt

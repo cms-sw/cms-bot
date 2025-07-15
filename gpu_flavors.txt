@@ -1,4 +1,4 @@
-cuda_h100
-rocm_mi300x
-cuda_l40s
-cuda_t4
+nvidia_h100
+amd_mi300x
+nvidia_l40s
+nvidia_t4

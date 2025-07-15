@@ -154,7 +154,7 @@ CMSSW_L2 = {
     "malbouis": ["ppd"],
     "vlimant": ["ppd"],
     # ML
-    "valsdav": ["ml"],
+    "valsdav": ["ml", "egamma-pog"],
     "y19y19": ["ml"],
 }
 

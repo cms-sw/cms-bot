@@ -2,5 +2,3 @@ cuda_h100
 rocm_mi300x
 cuda_l40s
 cuda_t4
-rocm_mi250x
-rocm_w7900

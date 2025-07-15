@@ -1,2 +1,6 @@
 cuda
 rocm
+cuda_l40s
+cuda_t4
+rocm_mi250x
+rocm_w7900

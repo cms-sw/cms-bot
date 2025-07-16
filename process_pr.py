@@ -46,6 +46,7 @@ from json import dumps, dump, load, loads
 import yaml
 import logging
 import sys
+import os
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper

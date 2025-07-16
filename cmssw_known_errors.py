@@ -178,13 +178,16 @@ KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
 # 14 and above
 RelFilter = "CMSSW_(14|1[5-9]|[2-9][0-9]|[1-9][0-9][0-9]+)_.+"
 KNOWN_ERRORS["relvals"][RelFilter] = {}
-KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
-    "180.1": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
-    "181.1": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
-    "182.1": {"step": 1, "exitcode": 16640, "reason": MSG_ARCH_INCOMPETIBILITY},
-    "2500.912": {"step": 1, "exitcode": 16640, "reason": MSG_ARCH_INCOMPETIBILITY},
-    "2500.913": {"step": 1, "exitcode": 16640, "reason": MSG_ARCH_INCOMPETIBILITY},
-}
+# Known MSG_ARCH_INCOMPETIBILITY failures
+KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {}
+for wf, step in [
+    ("180.1", 1),("181.1", 1),("182.1", 1),
+    ("2500.912", 1), ("2500.913", 1),
+    ("2500.9102", 1), ("2500.9103", 1)
+  ]:
+    KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"][wf] = {
+      "step": step, "exitcode": 16640, "reason": MSG_ARCH_INCOMPETIBILITY
+    }
 
 
 def get_known_errors(release, architecture, test_type):

@@ -1084,6 +1084,21 @@ def process_pr(
         if pr.changed_files == 0:
             logger.error("Ignoring: PR with no files changed")
             return
+
+        # Retrigger the job if PR is for cms-bot repo and author is core or externals l2
+        if (
+            repo.full_name == "cms-sw/cms-bot"
+            and os.getenv("CMS_BOT_TEST_BRANCH", "master") == "master"
+        ):
+            author_ = issue.user.login
+            cats = get_commenter_categories(author_, int(issue.created_at.strftime("%s")))
+            if "externals" in cats or "core" in cats:
+                with open("cms-bot.properties", "w") as f:
+                    f.write("CMS_BOT_TEST_BRANCH={0}\n".format(pr.base.ref))
+                    f.write("FORCE_PULL_REQUEST={0}\n".format(pr.number))
+                    f.write("CMS_BOT_TEST_PRS=cms-sw/cms-bot#{0}\n".format(pr.number))
+                return
+
         if pr.draft:
             logger.warning("Draft PR, mentions turned off")
             is_draft_pr = True

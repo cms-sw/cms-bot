@@ -1090,7 +1090,7 @@ def process_pr(
         if (
             repo.full_name == "cms-sw/cms-bot"
             and os.getenv("CMS_BOT_TEST_BRANCH", "master") == "master"
-            and False
+            and pr.state != "closed"
         ):
             author_ = issue.user.login
             cats = get_commenter_categories(author_, int(issue.created_at.strftime("%s")))

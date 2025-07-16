@@ -181,12 +181,18 @@ KNOWN_ERRORS["relvals"][RelFilter] = {}
 # Known MSG_ARCH_INCOMPETIBILITY failures
 KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {}
 for wf, step in [
-    ("180.1", 1),("181.1", 1),("182.1", 1),
-    ("2500.912", 1), ("2500.913", 1),
-    ("2500.9102", 1), ("2500.9103", 1)
-  ]:
+    ("180.1", 1),
+    ("181.1", 1),
+    ("182.1", 1),
+    ("2500.912", 1),
+    ("2500.913", 1),
+    ("2500.9102", 1),
+    ("2500.9103", 1),
+]:
     KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"][wf] = {
-      "step": step, "exitcode": 16640, "reason": MSG_ARCH_INCOMPETIBILITY
+        "step": step,
+        "exitcode": 16640,
+        "reason": MSG_ARCH_INCOMPETIBILITY,
     }
 
 

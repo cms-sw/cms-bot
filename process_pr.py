@@ -1676,7 +1676,6 @@ def process_pr(
                     extra_wfs = ",".join(sorted(v3.split(",")))
                     release_queue = v4
                     release_arch = ""
-                    test_comment = comment
                     if "/" in release_queue:
                         release_queue, release_arch = release_queue.split("/", 1)
                     elif re.match("^" + ARCH_PATTERN + "$", release_queue):
@@ -1684,10 +1683,17 @@ def process_pr(
                         release_queue = ""
 
                     if v5 and has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
-                        test_comment = None
                         continue
 
                     build_only = v5
+                    if build_only:
+                        new_bot_tests = True
+                        trigger_test = True
+                    else:
+                        new_bot_tests = False
+                        trigger_test = False
+                        test_comment = comment
+
                     signatures["tests"] = "pending"
 
                     logger.info(

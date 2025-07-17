@@ -30,6 +30,7 @@ RELVAL_KEYS = {
     "THREADED": [],
     "WORKFLOWS": [],
     "TIMEOUT": [],
+    "TRACE_FUNCTION": [],
 }
 GPU_RELVALS_FLAGS = "-w gpu --gpu required"
 THREADED_ROOT = "NON_THREADED_CMSSW"
@@ -41,10 +42,19 @@ RELVAL_KEYS["customiseWithTimeMemorySummary"].append(
     [".+", "--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"]
 )
 RELVAL_KEYS["PREFIX"].append(
-    ["CMSSW_[1-7]_.+", "--prefix '%s timeout --signal SIGSEGV @TIMEOUT@ '" % monitor_script]
+    [
+        "CMSSW_[1-7]_.+",
+        "--prefix '%s timeout --signal SIGSEGV @TIMEOUT@ @TRACE_FUNCTION@ '" % monitor_script,
+    ]
 )
 RELVAL_KEYS["PREFIX"].append(
-    ["CMSSW_.+", "--prefix '%s timeout --signal SIGTERM @TIMEOUT@ '" % monitor_script]
+    [
+        "CMSSW_.+",
+        "--prefix '%s timeout --signal SIGTERM @TIMEOUT@ @TRACE_FUNCTION@'" % monitor_script,
+    ]
+)
+RELVAL_KEYS["TRACE_FUNCTION"].append(
+    ["CMSSW_.+_DEVEL_.+", "cmsTraceFunction --startAfterFunction ScheduleItems::initMisc setenv"]
 )
 RELVAL_KEYS["JOB_REPORT"].append([".+", "--job-reports"])
 RELVAL_KEYS["USE_INPUT"].append([".+", "--useInput all"])

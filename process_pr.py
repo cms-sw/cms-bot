@@ -1716,13 +1716,9 @@ def process_pr(
             enabled_gpu_flavors.update([x.upper() for x in ALL_GPU_FLAVORS])
         elif test.lower() in ALL_GPU_FLAVORS:
             enabled_gpu_flavors.add(test)
-        elif test.lower() == "nvidia":
+        elif test.lower() in ("nvidia", "amd"):
             enabled_gpu_flavors.update(
-                [x.upper() for x in ALL_GPU_FLAVORS if x.startswith("nvidia_")]
-            )
-        elif test.lower() == "amd":
-            enabled_gpu_flavors.update(
-                [x.upper() for x in ALL_GPU_FLAVORS if x.startswith("amd_")]
+                [x.upper() for x in ALL_GPU_FLAVORS if x.startswith(test.lower() + "_")]
             )
         else:
             new_enable_tests.append(test)

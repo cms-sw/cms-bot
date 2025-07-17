@@ -1676,7 +1676,6 @@ def process_pr(
                     extra_wfs = ",".join(sorted(v3.split(",")))
                     release_queue = v4
                     release_arch = ""
-                    test_comment = comment
                     if "/" in release_queue:
                         release_queue, release_arch = release_queue.split("/", 1)
                     elif re.match("^" + ARCH_PATTERN + "$", release_queue):
@@ -1684,9 +1683,10 @@ def process_pr(
                         release_queue = ""
 
                     if v5 and has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
-                        test_comment = None
+                        # test_comment = None
                         continue
 
+                    test_comment = comment
                     build_only = v5
                     signatures["tests"] = "pending"
 
@@ -2117,16 +2117,14 @@ def process_pr(
                 if not new_bot_tests:
                     desc = "Old style tests %s" % desc
                 else:
-                    if not build_only:
-                        desc = "Tests %s" % desc
-                    else:
-                        desc = "Build %s" % desc
+                    desc = "Tests %s" % desc
 
                 logger.debug('Create status "%s"', desc)
                 if not dryRun:
-                    last_commit_obj.create_status(
-                        "success", description=desc, target_url=turl, context=bot_status_name
-                    )
+                    if not build_only:
+                        last_commit_obj.create_status(
+                            "success", description=desc, target_url=turl, context=bot_status_name
+                        )
                     set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
             if bot_status:
                 logger.debug(

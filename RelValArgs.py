@@ -42,10 +42,16 @@ RELVAL_KEYS["customiseWithTimeMemorySummary"].append(
     [".+", "--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"]
 )
 RELVAL_KEYS["PREFIX"].append(
-    ["CMSSW_[1-7]_.+", "--prefix '%s timeout --signal SIGSEGV @TIMEOUT@ @TRACE_FUNCTION@ '" % monitor_script]
+    [
+        "CMSSW_[1-7]_.+",
+        "--prefix '%s timeout --signal SIGSEGV @TIMEOUT@ @TRACE_FUNCTION@ '" % monitor_script,
+    ]
 )
 RELVAL_KEYS["PREFIX"].append(
-    ["CMSSW_.+", "--prefix '%s timeout --signal SIGTERM @TIMEOUT@ @TRACE_FUNCTION@'" % monitor_script]
+    [
+        "CMSSW_.+",
+        "--prefix '%s timeout --signal SIGTERM @TIMEOUT@ @TRACE_FUNCTION@'" % monitor_script,
+    ]
 )
 RELVAL_KEYS["TRACE_FUNCTION"].append(
     ["CMSSW_.+_DEVEL_.+", "cmsTraceFunction --startAfterFunction ScheduleItems::initMisc setenv"]

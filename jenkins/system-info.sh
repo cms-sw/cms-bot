@@ -212,7 +212,7 @@ if [ "$NVIDIA_VERSION" ]; then
   gpu_type=$(nvidia-smi -L | grep '^GPU [0-9]' | head -1 | sed -E -e 's/\(.*//;s/NVIDIA\s*//ig;s/\s*(NVL|Tesla)//ig' | sed 's/.*:\s*//;s/\s*$//;s/ /_/g' | tr 'A-Z' 'a-z')
   if [ "${gpu_type}" != "" ] ; then
     echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
-    SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda cuda_${gpu_type}"
+    SLAVE_LABELS="${SLAVE_LABELS} cuda nvidia nvidia-$NVIDIA_VERSION nvidia_${gpu_type}"
   fi
 fi
 
@@ -229,7 +229,7 @@ if [ "$ROCM_VERSION" ]; then
   gpu_type=$(rocm-smi -i | grep 'Device Name:' | head -1 | sed -E -e 's/\s*$//;s/.*Device Name:\s*//;s/.* //;s/ /_/g' | tr 'A-Z' 'a-z')
   if [ "${gpu_type}" != "" ] ; then
     echo "DATA_ROCM_VERSION=$ROCM_VERSION"
-    SLAVE_LABELS="${SLAVE_LABELS} rocm rocm-$ROCM_VERSION rocm_${gpu_type}"
+    SLAVE_LABELS="${SLAVE_LABELS} rocm rocm-$ROCM_VERSION amd_${gpu_type}"
   fi
 fi
 

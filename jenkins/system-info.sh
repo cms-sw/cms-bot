@@ -208,8 +208,13 @@ else
     NVIDIA_VERSION=`modinfo "$NVIDIA_MODULE" | grep '^version:' | sed 's|.*:\s*||;s|\s*$||'`
   fi
 fi
-echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
-if [ "$NVIDIA_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} nvidia nvidia-$NVIDIA_VERSION cuda" ; fi
+if [ "$NVIDIA_VERSION" ]; then
+  gpu_type=$(nvidia-smi -L | grep '^GPU [0-9]' | head -1 | sed -E -e 's/\(.*//;s/NVIDIA\s*//ig;s/\s*(NVL|Tesla)//ig' | sed 's/.*:\s*//;s/\s*$//;s/ /_/g' | tr 'A-Z' 'a-z')
+  if [ "${gpu_type}" != "" ] ; then
+    echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
+    SLAVE_LABELS="${SLAVE_LABELS} cuda nvidia nvidia-$NVIDIA_VERSION nvidia_${gpu_type}"
+  fi
+fi
 
 if [ -f /sys/module/amdgpu/version ]; then
   ROCM_VERSION=$(cat /sys/module/amdgpu/version)
@@ -220,8 +225,13 @@ else
   fi
 fi
 
-echo "DATA_ROCM_VERSION=$ROCM_VERSION"
-if [ "$ROCM_VERSION" ]; then SLAVE_LABELS="${SLAVE_LABELS} rocm rocm-$ROCM_VERSION" ; fi
+if [ "$ROCM_VERSION" ]; then
+  gpu_type=$(rocm-smi -i | grep 'Device Name:' | head -1 | sed -E -e 's/\s*$//;s/.*Device Name:\s*//;s/.* //;s/ /_/g' | tr 'A-Z' 'a-z')
+  if [ "${gpu_type}" != "" ] ; then
+    echo "DATA_ROCM_VERSION=$ROCM_VERSION"
+    SLAVE_LABELS="${SLAVE_LABELS} rocm rocm-$ROCM_VERSION amd_${gpu_type}"
+  fi
+fi
 
 if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
   hname=$(hostname -s)

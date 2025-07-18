@@ -2650,7 +2650,15 @@
       "category": [
         "ml"
       ],
+      "end_date": 1752537600,
       "start_date": 1701993600
+    },
+    {
+      "category": [
+        "ml",
+        "egamma-pog"
+      ],
+      "start_date": 1752537600
     }
   ],
   "vanbesien": [

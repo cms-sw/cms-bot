@@ -71,7 +71,8 @@ RELVAL_KEYS["WORKFLOWS"].append(
         "-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861",
     ]
 )
-if environ.get("IB_TEST_TYPE", "") in ["rocm", "cuda", "gpu"]:
+ib_test_type = environ.get("IB_TEST_TYPE", "")
+if ib_test_type in ["rocm", "cuda", "gpu"] or ib_test_type.startswith("nvidia_") or ib_test_type.startswith("amd_"):
     RELVAL_KEYS["WORKFLOWS"].append([".+", GPU_RELVALS_FLAGS])
 else:
     RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", GPU_RELVALS_FLAGS])

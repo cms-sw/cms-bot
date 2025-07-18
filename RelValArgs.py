@@ -72,7 +72,11 @@ RELVAL_KEYS["WORKFLOWS"].append(
     ]
 )
 ib_test_type = environ.get("IB_TEST_TYPE", "")
-if ib_test_type in ["rocm", "cuda", "gpu"] or ib_test_type.startswith("nvidia_") or ib_test_type.startswith("amd_"):
+if (
+    ib_test_type in ["rocm", "cuda", "gpu"]
+    or ib_test_type.startswith("nvidia_")
+    or ib_test_type.startswith("amd_")
+):
     RELVAL_KEYS["WORKFLOWS"].append([".+", GPU_RELVALS_FLAGS])
 else:
     RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", GPU_RELVALS_FLAGS])

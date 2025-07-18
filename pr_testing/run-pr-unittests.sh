@@ -21,7 +21,7 @@ if [[ $gpu_t_lc == nvidia_* ]]; then
   gpu_t_lc="cuda"
 fi
 if [[ $gpu_t_lc == amd_* ]]; then
-  gpu_t_lc="amd"
+  gpu_t_lc="rocm"
 fi
 UTESTS_CMD="USER_UNIT_TESTS=${gpu_t_lc} timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  unittests "
 echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"

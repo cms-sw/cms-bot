@@ -1676,7 +1676,6 @@ def process_pr(
                     extra_wfs = ",".join(sorted(v3.split(",")))
                     release_queue = v4
                     release_arch = ""
-                    test_comment = comment
                     if "/" in release_queue:
                         release_queue, release_arch = release_queue.split("/", 1)
                     elif re.match("^" + ARCH_PATTERN + "$", release_queue):
@@ -1684,10 +1683,11 @@ def process_pr(
                         release_queue = ""
 
                     if v5 and has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
-                        test_comment = None
+                        # test_comment = None
                         continue
 
                     build_only = v5
+                    test_comment = comment
                     signatures["tests"] = "pending"
 
                     logger.info(
@@ -2124,9 +2124,10 @@ def process_pr(
 
                 logger.debug('Create status "%s"', desc)
                 if not dryRun:
-                    last_commit_obj.create_status(
-                        "success", description=desc, target_url=turl, context=bot_status_name
-                    )
+                    if not build_only:
+                        last_commit_obj.create_status(
+                            "success", description=desc, target_url=turl, context=bot_status_name
+                        )
                     set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
             if bot_status:
                 logger.debug(
@@ -2154,17 +2155,17 @@ def process_pr(
                 for status in commit_statuses:
                     if not status.context.startswith(cms_status_prefix + "/"):
                         continue
-                    cdata = status.context.split("/")
-                    if cdata[-1] not in ["optional", "required"]:
+                    scontext, suffix = status.context.rsplit("/", 1)
+                    if suffix not in ["optional", "required"]:
                         continue
-                    if (cdata[-1] not in lab_stats) or (cdata[-1] == "required"):
-                        lab_stats[cdata[-1]] = []
-                    lab_stats[cdata[-1]].append("pending")
+                    if (suffix not in lab_stats) or (suffix == "required"):
+                        lab_stats[suffix] = []
+                    lab_stats[suffix].append("pending")
                     if status.state == "pending":
                         continue
-                    scontext = "/".join(cdata[:-1])
                     all_states = {}
                     result_url = ""
+                    build_only_flag = False
                     for s in [
                         i
                         for i in commit_statuses
@@ -2181,7 +2182,18 @@ def process_pr(
                         if s.state not in all_states:
                             all_states[s.state] = []
                         all_states[s.state].append(s.context)
+                        if s.context.endswith("/build_only") and s.description == "Only build":
+                            build_only_flag = True
+                            break
+
                     logger.debug("Test status for %s: %s", status.context, all_states)
+                    if build_only_flag:
+                        logger.debug("Skipping build-only context %s", scontext)
+                        # Undo changes to lab_stats
+                        lab_stats[suffix].pop()
+                        if not lab_stats[suffix]:
+                            del lab_stats[suffix]
+                        continue
                     if "pending" in all_states:
                         if status.description.startswith("Finished"):
                             logger.info(
@@ -2197,18 +2209,18 @@ def process_pr(
                                 )
                         continue
                     if "success" in all_states:
-                        lab_stats[cdata[-1]][-1] = "success"
+                        lab_stats[suffix][-1] = "success"
                     if "error" in all_states:
                         if [c for c in all_states["error"] if ("/opt/" not in c)]:
-                            lab_stats[cdata[-1]][-1] = "error"
+                            lab_stats[suffix][-1] = "error"
                     logger.info(
-                        "Final Status: status.context=%s cdata[-1]=%s lab_stats[cdata[-1]][-1]=%s status.description=%s",
+                        "Final Status: status.context=%s suffix=%s lab_stats[suffix][-1]=%s status.description=%s",
                         status.context,
-                        cdata[-1],
-                        lab_stats[cdata[-1]][-1],
+                        suffix,
+                        lab_stats[suffix][-1],
                         status.description,
                     )
-                    if (lab_stats[cdata[-1]][-1] != "pending") and (
+                    if (lab_stats[suffix][-1] != "pending") and (
                         not status.description.startswith("Finished")
                     ):
                         if result_url:
@@ -2226,7 +2238,7 @@ def process_pr(
                                 raise Exception("System-error: unable to get PR result")
                             if o and (not dryRun):
                                 res = "+1"
-                                if lab_stats[cdata[-1]][-1] == "error":
+                                if lab_stats[suffix][-1] == "error":
                                     res = "-1"
                                 res = "%s\n\n%s" % (res, o)
                                 issue.create_comment(res)

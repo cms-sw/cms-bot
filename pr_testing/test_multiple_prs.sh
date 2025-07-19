@@ -186,8 +186,12 @@ for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
   fi
 done
 
-[ ${BUILD_ONLY} = "true" ] && DO_COMPARISON=false
-
+if [ "${BUILD_ONLY}" = "true" ] ; then
+  DO_COMPARISON=false
+  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Only build'
+else
+  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Build and test'
+fi
 # ----------
 # -- MAIN --
 # ----------

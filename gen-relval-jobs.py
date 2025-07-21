@@ -56,7 +56,7 @@ if workflows:
     if splitWF:
         workflows = splitWorkflows(workflows, max_wf)
     else:
-        workflows = [workflows]
+        workflows = [workflows[:]]
     print(workflows)
     on_grid = 0
     # if '_DEVEL_X' in environ['CMSSW_VERSION']:

@@ -385,9 +385,10 @@ def es_send_resource_stats(
     }
     average_stats = get_summary_stats_from_json_file(sfile, cpu_normalize)
     sdata.update(average_stats)
+    idx_data = params.get("gpu", "")
     if params:
         sdata.update(params)
-    idx = sha1((release + arch + name + version + str(rel_sec)).encode()).hexdigest()
+    idx = sha1((idx_data + release + arch + name + version + str(rel_sec)).encode()).hexdigest()
     try:
         send_payload(index + "-" + week, doc, idx, json.dumps(sdata))
     except Exception as e:

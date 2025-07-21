@@ -391,19 +391,17 @@ if $DO_COMPARISON ; then
     if [ "${MATRIX_EXTRAS}" != "" ] ; then
       WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
-      ret=$(
-        (
-          set +e
-          set +x
-          cd $WORKSPACE/$CMSSW_IB
-          eval `scram run -sh`
-          set -x
-          check_invalid_wf_lists "-l ${WF_LIST}"
-          echo $?
-          set -e
-        )
+      (
+	set +e
+	set +x
+	cd $WORKSPACE/$CMSSW_IB
+	eval `scram run -sh`
+	set -x
+	check_invalid_wf_lists "-l ${WF_LIST}"
+	echo $? > $WORKSPACE/wf-check.res
+	set -e
       )
-      if [ $ret -ne 0 ]; then
+      if [ $(cat $WORKSPACE/wf-check.res) -ne 0 ]; then
         DO_COMPARISON=false
         rm -f run-baseline-${BUILD_ID}-02.default
         echo "`${WF_LIST}` does not contain any valid workflows - comparison skipped" >> ${RESULTS_DIR}/09-report.res

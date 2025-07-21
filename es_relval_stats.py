@@ -19,8 +19,11 @@ except:
 items = partial_log_dirpath.split("/")
 if items[-1] != "pyRelValPartialLogs":
     exit(1)
-release = items[-2]
-arch = items[-6]
+rel_idx = -2
+if items[-3] == "gpu":
+    release = -4
+release = items[rel_idx]
+arch = items[rel_idx - 4]
 if not exists("%s/threads.txt" % partial_log_dirpath):
     e, o = run_cmd(
         "grep ' --nThreads ' %s/*/cmdLog  | tail -1  | sed 's|.* *--nThreads *||;s| .*||'"

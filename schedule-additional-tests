@@ -50,23 +50,6 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
   fi
 done
 
-for test_type in relvals qa ; do
-  pfile="$WORKSPACE/auto-gpu-${test_type}-properties"
-  if [ -e $pfile ] ; then
-    for gpu in $(cat ${THISDIR}/gpu_flavors.txt | grep -v '^\s*$' | grep -v '^#') ; do
-      nfile="$WORKSPACE/auto-${test_type}-${gpu}-properties"
-      cp ${pfile} ${nfile}
-      case $gpu in
-        cuda|nvidia_*) echo "IB_TEST_TYPE=${gpu}" >> ${nfile}
-        rocm|amd_*)    echo "IB_TEST_TYPE=${gpu}" >> ${nfile}
-        * ) echo "ERROR: Unknow GPU type: ${gpu}"; exit 1;;
-      esac
-      sed -i -e 's|ADDITIONAL_TEST_NAME=gpu-relvals|ADDITIONAL_TEST_NAME=relvals|' ${nfile}
-    done
-    rm -f ${pfile}
-  fi
-done
-
 if [ "${PRODUCTION_ARCH}" = "1" ] ; then
   if [ $(grep "SCRAM_ARCH=${ARCHITECTURE};" $CONFIG_MAP | grep 'RELEASE_BRANCH=master;' | grep "RELEASE_QUEUE=${RELEASE_QUEUE};" | grep 'PROD_ARCH=1;' | grep -v 'DISABLED=1' | wc -l) -eq 1 ] ; then
     echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > cmssw-afs-eos.txt

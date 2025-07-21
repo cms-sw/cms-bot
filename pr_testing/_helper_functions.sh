@@ -215,7 +215,7 @@ check_invalid_wf_lists () {
     else
       if [ "$BADLIST_CNT" -eq "$WFS_CNT" ]; then
         echo "ERROR : all workflow lists were not recognized, and no additional workflows were requested"
-        [ "$UPLOAD" = "true" ] && {send_jenkins_artifacts $WORKSPACE/bad-workflow-lists.txt ib-baseline-tests/; rm $WORKSPACE/bad-workflow-lists.txt;}
+        [ "$UPLOAD" = "true" ] && { send_jenkins_artifacts $WORKSPACE/bad-workflow-lists.txt ib-baseline-tests/; rm $WORKSPACE/bad-workflow-lists.txt; }
         return 1
       else
         echo "WARNING : none of the workflow lists were recognized, only running explicitly requested workflows"

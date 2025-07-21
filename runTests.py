@@ -117,10 +117,16 @@ class UnitTester(IBThreadBase):
             return
         precmd = ""
         paralleJobs = MachineCPUCount
-        user_tests = os.environ.get("IB_TEST_TYPE", "")
-        if self.xType == "GPU":
+        test_type = os.environ.get("IB_TEST_TYPE", "")
+        user_tests = test_type
+        if user_tests == "":
+            if self.xType == "GPU":
+                user_tests = "cuda"
+            elif self.xType == "ROCM":
+                user_tests = "rocm"
+        elif user_tests.startswith("nvidia_"):
             user_tests = "cuda"
-        elif self.xType == "ROCM":
+        elif user_tests.startswith("amd_"):
             user_tests = "rocm"
         if ("ASAN" in os.environ["CMSSW_VERSION"]) or ("UBSAN" in os.environ["CMSSW_VERSION"]):
             paralleJobs = int(MachineCPUCount / 2)
@@ -190,7 +196,12 @@ class UnitTester(IBThreadBase):
         except Exception:
             pass
         self.checkTestLogs()
-        self.logger.updateUnitTestLogs(self.xType)
+        uploadDir = ""
+        if test_type:
+            uploadDir = test_type
+        elif self.xType:
+            uploadDir = self.xType
+        self.logger.updateUnitTestLogs(uploadDir)
         return
 
 

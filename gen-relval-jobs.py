@@ -28,6 +28,7 @@ if "RELVAL_WORKFLOWS" in environ:
     relval_args = relval_args + " " + environ["RELVAL_WORKFLOWS"]
 matrix = PyRelValsThread(1, environ["CMSSW_BASE"])
 workflows = matrix.getWorkFlows(relval_args)
+splitWF = False
 if exists(RelValtimes):
     owf = []
     max_tm = 0
@@ -50,8 +51,12 @@ if exists(RelValtimes):
         if not wf in owfs:
             uwf.append([wf, max_tm])
     workflows = uwf + owf
+    splitWF = True
 if workflows:
-    workflows = splitWorkflows(workflows, max_wf)
+    if splitWF:
+        workflows = splitWorkflows(workflows, max_wf)
+    else:
+        workflows = [workflows]
     print(workflows)
     on_grid = 0
     # if '_DEVEL_X' in environ['CMSSW_VERSION']:

@@ -188,9 +188,6 @@ done
 
 if [ "${BUILD_ONLY}" = "true" ] ; then
   DO_COMPARISON=false
-  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Only build'
-else
-  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Build and test'
 fi
 # ----------
 # -- MAIN --
@@ -249,6 +246,12 @@ mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build e
 PR_COMMIT_STATUS="optional"
 if $REQUIRED_TEST ; then PR_COMMIT_STATUS="required" ; fi
 mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
+
+if [ "${BUILD_ONLY}" = "true" ] ; then
+  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Only build'
+else
+  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Build and test'
+fi
 
 echo -n "**Summary**: ${PR_RESULT_URL}/summary.html" > ${RESULTS_DIR}/09-report.res
 CMSSW_VERSION=${RELEASE_FORMAT} $CMS_BOT_DIR/report-pull-request-results GET_BASE_MESSAGE --report-url ${PR_RESULT_URL} \

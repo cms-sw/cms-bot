@@ -1,6 +1,7 @@
 #!/bin/bash -ex
-source $(dirname $0)/cmsrep.sh
-CONFIG_MAP=$(dirname $0)/config.map
+THISDIR=$(dirname $0)
+source ${THISDIR}/cmsrep.sh
+CONFIG_MAP=${THISDIR}/config.map
 PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
 for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
   #Skip some tests which are run separately e.g. fwlie clang-analyzer (as part of static-cecks)
@@ -44,6 +45,23 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
       cp ${pfile} ${nfile}
       echo "PROFILING_WORKFLOWS=$wf" >> ${nfile}
       echo "EVENTS=100" >> ${nfile}
+    done
+    rm -f ${pfile}
+  fi
+done
+
+for test_type in relvals qa ; do
+  pfile="$WORKSPACE/auto-gpu-${test_type}-properties"
+  if [ -e $pfile ] ; then
+    for gpu in $(cat ${THISDIR}/gpu_flavors.txt | grep -v '^\s*$' | grep -v '^#') ; do
+      nfile="$WORKSPACE/auto-${test_type}-${gpu}-properties"
+      cp ${pfile} ${nfile}
+      case $gpu in
+        cuda|nvidia_*) echo "IB_TEST_TYPE=${gpu}" >> ${nfile}
+        rocm|amd_*)    echo "IB_TEST_TYPE=${gpu}" >> ${nfile}
+        * ) echo "ERROR: Unknow GPU type: ${gpu}"; exit 1;;
+      esac
+      sed -i -e 's|ADDITIONAL_TEST_NAME=gpu-relvals|ADDITIONAL_TEST_NAME=relvals|' ${nfile}
     done
     rm -f ${pfile}
   fi

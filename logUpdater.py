@@ -97,8 +97,13 @@ class LogUpdater(object):
         self.copyLogs("codeRules", ".", self.webTargetDir)
         return
 
+    def getRelValsDir(self):
+        return os.path.join(
+            self.webTargetDir, os.environ.get("IB_TEST_TYPE", ""), "pyRelValPartialLogs"
+        )
+
     def updateRelValMatrixPartialLogs(self, partialSubDir, dirToSend):
-        destination = os.path.join(self.webTargetDir, "pyRelValPartialLogs")
+        destination = self.getRelValsDir()
         print("\n--> going to copy pyrelval partial matrix logs to", destination, "... \n")
         self.copyLogs(dirToSend, partialSubDir, destination)
         self.runRemoteCmd("touch " + os.path.join(destination, dirToSend, "wf.done"))
@@ -106,7 +111,7 @@ class LogUpdater(object):
 
     def getDoneRelvals(self):
         wfDoneFile = "wf.done"
-        destination = os.path.join(self.webTargetDir, "pyRelValPartialLogs", "*", wfDoneFile)
+        destination = os.path.join(self.getRelValsDir(), "*", wfDoneFile)
         code, out = self.runRemoteCmd("ls " + destination, debug=False)
         return [
             wf.split("/")[-2].split("_")[0] for wf in out.split("\n") if wf.endswith(wfDoneFile)
@@ -114,9 +119,7 @@ class LogUpdater(object):
 
     def relvalAlreadyDone(self, wf):
         wfDoneFile = "wf.done"
-        destination = os.path.join(
-            self.webTargetDir, "pyRelValPartialLogs", str(wf) + "_*", wfDoneFile
-        )
+        destination = os.path.join(self.getRelValsDir(), str(wf) + "_*", wfDoneFile)
         code, out = self.runRemoteCmd("ls -d " + destination)
         return (code == 0) and out.endswith(wfDoneFile)
 

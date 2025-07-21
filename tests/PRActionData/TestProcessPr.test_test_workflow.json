@@ -61,8 +61,8 @@
             "data": {
                 "MATRIX_EXTRAS": "33234.0,33634.0",
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#24",
-                "ENABLE_BOT_TESTS": "CUDA,HIGH_STATS,NANO,PROFILING,ROCM,THREADING",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
+                "ENABLE_BOT_TESTS": "AMD_MI300X,HIGH_STATS,NANO,NVIDIA_T4,PROFILING,THREADING",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO NVIDIA AMD NVIDIA_T4 AMD_MI300X",
                 "CONTEXT_PREFIX": "cms/24"
             }
         }

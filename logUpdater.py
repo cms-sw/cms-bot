@@ -55,6 +55,7 @@ class LogUpdater(object):
         return
 
     def updateUnitTestLogs(self, subdir=""):
+        subdir = self.getTestTypeDir()
         print("\n--> going to copy unit test logs to", self.webTargetDir, "... \n")
         # copy back the test and relval logs to the install area
         # check size first ... sometimes the log _grows_ to tens of GB !!
@@ -97,10 +98,20 @@ class LogUpdater(object):
         self.copyLogs("codeRules", ".", self.webTargetDir)
         return
 
+    def getTestTypeDir(self):
+        test_type = os.environ.get("IB_TEST_TYPE", "")
+        if (
+            test_type in ["cuda", "rocm"]
+            or test_type.startswith("nvidia_")
+            or test_type.startswith("amd_")
+        ):
+            return os.path.join("gpu", test_type)
+        elif test_type:
+            return os.path.join("other", test_type)
+        return ""
+
     def getRelValsDir(self):
-        return os.path.join(
-            self.webTargetDir, os.environ.get("IB_TEST_TYPE", ""), "pyRelValPartialLogs"
-        )
+        return os.path.join(self.webTargetDir, self.getTestTypeDir(), "pyRelValPartialLogs")
 
     def updateRelValMatrixPartialLogs(self, partialSubDir, dirToSend):
         destination = self.getRelValsDir()

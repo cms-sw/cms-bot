@@ -196,12 +196,7 @@ class UnitTester(IBThreadBase):
         except Exception:
             pass
         self.checkTestLogs()
-        uploadDir = ""
-        if test_type:
-            uploadDir = test_type
-        elif self.xType:
-            uploadDir = self.xType
-        self.logger.updateUnitTestLogs(uploadDir)
+        self.logger.updateUnitTestLogs()
         return
 
 

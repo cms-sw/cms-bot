@@ -244,14 +244,12 @@ cp ${WORKSPACE}/prs_commits ${WORKSPACE}/prs_commits.txt
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset
 PR_COMMIT_STATUS="optional"
-if $REQUIRED_TEST ; then PR_COMMIT_STATUS="required" ; fi
-mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
-
 if [ "${BUILD_ONLY}" = "true" ] ; then
-  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Only build'
-else
-  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Build and test'
+  PR_COMMIT_STATUS="build_only"
+elif $REQUIRED_TEST ; then
+  PR_COMMIT_STATUS="required"
 fi
+mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
 
 echo -n "**Summary**: ${PR_RESULT_URL}/summary.html" > ${RESULTS_DIR}/09-report.res
 CMSSW_VERSION=${RELEASE_FORMAT} $CMS_BOT_DIR/report-pull-request-results GET_BASE_MESSAGE --report-url ${PR_RESULT_URL} \
@@ -1438,7 +1436,6 @@ popd
 
 prepare_upload_results
 rm -rf $WORKSPACE/upload
-mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
 
 echo "PR_BUILD_BASE=${WORKSPACE}" > $WORKSPACE/deploy-cmssw
 echo "CMS_WEEK=${CMS_WEEKLY_REPO}" >> $WORKSPACE/deploy-cmssw

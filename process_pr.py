@@ -2490,7 +2490,7 @@ def process_pr(
     global_test_params["EXTRA_RELVALS_TESTS"] = " ".join(
         [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS]
     )
-    global_test_params["BUILD_ONLY"] = not build_only
+    global_test_params["BUILD_ONLY"] = build_only is not None
 
     logger.debug("All Parameters: %s", global_test_params)
     # For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist

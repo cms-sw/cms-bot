@@ -2329,7 +2329,7 @@ def process_pr(
         else:
             labels.append("comparison-pending")
 
-    if ("PULL_REQUESTS" in global_test_params) or cmssw_prs:
+    if (("PULL_REQUESTS" in global_test_params) or cmssw_prs) and (not build_comment):
         need_external = True
     # Now updated the labels.
     xlabs = ["backport", "urgent", "backport-ok", "compilation-warnings"]

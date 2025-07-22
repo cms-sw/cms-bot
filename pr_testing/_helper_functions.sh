@@ -197,7 +197,7 @@ function get_gpu_matrix_args() {
   echo ${OPTS}
 }
 
-check_invalid_wf_lists () {
+function check_invalid_wf_lists () {
   WORKFLOWS=$(echo $1 | sed -e 's/^-l//')
   UPLOAD=${2:-true}
   WFLISTS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)

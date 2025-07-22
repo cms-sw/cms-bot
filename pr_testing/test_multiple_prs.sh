@@ -246,6 +246,7 @@ mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build e
 PR_COMMIT_STATUS="optional"
 if [ "${BUILD_ONLY}" = "true" ] ; then
   PR_COMMIT_STATUS="build_only"
+  export REQUIRED_TEST=false
 elif $REQUIRED_TEST ; then
   PR_COMMIT_STATUS="required"
 fi

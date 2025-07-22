@@ -17,13 +17,13 @@ try:
 except:
     jobs = 6
 items = partial_log_dirpath.split("/")
-idx_data = ""
+gpu_data = ""
 if items[-1] != "pyRelValPartialLogs":
     exit(1)
 rel_idx = -2
 if items[-3] == "gpu":
     release = -4
-    idx_data = items[-2]
+    gpu_data = items[-2]
 release = items[rel_idx]
 arch = items[rel_idx - 4]
 if not exists("%s/threads.txt" % partial_log_dirpath):
@@ -86,7 +86,7 @@ for wf in o.split("\n"):
                 sleep(0.1)
             else:
                 break
-        params = {"cmsthreads": wf_thrds, "gpu": idx_data}
+        params = {"cmsthreads": wf_thrds, "gpu": gpu_data}
         t = threading.Thread(
             target=es_send_resource_stats,
             args=(release, arch, wfnum, s, sfile, hostname, exit_code, params),

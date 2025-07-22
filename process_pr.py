@@ -557,7 +557,7 @@ def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", 
     return
 
 
-def get_user_emoji(bot_cache, comment, repository, user):
+def has_user_emoji(bot_cache, comment, repository, emoji, user):
     e = None
     comment_id = str(comment.id)
     if (comment_id in bot_cache["emoji"]) and (comment.reactions[emoji] > 0):
@@ -571,11 +571,6 @@ def get_user_emoji(bot_cache, comment, repository, user):
                 e = x.content
                 bot_cache["emoji"][comment_id] = e
                 break
-    return e
-
-
-def has_user_emoji(bot_cache, comment, repository, emoji, user):
-    e = get_user_emoji(bot_cache, comment, repository, user)
     return e and e == emoji
 
 
@@ -1086,7 +1081,7 @@ def process_pr(
     ok_too_many_files = False
     warned_too_many_files = False
     is_draft_pr = False
-    build_only = None
+    build_comment = None
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
@@ -1676,7 +1671,7 @@ def process_pr(
             if valid_commenter:
                 ok, v2, v3, v4, v5 = check_test_cmd(first_line, repository, global_test_params)
                 if ok:
-                    build_only = None
+                    build_comment = None
                     if v5:
                         if has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
                             continue
@@ -1686,7 +1681,7 @@ def process_pr(
                             )
                         ):
                             continue
-                        build_only = comment
+                        build_comment = comment
                     else:
                         test_comment = comment
                         signatures["tests"] = "pending"
@@ -2490,20 +2485,20 @@ def process_pr(
     global_test_params["EXTRA_RELVALS_TESTS"] = " ".join(
         [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS]
     )
-    global_test_params["BUILD_ONLY"] = build_only is not None
+    global_test_params["BUILD_ONLY"] = build_comment is not None
 
     logger.debug("All Parameters: %s", global_test_params)
     # For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
     if create_test_property:
         global_test_params["CONTEXT_PREFIX"] = (
-            cms_status_prefix if not build_only else cms_status_prefix + "/build"
+            cms_status_prefix if not build_comment else cms_status_prefix + "/build"
         )
-        if trigger_test or build_only:
+        if trigger_test or build_comment:
             create_properties_file_tests(
                 repository, prId, global_test_params, dryRun, abort=False, repo_config=repo_config
             )
             set_comment_emoji_cache(
-                dryRun, bot_cache, build_only if build_only else test_comment, repository
+                dryRun, bot_cache, build_comment if build_comment else test_comment, repository
             )
         elif abort_test and bot_status and (not bot_status.description.startswith("Aborted")):
             if not has_user_emoji(bot_cache, abort_test, repository, "+1", cmsbuild_user):

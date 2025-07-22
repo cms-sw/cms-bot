@@ -2498,7 +2498,7 @@ def process_pr(
                 repository, prId, global_test_params, dryRun, abort=False, repo_config=repo_config
             )
             set_comment_emoji_cache(
-                dryRun, bot_cache, build_comment if build_comment else test_comment, repository
+                dryRun, bot_cache, build_comment or test_comment, repository
             )
         elif abort_test and bot_status and (not bot_status.description.startswith("Aborted")):
             if not has_user_emoji(bot_cache, abort_test, repository, "+1", cmsbuild_user):

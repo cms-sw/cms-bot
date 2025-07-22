@@ -393,24 +393,23 @@ if $DO_COMPARISON ; then
       WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
       (
-	set +e
-	set +x
-	cd $WORKSPACE/$CMSSW_IB
-	eval `scram run -sh`
-	set -x
-	check_invalid_wf_lists "-l ${WF_LIST}"
-	echo $? > $WORKSPACE/wf-check.res
-	set -e
+        set +e
+        set +x
+        cd $WORKSPACE/$CMSSW_IB
+        eval `scram run -sh`
+        set -x
+        check_invalid_wf_lists "-l ${WF_LIST}"
+        echo $? > $WORKSPACE/wf-check.res
+        set -e
       )
       if [ $(cat $WORKSPACE/wf-check.res) -ne 0 ]; then
-        DO_COMPARISON=false
         rm -f run-baseline-${BUILD_ID}-02.default
-        echo "`${WF_LIST}` does not contain any valid workflows - comparison skipped" >> ${RESULTS_DIR}/09-report.res
+        echo "${WF_LIST} does not contain any valid workflows - comparison skipped" >> ${RESULTS_DIR}/09-report.res
       else
         echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
         echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
         if [ -e bad-workflow-lists.txt ] && [ $(wc -l $WORKSPACE/bad-workflow-lists.txt) -gt 0 ]; then
-          echo "Some of the requested workflow lists were invalid" >> ${RESULTS_DIR}/09-report.res
+          echo "Some of the requested workflow lists ${WF_LIST} were invalid" >> ${RESULTS_DIR}/09-report.res
         fi
       fi
     fi

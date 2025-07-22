@@ -41,10 +41,13 @@ def process_unittest_log(logFile):
     pathInfo = logFile.split("/")
     architecture = pathInfo[4]
     release = pathInfo[8]
+    gpu = ""
+    if pathInfo[9] == "gpu":
+        gpu = pathInfo[10]
     week, rel_sec = cmsswIB2Week(release)
     es_index = "ibs-" + week
     package = pathInfo[-3] + "/" + pathInfo[-2]
-    payload_dataset = {"type": "unittest"}
+    payload_dataset = {"type": "unittest", "gpu": gpu}
     payload_dataset["release"] = release
     release_queue = "_".join(release.split("_", -1)[:-1]).split("_", 3)
     payload_dataset["release_queue"] = "_".join(release_queue[0:3])
@@ -131,12 +134,12 @@ def process_unittest_log(logFile):
                 if stacktrace:
                     payload_utest["stacktrace"] = "\n".join(stacktrace)
                     stacktrace = []
-                utest_id = sha1hexdigest(release + architecture + utname)
+                utest_id = sha1hexdigest(release + architecture + utname + gpu)
                 print("==> ", json.dumps(payload_utest) + "\n")
                 send_payload(es_index, "unittests", utest_id, json.dumps(payload_utest))
 
                 payload_dataset["name"] = "%s/%s" % (package, utname)
-                dataset_id = sha1hexdigest(release + architecture + package + utname)
+                dataset_id = sha1hexdigest(release + architecture + package + utname + gpu)
                 print("==> ", json.dumps(payload_dataset) + "\n")
                 send_unittest_dataset(
                     datasets, payload_dataset, dataset_id, "ib-dataset-" + week, "unittest-dataset"
@@ -229,28 +232,31 @@ def process_hlt_log(logFile):
     return
 
 
-logs = run_cmd("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'unitTestLogs.zip'")
-logs = logs[1].split("\n")
-# process zip log files
-for logFile in logs:
-    flagFile = logFile + ".checked"
-    if not exists(flagFile):
-        utdir = dirname(logFile)
-        print("Working on ", logFile)
-        try:
-            err, utlogs = run_cmd(
-                "cd %s; rm -rf UT; mkdir UT; cd UT; unzip ../unitTestLogs.zip" % utdir
-            )
-            err, utlogs = run_cmd("find %s/UT -name 'unitTest.log' -type f" % utdir)
-            if not err:
-                for utlog in utlogs.split("\n"):
-                    process_unittest_log(utlog)
-                run_cmd("touch %s" % flagFile)
-        except Exception as e:
-            print("ERROR: ", logFile, e)
-            traceback.print_exc(file=sys.stdout)
-        run_cmd("cd %s/UT ; zip -r ../unitTestLogs.zip ." % utdir)
-        run_cmd("rm -rf %s/UT" % utdir)
+for dep in ["6", "8"]:
+    logs = run_cmd(
+        "find /data/sdt/buildlogs -mindepth %s -maxdepth %s -name 'unitTestLogs.zip'" % (dep, dep)
+    )
+    logs = logs[1].split("\n")
+    # process zip log files
+    for logFile in logs:
+        flagFile = logFile + ".checked"
+        if not exists(flagFile):
+            utdir = dirname(logFile)
+            print("Working on ", logFile)
+            try:
+                err, utlogs = run_cmd(
+                    "cd %s; rm -rf UT; mkdir UT; cd UT; unzip ../unitTestLogs.zip" % utdir
+                )
+                err, utlogs = run_cmd("find %s/UT -name 'unitTest.log' -type f" % utdir)
+                if not err:
+                    for utlog in utlogs.split("\n"):
+                        process_unittest_log(utlog)
+                    run_cmd("touch %s" % flagFile)
+            except Exception as e:
+                print("ERROR: ", logFile, e)
+                traceback.print_exc(file=sys.stdout)
+            run_cmd("cd %s/UT ; zip -r ../unitTestLogs.zip ." % utdir)
+            run_cmd("rm -rf %s/UT" % utdir)
 
 logs = run_cmd("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'addOnTests.zip'")
 logs = logs[1].split("\n")

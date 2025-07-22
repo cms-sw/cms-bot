@@ -1332,15 +1332,7 @@ if [ -f $WORKSPACE/buildClang.log ] ; then
   fi
 fi
 
-mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-
-if [ "$BUILD_ONLY" = "true" ]; then
-  DO_SHORT_MATRIX=false
-  DISABLE_GPU_TESTS=true
-  DO_ADDON_TESTS=false
-  DO_CRAB_TESTS=false
-  ENABLE_BOT_TESTS=$(echo $ENABLE_BOT_TESTS | sed -e 's/HLT_P2_TIMING//;s/HLT_P2_INTEGRATION//;s/PROFILING//')
-fi
+[ "$BUILD_ONLY" = "true" ] && RUN_TESTS=false
 
 DO_PROFILING=false
 DO_GPU_TESTS=false
@@ -1447,13 +1439,6 @@ echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
 echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $WORKSPACE/deploy-cmssw
 echo "RELEASE_FORMAT=$CMSSW_IB" >> $WORKSPACE/deploy-cmssw
 
-if [ "X$BUILD_OK" != Xtrue -o "$RUN_TESTS" != "true" ]; then exit 0 ; fi
-
-touch $WORKSPACE/job.env
-for x in REPORT_OPTS BUILD_EXTERNAL DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSDIST_ONLY CMSSW_IB UPLOAD_UNIQ_ID PRODUCTION_RELEASE; do
-  eval echo "$x=\\\"$(echo \$$x)\\\"" >> $WORKSPACE/job.env
-done
-
 if [ "${BUILD_ONLY}" = "true" ]; then
   if ${ALL_OK} ; then
     echo "+1" > comment.txt
@@ -1465,6 +1450,14 @@ if [ "${BUILD_ONLY}" = "true" ]; then
   $WORKSPACE/cms-bot/comment-gh-pr.py --repository ${PR_REPO} --pullrequest ${PR_NUMBER} --report-file comment.txt
   mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -u "${BUILD_URL}" -d "Finished" -e
 fi
+
+if [ "X$BUILD_OK" != Xtrue -o "$RUN_TESTS" != "true" ]; then exit 0 ; fi
+
+touch $WORKSPACE/job.env
+for x in REPORT_OPTS BUILD_EXTERNAL DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSDIST_ONLY CMSSW_IB UPLOAD_UNIQ_ID PRODUCTION_RELEASE; do
+  eval echo "$x=\\\"$(echo \$$x)\\\"" >> $WORKSPACE/job.env
+done
+
 
 echo "UPLOAD_UNIQ_ID=${UPLOAD_UNIQ_ID}" > $WORKSPACE/test-env.txt
 echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_REPO}/${PR_NUMBER}/${BUILD_NUMBER}/${CMSSW_VERSION}" >> $WORKSPACE/test-env.txt

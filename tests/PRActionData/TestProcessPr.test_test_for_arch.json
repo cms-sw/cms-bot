@@ -63,7 +63,8 @@
                 "ENABLE_BOT_TESTS": "CUDA,HIGH_STATS,NANO,PROFILING,ROCM,THREADING",
                 "ARCHITECTURE_FILTER": "slc6_amd64_gcc930",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
-                "CONTEXT_PREFIX": "cms/24"
+                "CONTEXT_PREFIX": "cms/24",
+                "BUILD_ONLY": false
             }
         }
     },

@@ -124,7 +124,7 @@ CMS_PR_PATTERN = format(
     cmsorgs="|".join(EXTERNAL_REPOS),
 )
 TEST_REGEXP = format(
-    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
+    r"^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)(test|build)(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
     workflow=WF_PATTERN,
     cms_pr=CMS_PR_PATTERN,
     pkg=CMSSW_PACKAGE_PATTERN,
@@ -358,6 +358,8 @@ def extract_bot_cache(comment_msgs):
 
     data = ""
     for comment_msg in comment_msgs:
+        if not comment_msg.body:
+            continue
         seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg.body)
         if seen_commits_match:
             data += seen_commits_match[1]
@@ -555,7 +557,7 @@ def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", 
     return
 
 
-def has_user_emoji(bot_cache, comment, repository, emoji, user):
+def get_user_emoji(bot_cache, comment, repository, user):
     e = None
     comment_id = str(comment.id)
     if (comment_id in bot_cache["emoji"]) and (comment.reactions[emoji] > 0):
@@ -565,10 +567,15 @@ def has_user_emoji(bot_cache, comment, repository, emoji, user):
         # github_utils.get_comment_emojis -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L135
         emojis = comment.get_reactions()
         for x in emojis:
-            if x["user"]["login"].encode("ascii", "ignore").decode() == user:
-                e = x["content"]
-                bot_cache["emoji"][comment_id] = x
+            if x.user.login.encode("ascii", "ignore").decode() == user:
+                e = x.content
+                bot_cache["emoji"][comment_id] = e
                 break
+    return e
+
+
+def has_user_emoji(bot_cache, comment, repository, emoji, user):
+    e = get_user_emoji(bot_cache, comment, repository, user)
     return e and e == emoji
 
 
@@ -745,19 +752,20 @@ def check_test_cmd(first_line, repo, params):
         prs = []
         cmssw_que = ""
         logger.debug("check_test_cmd: %s", m.groups())
-        if m.group(6):
-            wfs = ",".join(set(m.group(6).replace(" ", "").split(",")))
-        if m.group(11):
-            prs = get_prs_list_from_string(m.group(11), repo)
-        if m.group(20):
-            cmssw_que = m.group(20)
-        if m.group(25):
-            if "addpkg" in m.group(25):
-                params["EXTRA_CMSSW_PACKAGES"] = m.group(27).strip()
+        build_only = m.group(4) == "build"
+        if m.group(7):
+            wfs = ",".join(set(m.group(7).replace(" ", "").split(",")))
+        if m.group(12):
+            prs = get_prs_list_from_string(m.group(12), repo)
+        if m.group(21):
+            cmssw_que = m.group(21)
+        if m.group(26):
+            if "addpkg" in m.group(26):
+                params["EXTRA_CMSSW_PACKAGES"] = m.group(28).strip()
             else:
                 params["BUILD_FULL_CMSSW"] = "true"
-        return (True, " ".join(prs), wfs, cmssw_que)
-    return (False, "", "", "")
+        return (True, " ".join(prs), wfs, cmssw_que, build_only)
+    return (False, "", "", "", False)
 
 
 def get_prs_list_from_string(pr_string="", repo_string=""):
@@ -1078,6 +1086,7 @@ def process_pr(
     ok_too_many_files = False
     warned_too_many_files = False
     is_draft_pr = False
+    build_only = None
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
@@ -1665,9 +1674,22 @@ def process_pr(
 
             # Check if the someone asked to trigger the tests
             if valid_commenter:
-                ok, v2, v3, v4 = check_test_cmd(first_line, repository, global_test_params)
+                ok, v2, v3, v4, v5 = check_test_cmd(first_line, repository, global_test_params)
                 if ok:
-                    test_comment = comment
+                    build_only = None
+                    if v5:
+                        if has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
+                            continue
+                        if test_comment and (
+                            not has_user_emoji(
+                                bot_cache, test_comment, repository, "+1", cmsbuild_user
+                            )
+                        ):
+                            continue
+                        build_only = comment
+                    else:
+                        test_comment = comment
+                        signatures["tests"] = "pending"
                     abort_test = None
                     cmssw_prs = v2
                     extra_wfs = ",".join(sorted(v3.split(",")))
@@ -1687,7 +1709,6 @@ def process_pr(
                         extra_wfs,
                     )
                     logger.debug("Comment message: %s", first_line)
-                    signatures["tests"] = "pending"
                     continue
                 elif REGEX_TEST_ABORT.match(first_line) and (signatures["tests"] == "pending"):
                     abort_test = comment
@@ -2136,15 +2157,14 @@ def process_pr(
                 for status in commit_statuses:
                     if not status.context.startswith(cms_status_prefix + "/"):
                         continue
-                    cdata = status.context.split("/")
-                    if cdata[-1] not in ["optional", "required"]:
+                    scontext, suffix = status.context.rsplit("/", 1)
+                    if suffix not in ["optional", "required"]:
                         continue
-                    if (cdata[-1] not in lab_stats) or (cdata[-1] == "required"):
-                        lab_stats[cdata[-1]] = []
-                    lab_stats[cdata[-1]].append("pending")
+                    if (suffix not in lab_stats) or (suffix == "required"):
+                        lab_stats[suffix] = []
+                    lab_stats[suffix].append("pending")
                     if status.state == "pending":
                         continue
-                    scontext = "/".join(cdata[:-1])
                     all_states = {}
                     result_url = ""
                     for s in [
@@ -2179,18 +2199,18 @@ def process_pr(
                                 )
                         continue
                     if "success" in all_states:
-                        lab_stats[cdata[-1]][-1] = "success"
+                        lab_stats[suffix][-1] = "success"
                     if "error" in all_states:
                         if [c for c in all_states["error"] if ("/opt/" not in c)]:
-                            lab_stats[cdata[-1]][-1] = "error"
+                            lab_stats[suffix][-1] = "error"
                     logger.info(
-                        "Final Status: status.context=%s cdata[-1]=%s lab_stats[cdata[-1]][-1]=%s status.description=%s",
+                        "Final Status: status.context=%s suffix=%s lab_stats[suffix][-1]=%s status.description=%s",
                         status.context,
-                        cdata[-1],
-                        lab_stats[cdata[-1]][-1],
+                        suffix,
+                        lab_stats[suffix][-1],
                         status.description,
                     )
-                    if (lab_stats[cdata[-1]][-1] != "pending") and (
+                    if (lab_stats[suffix][-1] != "pending") and (
                         not status.description.startswith("Finished")
                     ):
                         if result_url:
@@ -2208,7 +2228,7 @@ def process_pr(
                                 raise Exception("System-error: unable to get PR result")
                             if o and (not dryRun):
                                 res = "+1"
-                                if lab_stats[cdata[-1]][-1] == "error":
+                                if lab_stats[suffix][-1] == "error":
                                     res = "-1"
                                 res = "%s\n\n%s" % (res, o)
                                 issue.create_comment(res)
@@ -2470,16 +2490,21 @@ def process_pr(
     global_test_params["EXTRA_RELVALS_TESTS"] = " ".join(
         [t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS]
     )
+    global_test_params["BUILD_ONLY"] = not build_only
 
     logger.debug("All Parameters: %s", global_test_params)
     # For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
     if create_test_property:
-        global_test_params["CONTEXT_PREFIX"] = cms_status_prefix
-        if trigger_test:
+        global_test_params["CONTEXT_PREFIX"] = (
+            cms_status_prefix if not build_only else cms_status_prefix + "/build"
+        )
+        if trigger_test or build_only:
             create_properties_file_tests(
                 repository, prId, global_test_params, dryRun, abort=False, repo_config=repo_config
             )
-            set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
+            set_comment_emoji_cache(
+                dryRun, bot_cache, build_only if build_only else test_comment, repository
+            )
         elif abort_test and bot_status and (not bot_status.description.startswith("Aborted")):
             if not has_user_emoji(bot_cache, abort_test, repository, "+1", cmsbuild_user):
                 create_properties_file_tests(

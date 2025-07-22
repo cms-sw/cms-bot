@@ -119,6 +119,7 @@ PR_REPO=$(echo ${PULL_REQUEST} | sed 's|#.*||')
 PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 UPLOAD_UNIQ_ID=PR-${PR_NUM}/${BUILD_NUMBER}
 PR_RESULT_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}"
+PR_COMMENT_TEXT_URL="https://cmssdt.cern.ch/SDT/cgi-bin/get_pr_results/${JENKINS_PREFIX}-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}/pr-result"
 NCPU=$(${COMMON}/get_cpu_number.sh)
 if [[  $NODE_NAME == *"cms-cmpwg-0"* ]]; then
    let NCPU=${NCPU}/2
@@ -185,6 +186,9 @@ for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
   fi
 done
 
+if [ "${BUILD_ONLY}" = "true" ] ; then
+  DO_COMPARISON=false
+fi
 # ----------
 # -- MAIN --
 # ----------
@@ -242,6 +246,12 @@ mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build e
 PR_COMMIT_STATUS="optional"
 if $REQUIRED_TEST ; then PR_COMMIT_STATUS="required" ; fi
 mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
+
+if [ "${BUILD_ONLY}" = "true" ] ; then
+  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Only build'
+else
+  mark_commit_status_all_prs "build_only" "success" -u "${BUILD_URL}" -d 'Build and test'
+fi
 
 echo -n "**Summary**: ${PR_RESULT_URL}/summary.html" > ${RESULTS_DIR}/09-report.res
 CMSSW_VERSION=${RELEASE_FORMAT} $CMS_BOT_DIR/report-pull-request-results GET_BASE_MESSAGE --report-url ${PR_RESULT_URL} \
@@ -1325,6 +1335,14 @@ fi
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 
+if [ "$BUILD_ONLY" = "true" ]; then
+  DO_SHORT_MATRIX=false
+  DISABLE_GPU_TESTS=true
+  DO_ADDON_TESTS=false
+  DO_CRAB_TESTS=false
+  ENABLE_BOT_TESTS=$(echo $ENABLE_BOT_TESTS | sed -e 's/HLT_P2_TIMING//;s/HLT_P2_INTEGRATION//;s/PROFILING//')
+fi
+
 DO_PROFILING=false
 DO_GPU_TESTS=false
 if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
@@ -1437,6 +1455,18 @@ touch $WORKSPACE/job.env
 for x in REPORT_OPTS BUILD_EXTERNAL DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSDIST_ONLY CMSSW_IB UPLOAD_UNIQ_ID PRODUCTION_RELEASE; do
   eval echo "$x=\\\"$(echo \$$x)\\\"" >> $WORKSPACE/job.env
 done
+
+if [ "${BUILD_ONLY}" = "true" ]; then
+  if ${ALL_OK} ; then
+    echo "+1" > comment.txt
+  else
+    echo "-1" > comment.txt
+  fi
+  echo "" >> comment.txt
+  curl -L ${PR_COMMENT_TEXT_URL} >> comment.txt
+  $WORKSPACE/cms-bot/comment-gh-pr.py --repository ${PR_REPO} --pullrequest ${PR_NUMBER} --report-file comment.txt
+  mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -u "${BUILD_URL}" -d "Finished" -e
+fi
 
 echo "UPLOAD_UNIQ_ID=${UPLOAD_UNIQ_ID}" > $WORKSPACE/test-env.txt
 echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_REPO}/${PR_NUMBER}/${BUILD_NUMBER}/${CMSSW_VERSION}" >> $WORKSPACE/test-env.txt

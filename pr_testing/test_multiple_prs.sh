@@ -398,7 +398,7 @@ if $DO_COMPARISON ; then
         cd $WORKSPACE/$CMSSW_IB
         eval `scram run -sh`
         set -x
-        check_invalid_wf_lists "-l ${WF_LIST}"
+        check_invalid_wf_lists "${WF_LIST}"
         echo $? > $WORKSPACE/wf-check.res
         set -e
       )

@@ -24,7 +24,7 @@ function get_cached_GH_JSON (){
         # TODO retry if curl fails do to external glitch
         >&2 echo "Downloading PR ${PR}"
         for i in 0 1 2 3 4 ; do
-            curl -s https://api.github.com/repos/${REPO}/pulls/${PR_NR} > ${GH_JSON_PATH} || continue
+            ${CMSBOT_PYTHON_CMD} -c "import github_utils,json;data=github_utils.get_pr('${REPO}', '${PR_NR}');print(json.dumps(data))" > ${GH_JSON_PATH} || continue
             echo ${GH_JSON_PATH}
             break
         done

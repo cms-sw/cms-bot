@@ -736,7 +736,6 @@ def get_combined_statuses(commit, repository):
 
 def get_pr_commits(pr, repository, per_page=None, last_page=False):
     get_gh_token(repository)
-    get_rate_limits()
     return github_api(
         "/repos/%s/pulls/%s/commits" % (repository, pr),
         method="GET",
@@ -982,6 +981,8 @@ def find_tags(repository, name):
 
 
 def get_pr(repository, pr_id):
+    get_gh_token(repository)
+    get_rate_limits()
     data = github_api("/repos/%s/pulls/%s" % (repository, pr_id), method="GET")
 
     return data

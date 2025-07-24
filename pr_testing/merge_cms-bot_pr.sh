@@ -5,7 +5,6 @@
 # Constants
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})             # To get CMS_BOT dir path
-export PYTHONPATH=$CMS_BOT_DIR:$PYTHONPATH
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 source ${PR_TESTING_DIR}/_helper_functions.sh    # general helper functions
 

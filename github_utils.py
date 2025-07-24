@@ -736,6 +736,7 @@ def get_combined_statuses(commit, repository):
 
 def get_pr_commits(pr, repository, per_page=None, last_page=False):
     get_gh_token(repository)
+    get_rate_limits()
     return github_api(
         "/repos/%s/pulls/%s/commits" % (repository, pr),
         method="GET",

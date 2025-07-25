@@ -198,11 +198,11 @@ function get_gpu_matrix_args() {
 }
 
 function check_invalid_wf_lists () {
-  WORKFLOWS=$(echo $1 | sed -e 's/^-l//')
+  WKFS=$(echo $1 | sed -e 's/^-l//')
   UPLOAD=${2:-true}
-  WFLISTS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)
-  WFS_CNT=$(echo "${WORKFLOWS}" | tr ',' '\n' | wc -l)
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS:-1} -l ${WORKFLOWS} -n 2>&1 > tmp123.tmp
+  WFLISTS_CNT=$(echo "${WKFS}" | tr ',' '\n' | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)
+  WFS_CNT=$(echo "${WKFS}" | tr ',' '\n' | wc -l)
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS:-1} -l ${WKFS} -n 2>&1 > tmp123.tmp
   if [ $? -ne 0 ]; then
     echo "ERROR : runTheMatrix returned non-zero exit code"
     return 1

@@ -44,7 +44,7 @@ function process_dir()
 {
   dir=$1
   if [[ ! -e $dir/../pyRelValMatrixLogs/run/runall-report-step123-.log ]] || [[ $dir -nt $dir/../pyRelValMatrixLogs/run/runall-report-step123-.log ]] ; then
-    python3 -u ./es_relval_stats.py $dir
+    [ "${SKIP_ES_STATS}" != "true" ] && python3 -u ./es_relval_stats.py $dir
     python3 -u ./process-partial-logs-relval.py $dir
     touch $WORKSPACE/update-github-pages
     rm -f $dir/../pyRelValMatrixLogs/run/done

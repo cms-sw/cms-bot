@@ -60,8 +60,8 @@ function process_dir()
     fi
     TIMEOUT=`find $dir -maxdepth 0 -mindepth 0 -type d -mmin +600 | wc -l`
     if [ -f $dir/../pyRelValMatrixLogs/run/all.pages ] || [ "X$TIMEOUT" = "X1" ] ; then
-      set +x
       pushd $dir
+        set +x
         rm -rf $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip
         rm -rf */*.log-es || true
         rm -rf */*.tar || true
@@ -73,6 +73,7 @@ function process_dir()
         rm -rf */*.dump || true
         rm -rf */*.tex || true
         rm -rf */fort.* || true
+        set -x
         if [[ "$dir" == *"_UBSAN_X"* ]]; then
           process_ubsan &
         fi

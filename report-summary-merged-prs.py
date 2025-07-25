@@ -417,7 +417,7 @@ def analyze_tests_results(output, results, arch, type):
             line_items = line.split("/")
             idx = -5 if (type == "gpu_relvals") else -3
             if line_items[idx] == "gpu":
-                result_arch["gpu"] = line_items[idx+1]
+                result_arch["gpu"] = line_items[idx + 1]
 
         if rel_name not in results.keys():
             results[rel_name] = []
@@ -2033,6 +2033,7 @@ if __name__ == "__main__":
         for idx1 in range(len(results[idx]["comparisons"])):
             res = results[idx]["comparisons"][idx1]
             rq = res.get("release_queue", "")
+            print("===> DEBUG", rq, short_summary["prod_archs"], res.get("tests_arch", []))
             if not rq in short_summary["prod_archs"]:
                 continue
             parch = short_summary["prod_archs"][rq]

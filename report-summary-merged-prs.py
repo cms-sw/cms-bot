@@ -2033,11 +2033,11 @@ if __name__ == "__main__":
         for idx1 in range(len(results[idx]["comparisons"])):
             res = results[idx]["comparisons"][idx1]
             rq = res.get("release_queue", "")
-            print("===> DEBUG", rq, short_summary["prod_archs"], res.get("tests_arch", []))
+            print("===> DEBUG", rq, short_summary["prod_archs"], res.get("tests_archs", []))
             if not rq in short_summary["prod_archs"]:
                 continue
             parch = short_summary["prod_archs"][rq]
-            if not parch in res.get("tests_arch", []):
+            if not parch in res.get("tests_archs", []):
                 continue
             results[idx]["comparisons"][idx1]["prod_arch"] = parch
 

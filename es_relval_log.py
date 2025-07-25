@@ -93,10 +93,10 @@ def es_parse_log(logFile):
     if exists(stamp):
         print("Already processed: ", logFile)
         return
-    if os.environ.get("SKIP_ES_STATS","false") == "true":
-      ref = open(stamp, "w")
-      ref.close()
-      return
+    if os.environ.get("SKIP_ES_STATS", "false") == "true":
+        ref = open(stamp, "w")
+        ref.close()
+        return
     t = os.path.getmtime(logFile)
     timestp = int(t * 1000)
     payload = {}
@@ -110,7 +110,7 @@ def es_parse_log(logFile):
     document = "runTheMatrix-data"
     id_str = release + architecture + workflow + str(step)
     if pathInfo[9] == "gpu":
-      id_str = id_str + pathInfo[10]
+        id_str = id_str + pathInfo[10]
     id = sha1(id_str.encode()).hexdigest()
     logdir = "/".join(logFile.split("/")[:-1])
     cmdfile = logdir + "/cmdLog"

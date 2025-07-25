@@ -746,7 +746,7 @@ def print_results(results):
 
             gpu_relvals_results = [
                 res["arch"] + ":" + str(res["passed"]) + ":" + str(res["details"])
-                for res in comp["qpu_relvals"]
+                for res in comp["gpu_relvals"]
             ]
             print("\t" + "GPU RelVals:" + str(gpu_relvals_results))
 

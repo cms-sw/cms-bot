@@ -24,6 +24,7 @@ rel_idx = -2
 if items[-3] == "gpu":
     release = -4
     gpu_data = items[-2]
+print("HERE",argv[1],items,release,arch)
 release = items[rel_idx]
 arch = items[rel_idx - 4]
 if not exists("%s/threads.txt" % partial_log_dirpath):

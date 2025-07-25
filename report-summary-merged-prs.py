@@ -2016,49 +2016,51 @@ if __name__ == "__main__":
     generate_separated_json_results(results)
     short_summary = generate_ib_json_short_summary(results)
 
-    for res in results["comparisons"]:
-        rq = res.get("release_queue", "")
-        if not rq in short_summary["prod_archs"]:
-            continue
-        parch = short_summary["prod_archs"][rq]
-        rq_archs = res.get("tests_arch", [])
-        if not parch in rq_archs:
-            continue
-        res["prod_arch"] = parch
+    for rx in results:
+        for res in rx["comparisons"]:
+            rq = res.get("release_queue", "")
+            if not rq in short_summary["prod_archs"]:
+                continue
+            parch = short_summary["prod_archs"][rq]
+            rq_archs = res.get("tests_arch", [])
+            if not parch in rq_archs:
+                continue
+            res["prod_arch"] = parch
 
     gpu_results = {}
-    for res in results["comparisons"]:
-        if not res.get("isIB", False):
-            continue
-        ib_date = res.get("ib_date", "")
-        release_queue = res.get("release_queue", "")
-        if not ib_date or not release_queue:
-            continue
-        release_queue_items = release_queue.split("_")
-        if release_queue_items[0] != "CMSSW" or release_queue_items[-1] != "X":
-            continue
-        release_flavor = "DEFAULT" if release_queue_items[3] == "X" else release_queue_items[3]
-        release_queuex = "_".join(release_queue_items[:3]) + "_X"
-        gpu_qa = res.get("gpu_qa", [])
-        gpu_relvals = res.get("gpu_relvals", [])
-        if not release_queuex in gpu_results:
-            gpu_results[release_queuex] = {}
-        if not ib_date in gpu_results[release_queuex]:
-            gpu_results[release_queuex][ib_date] = {"qa": {}, "relvals": {}}
-        for qa in gpu_qa:
-            gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
-            for x in ["arch", "gpu", "details", "passed"]:
-                gpu_results[release_queuex][ib_date][gpu_idx]["qa"][x] = qa[x]
-            gpu_results[release_queuex][ib_date][gpu_idx]["qa"]["release_name"] = res[
-                "release_name"
-            ]
-        for qa in gpu_relvals:
-            gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
-            for x in ["arch", "gpu", "details", "passed", "done"]:
-                gpu_results[release_queuex][ib_date][gpu_idx]["relvals"][x] = qa[x]
-            gpu_results[release_queuex][ib_date][gpu_idx]["relvals"]["release_name"] = res[
-                "release_name"
-            ]
+    for rx in results:
+        for res in rx["comparisons"]:
+            if not res.get("isIB", False):
+                continue
+            ib_date = res.get("ib_date", "")
+            release_queue = res.get("release_queue", "")
+            if not ib_date or not release_queue:
+                continue
+            release_queue_items = release_queue.split("_")
+            if release_queue_items[0] != "CMSSW" or release_queue_items[-1] != "X":
+                continue
+            release_flavor = "DEFAULT" if release_queue_items[3] == "X" else release_queue_items[3]
+            release_queuex = "_".join(release_queue_items[:3]) + "_X"
+            gpu_qa = res.get("gpu_qa", [])
+            gpu_relvals = res.get("gpu_relvals", [])
+            if not release_queuex in gpu_results:
+                gpu_results[release_queuex] = {}
+            if not ib_date in gpu_results[release_queuex]:
+                gpu_results[release_queuex][ib_date] = {"qa": {}, "relvals": {}}
+            for qa in gpu_qa:
+                gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
+                for x in ["arch", "gpu", "details", "passed"]:
+                    gpu_results[release_queuex][ib_date][gpu_idx]["qa"][x] = qa[x]
+                gpu_results[release_queuex][ib_date][gpu_idx]["qa"]["release_name"] = res[
+                    "release_name"
+                ]
+            for qa in gpu_relvals:
+                gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
+                for x in ["arch", "gpu", "details", "passed", "done"]:
+                    gpu_results[release_queuex][ib_date][gpu_idx]["relvals"][x] = qa[x]
+                gpu_results[release_queuex][ib_date][gpu_idx]["relvals"]["release_name"] = res[
+                    "release_name"
+                ]
 
     out_json = open("gpu_result_summary.json", "w")
     json.dump(gpu_results, out_json, sort_keys=True, indent=4)

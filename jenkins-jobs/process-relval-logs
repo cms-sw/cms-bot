@@ -60,6 +60,7 @@ function process_dir()
     fi
     TIMEOUT=`find $dir -maxdepth 0 -mindepth 0 -type d -mmin +600 | wc -l`
     if [ -f $dir/../pyRelValMatrixLogs/run/all.pages ] || [ "X$TIMEOUT" = "X1" ] ; then
+      set +x
       pushd $dir
         rm -rf $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip
         rm -rf */*.log-es || true

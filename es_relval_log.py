@@ -99,12 +99,15 @@ def es_parse_log(logFile):
     pathInfo = logFile.split("/")
     architecture = pathInfo[4]
     release = pathInfo[8]
-    workflow = pathInfo[10].split("_")[0]
-    step = pathInfo[11].split("_")[0]
+    workflow = pathInfo[-2].split("_")[0]
+    step = pathInfo[-1].split("_")[0]
     week, rel_sec = cmsswIB2Week(release)
     index = "ib-matrix-" + week
     document = "runTheMatrix-data"
-    id = sha1((release + architecture + workflow + str(step)).encode()).hexdigest()
+    id_str = release + architecture + workflow + str(step)
+    if pathInfo[9] == "gpu":
+      id_str = id_str + pathInfo[10]
+    id = sha1(id_str.encode()).hexdigest()
     logdir = "/".join(logFile.split("/")[:-1])
     cmdfile = logdir + "/cmdLog"
     cmd_step = find_step_cmd(cmdfile, step)

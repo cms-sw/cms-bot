@@ -2029,17 +2029,22 @@ if __name__ == "__main__":
     generate_separated_json_results(results)
     short_summary = generate_ib_json_short_summary(results)
 
-    for idx in range(len(results)):
-        for idx1 in range(len(results[idx]["comparisons"])):
-            res = results[idx]["comparisons"][idx1]
+    prod_ib_index = {}
+    for rx in results:
+        for res in rx["comparisons"]:
+            if not res.get("isIB", False):
+                continue
             rq = res.get("release_queue", "")
-            print("===> DEBUG", rq, short_summary["prod_archs"], res.get("tests_archs", []))
+            ib_date = res.get("ib_date", "")
+            if not ib_date or not rq:
+                continue
             if not rq in short_summary["prod_archs"]:
                 continue
             parch = short_summary["prod_archs"][rq]
             if not parch in res.get("tests_archs", []):
                 continue
-            results[idx]["comparisons"][idx1]["prod_arch"] = parch
+            res["prod_arch"] = parch
+            prod_ib_index["%s:%s" % (rq, res.get("ib_date"))] = res
 
     gpu_results = {}
     for rx in results:
@@ -2057,38 +2062,32 @@ if __name__ == "__main__":
             release_queuex = "_".join(release_queue_items[:3]) + "_X"
             gpu_qa = res.get("gpu_qa", [])
             gpu_relvals = res.get("gpu_relvals", [])
-            if not release_queuex in gpu_results:
-                gpu_results[release_queuex] = {}
-            if not ib_date in gpu_results[release_queuex]:
-                gpu_results[release_queuex][ib_date] = {}
+            idx = "%s:%s" % (release_queuex, ib_date)
+            if not idx in gpu_results:
+                gpu_results[idx] = {"qa": {}, "relvals": {}}
             for qa in gpu_qa:
                 if not "gpu" in qa:
                     continue
                 gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
-                if not gpu_idx in gpu_results[release_queuex][ib_date]:
-                    gpu_results[release_queuex][ib_date][gpu_idx] = {"qa": {}}
+                if not gpu_idx in gpu_results[idx]["qa"]:
+                    gpu_results[idx]["qa"][gpu_idx] = {}
                 for x in ["arch", "gpu", "details", "passed"]:
-                    gpu_results[release_queuex][ib_date][gpu_idx]["qa"][x] = qa[x]
-                gpu_results[release_queuex][ib_date][gpu_idx]["qa"]["release_name"] = res[
-                    "release_name"
-                ]
+                    gpu_results[idx]["qa"][gpu_idx][x] = qa[x]
+                gpu_results[idx]["qa"][gpu_idx]["release_name"] = res["release_name"]
             for qa in gpu_relvals:
                 if not "gpu" in qa:
                     continue
                 gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
-                if not gpu_idx in gpu_results[release_queuex][ib_date]:
-                    gpu_results[release_queuex][ib_date][gpu_idx] = {"relvals": {}}
-                if not "relvals" in gpu_results[release_queuex][ib_date][gpu_idx]:
-                    gpu_results[release_queuex][ib_date][gpu_idx]["relvals"] = {}
+                if not gpu_idx in gpu_results[idx]["relvals"]:
+                    gpu_results[idx]["relvals"][gpu_idx] = {}
                 for x in ["arch", "gpu", "details", "passed", "done"]:
-                    gpu_results[release_queuex][ib_date][gpu_idx]["relvals"][x] = qa[x]
-                gpu_results[release_queuex][ib_date][gpu_idx]["relvals"]["release_name"] = res[
-                    "release_name"
-                ]
+                    gpu_results[idx]["relvals"][gpu_idx][x] = qa[x]
+                gpu_results[idx]["relvals"][gpu_idx]["release_name"] = res["release_name"]
 
-    out_json = open("gpu_result_summary.json", "w")
-    json.dump(gpu_results, out_json, sort_keys=True, indent=4)
-    out_json.close()
+    for idx in gpu_results.keys():
+        if not idx in prod_ib_index:
+            continue
+        prod_ib_index[idx]["gpu_data"] = gpu_results[idx]
 
     out_json = open("merged_prs_summary.json", "w")
     json.dump(results, out_json, sort_keys=True, indent=4)

@@ -1505,7 +1505,6 @@ def generate_ib_json_short_summary(results):
     out_json = open("LatestIBsSummary.json", "w")
     json.dump(short_summary, out_json, sort_keys=True, indent=4)
     out_json.close()
-    return short_summary
 
 
 def identify_release_groups(results):
@@ -2026,9 +2025,8 @@ if __name__ == "__main__":
 
     structure = identify_release_groups(results)
     fix_results(results)
-    generate_separated_json_results(results)
-    short_summary = generate_ib_json_short_summary(results)
 
+    prod_archs = get_production_archs(get_config_map_properties())
     prod_ib_index = {}
     for rx in results:
         for res in rx["comparisons"]:
@@ -2038,9 +2036,9 @@ if __name__ == "__main__":
             ib_date = res.get("ib_date", "")
             if not ib_date or not rq:
                 continue
-            if not rq in short_summary["prod_archs"]:
+            if not rq in prod_archs:
                 continue
-            parch = short_summary["prod_archs"][rq]
+            parch = prod_archs[rq]
             if not parch in res.get("tests_archs", []):
                 continue
             res["prod_arch"] = parch
@@ -2088,6 +2086,9 @@ if __name__ == "__main__":
         if not idx in prod_ib_index:
             continue
         prod_ib_index[idx]["gpu_data"] = gpu_results[idx]
+
+    generate_separated_json_results(results)
+    generate_ib_json_short_summary(results)
 
     out_json = open("merged_prs_summary.json", "w")
     json.dump(results, out_json, sort_keys=True, indent=4)

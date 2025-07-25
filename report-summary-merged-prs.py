@@ -744,11 +744,23 @@ def print_results(results):
             ]
             print("\t" + "RelVals:" + str(relvals_results))
 
+            gpu_relvals_results = [
+                res["arch"] + ":" + str(res["passed"]) + ":" + str(res["details"])
+                for res in comp["qpu_relvals"]
+            ]
+            print("\t" + "GPU RelVals:" + str(gpu_relvals_results))
+
             utests_results = [
                 res["arch"] + ":" + str(res["passed"]) + ":" + str(res["details"])
                 for res in comp["utests"]
             ]
             print("\t" + "UnitTests:" + str(utests_results))
+
+            gpu_utests_results = [
+                res["arch"] + ":" + str(res["passed"]) + ":" + str(res["details"])
+                for res in comp["gpu_qa"]
+            ]
+            print("\t" + "GPU UnitTests:" + str(gpu_utests_results))
 
             addons_results = [res["arch"] + ":" + str(res["passed"]) for res in comp["addons"]]
             print("\t" + "AddOns:" + str(addons_results))
@@ -2048,6 +2060,8 @@ if __name__ == "__main__":
             if not ib_date in gpu_results[release_queuex]:
                 gpu_results[release_queuex][ib_date] = {"qa": {}, "relvals": {}}
             for qa in gpu_qa:
+                if not "gpu" in qa:
+                    continue
                 gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
                 for x in ["arch", "gpu", "details", "passed"]:
                     gpu_results[release_queuex][ib_date][gpu_idx]["qa"][x] = qa[x]
@@ -2055,6 +2069,8 @@ if __name__ == "__main__":
                     "release_name"
                 ]
             for qa in gpu_relvals:
+                if not "gpu" in qa:
+                    continue
                 gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
                 for x in ["arch", "gpu", "details", "passed", "done"]:
                     gpu_results[release_queuex][ib_date][gpu_idx]["relvals"][x] = qa[x]

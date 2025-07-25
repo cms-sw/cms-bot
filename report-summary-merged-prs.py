@@ -415,8 +415,9 @@ def analyze_tests_results(output, results, arch, type):
         result_arch["details"] = details
         if type in ["gpu_qa", "gpu_relvals"]:
             line_items = line.split("/")
-            if line_items[-5] == "gpu":
-                result_arch["gpu"] = line_items[-4]
+            idx = -5 if (type == "gpu_relvals") else -3
+            if line_items[idx] == "gpu":
+                result_arch["gpu"] = line_items[idx+1]
 
         if rel_name not in results.keys():
             results[rel_name] = []

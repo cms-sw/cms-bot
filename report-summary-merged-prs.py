@@ -2063,6 +2063,8 @@ if __name__ == "__main__":
                 if not "gpu" in qa:
                     continue
                 gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
+                if not gpu_idx in gpu_results[release_queuex][ib_date]:
+                    gpu_results[release_queuex][ib_date][gpu_idx] = {"qa": {}}
                 for x in ["arch", "gpu", "details", "passed"]:
                     gpu_results[release_queuex][ib_date][gpu_idx]["qa"][x] = qa[x]
                 gpu_results[release_queuex][ib_date][gpu_idx]["qa"]["release_name"] = res[
@@ -2072,6 +2074,10 @@ if __name__ == "__main__":
                 if not "gpu" in qa:
                     continue
                 gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
+                if not gpu_idx in gpu_results[release_queuex][ib_date]:
+                    gpu_results[release_queuex][ib_date][gpu_idx] = {"relvals": {}}
+                if not "relvals" in gpu_results[release_queuex][ib_date][gpu_idx]:
+                    gpu_results[release_queuex][ib_date][gpu_idx]["relvals"] = {}
                 for x in ["arch", "gpu", "details", "passed", "done"]:
                     gpu_results[release_queuex][ib_date][gpu_idx]["relvals"][x] = qa[x]
                 gpu_results[release_queuex][ib_date][gpu_idx]["relvals"]["release_name"] = res[

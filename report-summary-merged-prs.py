@@ -2028,16 +2028,16 @@ if __name__ == "__main__":
     generate_separated_json_results(results)
     short_summary = generate_ib_json_short_summary(results)
 
-    for rx in results:
-        for res in rx["comparisons"]:
+    for idx in range(len(results)):
+        for idx1 in range(len(results[idx]["comparisons"])):
+            res = results[idx]["comparisons"][idx1]
             rq = res.get("release_queue", "")
             if not rq in short_summary["prod_archs"]:
                 continue
             parch = short_summary["prod_archs"][rq]
-            rq_archs = res.get("tests_arch", [])
-            if not parch in rq_archs:
+            if not parch in res.get("tests_arch", []):
                 continue
-            res["prod_arch"] = parch
+            results[idx]["comparisons"][idx1]["prod_arch"] = parch
 
     gpu_results = {}
     for rx in results:
@@ -2058,7 +2058,7 @@ if __name__ == "__main__":
             if not release_queuex in gpu_results:
                 gpu_results[release_queuex] = {}
             if not ib_date in gpu_results[release_queuex]:
-                gpu_results[release_queuex][ib_date] = {"qa": {}, "relvals": {}}
+                gpu_results[release_queuex][ib_date] = {}
             for qa in gpu_qa:
                 if not "gpu" in qa:
                     continue

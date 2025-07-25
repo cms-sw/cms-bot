@@ -93,6 +93,10 @@ def es_parse_log(logFile):
     if exists(stamp):
         print("Already processed: ", logFile)
         return
+    if os.environ.get("SKIP_ES_STATS","false") == "true":
+      ref = open(stamp, "w")
+      ref.close()
+      return
     t = os.path.getmtime(logFile)
     timestp = int(t * 1000)
     payload = {}

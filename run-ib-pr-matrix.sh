@@ -89,10 +89,10 @@ pushd "$WORKSPACE/matrix-results"
   fi
 
   # Check what workflows will be ran
-  WORKFLOWS=$(echo "$MATRIX_ARGS" | sed 's|.*-l ||;s| .*||' )
+  WORKFLOWS_TO_RUN=$(echo "$MATRIX_ARGS" | sed 's|.*-l ||;s| .*||' )
 
   set +e
-  check_invalid_wf_lists "${WORKFLOWS}"
+  check_invalid_wf_lists "${WORKFLOWS_TO_RUN}"
   if [ $? -ne 0 ]; then
     WFS=""
     cat $WORKSPACE/bad-workflow-lists.txt >> ${WORKSPACE}/workflows-${BUILD_ID}.log

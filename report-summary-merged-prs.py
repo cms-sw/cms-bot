@@ -7,6 +7,7 @@ from optparse import OptionParser
 import subprocess
 import re
 import json
+from copy import deepcopy
 from pickle import Unpickler
 from os.path import basename, dirname, exists, join, expanduser, getmtime
 from glob import glob
@@ -2085,7 +2086,13 @@ if __name__ == "__main__":
     for idx in gpu_results.keys():
         if not idx in prod_ib_index:
             continue
-        prod_ib_index[idx]["gpu_data"] = gpu_results[idx]
+        prod_ib_index[idx]["gpu_data"] = deepcopy(gpu_results[idx])
+
+    for rx in results:
+        for res in rx["comparisons"]:
+            for x in ["gpu_qa", "gpu_relvals"]:
+                if x in res:
+                    del res[x]
 
     generate_separated_json_results(results)
     generate_ib_json_short_summary(results)

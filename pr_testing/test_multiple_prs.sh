@@ -340,6 +340,99 @@ fi
 
 WORKFLOWS_PR_LABELS=""
 scram -a $SCRAM_ARCH project $CMSSW_IB
+if $DO_COMPARISON ; then
+  mkdir $WORKSPACE/ib-baseline-tests
+  pushd $WORKSPACE/ib-baseline-tests
+    COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
+    if [ "${COMP_OS}" = "slc7" ] ; then COMP_OS="cc7"; fi
+    echo "RELEASE_FORMAT=$COMPARISON_REL" > run-baseline-${BUILD_ID}-01.default
+    echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
+    echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
+    echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
+    echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
+    echo "PRODUCTION_RELEASE=true"       >> run-baseline-${BUILD_ID}-01.default
+    echo "CMS_BOT_BRANCH=run-ib-pr-matrix-list" >> run-baseline-${BUILD_ID}-01.default
+    WF_LIST=$(get_pr_baseline_worklflow)
+    [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
+    echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
+
+    PR_LABELS=$(curl -s https://api.github.com/repos/${PR_REPO}/issues/${PR_NUMBER}/labels | grep '"name":' | sed 's|.*: *||;s|"||g;s|-pending||;s|-approved||;s|-rejected||' | tr ',\n' '  ' | tr '[a-z-]' '[A-Z_]')
+    EX_WFS=""
+    for l in ${PR_LABELS} ; do
+       EX_WFS="${EX_WFS},$(get_pr_baseline_worklflow _LAB_${l})"
+    done
+    EX_WFS=$(echo "${EX_WFS}" | sed 's|^,*||;s|,*$||;s|,,*|,|g')
+    if [ "${EX_WFS}" != "" ] ; then
+      (
+        set +x
+        cd $WORKSPACE/$CMSSW_IB
+        eval `scram run -sh`
+        runTheMatrix.py -n -e | grep '\[1\]:' | sed 's| .*||' > wfs.all
+        runTheMatrix.py -n -e -s ${WF_LIST} | grep '\[1\]:' | sed 's| .*||' > wfs.default
+        set -x
+      )
+      for wf in $(echo ${EX_WFS} | tr ',' '\n') ; do
+        if grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.all ; then
+          if ! grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.default ; then
+            WORKFLOWS_PR_LABELS="${WORKFLOWS_PR_LABELS},${wf}"
+          else
+            echo "WARNING: Workflow already part of default tests: $wf"
+          fi
+        else
+          echo "WARNING: No such workflow: $wf"
+        fi
+      done
+      WORKFLOWS_PR_LABELS=$(echo "${WORKFLOWS_PR_LABELS}" | sed 's|^,*||')
+      echo "WORKFLOWS_PR_LABELS=${WORKFLOWS_PR_LABELS}"
+      if [ "${WORKFLOWS_PR_LABELS}" != "" ] ; then
+        grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-03.default
+        echo "WORKFLOWS=-l ${WORKFLOWS_PR_LABELS}" >> run-baseline-${BUILD_ID}-03.default
+      fi
+    fi
+    if [ "${MATRIX_EXTRAS}" != "" ] ; then
+      WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
+      (
+        set +e
+        set +x
+        cd $WORKSPACE/$CMSSW_IB
+        eval `scram run -sh`
+        set -x
+        check_invalid_wf_lists "${WF_LIST}"
+        echo $? > $WORKSPACE/wf-check.res
+        set -e
+      )
+      if [ $(cat $WORKSPACE/wf-check.res) -ne 0 ]; then
+        rm -f run-baseline-${BUILD_ID}-02.default
+        echo "${WF_LIST} does not contain any valid workflows - comparison skipped" >> ${RESULTS_DIR}/09-report.res
+      else
+        echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
+        echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
+        if [ -e bad-workflow-lists.txt ] && [ $(wc -l $WORKSPACE/bad-workflow-lists.txt) -gt 0 ]; then
+          echo "Some of the requested workflow lists ${WF_LIST} were invalid" >> ${RESULTS_DIR}/09-report.res
+        fi
+      fi
+    fi
+
+    for ex_type in ${EXTRA_RELVALS_TESTS} ; do
+      [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
+      WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
+      [ "$WF_LIST" != "" ] || continue
+      ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\|TEST_FLAVOR\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      WF_LIST=$(order_workflow_list $(eval echo "\${MATRIX_EXTRAS_${ex_type}}"))
+      [ "${WF_LIST}" != "" ] || continue
+      WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.${ex_type_lc} > run-baseline-${BUILD_ID}-02.${ex_type_lc}
+      echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+      echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+    done
+  popd
+  send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
+  rm -rf $WORKSPACE/ib-baseline-tests
+fi
 
 #Incase week is changed but tests were run for last week
 let IB_WEEK=$(scram -a $SCRAM_ARCH list -c ${CMSSW_IB} | sed "s|/${SCRAM_ARCH}/.*||;s|^.*\([0-9]\)$|\1|")%2 || true
@@ -916,100 +1009,6 @@ $CMS_BOT_DIR/report-pull-request-results MERGE_COMMITS --recent-merges $RECENT_C
 # Don't do the following if we are only testing CMSDIST PR
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   git log --oneline --merges ${CMSSW_VERSION}..
-fi
-
-if $DO_COMPARISON ; then
-  mkdir $WORKSPACE/ib-baseline-tests
-  pushd $WORKSPACE/ib-baseline-tests
-    COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
-    if [ "${COMP_OS}" = "slc7" ] ; then COMP_OS="cc7"; fi
-    echo "RELEASE_FORMAT=$COMPARISON_REL" > run-baseline-${BUILD_ID}-01.default
-    echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
-    echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
-    echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
-    echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
-    echo "PRODUCTION_RELEASE=true"       >> run-baseline-${BUILD_ID}-01.default
-    echo "CMS_BOT_BRANCH=run-ib-pr-matrix-list" >> run-baseline-${BUILD_ID}-01.default
-    WF_LIST=$(get_pr_baseline_worklflow)
-    [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
-    echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
-
-    PR_LABELS=$(curl -s https://api.github.com/repos/${PR_REPO}/issues/${PR_NUMBER}/labels | grep '"name":' | sed 's|.*: *||;s|"||g;s|-pending||;s|-approved||;s|-rejected||' | tr ',\n' '  ' | tr '[a-z-]' '[A-Z_]')
-    EX_WFS=""
-    for l in ${PR_LABELS} ; do
-       EX_WFS="${EX_WFS},$(get_pr_baseline_worklflow _LAB_${l})"
-    done
-    EX_WFS=$(echo "${EX_WFS}" | sed 's|^,*||;s|,*$||;s|,,*|,|g')
-    if [ "${EX_WFS}" != "" ] ; then
-      (
-        set +x
-        cd $WORKSPACE/$CMSSW_IB
-        eval `scram run -sh`
-        runTheMatrix.py -n -e | grep '\[1\]:' | sed 's| .*||' > wfs.all
-        runTheMatrix.py -n -e -s ${WF_LIST} | grep '\[1\]:' | sed 's| .*||' > wfs.default
-        set -x
-      )
-      for wf in $(echo ${EX_WFS} | tr ',' '\n') ; do
-        if grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.all ; then
-          if ! grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.default ; then
-            WORKFLOWS_PR_LABELS="${WORKFLOWS_PR_LABELS},${wf}"
-          else
-            echo "WARNING: Workflow already part of default tests: $wf"
-          fi
-        else
-          echo "WARNING: No such workflow: $wf"
-        fi
-      done
-      WORKFLOWS_PR_LABELS=$(echo "${WORKFLOWS_PR_LABELS}" | sed 's|^,*||')
-      echo "WORKFLOWS_PR_LABELS=${WORKFLOWS_PR_LABELS}"
-      if [ "${WORKFLOWS_PR_LABELS}" != "" ] ; then
-        grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-03.default
-        echo "WORKFLOWS=-l ${WORKFLOWS_PR_LABELS}" >> run-baseline-${BUILD_ID}-03.default
-      fi
-    fi
-    if [ "${MATRIX_EXTRAS}" != "" ] ; then
-      WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
-      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
-      (
-        set +e
-        set +x
-        cd $WORKSPACE/$CMSSW_IB
-        eval `scram run -sh`
-        set -x
-        check_invalid_wf_lists "${WF_LIST}"
-        echo $? > $WORKSPACE/wf-check.res
-        set -e
-      )
-      if [ $(cat $WORKSPACE/wf-check.res) -ne 0 ]; then
-        rm -f run-baseline-${BUILD_ID}-02.default
-        echo "${WF_LIST} does not contain any valid workflows - comparison skipped" >> ${RESULTS_DIR}/09-report.res
-      else
-        echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
-        echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
-        if [ -e bad-workflow-lists.txt ] && [ $(wc -l $WORKSPACE/bad-workflow-lists.txt) -gt 0 ]; then
-          echo "Some of the requested workflow lists ${WF_LIST} were invalid" >> ${RESULTS_DIR}/09-report.res
-        fi
-      fi
-    fi
-
-    for ex_type in ${EXTRA_RELVALS_TESTS} ; do
-      [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
-      WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
-      [ "$WF_LIST" != "" ] || continue
-      ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
-      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\|TEST_FLAVOR\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-01.${ex_type_lc}
-      echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
-      echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
-      WF_LIST=$(order_workflow_list $(eval echo "\${MATRIX_EXTRAS_${ex_type}}"))
-      [ "${WF_LIST}" != "" ] || continue
-      WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
-      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.${ex_type_lc} > run-baseline-${BUILD_ID}-02.${ex_type_lc}
-      echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
-      echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
-    done
-  popd
-  send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
-  rm -rf $WORKSPACE/ib-baseline-tests
 fi
 
 # #############################################

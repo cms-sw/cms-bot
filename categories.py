@@ -146,6 +146,7 @@ CMSSW_L2 = {
     "AndreaBellora": ["proton-pog"],
     "forthommel": ["proton-pog"],
     "cardinia": ["tau-pog"],
+    "IzaakWN": ["tau-pog"],
     "mbluj": ["tau-pog"],
     "kskovpen": ["tracking-pog"],
     "mmasciov": ["tracking-pog"],

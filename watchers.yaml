@@ -1192,12 +1192,22 @@ jdolen:
 - CommonTools/PileupAlgos
 - CommonTools/RecoAlgos
 pfs:
-- SimCalorimetry/HGCalSimProducers
+- CondFormats/HGCalObjects
 - DataFormats/HGCDigi
+- DataFormats/HGCalDigi
 - DataFormats/HGCRecHit
-- Validation/HGCalValidation
+- Geometry/HGCalMapping
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+- SimCalorimetry/HGCalSimProducers
+- Validation/HGCalValidation
+IzaakWN:
+- CondFormats/HGCalObjects
+- DataFormats/HGCalDigi
+- DataFormats/HGCRecHit
+- EventFilter/HGCalRawToDigi
+- Geometry/HGCalMapping
+- RecoLocalCalo/HGCalRecAlgos
 vandreev11:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi

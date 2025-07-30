@@ -61,6 +61,7 @@ function process_dir()
     TIMEOUT=`find $dir -maxdepth 0 -mindepth 0 -type d -mmin +600 | wc -l`
     if [ -f $dir/../pyRelValMatrixLogs/run/all.pages ] || [ "X$TIMEOUT" = "X1" ] ; then
       pushd $dir
+        set +x
         rm -rf $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip
         rm -rf */*.log-es || true
         rm -rf */*.tar || true
@@ -72,6 +73,7 @@ function process_dir()
         rm -rf */*.dump || true
         rm -rf */*.tex || true
         rm -rf */fort.* || true
+        set -x
         if [[ "$dir" == *"_UBSAN_X"* ]]; then
           process_ubsan &
         fi
@@ -93,16 +95,18 @@ function process_dir()
 
 rm -f $WORKSPACE/update-github-pages
 cd $(dirname $(dirname $0))
-for dir in `find /data/sdt/buildlogs -maxdepth 6 -mindepth 6 -name pyRelValPartialLogs -type d | xargs --no-run-if-empty  ls -rtd` ; do
-  echo "Working on $dir"
-  set +x
-  echo "Jobs running: $(jobs -p |wc -l)"
-  while [ $(jobs -p | wc -l) -ge 4 ]; do
-    sleep 30
+for d in 6 8 ; do
+  for dir in `find /data/sdt/buildlogs -maxdepth $d -mindepth $d -name pyRelValPartialLogs -type d | xargs --no-run-if-empty  ls -rtd` ; do
+    echo "Working on $dir"
+    set +x
     echo "Jobs running: $(jobs -p |wc -l)"
-    jobs -pl
+    while [ $(jobs -p | wc -l) -ge 4 ]; do
+      sleep 30
+      echo "Jobs running: $(jobs -p |wc -l)"
+      jobs -pl
+    done
+    set -x
+    process_dir $dir &
   done
-  set -x
-  process_dir $dir &
 done
 wait

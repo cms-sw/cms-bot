@@ -67,7 +67,12 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     fi
     if [ "${DOCKER_IMGAGE}" != "" ] ; then  DOCKER_IMG="${DOCKER_IMGAGE}" ; fi
     PR_COMMIT_STATUS="optional"
-    if ${REQUIRED_TEST} ; then PR_COMMIT_STATUS="required" ; fi
+    if [ "${BUILD_ONLY}" = "true" ] ; then
+      PR_COMMIT_STATUS="build_only"
+      REQUIRED_TEST=false
+    elif $REQUIRED_TEST ; then
+     PR_COMMIT_STATUS="required"
+    fi
     echo "REQUIRED_TEST=${REQUIRED_TEST}" >> $OUTPUT_FILE
     echo "DRY_RUN=${DRY_RUN}" >> $OUTPUT_FILE
     echo "ENABLE_BOT_TESTS=${ENABLE_BOT_TESTS}" >> $OUTPUT_FILE
@@ -118,6 +123,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $OUTPUT_FILE
     echo "PROFILING_WORKFLOWS=${PROFILING_WORKFLOWS}" >> $OUTPUT_FILE
     echo "BUILD_VERBOSE=${BUILD_VERBOSE}" >> $OUTPUT_FILE
+    echo "BUILD_ONLY=${BUILD_ONLY}" >> $OUTPUT_FILE
     CMSSW_QUEUE="${RELEASE_QUEUE}"
     mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'pending' -d "Tests scheduled ${RELEASE_FORMAT}/${SCRAM_ARCH}" -u 'https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/' || true
     COMMIT_STATUS_CONTEXT="unknown/release"

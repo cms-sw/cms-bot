@@ -55,6 +55,7 @@ class LogUpdater(object):
         return
 
     def updateUnitTestLogs(self, subdir=""):
+        subdir = self.getTestTypeDir()
         print("\n--> going to copy unit test logs to", self.webTargetDir, "... \n")
         # copy back the test and relval logs to the install area
         # check size first ... sometimes the log _grows_ to tens of GB !!
@@ -97,8 +98,23 @@ class LogUpdater(object):
         self.copyLogs("codeRules", ".", self.webTargetDir)
         return
 
+    def getTestTypeDir(self):
+        test_type = os.environ.get("IB_TEST_TYPE", "")
+        if (
+            test_type in ["cuda", "rocm"]
+            or test_type.startswith("nvidia_")
+            or test_type.startswith("amd_")
+        ):
+            return os.path.join("gpu", test_type)
+        elif test_type:
+            return os.path.join("other", test_type)
+        return ""
+
+    def getRelValsDir(self):
+        return os.path.join(self.webTargetDir, self.getTestTypeDir(), "pyRelValPartialLogs")
+
     def updateRelValMatrixPartialLogs(self, partialSubDir, dirToSend):
-        destination = os.path.join(self.webTargetDir, "pyRelValPartialLogs")
+        destination = self.getRelValsDir()
         print("\n--> going to copy pyrelval partial matrix logs to", destination, "... \n")
         self.copyLogs(dirToSend, partialSubDir, destination)
         self.runRemoteCmd("touch " + os.path.join(destination, dirToSend, "wf.done"))
@@ -106,7 +122,7 @@ class LogUpdater(object):
 
     def getDoneRelvals(self):
         wfDoneFile = "wf.done"
-        destination = os.path.join(self.webTargetDir, "pyRelValPartialLogs", "*", wfDoneFile)
+        destination = os.path.join(self.getRelValsDir(), "*", wfDoneFile)
         code, out = self.runRemoteCmd("ls " + destination, debug=False)
         return [
             wf.split("/")[-2].split("_")[0] for wf in out.split("\n") if wf.endswith(wfDoneFile)
@@ -114,9 +130,7 @@ class LogUpdater(object):
 
     def relvalAlreadyDone(self, wf):
         wfDoneFile = "wf.done"
-        destination = os.path.join(
-            self.webTargetDir, "pyRelValPartialLogs", str(wf) + "_*", wfDoneFile
-        )
+        destination = os.path.join(self.getRelValsDir(), str(wf) + "_*", wfDoneFile)
         code, out = self.runRemoteCmd("ls -d " + destination)
         return (code == 0) and out.endswith(wfDoneFile)
 

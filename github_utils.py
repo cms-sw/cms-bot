@@ -981,6 +981,8 @@ def find_tags(repository, name):
 
 
 def get_pr(repository, pr_id):
+    get_gh_token(repository)
+    get_rate_limits()
     data = github_api("/repos/%s/pulls/%s" % (repository, pr_id), method="GET")
 
     return data

@@ -64,7 +64,8 @@
                 "ENABLE_BOT_TESTS": "AMD_MI300X,HIGH_STATS,NANO,NVIDIA_T4,PROFILING,THREADING",
                 "ARCHITECTURE_FILTER": "slc7_amd64_gcc930",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO NVIDIA AMD NVIDIA_T4 AMD_MI300X",
-                "CONTEXT_PREFIX": "cms/24"
+                "CONTEXT_PREFIX": "cms/24",
+                "BUILD_ONLY": false
             }
         }
     },

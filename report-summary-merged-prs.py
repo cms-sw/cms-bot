@@ -2070,7 +2070,7 @@ if __name__ == "__main__":
                 gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
                 if not gpu_idx in gpu_results[idx]["qa"]:
                     gpu_results[idx]["qa"][gpu_idx] = {}
-                for x in ["arch", "gpu", "details", "passed"]:
+                for x in ["arch", "gpu", "details", "passed", "file"]:
                     gpu_results[idx]["qa"][gpu_idx][x] = qa[x]
                 gpu_results[idx]["qa"][gpu_idx]["release_name"] = res["release_name"]
             for qa in gpu_relvals:
@@ -2079,7 +2079,7 @@ if __name__ == "__main__":
                 gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
                 if not gpu_idx in gpu_results[idx]["relvals"]:
                     gpu_results[idx]["relvals"][gpu_idx] = {}
-                for x in ["arch", "gpu", "details", "passed", "done"]:
+                for x in ["arch", "gpu", "details", "passed", "done", "file"]:
                     gpu_results[idx]["relvals"][gpu_idx][x] = qa[x]
                 gpu_results[idx]["relvals"][gpu_idx]["release_name"] = res["release_name"]
 

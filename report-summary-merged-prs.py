@@ -2057,7 +2057,7 @@ if __name__ == "__main__":
             release_queue_items = release_queue.split("_")
             if release_queue_items[0] != "CMSSW" or release_queue_items[-1] != "X":
                 continue
-            release_flavor = "DEFAULT" if release_queue_items[3] == "X" else release_queue_items[3]
+            release_flavor = [] if release_queue_items[3] == "X" else [release_queue_items[3]]
             release_queuex = "_".join(release_queue_items[:3]) + "_X"
             gpu_qa = res.get("gpu_qa", [])
             gpu_relvals = res.get("gpu_relvals", [])
@@ -2067,7 +2067,7 @@ if __name__ == "__main__":
             for qa in gpu_qa:
                 if not "gpu" in qa:
                     continue
-                gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
+                gpu_idx = "/".join([qa["gpu"]] + release_flavor + [qa["arch"]])
                 if not gpu_idx in gpu_results[idx]["qa"]:
                     gpu_results[idx]["qa"][gpu_idx] = {}
                 for x in ["arch", "gpu", "details", "passed", "file"]:
@@ -2076,7 +2076,7 @@ if __name__ == "__main__":
             for qa in gpu_relvals:
                 if not "gpu" in qa:
                     continue
-                gpu_idx = "%s/%s/%s" % (qa["gpu"], release_flavor, qa["arch"])
+                gpu_idx = "/".join([qa["gpu"]] + release_flavor + [qa["arch"]])
                 if not gpu_idx in gpu_results[idx]["relvals"]:
                     gpu_results[idx]["relvals"][gpu_idx] = {}
                 for x in ["arch", "gpu", "details", "passed", "done", "file"]:

@@ -1741,24 +1741,6 @@ def process_pr(
 
     # end of parsing comments section
 
-    # Extract enabled GPU flavors and remove them from enable_tests
-    new_enable_tests = []
-    enabled_gpu_flavors = set()
-    for test in enable_tests.split(","):
-        if test == "GPU":
-            enabled_gpu_flavors.update([x.upper() for x in ALL_GPU_FLAVORS])
-        elif test.lower() in ALL_GPU_FLAVORS:
-            enabled_gpu_flavors.add(test)
-        elif test.lower() in ("nvidia", "amd"):
-            enabled_gpu_flavors.update(
-                [x.upper() for x in ALL_GPU_FLAVORS if x.startswith(test.lower() + "_")]
-            )
-        else:
-            new_enable_tests.append(test)
-
-    new_enable_tests.extend(list(enabled_gpu_flavors))
-    enable_tests = ",".join(sorted(new_enable_tests))
-
     # Check if it needs to be automatically closed.
     if mustClose:
         if issue.state == "open":

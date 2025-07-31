@@ -53,7 +53,7 @@
             "filename": "trigger-tests-iarspider-cmssw-cmssw-24.properties",
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#24 iarspider-cmssw/cmssw#543210 cms-sw/cmssw#654321",
-                "ENABLE_BOT_TESTS": "NVIDIA_T4",
+                "ENABLE_BOT_TESTS": "NVIDIA",
                 "MATRIX_EXTRAS": "123.4",
                 "MATRIX_EXTRAS_NVIDIA": "333.3,567.8",
                 "USE_BASELINE": "self",

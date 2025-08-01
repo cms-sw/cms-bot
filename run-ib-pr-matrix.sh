@@ -26,20 +26,17 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     ALL_WFS=$(runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' | tr '\n' ',' | sed 's|,$||')
     WORKFLOWS=$(echo "${WORKFLOWS}" | sed "s|all|${ALL_WFS}|")
   fi
-  runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+  rm -f $WORKSPACE/req.wfs
+  if  ! check_invalid_wf_lists "${WORKFLOWS}" false ; then
+    touch $WORKSPACE/req.wfs
+  else
+    runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+  fi
   for wf in $(cat $WORKSPACE/req.wfs) ; do
-    [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
-    WFS="${wf},${WFS}"
+      [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
+      WFS="${wf},${WFS}"
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
-
-  set +e
-  check_invalid_wf_lists "${WORKFLOWS}" false
-  if [ $? -ne 0 ]; then
-    WFS=""
-    cat $WORKSPACE/bad-workflow-lists.txt >> ${WORKSPACE}/workflows-${BUILD_ID}.log
-  fi
-  set -e
 
   if [ "${WFS}" = "" ] ; then
     mv ${WORKSPACE}/workflows-${BUILD_ID}.log ${WORKSPACE}/workflows-${BUILD_ID}.done
@@ -91,14 +88,9 @@ pushd "$WORKSPACE/matrix-results"
   # Check what workflows will be ran
   WORKFLOWS_TO_RUN=$(echo "$MATRIX_ARGS" | sed 's|.*-l ||;s| .*||' )
 
-  set +e
-  check_invalid_wf_lists "${WORKFLOWS_TO_RUN}"
-  if [ $? -ne 0 ]; then
-    WFS=""
-    cat $WORKSPACE/bad-workflow-lists.txt >> ${WORKSPACE}/workflows-${BUILD_ID}.log
+  if ! check_invalid_wf_lists "${WORKFLOWS_TO_RUN}" ; then
     exit 1
   fi
-  set -e
 
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log

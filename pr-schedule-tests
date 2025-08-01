@@ -82,8 +82,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
 
     OUTPUT="$ENABLE_BOT_TESTS"
     OUTPUT="${OUTPUT//GPU/$GPU_LIST}"
-    OUTPUT="${OUTPUT//nvidia/$NVIDIA_LIST}"
-    OUTPUT="${OUTPUT//amd/$AMD_LIST}"
+    OUTPUT=$(echo "$OUTPUT" | sed -E "s#\bnvidia\b#$NVIDIA_LIST#g; s#\bamd\b#$AMD_LIST#g")
     ENABLE_BOT_TESTS="$OUTPUT"
 
     echo "ENABLE_BOT_TESTS=${ENABLE_BOT_TESTS}" >> $OUTPUT_FILE

@@ -2243,7 +2243,14 @@ def process_pr(
                                 if lab_stats[suffix][-1] == "error":
                                     res = "-1"
                                 res = "%s\n\n%s" % (res, o)
-                                issue.create_comment(res)
+                                cmt = issue.create_comment(res)
+                                logger.debug("Comment created: %s", cmt.html_url)
+                            else:
+                                logger.warning(
+                                    "Not posting PR result comment: dryRun=%s, bool(o)=%s",
+                                    dryRun,
+                                    bool(o),
+                                )
                         if not dryRun:
                             last_commit_obj.create_status(
                                 "success",

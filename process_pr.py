@@ -146,15 +146,19 @@ REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
 REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
-ALL_GPU_BRANDS = sorted(list(set(
-    x.strip().split("_", 1)[0]
-    for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
-    if x.strip()
-)))
+ALL_GPU_BRANDS = sorted(
+    list(
+        set(
+            x.strip().split("_", 1)[0]
+            for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
+            if x.strip()
+        )
+    )
+)
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"]
 EXTRA_RELVALS_TESTS_REX = EXTRA_RELVALS_TESTS[:]
 EXTRA_RELVALS_TESTS.extend(ALL_GPU_BRANDS)
-EXTRA_RELVALS_TESTS_REX.extend((x+"(?:_.*)?") for x in ALL_GPU_BRANDS)
+EXTRA_RELVALS_TESTS_REX.extend((x + "(?:_.*)?") for x in ALL_GPU_BRANDS)
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS_REX)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS_REX)

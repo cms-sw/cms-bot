@@ -1967,13 +1967,6 @@ if __name__ == "__main__":
                         find_one_profiling_result,
                     )
                     find_general_test_results(
-                        "reco_gpu_mods",
-                        release_queue_results["comparisons"],
-                        arch,
-                        MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3,
-                        find_one_profiling_result,
-                    )
-                    find_general_test_results(
                         "vtune",
                         release_queue_results["comparisons"],
                         arch,

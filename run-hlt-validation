@@ -43,29 +43,9 @@ ls
 INTEGRTESTS_LOG="${WORKSPACE}/results/hltPhase2UpgradeIntegrationTests.log"
 if which hltPhase2UpgradeIntegrationTests 2>/dev/null ; then
 	if hltPhase2UpgradeIntegrationTests --help | grep -w -- "--menu " 2>/dev/null ; then # if the "--menu" option is included in this IB
-
-		TEMPDIR="IntergrTest_temp"
-		TEMPFILE="autoHLT.py"
-		mkdir ${TEMPDIR}
-		cp ${CMSSW_RELEASE_BASE}/src/Configuration/HLT/python/${TEMPFILE} ${TEMPDIR}/${TEMPFILE}
-
-		PYTHON_SCRIPT=$(cat << 'EOF'
-from test import autoHLT
-for k, v in autoHLT.items():
-    if "Run4" in k:
-        print(v)
-EOF
-					 )
-
-		mapfile -t menus < <(python3 -c "$PYTHON_SCRIPT")
-
-		for elem in "${menus[@]}"; do
+		for elem in $(python3 -c 'from Configuration.HLT.autoHLT import autoHLT; [print(v) for k,v in autoHLT.items() if "Run4" in k]') ; do
 			hltPhase2UpgradeIntegrationTests --menu ${elem} --parallelJobs $(nproc) | tee -a ${INTEGRTESTS_LOG}
 		done
-
-		rm ${TEMPDIR}/${TEMPFILE}
-		rmdir ${TEMPDIR}
-
 	else # if the "--menu" option is NOT included in this IB
 		hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) | tee -a ${INTEGRTESTS_LOG}
 	fi

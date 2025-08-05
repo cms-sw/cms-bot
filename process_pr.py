@@ -2244,13 +2244,11 @@ def process_pr(
                                     res = "-1"
                                 res = "%s\n\n%s" % (res, o)
                                 cmt = issue.create_comment(res)
-                                logger.debug("Comment created: %s", cmt.html_url)
+                                logger.debug("PR Result Comment created: %s", cmt.html_url)
                             else:
-                                logger.warning(
-                                    "Not posting PR result comment: dryRun=%s, bool(o)=%s",
-                                    dryRun,
-                                    bool(o),
-                                )
+                                if not o:
+                                    logger.error("Server returned empty PR result")
+                                    exit(1)
                         if not dryRun:
                             last_commit_obj.create_status(
                                 "success",

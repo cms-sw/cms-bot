@@ -1392,7 +1392,8 @@ if ${ALL_OK} ; then
     if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
       echo "Found compilation warnings" >> ${RESULTS_DIR}/10-report.res
     fi
-    mark_commit_status_all_prs '' 'success' -u "${PR_RESULT_URL}" -d "Passed"
+    REPORT_STATUS="success"
+    REPORT_TEXT="Passed"
 else
    TESTS_FAILED=""
    if [ "X$BUILD_OK" = Xfalse ] ;         then TESTS_FAILED="$TESTS_FAILED  Build" ; fi
@@ -1410,7 +1411,8 @@ else
     if [ "X$PYTHON3_BUILD_OK" = Xfalse ]; then
       $CMS_BOT_DIR/report-pull-request-results PYTHON3_FAIL -f $WORKSPACE/python3.log ${REPORT_GEN_OPTS}
     fi
-    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed: ${TESTS_FAILED}"
+    REPORT_STATUS="error"
+    REPORT_TEXT="Failed: ${TESTS_FAILED}"
 fi
 if [ -e ${RESULTS_DIR}/static.txt ]; then
   if [ $(grep ${RESULTS_DIR}/static.txt -e 'EDM_ML_DEBUG_CHECKS;OK' | wc -l) -eq 0 ]; then
@@ -1428,6 +1430,7 @@ pushd $WORKSPACE
 popd
 
 prepare_upload_results
+mark_commit_status_all_prs '' $REPORT_STATUS -u "${PR_RESULT_URL}" -d "${REPORT_TEXT}"
 rm -rf $WORKSPACE/upload
 
 echo "PR_BUILD_BASE=${WORKSPACE}" > $WORKSPACE/deploy-cmssw

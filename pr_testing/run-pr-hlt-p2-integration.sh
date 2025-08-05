@@ -13,15 +13,16 @@ if [ ! -e "${HLT_BASEDIR}/${HLT_P2_SCRIPT}" ] ; then HLT_BASEDIR="${CMSSW_RELEAS
 cp -r ${HLT_BASEDIR}/${HLT_P2_SCRIPT} $WORKSPACE/rundir
 rm -rf $WORKSPACE/rundir/__pycache__
 
+INTEGRTESTS_LOG="${WORKSPACE}/hlt-p2-integration.log"
+
 pushd $WORKSPACE/rundir
-    INTEGRTESTS_LOG="${WORKSPACE}/hlt-p2-integration.log"
     export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-	if ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests --help | grep -w -- "--menu " 2>/dev/null ; then # if the "--menu" option is included in this IB
+	if hltPhase2UpgradeIntegrationTests --help | grep -w -- "--menu " 2>/dev/null ; then # if the "--menu" option is included in this IB
 		for elem in $(python3 -c 'from Configuration.HLT.autoHLT import autoHLT; [print(v) for k,v in autoHLT.items() if "Run4" in k]') ; do
-			timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests --menu ${elem} --parallelJobs $(nproc) 2>&1 | tee -a ${INTEGRTESTS_LOG}
+			timeout $TIMEOUT hltPhase2UpgradeIntegrationTests --menu ${elem} --parallelJobs $(nproc) 2>&1 | tee -a ${INTEGRTESTS_LOG}
 		done
 	else # if the "--menu" option is NOT included in this IB
-		timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) 2>&1 | tee -a ${INTEGRTESTS_LOG}
+		timeout $TIMEOUT hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) 2>&1 | tee -a ${INTEGRTESTS_LOG}
 	fi
 popd
 
@@ -31,7 +32,7 @@ HLT_P2_RES="SUCCESS"
 source $WORKSPACE/cms-bot/jenkins-artifacts
 touch ${RESULTS_DIR}/15-hlt-p2-integration-failed.res
 
-if grep -iE 'Error|failure' "${WORKSPACE}/hlt-p2-integration.log"; then
+if grep -iE 'Error|failure' "${INTEGRTESTS_LOG}"; then
   HLT_P2_RES="ERROR"
 elif [ ! -f $WORKSPACE/rundir/Phase2Timing_resources.json ] ; then
   HLT_P2_RES="ERROR"

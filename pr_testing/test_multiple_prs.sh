@@ -1430,7 +1430,7 @@ pushd $WORKSPACE
 popd
 
 prepare_upload_results
-mark_commit_status_all_prs '' $REPORT_STATUS -u "${PR_RESULT_URL}" -d ${REPORT_TEXT}
+mark_commit_status_all_prs '' $REPORT_STATUS -u "${PR_RESULT_URL}" -d "${REPORT_TEXT}"
 rm -rf $WORKSPACE/upload
 
 echo "PR_BUILD_BASE=${WORKSPACE}" > $WORKSPACE/deploy-cmssw

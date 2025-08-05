@@ -1,2 +1,2 @@
-nvidia_t4
+nvidia_t5
 amd_mi300x

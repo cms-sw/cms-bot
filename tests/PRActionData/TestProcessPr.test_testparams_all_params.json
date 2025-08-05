@@ -63,7 +63,7 @@
                 "DOCKER_IMGAGE": "cmssw/cc7",
                 "RUN_ON_SLAVE": "cmssdt",
                 "EXTRA_MATRIX_ARGS_NVIDIA": "-t 1",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO NVIDIA AMD NVIDIA_T4 AMD_MI300X",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO AMD NVIDIA",
                 "BUILD_ONLY": false,
                 "CONTEXT_PREFIX": "cms/24"
             }

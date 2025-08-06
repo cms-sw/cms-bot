@@ -162,7 +162,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
     mkdir -p $SINGULARITY_CACHEDIR
     export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
-    EX_OPTIONS="${SINGULARITY_OPTIONS} ${APPTAINER_OPTIONS}"
+    EX_OPTIONS="${SINGULARITY_OPTIONS} ${APPTAINER_OPTIONS} ${CMSCI_CONTAINER_OPTS}"
     if [ "${CHECK_NVIDIA}" != "false" -a -e "/proc/driver/nvidia/version" ] ; then
       nvidia-smi || true
       cat /proc/driver/nvidia/version || true

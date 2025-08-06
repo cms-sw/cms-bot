@@ -73,18 +73,23 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     elif $REQUIRED_TEST ; then
      PR_COMMIT_STATUS="required"
     fi
+    readarray -t ALL_GPU_TYPES < "${CMS_BOT_DIR}/gpu_flavors.txt"
+    IFS=',' read -ra PARSED_TESTS <<< "$ENABLE_BOT_TESTS"
+
+    if is_in_array "GPU" "${PARSED_TESTS[@]}" && [[ -z "$SELECTED_GPU_TYPES" ]]; then
+      SELECTED_GPU_TYPES=$(IFS=','; echo "${ALL_GPU_TYPES[*]}")
+    fi
+
+    if [[ -n "$SELECTED_GPU_TYPES" ]]; then
+      if [[ -n "$ENABLE_BOT_TESTS" ]]; then
+        ENABLE_BOT_TESTS="${ENABLE_BOT_TESTS},${SELECTED_GPU_TYPES}"
+      else
+        ENABLE_BOT_TESTS="${SELECTED_GPU_TYPES}"
+      fi
+      EXTRA_RELVALS_TESTS="${EXTRA_RELVALS_TESTS} ${SELECTED_GPU_TYPES//,/ }"
+    fi
     echo "REQUIRED_TEST=${REQUIRED_TEST}" >> $OUTPUT_FILE
     echo "DRY_RUN=${DRY_RUN}" >> $OUTPUT_FILE
-
-    GPU_LIST=$(paste -sd, "${CMS_BOT_DIR}/gpu_flavors.txt" | tr '[:lower:]' '[:upper:]')
-    NVIDIA_LIST=$(grep '^nvidia_' "${CMS_BOT_DIR}/gpu_flavors.txt" | tr '[:lower:]' '[:upper:]' | paste -sd, -)
-    AMD_LIST=$(grep '^amd_' "${CMS_BOT_DIR}/gpu_flavors.txt" | tr '[:lower:]' '[:upper:]' | paste -sd, -)
-
-    OUTPUT="$ENABLE_BOT_TESTS"
-    OUTPUT="${OUTPUT//GPU/$GPU_LIST}"
-    OUTPUT=$(echo "$OUTPUT" | sed -E "s#\bNVIDIA\b#$NVIDIA_LIST#g; s#\bAMD\b#$AMD_LIST#g")
-    ENABLE_BOT_TESTS="$OUTPUT"
-
     echo "ENABLE_BOT_TESTS=${ENABLE_BOT_TESTS}" >> $OUTPUT_FILE
     echo "DISABLE_POISON=${DISABLE_POISON}" >> $OUTPUT_FILE
     echo "BUILD_FULL_CMSSW=${BUILD_FULL_CMSSW}" >> $OUTPUT_FILE
@@ -134,6 +139,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo "PROFILING_WORKFLOWS=${PROFILING_WORKFLOWS}" >> $OUTPUT_FILE
     echo "BUILD_VERBOSE=${BUILD_VERBOSE}" >> $OUTPUT_FILE
     echo "BUILD_ONLY=${BUILD_ONLY}" >> $OUTPUT_FILE
+    echo "ENABLE_GPU_FLAVORS={$SELECTED_GPU_TYPES}" >> $OUTPUT_FILE
     CMSSW_QUEUE="${RELEASE_QUEUE}"
     mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'pending' -d "Tests scheduled ${RELEASE_FORMAT}/${SCRAM_ARCH}" -u 'https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/' || true
     COMMIT_STATUS_CONTEXT="unknown/release"

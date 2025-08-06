@@ -92,6 +92,7 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
 [ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 [ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]')"
 EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | grep -v GPU | tr '\n' ' ')
 # ---
@@ -168,21 +169,17 @@ if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   fi
 fi
 
-readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+IFS=',' read -ra ENABLE_GPU_FLAVORS <<< "$ENABLE_GPU_FLAVORS"
 
-declare -a ENABLE_GPU_FLAVORS
-for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
-  ex_type_lc=$(echo $ex_type | tr '[A-Z]' '[a-z]')
-  if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}" ; then
-    ENABLE_GPU_FLAVORS+=( $ex_type )
-    VAR_NAME="MATRIX_EXTRAS_${ex_type}"
-    if [ -z "${!VAR_NAME}" ]; then
-      eval "$VAR_NAME=\"${MATRIX_EXTRAS_GPU}\""
-    fi
-    VAR_NAME="EXTRA_MATRIX_ARGS_${ex_type}"
-    if [ -z "${!VAR_NAME}" ]; then
-      eval "$VAR_NAME=\"${EXTRA_MATRIX_ARGS_GPU}\""
-    fi
+for gpu_type in ${ENABLE_GPU_FLAVORS[@]} ; do
+  gpu_type_lc=$(echo $gpu_type | tr '[A-Z]' '[a-z]')
+  VAR_NAME="MATRIX_EXTRAS_${ex_type}"
+  if [ -z "${!VAR_NAME}" ]; then
+    eval "$VAR_NAME=\"${MATRIX_EXTRAS_GPU}\""
+  fi
+  VAR_NAME="EXTRA_MATRIX_ARGS_${ex_type}"
+  if [ -z "${!VAR_NAME}" ]; then
+    eval "$VAR_NAME=\"${EXTRA_MATRIX_ARGS_GPU}\""
   fi
 done
 

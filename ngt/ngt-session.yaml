@@ -8,11 +8,14 @@ metadata:
     mount-afs: "true" 
 spec:
   containers:
-  - name: container
-    image: registry.cern.ch/ngt/lxplus-like:9
-    command: ["sleep", "infinity"] 
-    resources:
-      limits:
-        @GPU_TYPE@.com/gpu: @GPU_COUNT@
+    - name: container
+      image: registry.cern.ch/ngt/lxplus-like:9
+      command: ["sleep", "infinity"]
+      env:
+        - name: TZ
+          value: Europe/Zurich
+      resources:
+        limits:
+          @GPU_TYPE@.com/gpu: @GPU_COUNT@
   nodeSelector:
     @GPU_TYPE@.com/gpu.@PRODUCT@: @GPU@

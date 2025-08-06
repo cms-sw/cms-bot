@@ -54,5 +54,5 @@ if [ "${GPU_TYPE}" = "" ] || [ "${GPU_COUNT}" = "" ] || [ "${GPU}" = "" ] ; then
   usage "Error: Missing option" 1
 fi
 PRODUCT=$(echo ${VALID_PRODUCTS} | tr ' ' '\n' | grep "${GPU_TYPE}:" | sed 's|.*:||')
-SESSION_ID=$(echo ${GPU} | tr 'A-Z_' 'a-z-')-$(date +%Y%M%d%H%m)
+SESSION_ID=$(echo ${GPU} | tr 'A-Z_' 'a-z-')-$(date +%Y%m%d%H%M)
 sed -e "s|@PRODUCT@|${PRODUCT}|;s|@GPU@|${GPU}|;s|@GPU_TYPE@|${GPU_TYPE}|;s|@GPU_COUNT@|${GPU_COUNT}|;s|@SESSION_ID@|${SESSION_ID}|" ${THISDIR}/ngt-session.yaml

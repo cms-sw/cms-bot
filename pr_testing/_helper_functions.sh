@@ -198,31 +198,46 @@ function get_gpu_matrix_args() {
 }
 
 function check_invalid_wf_lists () {
-  WKFS=$(echo $1 | sed -e 's/^-l//')
-  UPLOAD=${2:-true}
-  WFLISTS_CNT=$(echo "${WKFS}" | tr ',' '\n' | grep -v "^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s" | wc -l)
-  WFS_CNT=$(echo "${WKFS}" | tr ',' '\n' | wc -l)
-  runTheMatrix.py -j ${NJOBS:-1} -l ${WKFS} -n 2>&1 > tmp123.tmp
-  if [ $? -ne 0 ]; then
+  local WKFS="${1#-l}"
+  local DUMP_BADLIST=${2:-true}
+  local WFLISTS_CNT WFS_CNT BADLIST_CNT
+
+  rm -f "$WORKSPACE/bad-workflow-lists.txt"
+
+  # Count workflow lists vs numeric workflows
+  WFLISTS_CNT=$(echo "$WKFS" | tr ',' '\n' | grep -Ev "^[1-9][0-9]*(\.[0-9]+)?$" | wc -l)
+  WFS_CNT=$(echo "$WKFS" | tr ',' '\n' | wc -l)
+
+  # Capture both output and exit code of runTheMatrix.py
+  local RUN_OUTPUT
+  if ! RUN_OUTPUT=$(runTheMatrix.py -j "${NJOBS:-1}" -l "$WKFS" -n 2>&1); then
     echo "ERROR : runTheMatrix returned non-zero exit code"
     return 1
   fi
-  grep tmp123.tmp -e "is not a possible selected entry" > $WORKSPACE/bad-workflow-lists.txt || true
-  rm -f tmp123.tmp
-  BADLIST_CNT=$(wc -l < $WORKSPACE/bad-workflow-lists.txt)
-  if [ "$BADLIST_CNT" -gt 0 ]; then
-    if [ "$WFLISTS_CNT" -ne "$WFS_CNT" ]; then
+
+  # Extract bad workflow lists directly from the output
+  local BADLIST=()
+  while IFS= read -r line; do
+    [[ "$line" == *"is not a possible selected entry"* ]] && BADLIST+=("$(awk '{print $1}' <<< "$line")")
+  done <<< "$RUN_OUTPUT"
+
+  BADLIST_CNT=${#BADLIST[@]}
+
+  if (( BADLIST_CNT > 0 )); then
+    if [[ "$DUMP_BADLIST" == "true" ]]; then
+      printf " -  %s\n" "${BADLIST[@]}" > "$WORKSPACE/bad-workflow-lists.txt"
+    fi
+    if (( WFLISTS_CNT != WFS_CNT )); then
       echo "WARNING : some workflow lists were not recognized"
     else
-      if [ "$BADLIST_CNT" -eq "$WFS_CNT" ]; then
+      if (( BADLIST_CNT == WFS_CNT )); then
         echo "ERROR : all workflow lists were not recognized, and no additional workflows were requested"
-        [ "$UPLOAD" = "true" ] && { send_jenkins_artifacts $WORKSPACE/bad-workflow-lists.txt ib-baseline-tests/; rm $WORKSPACE/bad-workflow-lists.txt; }
         return 1
       else
         echo "WARNING : none of the workflow lists were recognized, only running explicitly requested workflows"
       fi
     fi
   fi
-  rm $WORKSPACE/bad-workflow-lists.txt
+
   return 0
 }

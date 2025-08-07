@@ -2500,11 +2500,6 @@ def process_pr(
     )
     global_test_params["BUILD_ONLY"] = build_comment is not None
 
-    if "GPU" in global_test_params["ENABLE_BOT_TESTS"].split(","):
-        global_test_params["SELECTED_GPU_TYPES"] = ",".join(
-            sorted(list(set(global_test_params.get("SELECTED_GPU_TYPES", ""))))
-        )
-
     logger.debug("All Parameters: %s", global_test_params)
     # For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
     if create_test_property:

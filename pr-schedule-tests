@@ -74,10 +74,29 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
      PR_COMMIT_STATUS="required"
     fi
     readarray -t ALL_GPU_TYPES < <(tr '[:lower:]' '[:upper:]' < "${CMS_BOT_DIR}/gpu_flavors.txt")
+    ALL_GPU_BRANDS=($(for gpu in "${ALL_GPU_TYPES[@]}"; do echo "${gpu%%_*}"; done | sort -u))
     IFS=',' read -ra PARSED_TESTS <<< "$ENABLE_BOT_TESTS"
 
-    if is_in_array "GPU" "${PARSED_TESTS[@]}" && [[ -z "$SELECTED_GPU_TYPES" ]]; then
-      SELECTED_GPU_TYPES=$(IFS=','; echo "${ALL_GPU_TYPES[*]}")
+    if is_in_array "GPU" "${PARSED_TESTS[@]}"; then
+      if [[ -z "$SELECTED_GPU_TYPES" ]]; then
+        SELECTED_GPU_TYPES=$(IFS=','; echo "${ALL_GPU_TYPES[*]}")
+      fi
+
+      IFS=',' read -ra SELECTED <<< "$SELECTED_GPU_TYPES"
+      TMP=()
+
+      for gpu in "${SELECTED[@]}"; do
+          if is_in_array "$gpu" "${ALL_GPU_BRANDS[@]}"; then
+              for full_gpu in "${ALL_GPU_TYPES[@]}"; do
+                  [[ "$full_gpu" == "${gpu}_"* ]] && TMP+=("$full_gpu")
+              done
+          else
+              TMP+=("$gpu")
+          fi
+      done
+
+      UNIQUE_TMP=($(printf "%s\n" "${TMP[@]}" | sort -u))
+      export SELECTED_GPU_TYPES="$(IFS=, ; echo "${UNIQUE_TMP[*]}")"
     fi
 
     if [[ -n "$SELECTED_GPU_TYPES" ]]; then

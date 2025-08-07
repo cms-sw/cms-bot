@@ -39,11 +39,20 @@ cd HLTrigger/Configuration/test/
 ls
 ./runAll.csh IB | tee -a $WORKSPACE/results/runIB.log
 ./examLogs.csh | tee -a $WORKSPACE/results/examLogs.out
+
+INTEGRTESTS_LOG="${WORKSPACE}/results/hltPhase2UpgradeIntegrationTests.log"
 if which hltPhase2UpgradeIntegrationTests 2>/dev/null ; then
-    hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) | tee -a  $WORKSPACE/results/hltPhase2UpgradeIntegrationTests.log
+	if hltPhase2UpgradeIntegrationTests --help | grep -w -- "--menu " 2>/dev/null ; then # if the "--menu" option is included in this IB
+		for elem in $(python3 -c 'from Configuration.HLT.autoHLT import autoHLT; [print(v) for k,v in autoHLT.items() if "Run4" in k]') ; do
+			hltPhase2UpgradeIntegrationTests --menu ${elem} --parallelJobs $(nproc) | tee -a ${INTEGRTESTS_LOG}
+		done
+	else # if the "--menu" option is NOT included in this IB
+		hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) | tee -a ${INTEGRTESTS_LOG}
+	fi
 else
     echo "hltPhase2UpgradeIntegrationTests not found, skipping"
 fi
+
 ls
 cp *.log $WORKSPACE/results
 cp *.out $WORKSPACE/results

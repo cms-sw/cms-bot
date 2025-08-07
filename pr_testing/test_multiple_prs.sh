@@ -169,9 +169,9 @@ if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   fi
 fi
 
-IFS=',' read -ra ENABLE_GPU_FLAVORS <<< "$ENABLE_GPU_FLAVORS"
+IFS=',' read -ra SELECTED_GPU_TYPES <<< "$SELECTED_GPU_TYPES"
 
-for gpu_type in ${ENABLE_GPU_FLAVORS[@]} ; do
+for gpu_type in ${SELECTED_GPU_TYPES[@]} ; do
   gpu_type_lc=$(echo $gpu_type | tr '[A-Z]' '[a-z]')
   VAR_NAME="MATRIX_EXTRAS_${ex_type}"
   if [ -z "${!VAR_NAME}" ]; then
@@ -1355,7 +1355,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
       done
     fi
   fi
-  if [ ${#ENABLE_GPU_FLAVORS[@]} -ne 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
+  if [ ${#SELECTED_GPU_TYPES[@]} -ne 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
     DO_GPU_TESTS=true
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
@@ -1557,7 +1557,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
 fi
 
 if [ "X$DO_GPU_TESTS" = Xtrue ]; then
-  for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
+  for GPU_T in ${SELECTED_GPU_TYPES[@]}; do
     GPU_T_LC=$(echo $GPU_T | tr '[A-Z]' '[a-z]')
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T_LC}.prop
     echo "TEST_FLAVOR=${GPU_T_LC}" >> $WORKSPACE/run-unittests-${GPU_T_LC}.prop

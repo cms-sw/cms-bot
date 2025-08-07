@@ -10,7 +10,7 @@ function get_env ()
 }
 function copy_file_to_remote()
 {
-  if ! rsync -L -e "ssh $SSH_OPTS" "${1}" "${2}" ; then
+  if ! rsync -L -e "ssh $SSH_EX_OPTS $SSH_OPTS" "${1}" "${2}" ; then
     scp -p $SSH_OPTS "${1}" "${2}"
   fi
 }
@@ -19,7 +19,8 @@ SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 TARGET=$1
 CLEANUP_WORKSPACE=$2
 REMOTE_USER=$(echo $TARGET | sed 's|@.*||')
-SSH_OPTS="-K -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+SSH_EX_OPTS="-K"
+SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 #Check unique slave conenction
 if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
@@ -38,14 +39,14 @@ USER_HOME_MD5=""
 if [ "${REMOTE_USER}" = "cmsbld" ] ; then
   USER_HOME_MD5=$(tar c ${HOME}/slave_setup/cmsbot 2>&1 | md5sum  | tail -1 | sed 's| .*||')
 fi
-#ssh -n $SSH_OPTS $TARGET aklog || true
+#ssh -n $SSH_EX_OPTS $SSH_OPTS $TARGET aklog || true
 SYS_SCRIPT="system-${REMOTE_USER}-$(hostname -s).sh"
 copy_file_to_remote ${SCRIPT_DIR}/system-info.sh "$TARGET:/tmp/${SYS_SCRIPT}"
 
 SYSENV=""
 [ "${AGENT_CORES}"  != "" ] && SYSENV="JENKINS_AGENT_CORES=${AGENT_CORES}"
 [ "${AGENT_MEMORY}" != "" ] && SYSENV="JENKINS_AGENT_MEMORY=${AGENT_MEMORY} ${SYSENV}"
-SYSTEM_DATA=$((ssh -n $SSH_OPTS $TARGET "${SYSENV} /tmp/${SYS_SCRIPT} '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}' '${USER_HOME_MD5}' '${JAVA_CMD}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
+SYSTEM_DATA=$((ssh -n $SSH_EX_OPTS $SSH_OPTS $TARGET "${SYSENV} /tmp/${SYS_SCRIPT} '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}' '${USER_HOME_MD5}' '${JAVA_CMD}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
 
 if [ $(get_data ERROR | wc -l) -gt 0 ] ; then
   echo $DATA | tr ';' '\n'
@@ -58,8 +59,8 @@ if [ "${SLAVE_MAX_WORKSPACE_SIZE}" != "" ] ; then
 fi
 
 if [ $(get_data RSYNC_SLAVE) = "true" ] ; then
-  rsync -e "ssh $SSH_OPTS" -av ${HOME}/slave_setup/cmsbot/ ${TARGET}:~/
-  ssh -n $SSH_OPTS $TARGET "echo '${USER_HOME_MD5}' > ~/.jenkins_slave_md5"
+  rsync -e "ssh $SSH_EX_OPTS $SSH_OPTS" -av ${HOME}/slave_setup/cmsbot/ ${TARGET}:~/
+  ssh -n $SSH_EX_OPTS $SSH_OPTS $TARGET "echo '${USER_HOME_MD5}' > ~/.jenkins_slave_md5"
 fi
 REMOTE_USER_ID=$(get_data REMOTE_USER_ID)
 JENKINS_PORT=$(pgrep -x -a  -f ".*httpPort=.*" | tail -1 | tr ' ' '\n' | grep httpPort | sed 's|.*=||')
@@ -133,7 +134,7 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   START_ALL_SHARED=true
   while true ; do
     if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | wc -l) -eq 0 ] ; then
-      if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
+      if [ $(ssh -n $SSH_EX_OPTS $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
     fi
     if $START_ALL_SHARED ; then
       START_ALL_SHARED=false
@@ -175,7 +176,7 @@ if [ "${JAVA}" = "" ] ; then
   JAVA=$(get_data JAVA)
   if [ "${JAVA}" = "" ] ; then JAVA="java"; fi
 fi
-ssh $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} \
+ssh $SSH_EX_OPTS $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} \
   -Djava.io.tmpdir=$WORKSPACE/tmp \
   -Djdk.reflect.useDirectMethodHandle=false \
   --add-opens java.base/java.lang=ALL-UNNAMED \

@@ -18,14 +18,16 @@ INTEGRTESTS_LOG="${WORKSPACE}/hlt-p2-integration.log"
 HLT_P2_RES="SUCCESS"
 
 pushd $WORKSPACE/rundir
+    set -o pipefail # required for correct error status piping within the loop
     export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
 	if hltPhase2UpgradeIntegrationTests --help | grep -w -- "--menu " 2>/dev/null ; then # if the "--menu" option is included in this IB
 		for elem in $(python3 -c 'from Configuration.HLT.autoHLT import autoHLT; [print(v) for k,v in autoHLT.items() if "Run4" in k]') ; do
-			timeout $TIMEOUT hltPhase2UpgradeIntegrationTests --menu ${elem} --parallelJobs $(nproc) 2>&1 | tee -a ${INTEGRTESTS_LOG} && HLT_P2_RES="ERROR"
+			timeout $TIMEOUT hltPhase2UpgradeIntegrationTests --menu ${elem} --parallelJobs $(nproc) 2>&1 | tee -a ${INTEGRTESTS_LOG} || HLT_P2_RES="ERROR"
 		done
 	else # if the "--menu" option is NOT included in this IB
 		timeout $TIMEOUT hltPhase2UpgradeIntegrationTests --parallelJobs $(nproc) 2>&1 | tee -a ${INTEGRTESTS_LOG}
 	fi
+	set +o pipefail
 popd
 
 # Upload results

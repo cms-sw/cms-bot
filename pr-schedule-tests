@@ -96,7 +96,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
       done
 
       UNIQUE_TMP=($(printf "%s\n" "${TMP[@]}" | sort -u))
-      SELECTED_GPU_TYPES="$(IFS=, ; echo "${UNIQUE_TMP[*]}" | tr '[:lower]' '[:upper:]' )"
+      SELECTED_GPU_TYPES="$(IFS=, ; echo "${UNIQUE_TMP[*]}" | tr '[:lower:]' '[:upper:]' )"
     fi
 
     if [[ -n "$SELECTED_GPU_TYPES" ]]; then

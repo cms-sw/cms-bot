@@ -86,7 +86,7 @@ pushd "$WORKSPACE/matrix-results"
   fi
 
   # Check what workflows will be ran
-  if ! check_invalid_wf_lists "${$MATRIX_ARGS}" ; then
+  if ! check_invalid_wf_lists "${MATRIX_ARGS}" ; then
     exit 1
   fi
 

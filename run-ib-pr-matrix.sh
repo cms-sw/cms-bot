@@ -80,14 +80,15 @@ pushd "$WORKSPACE/matrix-results"
   else
     CMD_OPTS="${CMD_OPTS} ${EXTRA_MATRIX_COMMAND_ARGS}"
   fi
+
+  # Check what workflows will be ran (without any --command option)
+  if ! check_invalid_wf_lists "${MATRIX_ARGS}" ; then
+    exit 1
+  fi
+
   [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
     CMS_SITE_OVERRIDE="local"
-  fi
-
-  # Check what workflows will be ran
-  if ! check_invalid_wf_lists "${MATRIX_ARGS}" ; then
-    exit 1
   fi
 
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log

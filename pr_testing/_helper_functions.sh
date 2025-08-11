@@ -198,7 +198,7 @@ function get_gpu_matrix_args() {
 }
 
 function check_invalid_wf_lists () {
-  local WKFS="${1#-l}"
+  local WKFS=$(sed -n 's/.*-l \([^ ]*\).*/\1/p' <<< "$1")
   local DUMP_BADLIST=${2:-true}
   local WFLISTS_CNT WFS_CNT BADLIST_CNT
 

@@ -27,7 +27,7 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     WORKFLOWS=$(echo "${WORKFLOWS}" | sed "s|all|${ALL_WFS}|")
   fi
   rm -f $WORKSPACE/req.wfs
-  if  ! check_invalid_wf_lists "${WORKFLOWS}" false ; then
+  if  ! check_invalid_wf_lists "${OPTS} ${MATRIX_ARGS} ${WORKFLOWS}" false ; then
     touch $WORKSPACE/req.wfs
   else
     runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs

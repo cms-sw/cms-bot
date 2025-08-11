@@ -198,6 +198,7 @@ function get_gpu_matrix_args() {
 }
 
 function check_invalid_wf_lists () {
+  local CMD_OPTS="$1"
   local WKFS=$(sed -n 's/.*-l \([^ ]*\).*/\1/p' <<< "$1")
   local DUMP_BADLIST=${2:-true}
   local WFLISTS_CNT WFS_CNT BADLIST_CNT
@@ -210,21 +211,18 @@ function check_invalid_wf_lists () {
 
   # Capture both output and exit code of runTheMatrix.py
   local RUN_OUTPUT
-  if ! RUN_OUTPUT=$(runTheMatrix.py -j "${NJOBS:-1}" -l "$WKFS" -n 2>&1); then
+  if ! RUN_OUTPUT=$(runTheMatrix.py ${CMD_OPTS} -n 2>&1); then
     echo "ERROR : runTheMatrix returned non-zero exit code"
     return 1
   fi
 
   # Extract bad workflow lists directly from the output
   if (( WFLISTS_CNT > 0 )); then
-    local BADLIST=()
-    while IFS= read -r line; do
-      [[ "$line" == *"is not a possible selected entry"* ]] && BADLIST+=("$(awk '{print $1}' <<< "$line")")
-    done <<< "$RUN_OUTPUT"
-    BADLIST_CNT=${#BADLIST[@]}
+    local BADLIST=$(grep "is not a possible selected entry" <<< "$RUN_OUTPUT" | awk '{print $1}')
+    BADLIST_CNT=$(echo $BADLIST | wc -w)
     if (( BADLIST_CNT > 0 )); then
       if [[ "$DUMP_BADLIST" == "true" ]]; then
-        printf " -  %s\n" "${BADLIST[@]}" > "$WORKSPACE/bad-workflow-lists.txt"
+        echo " - $(echo $BADLIST | tr ' ' ',')"
       fi
       if (( WFLISTS_CNT != WFS_CNT )); then
         echo "WARNING : some workflow lists were not recognized"

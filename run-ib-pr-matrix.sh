@@ -86,9 +86,7 @@ pushd "$WORKSPACE/matrix-results"
   fi
 
   # Check what workflows will be ran
-  WORKFLOWS_TO_RUN=$(echo "$MATRIX_ARGS" | sed 's|.*-l ||;s| .*||' )
-
-  if ! check_invalid_wf_lists "${WORKFLOWS_TO_RUN}" ; then
+  if ! check_invalid_wf_lists "${$MATRIX_ARGS}" ; then
     exit 1
   fi
 

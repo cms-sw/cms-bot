@@ -216,28 +216,27 @@ function check_invalid_wf_lists () {
   fi
 
   # Extract bad workflow lists directly from the output
-  local BADLIST=()
-  while IFS= read -r line; do
-    [[ "$line" == *"is not a possible selected entry"* ]] && BADLIST+=("$(awk '{print $1}' <<< "$line")")
-  done <<< "$RUN_OUTPUT"
-
-  BADLIST_CNT=${#BADLIST[@]}
-
-  if (( BADLIST_CNT > 0 )); then
-    if [[ "$DUMP_BADLIST" == "true" ]]; then
-      printf " -  %s\n" "${BADLIST[@]}" > "$WORKSPACE/bad-workflow-lists.txt"
-    fi
-    if (( WFLISTS_CNT != WFS_CNT )); then
-      echo "WARNING : some workflow lists were not recognized"
-    else
-      if (( BADLIST_CNT == WFS_CNT )); then
-        echo "ERROR : all workflow lists were not recognized, and no additional workflows were requested"
-        return 1
+  if (( WFLISTS_CNT > 0 )); then
+    local BADLIST=()
+    while IFS= read -r line; do
+      [[ "$line" == *"is not a possible selected entry"* ]] && BADLIST+=("$(awk '{print $1}' <<< "$line")")
+    done <<< "$RUN_OUTPUT"
+    BADLIST_CNT=${#BADLIST[@]}
+    if (( BADLIST_CNT > 0 )); then
+      if [[ "$DUMP_BADLIST" == "true" ]]; then
+        printf " -  %s\n" "${BADLIST[@]}" > "$WORKSPACE/bad-workflow-lists.txt"
+      fi
+      if (( WFLISTS_CNT != WFS_CNT )); then
+        echo "WARNING : some workflow lists were not recognized"
       else
-        echo "WARNING : none of the workflow lists were recognized, only running explicitly requested workflows"
+        if (( BADLIST_CNT == WFS_CNT )); then
+          echo "ERROR : all workflow lists were not recognized, and no additional workflows were requested"
+          return 1
+        else
+          echo "WARNING : none of the workflow lists were recognized, only running explicitly requested workflows"
+        fi
       fi
     fi
   fi
-
   return 0
 }

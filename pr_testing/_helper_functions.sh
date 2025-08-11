@@ -178,7 +178,7 @@ function get_result_file_name () {
       ;;
     comp)
       if [ "$TEST_FLAVOR" != "" ]; then
-        echo "20-${TEST_FLAVOR}-comparison-report.res"
+        echo "22-${TEST_FLAVOR}-comparison-report.res"
       else
         echo "20-comparison-report.res"
       fi

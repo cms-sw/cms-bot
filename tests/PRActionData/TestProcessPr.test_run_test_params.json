@@ -122,7 +122,7 @@
                 "SKIP_TESTS": "header,static",
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#17 cms-sw/cms-bot#2134",
                 "RELEASE_FORMAT": "CMSSW_14_1_CPP20_X",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
                 "CONTEXT_PREFIX": "cms/17",
                 "BUILD_ONLY": false
             }

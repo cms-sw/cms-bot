@@ -196,3 +196,45 @@ function get_gpu_matrix_args() {
   OPTS=$(PYTHONPATH=${PR_TESTING_DIR}/.. ${CMSBOT_PYTHON_CMD} -c 'from RelValArgs import GPU_RELVALS_FLAGS;print(GPU_RELVALS_FLAGS)')
   echo ${OPTS}
 }
+
+function check_invalid_wf_lists () {
+  local CMD_OPTS="$1"
+  local WKFS=$(sed -n 's/.*-l \([^ ]*\).*/\1/p' <<< "$1")
+  local DUMP_BADLIST=${2:-true}
+  local WFLISTS_CNT WFS_CNT BADLIST_CNT
+
+  rm -f "$WORKSPACE/bad-workflow-lists.txt"
+
+  # Count workflow lists vs numeric workflows
+  WFLISTS_CNT=$(echo "$WKFS" | tr ',' '\n' | grep -Ev "^[1-9][0-9]*(\.[0-9]+)?$" | wc -l)
+  WFS_CNT=$(echo "$WKFS" | tr ',' '\n' | wc -l)
+
+  # Capture both output and exit code of runTheMatrix.py
+  local RUN_OUTPUT
+  if ! RUN_OUTPUT=$(runTheMatrix.py ${CMD_OPTS} -n 2>&1); then
+    echo "ERROR : runTheMatrix returned non-zero exit code"
+    return 1
+  fi
+
+  # Extract bad workflow lists directly from the output
+  if (( WFLISTS_CNT > 0 )); then
+    local BADLIST=$(grep "is not a possible selected entry" <<< "$RUN_OUTPUT" | awk '{print $1}')
+    BADLIST_CNT=$(echo $BADLIST | wc -w)
+    if (( BADLIST_CNT > 0 )); then
+      if [[ "$DUMP_BADLIST" == "true" ]]; then
+        echo " - $(echo $BADLIST | tr ' ' ',')"
+      fi
+      if (( WFLISTS_CNT != WFS_CNT )); then
+        echo "WARNING : some workflow lists were not recognized"
+      else
+        if (( BADLIST_CNT == WFS_CNT )); then
+          echo "ERROR : all workflow lists were not recognized, and no additional workflows were requested"
+          return 1
+        else
+          echo "WARNING : none of the workflow lists were recognized, only running explicitly requested workflows"
+        fi
+      fi
+    fi
+  fi
+  return 0
+}

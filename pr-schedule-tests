@@ -82,7 +82,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
         SELECTED_GPU_TYPES=$(IFS=','; echo "${ALL_GPU_TYPES[*]}")
       fi
 
-      IFS=',' read -ra SELECTED <<< "$SELECTED_GPU_TYPES"
+      IFS=',' read -ra SELECTED <<< "$(echo "$SELECTED_GPU_TYPES" | tr '[:lower:]' '[:upper:]')"
       TMP=()
 
       for gpu in "${SELECTED[@]}"; do

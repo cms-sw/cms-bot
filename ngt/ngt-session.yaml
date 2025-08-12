@@ -1,15 +1,16 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: ngt-session-@SESSION_ID@
+  name: ngt-@SESSION_ID@
   labels:
-    home-afs: "true" 
-    mount-cvmfs: "true" 
-    mount-afs: "true" 
+    home-eos: "true"
+    mount-cvmfs: "true"
+    mount-afs: "false"
+    mount-eos: "true"
 spec:
   containers:
     - name: container
-      image: registry.cern.ch/ngt/lxplus-like:9
+      image: cmssw/el9:x86_64
       command: ["sleep", "infinity"]
       env:
         - name: TZ

@@ -6,13 +6,13 @@ if [ "$HOST" = "" ] ; then
     JURL=$(echo $LOCAL_JENKINS_URL | sed "s|//localhost|//$hname|")
     echo "${JDATA}" > $WORKSPACE/../jenkins-wekhook.data
     uheader=$(grep '<forwardedUser>' $JENKINS_HOME/config.xml | sed 's|.*<forwardedUser> *||;s| *</forwardedUser>.*||')
+    ERR=0
     curl -s -k -f --retry 3 --retry-delay 5 --max-time 30 -X POST -d \
       "{\"DATA\":\"${JDATA}\",\"JENKINS_SERVER\":\"${JURL}\",\"JENKINS_USER\":\"cmssdt\",\"USER_HEADER\":\"${uheader}\"}" \
       --header 'Content-Type: application/json' \
-      https://cmssdt.cern.ch/SDT/cgi-bin/jenkins_webhook > out.txt
+      https://cmssdt.cern.ch/SDT/cgi-bin/jenkins_webhook > out.txt || ERR=$?
     cat out.txt
-    grep 'Unable to start jenkins job' out.txt >/dev/null && exit 1
-    exit 0
+    exit $ERR
   fi
 fi
 HOSTNAME=$(hostname -I)

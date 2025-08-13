@@ -221,7 +221,7 @@ function check_invalid_wf_lists () {
     BADLIST_CNT=$(echo $BADLIST | wc -w)
     if (( BADLIST_CNT > 0 )); then
       if [[ "$DUMP_BADLIST" == "true" ]]; then
-        echo " - $(echo $BADLIST | tr ' ' ',')" > "$WORKSPACE/bad-workflow-lists.txt"
+        echo "$(echo $BADLIST | tr ' ' ',')" > "$WORKSPACE/bad-workflow-lists.txt"
       fi
       if (( WFLISTS_CNT != WFS_CNT )); then
         echo "WARNING : some workflow lists were not recognized"

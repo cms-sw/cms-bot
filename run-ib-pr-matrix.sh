@@ -30,8 +30,9 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   if  ! check_invalid_wf_lists "${OPTS} ${MATRIX_ARGS} ${WORKFLOWS}" false ; then
     touch $WORKSPACE/req.wfs
   else
-    runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+    cat $WORKSPACE/runTheMatrix.log | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
   fi
+  rm -f $WORKSPACE/runTheMatrix.log
   for wf in $(cat $WORKSPACE/req.wfs) ; do
       [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
       WFS="${wf},${WFS}"
@@ -85,6 +86,7 @@ pushd "$WORKSPACE/matrix-results"
   if ! check_invalid_wf_lists "${MATRIX_ARGS}" ; then
     exit 1
   fi
+  rm -f $WORKSPACE/runTheMatrix.log
 
   [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then

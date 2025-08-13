@@ -105,9 +105,7 @@ else
   echo "MATRIX${UC_TEST_FLAVOR}_TESTS;OK,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/$(get_status_file_name relval "$TEST_FLAVOR")
 
   if [[ -s "$WORKSPACE/bad-workflow-lists.txt" ]]; then
-    echo "### Invalid workflow lists" >  ${RESULTS_DIR}/0a-bad-workflows-report.res
-    echo "The following workflow names were not recognized and not ran:" >> ${RESULTS_DIR}/0a-bad-workflows-report.res
-    cat "$WORKSPACE/bad-workflow-lists.txt" >> ${RESULTS_DIR}/0a-bad-workflows-report.res
+    echo '* **Invalid workflow lists*: ${\color{red}{\textsf{'$(cat $WORKSPACE/bad-workflow-lists.txt)'}}}$' >  ${RESULTS_DIR}/0a-bad-workflows-report.res
   fi
 
   if $DO_COMPARISON ; then

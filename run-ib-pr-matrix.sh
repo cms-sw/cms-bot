@@ -26,12 +26,19 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     ALL_WFS=$(runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' | tr '\n' ',' | sed 's|,$||')
     WORKFLOWS=$(echo "${WORKFLOWS}" | sed "s|all|${ALL_WFS}|")
   fi
-  runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+  rm -f $WORKSPACE/req.wfs
+  if  ! check_invalid_wf_lists "${OPTS} ${MATRIX_ARGS} ${WORKFLOWS}" false ; then
+    touch $WORKSPACE/req.wfs
+  else
+    cat $WORKSPACE/runTheMatrix.log | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+  fi
+  rm -f $WORKSPACE/runTheMatrix.log
   for wf in $(cat $WORKSPACE/req.wfs) ; do
-    [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
-    WFS="${wf},${WFS}"
+      [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
+      WFS="${wf},${WFS}"
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
+
   if [ "${WFS}" = "" ] ; then
     mv ${WORKSPACE}/workflows-${BUILD_ID}.log ${WORKSPACE}/workflows-${BUILD_ID}.done
     send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.done ${ARTIFACT_DIR}/workflows-${BUILD_ID}.done
@@ -74,10 +81,18 @@ pushd "$WORKSPACE/matrix-results"
   else
     CMD_OPTS="${CMD_OPTS} ${EXTRA_MATRIX_COMMAND_ARGS}"
   fi
+
+  # Check what workflows will be ran (without any --command option)
+  if ! check_invalid_wf_lists "${MATRIX_ARGS}" ; then
+    exit 1
+  fi
+  rm -f $WORKSPACE/runTheMatrix.log
+
   [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
     CMS_SITE_OVERRIDE="local"
   fi
+
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}.txt

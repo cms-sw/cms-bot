@@ -104,6 +104,10 @@ else
   echo "no errors in the RelVals!!"
   echo "MATRIX${UC_TEST_FLAVOR}_TESTS;OK,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/$(get_status_file_name relval "$TEST_FLAVOR")
 
+  if [[ -s "$WORKSPACE/bad-workflow-lists.txt" ]]; then
+    echo '* **Invalid workflow lists**: ${\color{red}\Huge{\textsf{'$(cat $WORKSPACE/bad-workflow-lists.txt)'}}}$' >  ${RESULTS_DIR}/0a-bad-workflows-report.res
+  fi
+
   if $DO_COMPARISON ; then
     echo "COMPARISON${UC_TEST_FLAVOR};QUEUED,Comparison ${UC_TEST_FLAVOR} with the baseline,See results,See results" >> ${RESULTS_DIR}/comparison${UC_TEST_FLAVOR}.txt
     TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'

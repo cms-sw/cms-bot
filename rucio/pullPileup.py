@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import glob, os, pwd, shlex, subprocess, sys
 from argparse import ArgumentParser
 from hashlib import md5

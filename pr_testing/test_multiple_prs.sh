@@ -172,12 +172,11 @@ fi
 IFS=',' read -ra SELECTED_GPU_TYPES <<< "$SELECTED_GPU_TYPES"
 
 for gpu_type in ${SELECTED_GPU_TYPES[@]} ; do
-  gpu_type_lc=$(echo $gpu_type | tr '[A-Z]' '[a-z]')
-  VAR_NAME="MATRIX_EXTRAS_${ex_type}"
+  VAR_NAME="MATRIX_EXTRAS_${gpu_type}"
   if [ -z "${!VAR_NAME}" ]; then
     eval "$VAR_NAME=\"${MATRIX_EXTRAS_GPU}\""
   fi
-  VAR_NAME="EXTRA_MATRIX_ARGS_${ex_type}"
+  VAR_NAME="EXTRA_MATRIX_ARGS_${gpu_type}"
   if [ -z "${!VAR_NAME}" ]; then
     eval "$VAR_NAME=\"${EXTRA_MATRIX_ARGS_GPU}\""
   fi

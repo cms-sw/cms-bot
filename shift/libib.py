@@ -1,5 +1,6 @@
 import datetime
 import io
+import itertools
 import json
 import logging
 import os
@@ -481,6 +482,65 @@ def extract_relval_error(release_name, arch, rvItem):
     # print("!!!")
 
 
+def get_ut_data(utFile):
+    utFile = utFile.replace("/data/sdt", "").replace(
+        "unitTests-summary.log", "unitTestResults.pkl"
+    )
+
+    utIO = io.BytesIO(fetch(utFile, ContentType.BINARY))
+    # utIO.seek(0)
+    pklr = pickle.Unpickler(utIO)
+    unitTestResults = pklr.load()
+    return unitTestResults
+
+
+def process_ut_data(unitTestResults, arch, release_name):
+    result = []
+    for pkg, utData in unitTestResults.items():
+        utList, passed, failed = utData
+        if failed > 0:
+            webURL_t = (
+                f"https://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
+                f"{arch}/{release_name}/unitTestLogs/{pkg}#/{{"
+                f"lineStart}}-{{lineEnd}}"
+            )
+            # print(f"\t\t{failed} Unit Test{'s' if failed>1 else ''} in {pkg}")
+            try:
+                utlData = fetch(
+                    f"SDT/cgi-bin/buildlogs/raw_read_config/{arch}/"
+                    f"{release_name}/unitTestLogs/{pkg}",
+                    ContentType.JSON,
+                )
+            except urllib.error.HTTPError:
+                utlData = {"show_controls": []}
+
+            for ctl in utlData["show_controls"]:
+                if ctl["name"] != "Issues":
+                    continue
+                for obj in ctl["list"]:
+                    if obj["control_type"] == "Issues" and re.match(
+                        r".* failed at line #\d+", obj["name"]
+                    ):
+                        webURL = webURL_t.format(**obj)
+                        # print("\t\t" + obj["name"])
+                        utName = pkg + "/" + obj["name"].split(" ", 1)[0]
+                        result.append(LogEntry(name=utName, url=webURL, data=None))
+
+    return result
+
+
+def process_relval_data(rvData, arch, release_name):
+    result = []
+    for rvItem in rvData:
+        if rvItem["exitcode"] == 0 or rvItem["known_error"] == 1:
+            continue
+        x = extract_relval_error(release_name, arch, rvItem)
+        assert x
+        result.append(x)
+
+    return result
+
+
 def check_ib(data, compilation_only=False):
     global logger
     res = {}
@@ -490,6 +550,10 @@ def check_ib(data, compilation_only=False):
     for arch in data["tests_archs"]:
         # print(f"\tFound arch {arch}")
         res[arch] = {"build": [], "utest": [], "relval": []}
+
+    if "gpu_data" in data:
+        for gpuarch in set(itertools.chain(data["gpu_data"]["qa"], data["gpu_data"]["relvals"])):
+            res[gpuarch] = {"build": [], "utest": [], "relval": []}
 
     logger.info("== Compilation results ==")
     for bld in data["builds"]:
@@ -542,48 +606,12 @@ def check_ib(data, compilation_only=False):
         logger.info("== Unit test results ==")
         for ut in data["utests"]:
             arch = ut["arch"]
+            release_name = data["release_name"]
             logger.info(f"\tArch: {arch}, status: {ut['passed']}")
             if ut["passed"] == "failed":
-                utFile = ut["file"]
-                utFile = utFile.replace("/data/sdt", "").replace(
-                    "unitTests-summary.log", "unitTestResults.pkl"
-                )
-
-                utIO = io.BytesIO(fetch(utFile, ContentType.BINARY))
-                # utIO.seek(0)
-                pklr = pickle.Unpickler(utIO)
-                unitTestResults = pklr.load()
-                for pkg, utData in unitTestResults.items():
-                    utList, passed, failed = utData
-                    if failed > 0:
-                        webURL_t = (
-                            f"https://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
-                            f"{arch}/{data['release_name']}/unitTestLogs/{pkg}#/{{"
-                            f"lineStart}}-{{lineEnd}}"
-                        )
-                        # print(f"\t\t{failed} Unit Test{'s' if failed>1 else ''} in {pkg}")
-                        try:
-                            utlData = fetch(
-                                f"SDT/cgi-bin/buildlogs/raw_read_config/{arch}/"
-                                f"{data['release_name']}/unitTestLogs/{pkg}",
-                                ContentType.JSON,
-                            )
-                        except urllib.error.HTTPError:
-                            utlData = {"show_controls": []}
-
-                        for ctl in utlData["show_controls"]:
-                            if ctl["name"] != "Issues":
-                                continue
-                            for obj in ctl["list"]:
-                                if obj["control_type"] == "Issues" and re.match(
-                                    r".* failed at line #\d+", obj["name"]
-                                ):
-                                    webURL = webURL_t.format(**obj)
-                                    # print("\t\t" + obj["name"])
-                                    utName = pkg + "/" + obj["name"].split(" ", 1)[0]
-                                    res[arch]["utest"].append(
-                                        LogEntry(name=utName, url=webURL, data=None)
-                                    )
+                unitTestResults = get_ut_data(ut["file"])
+                ut_log_entries = process_ut_data(unitTestResults, arch, release_name)
+                res[arch]["utest"].extend(ut_log_entries)
 
         logger.info("== RelVal results ==")
         for rv in data["relvals"]:
@@ -599,12 +627,38 @@ def check_ib(data, compilation_only=False):
                 except urllib.error.HTTPError:
                     rvData = []
 
-                for rvItem in rvData:
-                    if rvItem["exitcode"] == 0 or rvItem["known_error"] == 1:
-                        continue
-                    x = extract_relval_error(data["release_name"], arch, rvItem)
-                    assert x
-                    res[arch]["relval"].append(x)
+                rv_log_entries = process_relval_data(rvData, arch, data["release_name"])
+                res[arch]["relval"].extend(rv_log_entries)
+
+        if "gpu_data" in data:
+            logger.info("== GPU results ==")
+            for key, ut in data["gpu_data"]["qa"].items():
+                logger.info(f"\tGPU flavor: {key}, status: {ut['passed']}")
+                if int(ut["details"]["num_fails"]) != 0:
+                    arch = ut["arch"]
+                    release_name = f"{ut['release_queue']}/gpu/{ut['gpu']}"
+                    unitTestResults = get_ut_data(ut["file"])
+                    ut_log_entries = process_ut_data(unitTestResults, arch, release_name)
+                    res[key]["utest"] = ut_log_entries
+
+            for key, rv in data["gpu_data"]["relvals"].items():
+                logger.info(f"\tGPU flavor: {key}, status: {rv['passed']}")
+                arch = rv["arch"]
+                queue = re.sub("_X.*", "_X", rv["release_name"])
+                release_name = f"{rv['release_name']}/gpu/{rv['gpu']}"
+                if not rv["passed"]:
+                    try:
+                        rvData = fetch(
+                            f"SDT/public/cms-sw.github.io/data/relvals/{arch}/{ib_date}/gpu/{rv["gpu"]}/"
+                            f"{queue}.json",
+                            ContentType.JSON,
+                        )
+                    except urllib.error.HTTPError:
+                        rvData = []
+
+                    rv_log_entries = process_relval_data(rvData, arch, release_name)
+                    res[key]["relval"].extend(rv_log_entries)
+
     logger.info("=" * 80)
     return data["release_name"], res
 

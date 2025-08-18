@@ -649,7 +649,7 @@ def check_ib(data, compilation_only=False):
                 if not rv["passed"]:
                     try:
                         rvData = fetch(
-                            f"SDT/public/cms-sw.github.io/data/relvals/{arch}/{ib_date}/gpu/{rv["gpu"]}/"
+                            f"SDT/public/cms-sw.github.io/data/relvals/{arch}/{ib_date}/gpu/{rv['gpu']}/"
                             f"{queue}.json",
                             ContentType.JSON,
                         )

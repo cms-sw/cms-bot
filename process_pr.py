@@ -47,6 +47,7 @@ import yaml
 import logging
 import sys
 import os
+import itertools
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -146,10 +147,13 @@ REGEX_IGNORE_COMMIT_COUNT = r"\+commit-count"
 REGEX_IGNORE_FILE_COUNT = r"\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
-ALL_GPU_FLAVORS = [
-    x.strip() for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
+ALL_GPUS = [
+    x.strip()
+    for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
+    if x.strip()
 ]
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"] + ALL_GPU_FLAVORS
+ALL_GPU_BRANDS = sorted(list(set(x.strip().split("_", 1)[0] for x in ALL_GPUS)))
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)
@@ -199,6 +203,12 @@ MULTILINE_COMMENTS_MAP = {
     "(workflow|relval)(s|)_command_opt(ion|)(s|)("
     + EXTRA_RELVALS_TESTS_OPTS
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
+    "gpu(s|_flavor(s|)|_type(s|)|)": [
+        format(
+            r"%(gpu)s(\s*,\s*%(gpu)s|)*", gpu="|".join(itertools.chain(ALL_GPUS, ALL_GPU_BRANDS))
+        ),
+        "SELECTED_GPU_TYPES",
+    ],
 }
 
 BOT_CACHE_CHUNK_SIZE = 55000
@@ -1738,20 +1748,6 @@ def process_pr(
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
-
-    # Extract enabled GPU flavors and remove them from enable_tests
-    new_enable_tests = []
-    enabled_gpu_flavors = set()
-    for test in enable_tests.split(","):
-        if test == "GPU":
-            enabled_gpu_flavors.update([x.upper() for x in ALL_GPU_FLAVORS])
-        elif test.lower() in ALL_GPU_FLAVORS:
-            enabled_gpu_flavors.add(test)
-        else:
-            new_enable_tests.append(test)
-
-    new_enable_tests.extend(list(enabled_gpu_flavors))
-    enable_tests = ",".join(sorted(new_enable_tests))
 
     # Check if it needs to be automatically closed.
     if mustClose:

@@ -61,8 +61,8 @@
             "data": {
                 "EXTRA_CMSSW_PACKAGES": "Foo/Bar",
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#24",
-                "ENABLE_BOT_TESTS": "CUDA,HIGH_STATS,NANO,PROFILING,ROCM,THREADING",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
+                "ENABLE_BOT_TESTS": "GPU,THREADING,PROFILING,HIGH_STATS,NANO",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
                 "CONTEXT_PREFIX": "cms/24",
                 "BUILD_ONLY": false
             }

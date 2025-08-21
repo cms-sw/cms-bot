@@ -353,6 +353,7 @@
         "operations",
         "orp"
       ],
+      "end_date": 1755734400,
       "start_date": 1692144000
     }
   ],
@@ -1083,6 +1084,15 @@
       ],
       "end_date": 1621814400,
       "start_date": 1585008000
+    }
+  ],
+  "ftenchini": [
+    {
+      "category": [
+        "operations",
+        "orp"
+      ],
+      "start_date": 1755734400
     }
   ],
   "ftorrresd": [
@@ -2209,6 +2219,7 @@
         "orp",
         "orp"
       ],
+      "end_date": 1755734400,
       "start_date": 1657152000
     }
   ],

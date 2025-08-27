@@ -31,7 +31,7 @@ import forward_ports_map
 import re, time
 from collections import defaultdict
 import zlib, base64
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from os.path import join, exists, dirname
 from os import environ
 from github_utils import (
@@ -47,6 +47,7 @@ import yaml
 import logging
 import sys
 import os
+import functools
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -97,7 +98,8 @@ def format(s, **kwds):
     return s % kwds
 
 
-BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
+BOT_CACHE_VERSION = 3
+BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}, "version": BOT_CACHE_VERSION}
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
@@ -341,13 +343,35 @@ def collect_commit_cache(bot_cache):
         bot_cache["commits"] = commit_cache
 
 
+def bot_cache_v1_to_v2(cache):
+    logger.info("Applying v1 to v2 migration")
+    collect_commit_cache(cache)
+
+
+def bot_cache_v2_to_v3(cache):
+    logger.info("Applying v2 to v3 migration")
+    for commit_id in cache["commits"]:
+        ts = cache["commits"][commit_id]["time"]
+        t_utc = datetime.fromtimestamp(ts).replace(tzinfo=datetime.UTC)
+        cache["commits"][commit_id]["time"] = t_utc.timestamp()
+
+
 def read_bot_cache(data):
+    # This will only get called if data is not empty - i.e. when we *do* have a cache
     logger.info("Loading bot cache")
     res = loads_maybe_decompress(data)
+
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in res:
             res[k] = copy.deepcopy(v)
-    collect_commit_cache(res)
+
+    if cache_version != BOT_CACHE_VERSION:
+        logger.info("Applying cache migrations")
+        for i in range(cache_version, BOT_CACHE_VERSION):
+            func_ = globals().get("bot_cache_v{0}_to_v{1}".format(i, i + 1))
+            if func_:
+                func_(res)
+
     return res
 
 
@@ -370,7 +394,7 @@ def extract_bot_cache(comment_msgs):
         logger.trace("Loaded bot cache:\n%s", dumps(res))
         return res
 
-    return {}
+    return copy.deepcopy(BOT_CACHE_TEMPLATE)
 
 
 def prepare_bot_cache(bot_cache):
@@ -1263,8 +1287,8 @@ def process_pr(
         logger.info("Latest commit message: %s", ensure_ascii(last_commit.message))
         logger.info("Latest commit sha: %s", last_commit.sha)
         logger.info("PR update time: %s", pr.updated_at)
-        logger.info("Time UTC: %s", datetime.utcnow())
-        if last_commit_date > datetime.utcnow():
+        logger.info("Time UTC: %s", datetime.now(tz=datetime.UTC))
+        if last_commit_date > datetime.now(tz=datetime.UTC):
             logger.warning("==== Future commit found ====")
             add_labels = True
             try:
@@ -1364,9 +1388,9 @@ def process_pr(
         bot_cache = extract_bot_cache(technical_comments)
 
     # Make sure bot cache has the needed keys
-    for k, v in BOT_CACHE_TEMPLATE.items():
-        if k not in bot_cache:
-            bot_cache[k] = copy.deepcopy(v)
+    # for k, v in BOT_CACHE_TEMPLATE.items():
+    #     if k not in bot_cache:
+    #         bot_cache[k] = copy.deepcopy(v)
 
     for comment in all_comments:
         commenter = ensure_ascii(comment.user.login)
@@ -1934,7 +1958,7 @@ def process_pr(
                     bot_cache["commits"][commit.sha]["time"] = last_seen_commit_time
 
             cache_entry = bot_cache["commits"][commit.sha]
-            events[datetime.fromtimestamp(cache_entry["time"])].append(
+            events[datetime.fromtimestamp(cache_entry["time"], tz=datetime.UTC)].append(
                 {"type": "commit", "value": {"files": cache_entry["files"], "sha": commit.sha}}
             )
 
@@ -1942,7 +1966,7 @@ def process_pr(
         for commit_sha, cache_entry in bot_cache["commits"].items():
             if cache_entry.get("squashed", False):
                 logger.debug("Adding back cached commit %s", commit_sha)
-                events[datetime.fromtimestamp(cache_entry["time"])].append(
+                events[datetime.fromtimestamp(cache_entry["time"], tz=datetime.UTC)].append(
                     {
                         "type": "commit",
                         "value": {"files": cache_entry["files"], "sha": commit_sha},

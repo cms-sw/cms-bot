@@ -49,6 +49,9 @@ import sys
 import os
 
 CMSSW_CATEGORIES = {}
+import itertools
+from dataclasses import dataclass, field
+from typing import List
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -104,39 +107,37 @@ TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
 IGNORING_TESTS_MSG = "Ignoring test request."
-TESTS_RESULTS_MSG = "^\\s*([-|+]1|I had the issue.*)\\s*$"
+TESTS_RESULTS_MSG = r"^\s*([-|+]1|I had the issue.*)\s*$"
 FAILED_TESTS_MSG = "The jenkins tests job failed, please try again."
-PUSH_TEST_ISSUE_MSG = "^\\[Jenkins CI\\] Testing commit: [0-9a-f]+$"
+PUSH_TEST_ISSUE_MSG = r"^\[Jenkins CI\] Testing commit: [0-9a-f]+$"
 HOLD_MSG = "Pull request has been put on hold by "
 # Regexp to match the test requests
 CODE_CHECKS_REGEXP = re.compile(
-    r"code-checks( with cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)( and apply patch|)$"
+    r"code-checks(?: with (?P<with>cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+))?(?P<apply> and apply patch)?$"
 )
-WF_PATTERN = r"(?:[a-z][a-z0-9_]+|[1-9][0-9]*(\.[0-9]+|))"
-CMSSW_QUEUE_PATTERN = "CMSSW_[0-9]+_[0-9]+_(X|[A-Z][A-Z0-9]+_X|[0-9]+(_[a-zA-Z0-9_]+|))"
+WF_PATTERN = r"(?:[a-z][a-z0-9_]+|[1-9][0-9]*(?:\.[0-9]+)?)"
+CMSSW_QUEUE_PATTERN = "CMSSW_[0-9]+_[0-9]+_(X|[A-Z][A-Z0-9]+_X|[0-9]+(_[a-zA-Z0-9_]+)?)"
 CMSSW_PACKAGE_PATTERN = "[A-Z][a-zA-Z0-9]+(?:/[a-zA-Z0-9]+|)"
 ARCH_PATTERN = "[a-z0-9]+_[a-z0-9]+_[a-z0-9]+"
-CMSSW_RELEASE_QUEUE_PATTERN = "(?P<queue>{cmssw}|{arch}|{cmssw}/{arch})".format(
-    cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN
+CMSSW_RELEASE_QUEUE_PATTERN = (
+    f"(?:{CMSSW_QUEUE_PATTERN}|{ARCH_PATTERN}|{CMSSW_QUEUE_PATTERN}/{ARCH_PATTERN})"
 )
 RELVAL_OPTS = r"[-][a-zA-Z0-9_.,\s/'-]+"
 CLOSE_REQUEST = re.compile(r"^close$", re.I)
-REOPEN_REQUEST = re.compile(r"^(?:re|)open$", re.I)
+REOPEN_REQUEST = re.compile(r"^(re)?open$", re.I)
 CMS_PR_PATTERN = "(?:#[1-9][0-9]*|(?:{cmsorgs})/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(?:{cmsorgs})/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)".format(
     cmsorgs="|".join(EXTERNAL_REPOS),
 )
-TEST_REGEXP = r"^(?P<verb>test|build)(?: workflow(?:s|) (?P<wf>{workflow}(,{workflow}|)*)|)(?: with (?P<pr>{cms_pr}(,{cms_pr})*)|)( for {release_queue}|)(?P<using> using full cmssw| using (?:cms-|)addpkg (?P<pkg>{pkg}(?:,{pkg})*)|)$".format(
-    workflow=WF_PATTERN,
-    cms_pr=CMS_PR_PATTERN,
-    pkg=CMSSW_PACKAGE_PATTERN,
-    release_queue=CMSSW_RELEASE_QUEUE_PATTERN,
-)
+RE_WF_LIST = re.compile(f"{WF_PATTERN}(,{WF_PATTERN})*")
+RE_PR_LIST = re.compile(f"{CMS_PR_PATTERN}(,{CMS_PR_PATTERN})*")
+RE_PKG_LIST = re.compile(f"{CMSSW_PACKAGE_PATTERN}(,{CMSSW_PACKAGE_PATTERN})*")
+RE_QUEUE = re.compile(CMSSW_RELEASE_QUEUE_PATTERN)
+TEST_VERBS = ("build", "test")
 
 AUTO_TEST_REPOS = ["cms-sw/cmssw"]
-REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
-REGEX_TEST_ABORT = re.compile(r"^abort(?: test|)$", re.I)
+REGEX_TEST_ABORT = re.compile(r"^abort( test)?$", re.I)
 REGEX_TEST_IGNORE = re.compile(
-    r"^ignore tests-rejected (?:with|)([a-z -]+)$",
+    r"^ignore tests-rejected (?:with )?([a-z -]+)$",
     re.I,
 )
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
@@ -162,54 +163,51 @@ EXTRA_TESTS = (
     + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi_microarchs"
 )
 SKIP_TESTS = "|".join(["static", "header"])
-ENABLE_TEST_PTRN = "enable(_test(s|)|)"
+ENABLE_TEST_PTRN = "enable(_tests?)?"
 JENKINS_NODES = r"[a-zA-Z0-9_|&\s()-]+"
 MULTILINE_COMMENTS_MAP = {
-    "(workflow|relval)(s|)("
+    "(workflow|relval)s?("
     + EXTRA_RELVALS_TESTS_OPTS
-    + "|)": [r"{workflow}(,{workflow}|)*".format(workflow=WF_PATTERN), "MATRIX_EXTRAS"],
-    "(workflow|relval)(s|)_profiling": [
-        r"{workflow}(,{workflow}|)*".format(workflow=WF_PATTERN),
+    + ")?": [rf"({WF_PATTERN})(,({WF_PATTERN}))*", "MATRIX_EXTRAS"],
+    "(workflow|relval)s?_profiling": [
+        rf"({WF_PATTERN})(,({WF_PATTERN}))*",
         "PROFILING_WORKFLOWS",
     ],
-    "pull_request(s|)": [
-        "{cms_pr}(,{cms_pr})*".format(cms_pr=CMS_PR_PATTERN),
+    "pull_requests?": [
+        f"{CMS_PR_PATTERN}(,{CMS_PR_PATTERN})*",
         "PULL_REQUESTS",
     ],
     "full_cmssw|full": ["true|false", "BUILD_FULL_CMSSW"],
     "disable_poison": ["true|false", "DISABLE_POISON"],
     "use_ib_tag": ["true|false", "USE_IB_TAG"],
     "baseline": ["self|default", "USE_BASELINE"],
-    "set_env": [r"[A-Z][A-Z0-9_]+(,[A-Z][A-Z0-9_]+|)*", "CMSBOT_SET_ENV"],
-    "skip_test(s|)": [r"({tests})(,{tests})*".format(tests=SKIP_TESTS), "SKIP_TESTS"],
+    "set_env": [r"[A-Z][A-Z0-9_]+(,[A-Z][A-Z0-9_]+)*", "CMSBOT_SET_ENV"],
+    "skip_tests?": [rf"({SKIP_TESTS})(,({SKIP_TESTS}))*", "SKIP_TESTS"],
     "dry_run": ["true|false", "DRY_RUN"],
     "jenkins_(slave|node)": [JENKINS_NODES, "RUN_ON_SLAVE"],
-    "(arch(itecture(s|))|release|release/arch)": [CMSSW_RELEASE_QUEUE_PATTERN, "RELEASE_FORMAT"],
+    "(arch(itectures?)?|release|release/arch)": [CMSSW_RELEASE_QUEUE_PATTERN, "RELEASE_FORMAT"],
     ENABLE_TEST_PTRN: [
-        r"({tests})(,({tests}))*".format(tests=EXTRA_TESTS),
+        rf"({EXTRA_TESTS})(,({EXTRA_TESTS}))*",
         "ENABLE_BOT_TESTS",
     ],
-    "ignore_test(s|)": ["build-warnings|clang-warnings", "IGNORE_BOT_TESTS"],
+    "ignore_tests?": ["build-warnings|clang-warnings", "IGNORE_BOT_TESTS"],
     "container": [
-        "[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+|)",
+        "[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+)?",
         "DOCKER_IMGAGE",
     ],
     "cms-addpkg|addpkg": [
-        "{pkg}(?:,{pkg})*".format(pkg=CMSSW_PACKAGE_PATTERN),
+        f"{CMSSW_PACKAGE_PATTERN}(,({CMSSW_PACKAGE_PATTERN}))*",
         "EXTRA_CMSSW_PACKAGES",
     ],
     "build_verbose": ["true|false", "BUILD_VERBOSE"],
-    "(workflow|relval)(s|)_opt(ion|)(s|)("
+    "(workflow|relval)s?_opt(ion)?s?("
     + EXTRA_RELVALS_TESTS_OPTS
-    + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_ARGS", True],
-    "(workflow|relval)(s|)_command_opt(ion|)(s|)("
+    + "|_input)?": [RELVAL_OPTS, "EXTRA_MATRIX_ARGS", True],
+    "(workflow|relval)s?_command_opt(ion)?s?("
     + EXTRA_RELVALS_TESTS_OPTS
-    + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
-    "gpu(s|_flavor(s|)|_type(s|)|)": [
-        format(
-            r"(%(gpu)s)(\s*,\s*(%(gpu)s))*",
-            gpu="|".join(f"{x}(?:_.+)?" for x in ALL_GPU_BRANDS),
-        ),
+    + "|_input)?": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
+    "gpu(_flavor|_type)?s?": [
+        format(r"%(gpu)s(,(%(gpu)s))*", gpu="|".join(itertools.chain(ALL_GPUS, ALL_GPU_BRANDS))),
         "SELECTED_GPU_TYPES",
     ],
 }
@@ -589,26 +587,28 @@ def has_user_emoji(bot_cache, comment, repository, emoji, user):
 
 
 def get_assign_categories(line, extra_labels):
-    m = re.match(
-        r"^\s*(New categories assigned:\s*|(unassign|assign)\s+(from\s+|package\s+|))([a-zA-Z0-9/,\s-]+)\s*$",
+    m = re.fullmatch(
+        r"(?:(?P<new>New categories assigned:)|(?P<action>unassign|assign)(?: (?:from|package)?)?) (?P<cats>[A-Za-z0-9/,-]+)",
         line,
         re.I,
     )
-    if m:
-        assign_type = m.group(1).lower()
-        if m.group(2):
-            assign_type = m.group(2).lower()
-        new_cats = []
-        for ex_cat in m.group(4).replace(" ", "").split(","):
-            if "/" in ex_cat:
-                new_cats += get_package_categories(ex_cat)
-                add_nonblocking_labels([ex_cat], extra_labels)
-                continue
-            if not ex_cat in CMSSW_CATEGORIES:
-                continue
-            new_cats.append(ex_cat)
-        return assign_type.strip(), new_cats
-    return "", []
+    if not m:
+        return ("", [])
+
+    # determine type; empty type "" should never happen
+    assign_type = (m.group("action") or m.group("new")).lower()
+
+    new_cats = []
+    for ex_cat in m.group("cats").split(","):
+        if "/" in ex_cat:
+            new_cats += get_package_categories(ex_cat)
+            add_nonblocking_labels([ex_cat], extra_labels)
+            continue
+        if ex_cat not in CMSSW_CATEGORIES:
+            continue
+        new_cats.append(ex_cat)
+
+    return (assign_type.strip(), new_cats)
 
 
 def ignore_issue(repo_config, repo, issue):
@@ -754,27 +754,134 @@ def check_release_format(first_line, repo, params, *args):
     return rq, None
 
 
-def check_test_cmd(first_line, repo, params):
-    m = REGEX_TEST_REG.match(first_line)
-    if m:
-        wfs = ""
-        prs = []
-        cmssw_que = ""
-        logger.debug("check_test_cmd: %s", m.groups())
-        build_only = m.group("verb") == "build"
-        if m.group("wf"):
-            wfs = ",".join(set(m.group("wf").replace(" ", "").split(",")))
-        if m.group("pr"):
-            prs = get_prs_list_from_string(m.group("pr"), repo)
-        if m.group("queue"):
-            cmssw_que = m.group("queue")
-        if m.group("using"):
-            if "addpkg" in m.group("using"):
-                params["EXTRA_CMSSW_PACKAGES"] = m.group("pkg").strip()
+class ParseError(ValueError):
+    pass
+
+
+@dataclass
+class ParseResult:
+    verb: str
+    workflows: List[str] = field(default_factory=list)
+    prs: List[str] = field(default_factory=list)
+    queue: str = ""
+    using_full_cmssw: bool = False
+    addpkg_pkgs: List[str] = field(default_factory=list)
+
+
+def parse_test_cmd(first_line: str) -> ParseResult:
+    def _expect_list(token: str, rx: re.Pattern, kind: str) -> List[str]:
+        if not rx.fullmatch(token):
+            raise ParseError(f"invalid {kind} list: {token!r}")
+        # inputs are pre-normalized: commas are clean, spaces collapsed
+        return token.split(",")
+
+    def need(next_i: int, what: str):
+        if next_i >= n:
+            raise ParseError(f"expected {what} after {tokens[i - 1]!r}")
+
+    tokens = first_line.strip().split()
+    if not tokens:
+        raise ParseError("empty input")
+
+    verb = tokens.pop(0)
+    if verb not in TEST_VERBS:
+        raise ParseError(f"unknown verb: {verb!r}")
+
+    seen = set()
+    res = ParseResult(verb=verb)
+
+    i = 0
+    n = len(tokens)
+
+    while i < n:
+        t = tokens[i]
+
+        if t in ("workflow", "workflows"):
+            if "wf" in seen:
+                raise ParseError("duplicate workflows clause")
+            i += 1
+            need(i, "workflow list")
+            res.workflows = _expect_list(tokens[i], RE_WF_LIST, "workflow")
+            seen.add("wf")
+            i += 1
+            continue
+
+        if t == "with":
+            if "with" in seen:
+                raise ParseError("duplicate with clause")
+            i += 1
+            need(i, "PR list")
+            res.prs = _expect_list(tokens[i], RE_PR_LIST, "PR")
+            seen.add("with")
+            i += 1
+            continue
+
+        if t == "for":
+            if "for" in seen:
+                raise ParseError("duplicate for clause")
+            i += 1
+            need(i, "queue")
+            if not RE_QUEUE.fullmatch(tokens[i]):
+                raise ParseError(f"invalid release queue: {tokens[i]!r}")
+            res.queue = tokens[i]
+            seen.add("for")
+            i += 1
+            continue
+
+        if t == "using":
+            if "using" in seen:
+                raise ParseError("duplicate using clause")
+            i += 1
+            need(i, "'full cmssw' or 'addpkg'")
+            if tokens[i] == "full":
+                # expecting: 'using full cmssw'
+                i += 1
+                need(i, "'cmssw'")
+                if tokens[i] != "cmssw":
+                    raise ParseError("expected 'cmssw' after 'using full'")
+                res.using_full_cmssw = True
+                seen.add("using")
+                i += 1
             else:
-                params["BUILD_FULL_CMSSW"] = "true"
-        return (True, " ".join(prs), wfs, cmssw_que, build_only)
-    return (False, "", "", "", False)
+                # expecting: 'using (cms-)?addpkg <pkg[,pkg]*>'
+                if tokens[i] not in ("addpkg", "cms-addpkg"):
+                    raise ParseError("expected 'addpkg' or 'cms-addpkg' after 'using'")
+                i += 1
+                need(i, "package list")
+                res.addpkg_pkgs = _expect_list(tokens[i], RE_PKG_LIST, "package")
+                seen.add("using")
+                i += 1
+            continue
+
+        # Anything else is unexpected (helps catch typos/malformed input)
+        raise ParseError(f"unexpected token: {t!r}")
+
+    return res
+
+
+def check_test_cmd(first_line, repo, params):
+    try:
+        res = parse_test_cmd(first_line)
+    except ParseError as e:
+        logger.warning("Invalid build/test command: " + str(e))
+        return (False, "", "", "", False)
+
+    wfs = ""
+    prs = []
+
+    if res.workflows:
+        wfs = ",".join(set(res.workflows))
+
+    if res.prs:
+        prs = get_prs_list_from_string(",".join(res.prs))
+
+    if res.using_full_cmssw:
+        params["BUILD_FULL_CMSSW"] = "true"
+
+    if res.addpkg_pkgs:
+        params["EXTRA_CMSSW_PACKAGES"] = ",".join(res.addpkg_pkgs)
+
+    return (True, " ".join(prs), wfs, res.queue, res.verb == "build")
 
 
 def get_prs_list_from_string(pr_string="", repo_string=""):
@@ -822,12 +929,12 @@ def parse_extra_params(full_comment, repo):
         line_args[1] = line_args[1].strip()
         found = False
         for k, pttrn in MULTILINE_COMMENTS_MAP.items():
-            if not re.match("^(%s)$" % k, line_args[0], re.I):
+            if not re.fullmatch(k, line_args[0], re.I):
                 continue
             if (len(pttrn) < 3) or (not pttrn[2]):
                 line_args[1] = line_args[1].replace(" ", "")
             param = pttrn[1]
-            if not re.match("^(%s)$" % pttrn[0], line_args[1], re.I):
+            if not re.fullmatch(pttrn[0], line_args[1], re.I):
                 xerrors["value"].append(line_args[0])
                 found = True
                 break
@@ -1083,15 +1190,13 @@ def process_pr(
     REGEX_TYPE_CMDS = (
         r"^(type|(build-|)state)\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
     )
-    REGEX_EX_CMDS = r"^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (
-        repo.full_name
+    REGEX_EX_CMDS = (
+        rf"^(?:urgent|backport (?:of )?(?:#|https?://github\.com/{repo.full_name}/pull/)\d+)$"
     )
-    known_ignore_tests = "%s" % MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
-    REGEX_EX_IGNORE_CHKS = r"^ignore\s+((%s)(\s*,\s*(%s))*|none)$" % (
-        known_ignore_tests,
-        known_ignore_tests,
-    )
-    REGEX_EX_ENABLE_TESTS = r"^enable\s+(%s)$" % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
+    known_ignore_tests = MULTILINE_COMMENTS_MAP["ignore_tests?"][0]
+    REGEX_EX_IGNORE_CHKS = rf"^ignore\s+(({known_ignore_tests})(,({known_ignore_tests}))*|none)$"
+    known_enable_tests = MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
+    REGEX_EX_ENABLE_TESTS = rf"^enable ({known_enable_tests})$"
     L2_DATA = init_l2_data(repo_config, cms_repo)
     last_commit_date = None
     last_commit_obj = None
@@ -1562,9 +1667,9 @@ def process_pr(
             if m:
                 first_line = "code-checks"
                 code_check_apply_patch = False
-                if m.group(1):
-                    code_checks_tools = m.group(1).strip().split(" ")[-1]
-                if m.group(2):
+                if m.group("with"):
+                    code_checks_tools = m.group("with")
+                if m.group("apply"):
                     code_check_apply_patch = True
                 set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1")
 
@@ -1722,42 +1827,43 @@ def process_pr(
 
             # Check if someone asked to trigger the tests
             if valid_commenter:
-                ok, v2, v3, v4, v5 = check_test_cmd(first_line, repository, global_test_params)
-                if ok:
-                    build_comment = None
-                    if v5:
-                        if has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
-                            continue
-                        if test_comment and (
-                            not has_user_emoji(
-                                bot_cache, test_comment, repository, "+1", cmsbuild_user
-                            )
-                        ):
-                            continue
-                        build_comment = comment
-                    else:
-                        test_comment = comment
-                        signatures["tests"] = "pending"
-                    abort_test = None
-                    cmssw_prs = v2
-                    extra_wfs = ",".join(sorted(v3.split(",")))
-                    release_queue = v4
-                    release_arch = ""
-                    if "/" in release_queue:
-                        release_queue, release_arch = release_queue.split("/", 1)
-                    elif re.match("^" + ARCH_PATTERN + "$", release_queue):
-                        release_arch = release_queue
-                        release_queue = ""
-                    logger.info(
-                        "Tests requested: %s asked to test this PR with cmssw_prs=%s, release_queue=%s, arch=%s and workflows=%s",
-                        commenter,
-                        cmssw_prs,
-                        release_queue,
-                        release_arch,
-                        extra_wfs,
-                    )
-                    logger.debug("Comment message: %s", first_line)
-                    continue
+                if re.match("^(" + "|".join(TEST_VERBS) + ")", first_line):
+                    ok, v2, v3, v4, v5 = check_test_cmd(first_line, repository, global_test_params)
+                    if ok:
+                        build_comment = None
+                        if v5:
+                            if has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
+                                continue
+                            if test_comment and (
+                                not has_user_emoji(
+                                    bot_cache, test_comment, repository, "+1", cmsbuild_user
+                                )
+                            ):
+                                continue
+                            build_comment = comment
+                        else:
+                            test_comment = comment
+                            signatures["tests"] = "pending"
+                        abort_test = None
+                        cmssw_prs = v2
+                        extra_wfs = ",".join(sorted(v3.split(",")))
+                        release_queue = v4
+                        release_arch = ""
+                        if "/" in release_queue:
+                            release_queue, release_arch = release_queue.split("/", 1)
+                        elif re.match("^" + ARCH_PATTERN + "$", release_queue):
+                            release_arch = release_queue
+                            release_queue = ""
+                        logger.info(
+                            "Tests requested: %s asked to test this PR with cmssw_prs=%s, release_queue=%s, arch=%s and workflows=%s",
+                            commenter,
+                            cmssw_prs,
+                            release_queue,
+                            release_arch,
+                            extra_wfs,
+                        )
+                        logger.debug("Comment message: %s", first_line)
+                        continue
                 elif REGEX_TEST_ABORT.match(first_line) and (signatures["tests"] == "pending"):
                     abort_test = comment
                     test_comment = None
@@ -1769,6 +1875,7 @@ def process_pr(
                         logger.error("Invalid ignore reason: %s", reason)
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "-1")
                         reason = ""
+
                     if reason:
                         override_tests_failure = reason
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)

@@ -36,4 +36,3 @@ def pytest_configure(config):
         Framework.activateRecordMode()
     if config.getoption("record_action"):
         Framework.activateRecordActionMode()
-    Framework.activateTokenAuthMode()

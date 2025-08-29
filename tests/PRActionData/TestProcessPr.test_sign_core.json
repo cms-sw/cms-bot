@@ -8,12 +8,13 @@
                         "Utilities/ReleaseScripts/test/BuildFile.xml"
                     ],
                     "squashed": false,
-                    "time": 1711538467
+                    "time": 1711542067
                 }
             },
             "emoji": {},
             "last_seen_sha": "2a9454e30606b17e52000110972998326ce9e428",
-            "signatures": {}
+            "signatures": {},
+            "version": 3
         }
     },
     {
@@ -44,7 +45,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711538467}},\"emoji\":{\"2049242908\":\"+1\"},\"last_seen_sha\":\"2a9454e30606b17e52000110972998326ce9e428\",\"signatures\":{\"2049242908\":\"2a9454e30606b17e52000110972998326ce9e428\"}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711542067}},\"emoji\":{\"2049242908\":\"+1\"},\"last_seen_sha\":\"2a9454e30606b17e52000110972998326ce9e428\",\"signatures\":{\"2049242908\":\"2a9454e30606b17e52000110972998326ce9e428\"},\"version\":3} -->"
     },
     {
         "type": "save-bot-cache",
@@ -55,7 +56,7 @@
                         "Utilities/ReleaseScripts/test/BuildFile.xml"
                     ],
                     "squashed": false,
-                    "time": 1711538467
+                    "time": 1711542067
                 }
             },
             "emoji": {
@@ -64,7 +65,8 @@
             "last_seen_sha": "2a9454e30606b17e52000110972998326ce9e428",
             "signatures": {
                 "2049242908": "2a9454e30606b17e52000110972998326ce9e428"
-            }
+            },
+            "version": 3
         }
     }
 ]

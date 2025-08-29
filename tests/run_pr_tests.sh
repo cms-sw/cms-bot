@@ -1,11 +1,13 @@
 #!/bin/bash -xe
+#VENV_DIR=venv
+VENV_DIR=~/Work/cms-bot/.venv39
 INSTALL_REQS=0
-if [ ! -d venv ];  then
-  python3 -m venv venv
+if [ ! -d $VENV_DIR ];  then
+  python3 -m venv $VENV_DIR
   INSTALL_REQS=1
 fi
 
-source venv/bin/activate
+source $VENV_DIR/bin/activate
 if [ $INSTALL_REQS -eq 1 ]; then
   python3 -m pip install --upgrade pip
   pip install -r test-requirements.txt

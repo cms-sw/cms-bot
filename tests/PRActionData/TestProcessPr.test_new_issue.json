@@ -11,15 +11,11 @@
     },
     {
         "type": "create-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{},\"emoji\":{},\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {} -->"
     },
     {
         "type": "save-bot-cache",
-        "data": {
-            "emoji": {},
-            "signatures": {},
-            "commits": {}
-        }
+        "data": {}
     },
     {
         "type": "create-comment",

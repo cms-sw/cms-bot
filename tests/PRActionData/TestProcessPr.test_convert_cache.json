@@ -11,9 +11,10 @@
                         "README"
                     ],
                     "squashed": false,
-                    "time": 1743158481
+                    "time": 1743162081
                 }
-            }
+            },
+            "version": 3
         }
     },
     {
@@ -34,7 +35,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"ceea69106c5e0e17c03c87c13bdf187f03214fec\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743158481}},\"emoji\":{\"2761127311\":\"+1\"},\"last_seen_sha\":\"ceea69106c5e0e17c03c87c13bdf187f03214fec\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"ceea69106c5e0e17c03c87c13bdf187f03214fec\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743162081}},\"emoji\":{\"2761127311\":\"+1\"},\"last_seen_sha\":\"ceea69106c5e0e17c03c87c13bdf187f03214fec\",\"signatures\":{},\"version\":3} -->"
     },
     {
         "type": "save-bot-cache",
@@ -50,9 +51,10 @@
                         "README"
                     ],
                     "squashed": false,
-                    "time": 1743158481
+                    "time": 1743162081
                 }
-            }
+            },
+            "version": 3
         }
     }
 ]

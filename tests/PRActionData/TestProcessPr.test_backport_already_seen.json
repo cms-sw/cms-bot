@@ -8,14 +8,15 @@
                         "README"
                     ],
                     "squashed": false,
-                    "time": 1743163702
+                    "time": 1743167302
                 }
             },
             "emoji": {
                 "2761370733": "+1"
             },
             "last_seen_sha": "551c95f59caff42369887b5fee86583fe2bff161",
-            "signatures": {}
+            "signatures": {},
+            "version": 3
         }
     },
     {
@@ -39,6 +40,10 @@
         "data": []
     },
     {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"551c95f59caff42369887b5fee86583fe2bff161\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743167302}},\"emoji\":{\"2761370733\":\"+1\"},\"last_seen_sha\":\"551c95f59caff42369887b5fee86583fe2bff161\",\"signatures\":{},\"version\":3} -->"
+    },
+    {
         "type": "save-bot-cache",
         "data": {
             "commits": {
@@ -47,14 +52,15 @@
                         "README"
                     ],
                     "squashed": false,
-                    "time": 1743163702
+                    "time": 1743167302
                 }
             },
             "emoji": {
                 "2761370733": "+1"
             },
             "last_seen_sha": "551c95f59caff42369887b5fee86583fe2bff161",
-            "signatures": {}
+            "signatures": {},
+            "version": 3
         }
     }
 ]

@@ -1,33 +1,25 @@
---- Framework.py.orig	2025-04-03 10:01:22.739783757 +0200
-+++ Framework.py	2025-04-03 10:03:32.558079128 +0200
-@@ -241,6 +241,7 @@
+--- Framework.py.orig	2025-08-28 09:50:04.002076656 +0200
++++ Framework.py	2025-08-28 09:50:39.017704705 +0200
+@@ -344,8 +344,9 @@
  
  class BasicTestCase(unittest.TestCase):
      recordMode = False
 +    recordActionMode = False
-     tokenAuthMode = False
-     jwtAuthMode = False
+     authMode = "token"
+-    per_page = Consts.DEFAULT_PER_PAGE
++    per_page = 100
      retry = None
-@@ -349,15 +350,15 @@
- 
-         if self.tokenAuthMode:
-             self.g = github.Github(
--                self.oauth_token, retry=self.retry, pool_size=self.pool_size
-+                self.oauth_token, retry=self.retry, per_page=100
-             )
-         elif self.jwtAuthMode:
-             self.g = github.Github(
--                jwt=self.jwt, retry=self.retry, pool_size=self.pool_size
-+                jwt=self.jwt, retry=self.retry, per_page=100
-             )
-         else:
-             self.g = github.Github(
--                self.login, self.password, retry=self.retry, pool_size=self.pool_size
-+                self.login, self.password, retry=self.retry, per_page=100
-             )
- 
- 
-@@ -379,3 +380,7 @@
+     pool_size = None
+     seconds_between_requests: float | None = None
+@@ -497,7 +498,6 @@
+             auth=auth,
+             per_page=self.per_page,
+             retry=retry,
+-            pool_size=pool_size,
+             seconds_between_requests=self.seconds_between_requests,
+             seconds_between_writes=self.seconds_between_writes,
+         )
+@@ -517,3 +517,7 @@
  
  def setPoolSize(pool_size):
      BasicTestCase.pool_size = pool_size

@@ -205,7 +205,8 @@ MULTILINE_COMMENTS_MAP = {
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
     "gpu(s|_flavor(s|)|_type(s|)|)": [
         format(
-            r"%(gpu)s(\s*,\s*%(gpu)s|)*", gpu="|".join(itertools.chain(ALL_GPUS, ALL_GPU_BRANDS))
+            r"(%(gpu)s)(\s*,\s*(%(gpu)s))*",
+            gpu="|".join(itertools.chain(ALL_GPUS, ALL_GPU_BRANDS)),
         ),
         "SELECTED_GPU_TYPES",
     ],

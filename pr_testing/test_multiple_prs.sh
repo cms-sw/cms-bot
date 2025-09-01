@@ -92,6 +92,7 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
 [ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
+readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
 [ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]')"
 EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | grep -v GPU | tr '\n' ' ')
 # ---
@@ -168,21 +169,16 @@ if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   fi
 fi
 
-readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+IFS=',' read -ra SELECTED_GPU_TYPES <<< "$SELECTED_GPU_TYPES"
 
-declare -a ENABLE_GPU_FLAVORS
-for ex_type in $(echo ${ENABLE_BOT_TESTS} | tr "," " ") ; do
-  ex_type_lc=$(echo $ex_type | tr '[A-Z]' '[a-z]')
-  if is_in_array "$ex_type_lc" "${ALL_GPU_TYPES[@]}" ; then
-    ENABLE_GPU_FLAVORS+=( $ex_type )
-    VAR_NAME="MATRIX_EXTRAS_${ex_type}"
-    if [ -z "${!VAR_NAME}" ]; then
-      eval "$VAR_NAME=\"${MATRIX_EXTRAS_GPU}\""
-    fi
-    VAR_NAME="EXTRA_MATRIX_ARGS_${ex_type}"
-    if [ -z "${!VAR_NAME}" ]; then
-      eval "$VAR_NAME=\"${EXTRA_MATRIX_ARGS_GPU}\""
-    fi
+for gpu_type in ${SELECTED_GPU_TYPES[@]} ; do
+  VAR_NAME="MATRIX_EXTRAS_${gpu_type}"
+  if [ -z "${!VAR_NAME}" ]; then
+    eval "$VAR_NAME=\"${MATRIX_EXTRAS_GPU}\""
+  fi
+  VAR_NAME="EXTRA_MATRIX_ARGS_${gpu_type}"
+  if [ -z "${!VAR_NAME}" ]; then
+    eval "$VAR_NAME=\"${EXTRA_MATRIX_ARGS_GPU}\""
   fi
 done
 
@@ -341,6 +337,11 @@ fi
 WORKFLOWS_PR_LABELS=""
 scram -a $SCRAM_ARCH project $CMSSW_IB
 if $DO_COMPARISON ; then
+  CMS_BOT_TEST_BRANCH=""
+  if [[ "$PULL_REQUEST" == cms-sw/cms-bot#* ]]; then
+    PR_METADATA_PATH=$(get_cached_GH_JSON $PULL_REQUEST)
+    CMS_BOT_TEST_BRANCH=$(${CMSBOT_PYTHON_CMD} -c "import json,sys,codecs;obj=json.load(codecs.open('${PR_METADATA_PATH}',encoding='utf-8',errors='ignore'));print(obj['head']['ref'])")
+  fi
   mkdir $WORKSPACE/ib-baseline-tests
   pushd $WORKSPACE/ib-baseline-tests
     COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
@@ -351,6 +352,9 @@ if $DO_COMPARISON ; then
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
     echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
     echo "PRODUCTION_RELEASE=true"       >> run-baseline-${BUILD_ID}-01.default
+    if [ -n $CMS_BOT_TEST_BRANCH ]; then
+      echo "CMS_BOT_BRANCH=$CMS_BOT_TEST_BRANCH" >> run-baseline-${BUILD_ID}-01.default
+    fi
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
@@ -1358,7 +1362,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
       done
     fi
   fi
-  if [ ${#ENABLE_GPU_FLAVORS[@]} -ne 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
+  if [ ${#SELECTED_GPU_TYPES[@]} -ne 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
     DO_GPU_TESTS=true
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
@@ -1563,7 +1567,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
 fi
 
 if [ "X$DO_GPU_TESTS" = Xtrue ]; then
-  for GPU_T in ${ENABLE_GPU_FLAVORS[@]}; do
+  for GPU_T in ${SELECTED_GPU_TYPES[@]}; do
     GPU_T_LC=$(echo $GPU_T | tr '[A-Z]' '[a-z]')
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests-${GPU_T_LC}.prop
     echo "TEST_FLAVOR=${GPU_T_LC}" >> $WORKSPACE/run-unittests-${GPU_T_LC}.prop

@@ -59,7 +59,7 @@ pushd "$WORKSPACE/matrix-results"
   NJOBS=$(nproc)
   CMD_OPTS=""
   if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
-    if [ "${TEST_FLAVOR}" != "rocm" ]; then
+    if [[ "${TEST_FLAVOR}" != amd* ]]; then
       CMD_OPTS="--maxmem_profile"
     fi
   fi

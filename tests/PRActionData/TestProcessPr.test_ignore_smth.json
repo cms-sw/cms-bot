@@ -66,7 +66,7 @@
                     "BUILD-WARNINGS",
                     null
                 ],
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
                 "CONTEXT_PREFIX": "cms/25",
                 "BUILD_ONLY": false
             }

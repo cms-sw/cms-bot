@@ -64,9 +64,9 @@
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#24 cms-sw/cmssw#543210",
                 "MATRIX_EXTRAS": "33234.0,33634.0",
                 "RELEASE_FORMAT": "CMSSW_12_6_X",
-                "ENABLE_BOT_TESTS": "CUDA,HIGH_STATS,NANO,PROFILING,ROCM,THREADING",
+                "ENABLE_BOT_TESTS": "GPU,THREADING,PROFILING,HIGH_STATS,NANO",
                 "ARCHITECTURE_FILTER": "slc6_amd64_gcc930",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
                 "CONTEXT_PREFIX": "cms/24",
                 "BUILD_ONLY": false
             }

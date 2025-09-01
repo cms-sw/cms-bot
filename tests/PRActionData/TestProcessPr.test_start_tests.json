@@ -87,7 +87,7 @@
             "filename": "trigger-tests-iarspider-cmssw-cmssw-17.properties",
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#17",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
                 "CONTEXT_PREFIX": "cms/17",
                 "BUILD_ONLY": false
             }

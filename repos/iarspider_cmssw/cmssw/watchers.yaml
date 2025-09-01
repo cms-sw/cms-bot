@@ -1508,7 +1508,16 @@ missirol:
 - .*L1T
 - .*HL
 - .*Trig
+- CommonTools
+- Configuration
 - EventFilter
+- FWCore
+- Heterogeneous
+- Reco
+- SLHCUpgradeSimulations
+- SimTracker
+- TrackingTools
+- Validation
 sobhatta:
 - RecoEgamma
 - RecoEcal

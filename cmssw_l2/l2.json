@@ -435,6 +435,7 @@
       "category": [
         "generators"
       ],
+      "end_date": 1756684800,
       "start_date": 1694649600
     }
   ],
@@ -1776,6 +1777,7 @@
       "category": [
         "generators"
       ],
+      "end_date": 1756684800,
       "start_date": 1659312000
     }
   ],
@@ -2478,6 +2480,14 @@
       "start_date": 1423612800
     }
   ],
+  "ssen": [
+    {
+      "category": [
+        "generators"
+      ],
+      "start_date": 1756684800
+    }
+  ],
   "subansal": [
     {
       "category": [
@@ -2535,6 +2545,14 @@
       ],
       "end_date": 1730246400,
       "start_date": 1662595200
+    }
+  ],
+  "theofil": [
+    {
+      "category": [
+        "generators"
+      ],
+      "start_date": 1756684800
     }
   ],
   "thomreis": [

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import sys, json, re, ssl, base64
 from os.path import exists
-from os import getenv
+from glob import glob
+from os import getenv, remove
 from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile, epoch2week
-from _py2with3compatibility import Request, urlopen
+from _py2with3compatibility import Request, urlopen, run_cmd
 from os import stat as tstat
 from time import time
 
@@ -135,12 +136,54 @@ def send_request(
     return True
 
 
+def es_cache_dir():
+    return getenv("CMS_ES_CACHE_DIR", "")
+
+
+def es_cache_payload(uri, payload, passwd_file):
+    cache_dir = es_cache_dir()
+    data = {"uri": uri, "payload": payload, "passwd_file": passwd_file}
+    cache_id = sha1(json.dumps(data).encode()).hexdigest()
+    cache_dir = "%s/%s" % (cache_dir, cache_id[0:2])
+    err, out = run_cmd("mkdir -p %s" % cache_dir)
+    if err:
+        print("ERROR:", out)
+        return False
+    cache_file = "%s/%s.json" % (cache_dir, cache_id)
+    with open(cache_file, "w") as ref:
+        json.dump(data, ref)
+        print("OK Cached:", cache_file)
+    return True
+
+
+def send_cached_payload():
+    for cache_file in glob("%s/*/*.json" % es_cache_dir()):
+        print("Processing: ", cache_file)
+        with open(cache_file) as ref:
+            data = json.load(ref)
+            if not send_request(
+                data["uri"],
+                payload=data["payload"],
+                method="POST",
+                passwd_file=data["passwd_file"],
+            ):
+                return False
+        try:
+            remove(cache_file)
+        except:
+            pass
+    return True
+
+
 def send_payload(index, document, id, payload, passwd_file=None):
     if not index.startswith("cmssdt-"):
         index = "cmssdt-" + index
     uri = "%s/%s/" % (index, document)
     if id:
         uri = uri + id
+    cache_dir = es_cache_dir()
+    if cache_dir:
+        return es_cache_payload(uri, payload, passwd_file)
     return send_request(uri, payload=payload, method="POST", passwd_file=passwd_file)
 
 

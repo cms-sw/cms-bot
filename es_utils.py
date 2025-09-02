@@ -145,10 +145,11 @@ def es_cache_payload(uri, payload, passwd_file):
     data = {"uri": uri, "payload": payload, "passwd_file": passwd_file}
     cache_id = sha1(json.dumps(data).encode()).hexdigest()
     cache_dir = "%s/%s" % (cache_dir, cache_id[0:2])
-    err, out = run_cmd("mkdir -p %s" % cache_dir)
-    if err:
-        print("ERROR:", out)
-        return False
+    if not exists(cache_dir):
+        err, out = run_cmd("mkdir -p %s" % cache_dir)
+        if err:
+            print("ERROR:", out)
+            return False
     cache_file = "%s/%s.json" % (cache_dir, cache_id)
     with open(cache_file, "w") as ref:
         json.dump(data, ref)

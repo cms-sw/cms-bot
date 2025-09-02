@@ -140,17 +140,15 @@ def es_cache_dir():
     return getenv("CMS_ES_CACHE_DIR", "")
 
 
-def es_cache_payload(uri, payload, passwd_file):
-    cache_dir = es_cache_dir()
+def es_cache_payload(id, uri, payload, passwd_file):
     data = {"uri": uri, "payload": payload, "passwd_file": passwd_file}
-    cache_id = sha1(json.dumps(data).encode()).hexdigest()
-    cache_dir = "%s/%s" % (cache_dir, cache_id[0:2])
+    cache_dir = "%s/%s" % (es_cache_dir(), id[0:2])
     if not exists(cache_dir):
         err, out = run_cmd("mkdir -p %s" % cache_dir)
         if err:
             print("ERROR:", out)
             return False
-    cache_file = "%s/%s.json" % (cache_dir, cache_id)
+    cache_file = "%s/%s.json" % (cache_dir, id)
     with open(cache_file, "w") as ref:
         json.dump(data, ref)
         print("OK Cached:", cache_file)
@@ -182,9 +180,9 @@ def send_payload(index, document, id, payload, passwd_file=None):
     uri = "%s/%s/" % (index, document)
     if id:
         uri = uri + id
-    cache_dir = es_cache_dir()
-    if cache_dir:
-        return es_cache_payload(uri, payload, passwd_file)
+        cache_dir = es_cache_dir()
+        if cache_dir:
+            return es_cache_payload(id, uri, payload, passwd_file)
     return send_request(uri, payload=payload, method="POST", passwd_file=passwd_file)
 
 

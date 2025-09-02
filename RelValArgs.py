@@ -35,6 +35,7 @@ RELVAL_KEYS = {
 GPU_RELVALS_FLAGS = "-w gpu --gpu required"
 THREADED_ROOT = "NON_THREADED_CMSSW"
 THREADED_IBS = "NON_THREADED_CMSSW"
+TRACE_FUNCTION = "cmsTraceFunction --abort --startAfterFunction ScheduleItems::initMisc setenv"
 if not "CMSSW_NON_THREADED" in environ:
     THREADED_ROOT = "CMSSW_9_[1-9]_ROOT6_X_.+"
     THREADED_IBS = "CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_.+:([a-z]+)([6-9]|[1-9][0-9]+)_[^_]+_gcc(5[3-9]|[6-9]|[1-9][0-9])[0-9]*"
@@ -53,9 +54,8 @@ RELVAL_KEYS["PREFIX"].append(
         "--prefix '%s timeout --signal SIGTERM @TIMEOUT@ @TRACE_FUNCTION@'" % monitor_script,
     ]
 )
-RELVAL_KEYS["TRACE_FUNCTION"].append(
-    ["CMSSW_.+_DEVEL_.+", "cmsTraceFunction --startAfterFunction ScheduleItems::initMisc setenv"]
-)
+RELVAL_KEYS["TRACE_FUNCTION"].append(["CMSSW_.+_DEVEL_.+", TRACE_FUNCTION])
+RELVAL_KEYS["TRACE_FUNCTION"].append(["CMSSW_.+_ROOT6_X_.+", TRACE_FUNCTION])
 RELVAL_KEYS["JOB_REPORT"].append([".+", "--job-reports"])
 RELVAL_KEYS["USE_INPUT"].append([".+", "--useInput all"])
 RELVAL_KEYS["THREADED"].append([THREADED_IBS, "-t 4"])

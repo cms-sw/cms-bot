@@ -1864,6 +1864,9 @@ def process_pr(
                         )
                         logger.debug("Comment message: %s", first_line)
                         continue
+                    else:
+                        set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "-1")
+                        continue
                 elif REGEX_TEST_ABORT.match(first_line) and (signatures["tests"] == "pending"):
                     abort_test = comment
                     test_comment = None

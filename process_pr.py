@@ -47,7 +47,6 @@ import yaml
 import logging
 import sys
 import os
-import itertools
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -206,7 +205,7 @@ MULTILINE_COMMENTS_MAP = {
     "gpu(s|_flavor(s|)|_type(s|)|)": [
         format(
             r"(%(gpu)s)(\s*,\s*(%(gpu)s))*",
-            gpu="|".join(itertools.chain(ALL_GPUS, ALL_GPU_BRANDS)),
+            gpu="|".join(f"{x}(?:_.+)?" for x in ALL_GPU_BRANDS),
         ),
         "SELECTED_GPU_TYPES",
     ],

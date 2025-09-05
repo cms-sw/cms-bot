@@ -151,6 +151,11 @@ ALL_GPUS = [
     for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
     if x.strip()
 ]
+ALL_GPUS.extend(
+    x.strip()
+    for x in open(join(dirname(__file__), "gpu_flavors_ondemand.txt"), "r").read().splitlines()
+    if x.strip()
+)
 ALL_GPU_BRANDS = sorted(list(set(x.strip().split("_", 1)[0] for x in ALL_GPUS)))
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)

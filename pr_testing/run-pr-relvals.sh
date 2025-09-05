@@ -1,6 +1,9 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
-readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+readarray -t REQUIRED_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors.txt
+readarray -t ONDEMAND_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors_ondemand.txt
+ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
+
 
 GH_CONTEXT="relvals"
 GH_COMP_CONTEXT="comparison"

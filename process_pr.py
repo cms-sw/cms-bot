@@ -1790,7 +1790,7 @@ def process_pr(
                 IGNORING_TESTS_MSG, first_line
             ):
                 signatures["tests"] = "pending"
-            elif re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", first_line):
+            elif re.match("Pull request ([^ #]+)?[#][0-9]+ was updated[.].*", first_line):
                 pull_request_updated = False
             elif re.match(TRIGERING_TESTS_MSG, first_line) or re.match(
                 TRIGERING_TESTS_MSG1, first_line
@@ -1836,7 +1836,7 @@ def process_pr(
 
         if issue.pull_request or push_test_issue:
             # Check if the release manager asked for merging this.
-            if re.match(r"^\s*(merge)\s*$", first_line, re.I):
+            if re.fullmatch(r"merge$", first_line, re.I):
                 emoji = "-1"
                 if (commenter in releaseManagers) or ("orp" in commenter_categories):
                     mustMerge = True

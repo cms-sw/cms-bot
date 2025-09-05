@@ -1,7 +1,10 @@
 #!/bin/bash -ex
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(cd $(dirname $0) >/dev/null 2>&1; pwd -P)
-readarray -t ALL_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
+readarray -t REQUIRED_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors.txt
+readarray -t ONDEMAND_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors_ondemand.txt
+ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
+
 ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
 source $CMS_BOT_DIR/jenkins-artifacts
 source $CMS_BOT_DIR/pr_testing/_helper_functions.sh

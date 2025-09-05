@@ -51,7 +51,7 @@ import os
 CMSSW_CATEGORIES = {}
 import itertools
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Union
 from collections.abc import Iterable
 
 try:
@@ -772,11 +772,11 @@ class ParseResult:
 
 @dataclass
 class TestCmdParam:
-    keyword: str | re.Pattern
+    keyword: Union[str, re.Pattern]
     field_name: str
-    rx: str | re.Pattern | None = field(default=None)
+    rx: Union[str, re.Pattern, None] = field(default=None)
     split_by: Optional[str] = field(default=",")
-    prev_keyword: str | re.Pattern | None = field(default=None)
+    prev_keyword: Union[str, re.Pattern, None] = field(default=None)
 
     def __post_init__(self):
         if isinstance(self.keyword, str):

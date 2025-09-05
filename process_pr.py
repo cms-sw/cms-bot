@@ -51,7 +51,8 @@ import os
 CMSSW_CATEGORIES = {}
 import itertools
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
+from collections.abc import Iterable
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -764,97 +765,110 @@ class ParseResult:
     workflows: List[str] = field(default_factory=list)
     prs: List[str] = field(default_factory=list)
     queue: str = ""
-    using_full_cmssw: bool = False
-    addpkg_pkgs: List[str] = field(default_factory=list)
+    using: bool = field(default=False)
+    full: str = field(default="")
+    addpkg: List[str] = field(default_factory=list)
+
+
+@dataclass
+class TestCmdParam:
+    keyword: str | re.Pattern
+    field_name: str
+    rx: str | re.Pattern | None = field(default=None)
+    split_by: Optional[str] = field(default=",")
+    prev_keyword: str | re.Pattern | None = field(default=None)
+
+    def __post_init__(self):
+        if isinstance(self.keyword, str):
+            self.keyword = re.compile(self.keyword, re.I)
+        if isinstance(self.rx, str):
+            self.rx = re.compile(self.rx, re.I)
+        if isinstance(self.prev_keyword, str):
+            self.prev_keyword = re.compile(self.prev_keyword, re.I)
 
 
 def parse_test_cmd(first_line: str) -> ParseResult:
-    def _expect_list(token: str, rx: re.Pattern, kind: str) -> List[str]:
-        if not rx.fullmatch(token):
-            raise ParseError(f"invalid {kind} list: {token!r}")
-        # inputs are pre-normalized: commas are clean, spaces collapsed
-        return token.split(",")
-
-    def need(next_i: int, what: str):
-        if next_i >= n:
-            raise ParseError(f"expected {what} after {tokens[i - 1]!r}")
-
     tokens = first_line.strip().split()
     if not tokens:
         raise ParseError("empty input")
 
-    verb = tokens.pop(0)
-    if verb not in TEST_VERBS:
-        raise ParseError(f"unknown verb: {verb!r}")
-
     seen = set()
-    res = ParseResult(verb=verb)
+    res = ParseResult(verb=tokens.pop(0))
 
-    i = 0
-    n = len(tokens)
+    params: List[TestCmdParam] = [
+        TestCmdParam(
+            keyword="workflows?",
+            rx=RE_WF_LIST,
+            split_by=",",
+            field_name="workflows",
+        ),
+        TestCmdParam(
+            keyword="with",
+            rx=RE_PR_LIST,
+            split_by=",",
+            field_name="prs",
+        ),
+        TestCmdParam(
+            keyword="for",
+            rx=RE_QUEUE,
+            split_by=None,
+            field_name="queue",
+        ),
+        TestCmdParam(
+            keyword="using",
+            rx=None,
+            field_name="using",
+            split_by=None,
+        ),
+        TestCmdParam(
+            keyword="full",
+            rx="cmssw",
+            split_by=None,
+            field_name="full",
+            prev_keyword="using",
+        ),
+        TestCmdParam(
+            keyword="(cms-)?addpkg",
+            rx=RE_PKG_LIST,
+            split_by=",",
+            field_name="addpkg",
+            prev_keyword="using",
+        ),
+    ]
 
-    while i < n:
-        t = tokens[i]
+    t = None
+    prev_t = None
 
-        if t in ("workflow", "workflows"):
-            if "wf" in seen:
-                raise ParseError("duplicate workflows clause")
-            i += 1
-            need(i, "workflow list")
-            res.workflows = _expect_list(tokens[i], RE_WF_LIST, "workflow")
-            seen.add("wf")
-            i += 1
-            continue
+    while tokens:
+        prev_t = t
+        t = tokens.pop(0)
+        for p in params:
+            if not p.keyword.match(t):
+                continue
+            if p.keyword in seen:
+                raise ParseError(f"Duplicate {p.keyword} clause")
+            next_ = True
 
-        if t == "with":
-            if "with" in seen:
-                raise ParseError("duplicate with clause")
-            i += 1
-            need(i, "PR list")
-            res.prs = _expect_list(tokens[i], RE_PR_LIST, "PR")
-            seen.add("with")
-            i += 1
-            continue
+            if p.prev_keyword and not p.prev_keyword.fullmatch(prev_t):
+                raise ParseError(f"Keyword {p.keyword} not preceeded by {p.prev_keyword}")
 
-        if t == "for":
-            if "for" in seen:
-                raise ParseError("duplicate for clause")
-            i += 1
-            need(i, "queue")
-            if not RE_QUEUE.fullmatch(tokens[i]):
-                raise ParseError(f"invalid release queue: {tokens[i]!r}")
-            res.queue = tokens[i]
-            seen.add("for")
-            i += 1
-            continue
+            if p.rx or p.split_by:
+                try:
+                    next_ = tokens.pop(0)
+                except IndexError:
+                    raise ParseError(f"Missing parameter for keyword {p.keyword}")
 
-        if t == "using":
-            if "using" in seen:
-                raise ParseError("duplicate using clause")
-            i += 1
-            need(i, "'full cmssw' or 'addpkg'")
-            if tokens[i] == "full":
-                # expecting: 'using full cmssw'
-                i += 1
-                need(i, "'cmssw'")
-                if tokens[i] != "cmssw":
-                    raise ParseError("expected 'cmssw' after 'using full'")
-                res.using_full_cmssw = True
-                seen.add("using")
-                i += 1
-            else:
-                # expecting: 'using (cms-)?addpkg <pkg[,pkg]*>'
-                if tokens[i] not in ("addpkg", "cms-addpkg"):
-                    raise ParseError("expected 'addpkg' or 'cms-addpkg' after 'using'")
-                i += 1
-                need(i, "package list")
-                res.addpkg_pkgs = _expect_list(tokens[i], RE_PKG_LIST, "package")
-                seen.add("using")
-                i += 1
-            continue
+                if p.rx and not p.rx.fullmatch(next_):
+                    raise ParseError(f"Invalid parameter for keyword {p.keyword}: {next_!r}")
 
-        # Anything else is unexpected (helps catch typos/malformed input)
-        raise ParseError(f"unexpected token: {t!r}")
+                if p.split_by:
+                    next_ = next_.split(p.split_by)
+
+            setattr(res, p.field_name, next_)
+            seen.add(p.keyword)
+            break
+        else:
+            raise ParseError(f"Unexpected token: {t!r}")
 
     return res
 
@@ -875,11 +889,11 @@ def check_test_cmd(first_line, repo, params):
     if res.prs:
         prs = get_prs_list_from_string(",".join(res.prs))
 
-    if res.using_full_cmssw:
+    if res.full:
         params["BUILD_FULL_CMSSW"] = "true"
 
-    if res.addpkg_pkgs:
-        params["EXTRA_CMSSW_PACKAGES"] = ",".join(res.addpkg_pkgs)
+    if res.addpkg:
+        params["EXTRA_CMSSW_PACKAGES"] = ",".join(set(res.addpkg))
 
     return (True, " ".join(prs), wfs, res.queue, res.verb == "build")
 

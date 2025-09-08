@@ -590,6 +590,10 @@ forthommel:
 - RecoPPS
 - SimPPS/DirectSimProducer
 fwyzard:
+- EventFilter/Configuration
+- EventFilter/OnlineMetaDataRawToDigi
+- EventFilter/RawDataCollector
+- EventFilter/Utilities
 - FWCore/ServiceRegistry
 - FWCore/Services
 - HLTrigger/HLTcore

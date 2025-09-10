@@ -1142,6 +1142,14 @@
       "start_date": 1625702400
     }
   ],
+  "gabrielmscampos": [
+    {
+      "category": [
+        "dqm"
+      ],
+      "start_date": 1757462400
+    }
+  ],
   "georgia14": [
     {
       "category": [
@@ -1988,6 +1996,12 @@
       ],
       "end_date": 1730246400,
       "start_date": 1683676800
+    },
+    {
+      "category": [
+        "dqm"
+      ],
+      "start_date": 1757462400
     }
   ],
   "nsmith-": [

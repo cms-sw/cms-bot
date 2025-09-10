@@ -168,10 +168,13 @@ def main():
                     if old_result and arch in old_result and error in old_result[arch]["relval"]:
                         continue
 
-                    known_failure = libib.get_known_failure(
-                        "relval",
-                        **error.data,
-                    )
+                    if error.data["step"] != -1:
+                        known_failure = libib.get_known_failure(
+                            "relval",
+                            **error.data,
+                        )
+                    else:
+                        known_failure = None
                     if known_failure:
                         continue
 

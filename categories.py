@@ -155,7 +155,7 @@ CMSSW_L2 = {
     "malbouis": ["ppd"],
     "vlimant": ["ppd"],
     "nothingface0": ["dqm"],
-    "gabrielmscampos": ["dqm"]
+    "gabrielmscampos": ["dqm"],
     # ML
     "valsdav": ["ml", "egamma-pog"],
     "y19y19": ["ml"],

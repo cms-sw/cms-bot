@@ -528,7 +528,7 @@ def updateMilestone(repo, issue, pr, dryRun):
     if pr.state != "open":
         logger.error("PR not open, not setting/checking milestone")
         return
-    if issue.milestone and issue.milestone.number == milestoneId:
+    if issue.milestone and issue.milestone.number >= milestoneId:
         return
     milestone = repo.get_milestone(milestoneId)
     logger.info("Setting milestone to %s", milestone.title)

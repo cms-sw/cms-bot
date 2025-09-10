@@ -803,10 +803,15 @@ def search_es(index, **kwargs):
     query = " AND ".join(
         "{0}:{1}".format(k, f'\\"{v}\\"' if isinstance(v, str) else v) for k, v in kwargs.items()
     )
-    ret = es_utils.es_query(
-        f"cmssdt-{index}-failures", query, start_time=0, end_time=1000 * int(time.time())
-    )
-    return tuple(x["_source"] for x in ret["hits"]["hits"])
+    try:
+        ret = es_utils.es_query(
+            f"cmssdt-{index}-failures", query, start_time=0, end_time=1000 * int(time.time())
+        )
+    except json.decoder.JSONDecodeError as e:
+        logger.error(f"Request to ES failed: {e}. Query was: {query}")
+        return tuple()
+    else:
+        return tuple(x["_source"] for x in ret["hits"]["hits"])
 
 
 def is_issue_closed(ib_date, issue):

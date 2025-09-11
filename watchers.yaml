@@ -1452,8 +1452,6 @@ hqucms:
 - PhysicsTools/MXNet
 - RecoBTag/MXNet
 - RecoBTag/FeatureTools
-adewit:
-- Alignment
 vargasa:
 - Configuration/Geometry
 - Geometry/TrackerCommonData

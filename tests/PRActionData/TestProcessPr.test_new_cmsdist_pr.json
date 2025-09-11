@@ -1,0 +1,55 @@
+[
+    {
+        "type": "status",
+        "data": {
+            "commit": "97b8e6b89e86de19afb3a428f54f08313457374e",
+            "state": "pending",
+            "target_url": null,
+            "description": "Waiting for authorized user to issue the test command.",
+            "context": "bot/1/jenkins"
+        }
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "externals-pending",
+            "orp-pending",
+            "pending-signatures",
+            "tests-pending"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": []
+    },
+    {
+        "type": "create-comment",
+        "data": "A new Pull Request was created by  @iarspider for branch IB/CMSSW_15_1_X/rootmaster.\n\n@iarspider can you please review it and eventually sign? Thanks.\n@iarspider you are the release manager for this.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n"
+    },
+    {
+        "type": "create-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"3796ce54fef5c2b00990949a4e3f7d49489561c3\":{\"files\":[\"root.spec\"],\"squashed\":false,\"time\":1745827456},\"97b8e6b89e86de19afb3a428f54f08313457374e\":{\"files\":[],\"squashed\":false,\"time\":1745910099}},\"emoji\":{},\"last_seen_sha\":\"97b8e6b89e86de19afb3a428f54f08313457374e\",\"signatures\":{}} -->"
+    },
+    {
+        "type": "save-bot-cache",
+        "data": {
+            "emoji": {},
+            "signatures": {},
+            "commits": {
+                "97b8e6b89e86de19afb3a428f54f08313457374e": {
+                    "time": 1745910099,
+                    "squashed": false,
+                    "files": []
+                },
+                "3796ce54fef5c2b00990949a4e3f7d49489561c3": {
+                    "time": 1745827456,
+                    "squashed": false,
+                    "files": [
+                        "root.spec"
+                    ]
+                }
+            },
+            "last_seen_sha": "97b8e6b89e86de19afb3a428f54f08313457374e"
+        }
+    }
+]

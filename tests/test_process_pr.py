@@ -132,84 +132,84 @@ def on_commit_create_status(self, *args, **kwargs):
             state, target_url, description, context
         )
     )
-
-
-# TODO: remove once we update pygithub
-def get_commit_files(commit):
-    # noinspection PyProtectedMember
-    return github.PaginatedList.PaginatedList(
-        github.File.File,
-        commit._requester,
-        commit.url,
-        {},
-        None,
-        "files",
-    )
-
-
-# TODO: remove once we update pygithub
-def get_commit_files_pygithub(*args, **kwargs):
-    kwargs.pop("res")
-    assert len(args) == 2, "Signature of process_pr.get_commit_files changed"
-    assert len(kwargs) == 0, "Signature of process_pr.get_commit_files changed"
-    commit = args[1]
-    return (x.filename for x in get_commit_files(commit))
-
-
-# TODO: remove once we update pygithub
-def github__issue__reactions(self):
-    """
-    :type: dict
-    """
-    self._completeIfNotSet(self._reactions)
-    return self._reactions.value
-
-
-# TODO: remove once we update pygithub
-def github__issuecomment__reactions(self):
-    """
-    :type: dict
-    """
-    self._completeIfNotSet(self._reactions)
-    return self._reactions.value
-
-
-# TODO: remove once we update pygithub
-def github__issue___initAttributes(self, *args, **kwargs):
-    res = kwargs.pop("res")
-    self._reactions = github.GithubObject.NotSet
-
-    return res
-
-
-# TODO: remove once we update pygithub
-def github__issuecomment___initAttributes(self, *args, **kwargs):
-    res = kwargs.pop("res")
-    self._reactions = github.GithubObject.NotSet
-
-    return res
-
-
-# TODO: remove once we update pygithub
-def github__issue___useAttributes(self, *args, **kwargs):
-    res = kwargs.pop("res")
-    attributes = args[0]
-
-    if "reactions" in attributes:
-        self._reactions = self._makeDictAttribute(attributes["reactions"])
-
-    return res
-
-
-# TODO: remove once we update pygithub
-def github__issuecomment___useAttributes(self, *args, **kwargs):
-    res = kwargs.pop("res")
-    attributes = args[0]
-
-    if "reactions" in attributes:
-        self._reactions = self._makeDictAttribute(attributes["reactions"])
-
-    return res
+#
+#
+# # TODO: remove once we update pygithub
+# def get_commit_files(commit):
+#     # noinspection PyProtectedMember
+#     return github.PaginatedList.PaginatedList(
+#         github.File.File,
+#         commit._requester,
+#         commit.url,
+#         {},
+#         None,
+#         "files",
+#     )
+#
+#
+# # TODO: remove once we update pygithub
+# def get_commit_files_pygithub(*args, **kwargs):
+#     kwargs.pop("res")
+#     assert len(args) == 2, "Signature of process_pr.get_commit_files changed"
+#     assert len(kwargs) == 0, "Signature of process_pr.get_commit_files changed"
+#     commit = args[1]
+#     return (x.filename for x in get_commit_files(commit))
+#
+#
+# # TODO: remove once we update pygithub
+# def github__issue__reactions(self):
+#     """
+#     :type: dict
+#     """
+#     self._completeIfNotSet(self._reactions)
+#     return self._reactions.value
+#
+#
+# # TODO: remove once we update pygithub
+# def github__issuecomment__reactions(self):
+#     """
+#     :type: dict
+#     """
+#     self._completeIfNotSet(self._reactions)
+#     return self._reactions.value
+#
+#
+# # TODO: remove once we update pygithub
+# def github__issue___initAttributes(self, *args, **kwargs):
+#     res = kwargs.pop("res")
+#     self._reactions = github.GithubObject.NotSet
+#
+#     return res
+#
+#
+# # TODO: remove once we update pygithub
+# def github__issuecomment___initAttributes(self, *args, **kwargs):
+#     res = kwargs.pop("res")
+#     self._reactions = github.GithubObject.NotSet
+#
+#     return res
+#
+#
+# # TODO: remove once we update pygithub
+# def github__issue___useAttributes(self, *args, **kwargs):
+#     res = kwargs.pop("res")
+#     attributes = args[0]
+#
+#     if "reactions" in attributes:
+#         self._reactions = self._makeDictAttribute(attributes["reactions"])
+#
+#     return res
+#
+#
+# # TODO: remove once we update pygithub
+# def github__issuecomment___useAttributes(self, *args, **kwargs):
+#     res = kwargs.pop("res")
+#     attributes = args[0]
+#
+#     if "reactions" in attributes:
+#         self._reactions = self._makeDictAttribute(attributes["reactions"])
+#
+#     return res
 
 
 def on_read_bot_cache(*args, **kwargs):
@@ -331,22 +331,22 @@ class TestProcessPr(Framework.TestCase):
         global skip_watchers
         skip_watchers = False
 
-    def setUpReactions(self):
-        patcher_1 = patch(
-            "github.IssueComment.IssueComment.reactions",
-            new_callable=PropertyMock,
-            create=True,
-        )
-        patcher_1.__get__ = github__issuecomment__reactions
-
-        patcher_2 = patch("github.Issue.Issue.reactions", new_callable=PropertyMock, create=True)
-        patcher_2.__get__ = github__issue__reactions
-
-        self.patchers.append(patcher_1)
-        self.patchers.append(patcher_2)
-
-        patcher_1.start()
-        patcher_2.start()
+    # def setUpReactions(self):
+    #     patcher_1 = patch(
+    #         "github.IssueComment.IssueComment.reactions",
+    #         new_callable=PropertyMock,
+    #         create=True,
+    #     )
+    #     patcher_1.__get__ = github__issuecomment__reactions
+    #
+    #     patcher_2 = patch("github.Issue.Issue.reactions", new_callable=PropertyMock, create=True)
+    #     patcher_2.__get__ = github__issue__reactions
+    #
+    #     self.patchers.append(patcher_1)
+    #     self.patchers.append(patcher_2)
+    #
+    #     patcher_1.start()
+    #     patcher_2.start()
 
     def setUpHooks(self):
         self.patchers = []
@@ -403,13 +403,13 @@ class TestProcessPr(Framework.TestCase):
                 "hook_function": on_commit_create_status,
                 "call_original": False,
             },
-            {
-                "module_path": "process_pr",
-                "class_name": None,
-                "function_name": "get_commit_files",
-                "hook_function": get_commit_files_pygithub,
-                "call_original": False,
-            },
+            # {
+            #     "module_path": "process_pr",
+            #     "class_name": None,
+            #     "function_name": "get_commit_files",
+            #     "hook_function": get_commit_files_pygithub,
+            #     "call_original": False,
+            # },
             {
                 "module_path": "process_pr",
                 "class_name": None,
@@ -463,38 +463,38 @@ class TestProcessPr(Framework.TestCase):
                 "hook_function": dummy_fetch_pr_result,
                 "call_original": False,
             },
-            # TODO: remove once we update PyGithub
-            {
-                "module_path": "github.IssueComment",
-                "class_name": "IssueComment",
-                "function_name": "_initAttributes",
-                "hook_function": github__issuecomment___initAttributes,
-                "call_original": True,
-            },
-            # TODO: remove once we update PyGithub
-            {
-                "module_path": "github.Issue",
-                "class_name": "Issue",
-                "function_name": "_initAttributes",
-                "hook_function": github__issue___initAttributes,
-                "call_original": True,
-            },
-            # TODO: remove once we update PyGithub
-            {
-                "module_path": "github.IssueComment",
-                "class_name": "IssueComment",
-                "function_name": "_useAttributes",
-                "hook_function": github__issuecomment___useAttributes,
-                "call_original": True,
-            },
-            # TODO: remove once we update PyGithub
-            {
-                "module_path": "github.Issue",
-                "class_name": "Issue",
-                "function_name": "_useAttributes",
-                "hook_function": github__issue___useAttributes,
-                "call_original": True,
-            },
+            # # TODO: remove once we update PyGithub
+            # {
+            #     "module_path": "github.IssueComment",
+            #     "class_name": "IssueComment",
+            #     "function_name": "_initAttributes",
+            #     "hook_function": github__issuecomment___initAttributes,
+            #     "call_original": True,
+            # },
+            # # TODO: remove once we update PyGithub
+            # {
+            #     "module_path": "github.Issue",
+            #     "class_name": "Issue",
+            #     "function_name": "_initAttributes",
+            #     "hook_function": github__issue___initAttributes,
+            #     "call_original": True,
+            # },
+            # # TODO: remove once we update PyGithub
+            # {
+            #     "module_path": "github.IssueComment",
+            #     "class_name": "IssueComment",
+            #     "function_name": "_useAttributes",
+            #     "hook_function": github__issuecomment___useAttributes,
+            #     "call_original": True,
+            # },
+            # # TODO: remove once we update PyGithub
+            # {
+            #     "module_path": "github.Issue",
+            #     "class_name": "Issue",
+            #     "function_name": "_useAttributes",
+            #     "hook_function": github__issue___useAttributes,
+            #     "call_original": True,
+            # },
             {
                 "module_path": "process_pr",
                 "class_name": None,
@@ -663,7 +663,7 @@ class TestProcessPr(Framework.TestCase):
     def setUp(self):
         super().setUp()
         self.setUpHooks()
-        self.setUpReactions()
+        # self.setUpReactions()
 
         self.__eventFileName = ""
         self.__eventFile = None

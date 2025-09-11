@@ -1,17 +1,21 @@
---- Framework.py.orig	2025-08-28 09:50:04.002076656 +0200
-+++ Framework.py	2025-08-28 09:50:39.017704705 +0200
-@@ -344,8 +344,9 @@
+--- Framework.py.orig	2025-09-09 11:56:53.659445709 +0200
++++ Framework.py	2025-09-09 11:58:27.196414016 +0200
+@@ -345,12 +345,13 @@
  
  class BasicTestCase(unittest.TestCase):
      recordMode = False
 +    recordActionMode = False
-     authMode = "token"
--    per_page = Consts.DEFAULT_PER_PAGE
-+    per_page = 100
-     retry = None
-     pool_size = None
-     seconds_between_requests: float | None = None
-@@ -497,7 +498,6 @@
+     replayDataFolder = os.path.join(os.path.dirname(__file__), "ReplayData")
+ 
+     def __init__(self, methodName="runTest") -> None:
+         super().__init__(methodName)
+         self.authMode = "token"
+-        self.per_page = Consts.DEFAULT_PER_PAGE
++        self.per_page = 100
+         self.retry = None
+         self.pool_size = None
+         self.seconds_between_requests: float | None = None
+@@ -520,7 +521,6 @@
              auth=auth,
              per_page=self.per_page,
              retry=retry,
@@ -19,10 +23,10 @@
              seconds_between_requests=self.seconds_between_requests,
              seconds_between_writes=self.seconds_between_writes,
          )
-@@ -517,3 +517,7 @@
+@@ -528,3 +528,7 @@
  
- def setPoolSize(pool_size):
-     BasicTestCase.pool_size = pool_size
+ def activateRecordMode():  # pragma no cover (Function useful only when recording new tests, not used during automated tests)
+     BasicTestCase.recordMode = True
 +
 +
 +def activateRecordActionMode():  # pragma no cover (Function useful only when recording new tests, not used during automated tests)

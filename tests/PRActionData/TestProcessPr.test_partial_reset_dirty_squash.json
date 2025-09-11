@@ -1,0 +1,127 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "1495b64c35fc2c4ef98688d2958fc39490b8d2e1": {
+                    "files": [
+                        "L1Trigger/CSCTrackFinder/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1734005540
+                },
+                "4ae404d88e0c25c511b3cbaa031e116669676fec": {
+                    "files": [
+                        "FWCore/Integration/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1734005038
+                }
+            },
+            "emoji": {
+                "2538875283": "+1",
+                "2538876197": "+1"
+            },
+            "last_seen_sha": "1495b64c35fc2c4ef98688d2958fc39490b8d2e1",
+            "signatures": {
+                "2538875283": "1495b64c35fc2c4ef98688d2958fc39490b8d2e1",
+                "2538876197": "1495b64c35fc2c4ef98688d2958fc39490b8d2e1"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2538875283,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            2538876197,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "code-checks-pending",
+            "l1-pending",
+            "pending-signatures"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "code-checks-approved",
+            "fully-signed",
+            "l1-approved"
+        ]
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-code-checks-iarspider-cmssw-cmssw-23.properties",
+            "data": {
+                "PULL_REQUEST": "23",
+                "CONTEXT_PREFIX": "cms/23",
+                "CMSSW_TOOL_CONF": "",
+                "APPLY_PATCH": "false"
+            }
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "c6cd57066c758445d041e3a3708c71f166593b9a",
+            "state": "pending",
+            "target_url": null,
+            "description": "code-checks requested",
+            "context": "cms/23/code-checks"
+        }
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"1495b64c35fc2c4ef98688d2958fc39490b8d2e1\":{\"files\":[\"L1Trigger/CSCTrackFinder/BuildFile.xml\"],\"squashed\":true,\"time\":1734005540},\"4ae404d88e0c25c511b3cbaa031e116669676fec\":{\"files\":[\"FWCore/Integration/BuildFile.xml\"],\"squashed\":true,\"time\":1734005038},\"c6cd57066c758445d041e3a3708c71f166593b9a\":{\"files\":[\"L1Trigger/CSCTrackFinder/BuildFile.xml\"],\"squashed\":false,\"time\":1734005679}},\"emoji\":{\"2538875283\":\"+1\",\"2538876197\":\"+1\"},\"last_seen_sha\":\"c6cd57066c758445d041e3a3708c71f166593b9a\",\"signatures\":{\"2538875283\":\"1495b64c35fc2c4ef98688d2958fc39490b8d2e1\",\"2538876197\":\"1495b64c35fc2c4ef98688d2958fc39490b8d2e1\"}} -->"
+    },
+    {
+        "type": "save-bot-cache",
+        "data": {
+            "commits": {
+                "1495b64c35fc2c4ef98688d2958fc39490b8d2e1": {
+                    "files": [
+                        "L1Trigger/CSCTrackFinder/BuildFile.xml"
+                    ],
+                    "squashed": true,
+                    "time": 1734005540
+                },
+                "4ae404d88e0c25c511b3cbaa031e116669676fec": {
+                    "files": [
+                        "FWCore/Integration/BuildFile.xml"
+                    ],
+                    "squashed": true,
+                    "time": 1734005038
+                },
+                "c6cd57066c758445d041e3a3708c71f166593b9a": {
+                    "time": 1734005679,
+                    "squashed": false,
+                    "files": [
+                        "L1Trigger/CSCTrackFinder/BuildFile.xml"
+                    ]
+                }
+            },
+            "emoji": {
+                "2538875283": "+1",
+                "2538876197": "+1"
+            },
+            "last_seen_sha": "c6cd57066c758445d041e3a3708c71f166593b9a",
+            "signatures": {
+                "2538875283": "1495b64c35fc2c4ef98688d2958fc39490b8d2e1",
+                "2538876197": "1495b64c35fc2c4ef98688d2958fc39490b8d2e1"
+            }
+        }
+    }
+]

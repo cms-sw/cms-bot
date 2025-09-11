@@ -4,5 +4,5 @@ pytest-github-actions-annotate-failures <1.0.0
 pytest-subtests >=0.11.0
 responses
 # Pin to latest version as of 2025-08-28
-PyGithub==2.7.0
+PyGithub==2.8.0
 pyyaml

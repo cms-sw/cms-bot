@@ -991,9 +991,9 @@ def add_nonblocking_labels(chg_files, extra_labels):
     return
 
 
-# TODO: remove once we update pygithub
-def get_commit_files(repo_, commit):  # pragma: no cover
-    return (x["filename"] for x in get_commit(repo_.full_name, commit.sha)["files"])
+# # TODO: remove once we update pygithub
+# def get_commit_files(repo_, commit):  # pragma: no cover
+#     return (x["filename"] for x in get_commit(repo_.full_name, commit.sha)["files"])
 
 
 def on_labels_changed(added_labels, removed_labels):  # pragma: no cover
@@ -1023,6 +1023,10 @@ def process_pr(
     global L2_DATA, create_status
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
+
+    from github_utils import enable_github_loggin
+
+    enable_github_loggin()
 
     setup_logging("trace" if enableTraceLog else "debug")
 
@@ -1387,10 +1391,9 @@ def process_pr(
         elif re.match(CMSBOT_TECHNICAL_MSG, first_line):
             technical_comments.append(comment)
 
-    if technical_comments:
-        if is_draft_pr:
-            pull_request_updated = technical_comments[0].created_at < last_commit_date
-        bot_cache = extract_bot_cache(technical_comments)
+    if is_draft_pr:
+        pull_request_updated = technical_comments[0].created_at < last_commit_date
+    bot_cache = extract_bot_cache(technical_comments)
 
     # Make sure bot cache has the needed keys
     # for k, v in BOT_CACHE_TEMPLATE.items():
@@ -1951,7 +1954,7 @@ def process_pr(
                     bot_cache["commits"][commit.sha]["files"] = []
                 else:
                     bot_cache["commits"][commit.sha]["files"] = sorted(
-                        get_commit_files(repo, commit)
+                        x.filename for x in commit.files
                     )
 
             elif len(commit.parents) > 1:

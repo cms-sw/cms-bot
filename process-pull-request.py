@@ -82,7 +82,7 @@ if __name__ == "__main__":
         else:
             print(get_pr_latest_commit(args[0], opts.repository))
     else:
-        from github import Github
+        from github import Github, Auth
 
         repo_dir = join(SCRIPT_DIR, "repos", opts.repository.replace("-", "_"))
         if exists(repo_dir):
@@ -93,7 +93,7 @@ if __name__ == "__main__":
             sys.exit(0)
         if getattr(repo_config, "REQUEST_PROCESSOR", "cms-bot") != "cms-bot":
             sys.exit(0)
-        gh = Github(login_or_token=get_gh_token(opts.repository), per_page=100)
+        gh = Github(auth=Auth.Token(get_gh_token(opts.repository)), per_page=100)
         api_rate_limits(gh)
         repo = gh.get_repo(opts.repository)
         from process_pr import process_pr

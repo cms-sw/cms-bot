@@ -992,8 +992,8 @@ def add_nonblocking_labels(chg_files, extra_labels):
 
 
 # # TODO: remove once we update pygithub
-# def get_commit_files(repo_, commit):  # pragma: no cover
-#     return (x["filename"] for x in get_commit(repo_.full_name, commit.sha)["files"])
+def get_commit_files(repo_, commit):  # pragma: no cover
+    return list(x["filename"] for x in get_commit(repo_.full_name, commit.sha)["files"])
 
 
 def on_labels_changed(added_labels, removed_labels):  # pragma: no cover
@@ -1953,9 +1953,7 @@ def process_pr(
                 if len(commit.parents) > 1:
                     bot_cache["commits"][commit.sha]["files"] = []
                 else:
-                    bot_cache["commits"][commit.sha]["files"] = sorted(
-                        x.filename for x in commit.files
-                    )
+                    bot_cache["commits"][commit.sha]["files"] = get_commit_files(repo, commit)
 
             elif len(commit.parents) > 1:
                 bot_cache["commits"][commit.sha]["files"] = []

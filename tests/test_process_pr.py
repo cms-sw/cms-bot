@@ -11,6 +11,8 @@ from unittest.mock import patch, PropertyMock
 import pytest
 import github
 import github.GithubObject
+import github.PaginatedList
+import github.File
 
 from . import Framework
 from .Framework import readLine
@@ -134,26 +136,26 @@ def on_commit_create_status(self, *args, **kwargs):
     )
 #
 #
-# # TODO: remove once we update pygithub
-# def get_commit_files(commit):
-#     # noinspection PyProtectedMember
-#     return github.PaginatedList.PaginatedList(
-#         github.File.File,
-#         commit._requester,
-#         commit.url,
-#         {},
-#         None,
-#         "files",
-#     )
-#
-#
-# # TODO: remove once we update pygithub
-# def get_commit_files_pygithub(*args, **kwargs):
-#     kwargs.pop("res")
-#     assert len(args) == 2, "Signature of process_pr.get_commit_files changed"
-#     assert len(kwargs) == 0, "Signature of process_pr.get_commit_files changed"
-#     commit = args[1]
-#     return (x.filename for x in get_commit_files(commit))
+# TODO: remove once we update pygithub
+def get_commit_files(commit):
+    # noinspection PyProtectedMember
+    return github.PaginatedList.PaginatedList(
+        github.File.File,
+        commit._requester,
+        commit.url,
+        {},
+        None,
+        "files",
+    )
+
+
+# TODO: remove once we update pygithub
+def get_commit_files_pygithub(*args, **kwargs):
+    kwargs.pop("res")
+    assert len(args) == 2, "Signature of process_pr.get_commit_files changed"
+    assert len(kwargs) == 0, "Signature of process_pr.get_commit_files changed"
+    commit = args[1]
+    return (x.filename for x in get_commit_files(commit))
 #
 #
 # # TODO: remove once we update pygithub

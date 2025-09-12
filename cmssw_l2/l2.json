@@ -465,6 +465,14 @@
       "start_date": 1559952000
     }
   ],
+  "bmarzocc": [
+    {
+      "category": [
+        "ecal-dpg"
+      ],
+      "start_date": 1757548800
+    }
+  ],
   "bonanomi": [
     {
       "category": [
@@ -2815,6 +2823,7 @@
       "category": [
         "ecal-dpg"
       ],
+      "end_date": 1757548800,
       "start_date": 1680048000
     }
   ],

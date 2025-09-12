@@ -1,6 +1,8 @@
 #!/bin/bash
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
-readarray -t ALL_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors.txt
+readarray -t REQUIRED_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors.txt
+readarray -t ONDEMAND_GPU_TYPES < ${SCRIPTPATH}/gpu_flavors_ondemand.txt
+ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
 CMSSW_VER=$CMSSW_VERSION
 [ "${CMSSW_VER}" != "" ] || CMSSW_VER=${RELEASE_FORMAT}
 CMSSW_MAJOR=0

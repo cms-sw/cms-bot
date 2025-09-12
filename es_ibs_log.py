@@ -41,7 +41,7 @@ def process_unittest_log(logFile):
     pathInfo = logFile.split("/")
     architecture = pathInfo[4]
     release = pathInfo[8]
-    gpu = ""
+    gpu = "-"
     if pathInfo[9] == "gpu":
         gpu = pathInfo[10]
     week, rel_sec = cmsswIB2Week(release)

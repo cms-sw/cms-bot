@@ -105,7 +105,7 @@ def es_parse_log(logFile):
     index = "ib-matrix-" + week
     document = "runTheMatrix-data"
     id_str = release + architecture + workflow + str(step)
-    gpu = ""
+    gpu = "-"
     if pathInfo[9] == "gpu":
         gpu = pathInfo[10]
         id_str = id_str + gpu

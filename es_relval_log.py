@@ -109,8 +109,11 @@ def es_parse_log(logFile):
     index = "ib-matrix-" + week
     document = "runTheMatrix-data"
     id_str = release + architecture + workflow + str(step)
+    gpu = ""
     if pathInfo[9] == "gpu":
-        id_str = id_str + pathInfo[10]
+        gpu = pathInfo[10]
+        id_str = id_str + gpu
+    payload["gpu"] = gpu
     id = sha1(id_str.encode()).hexdigest()
     logdir = "/".join(logFile.split("/")[:-1])
     cmdfile = logdir + "/cmdLog"

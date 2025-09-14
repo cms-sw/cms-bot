@@ -25,7 +25,18 @@ function external_check() {
 source $(dirname $0)/setup-pr-test-env.sh
 toolconf_file=$CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/python-paths.xml
 [ -f $toolconf_file ] || exit 0
-tool_conf=$(grep -E '/cms/cmssw-(patch-|)tool-conf/' $toolconf_file | tr ' ' '\n' | grep -E '/cmssw-(patch-|)tool-conf/' | sed 's|.*=||;s|"||g' | rev  | cut -d/ -f4- | rev)
+for n in tool-conf ; do
+  tool_conf=$(grep -E "/cms/cmssw-(patch-|)${n}/" $toolconf_file | tr ' ' '\n' | grep -E "/cmssw-(patch-|)${n}/" | head -1 | sed 's|.*=||;s|"||g' | rev  | cut -d/ -f4- | rev)
+  [ "${tool_conf}" = "" ] || break
+done
+if [ "${tool_conf}" = "" ] ;  then
+  if [ "${DRY_RUN}" = "" ] ; then
+    echo "ERROR: Unable to find cmssw-tools/cmssw-tool-conf path in python-paths.xml" > ${WORKSPACE}/externals-checks.log
+    echo 'CMSSWTOOLCONF_CHECKS_TOOLS;ERROR,Externals Tools,See Log,external_checks.log' > ${RESULTS_DIR}/externals_checks.txt
+    prepare_upload_results
+  fi
+  exit 0
+fi
 tool_pkg=$(echo $tool_conf | rev | cut -d/ -f1-3 | rev | tr '/' '+')
 base_dir=$(echo $tool_conf | sed "s|/$SCRAM_ARCH/.*||")
 cmspkg="${base_dir}/common/cmspkg -a $SCRAM_ARCH"

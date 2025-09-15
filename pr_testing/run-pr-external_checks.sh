@@ -13,7 +13,7 @@ function external_check() {
   [ "${build_dir}" != "" ] || return 0
   local LOGFILE=${WORKSPACE}/external_checks/relocate/${pkg_name}.txt
   #FIXME: Remove direct_url.json condition once cmsdist/build-with-pip.file is fixes to relocate direct_url.json
-  (grep "${build_dir}/" -Ir ${pkg_dir} 2>&1 | grep -v '/direct_url.json:' >${LOGFILE}) || true
+  (grep "${build_dir}/" -Ir ${pkg_dir} 2>&1 | grep -v '/direct_url.json:' | sed "s|^${pkg_dir}/||" >${LOGFILE}) || true
   [ ! -s ${LOGFILE} ] && rm -f ${LOGFILE}
   if [ -f ${WORKSPACE}/externals-checks-missing.log ] ; then
     LOGFILE=${WORKSPACE}/external_checks/unknown/${pkg_name}.txt
@@ -25,7 +25,18 @@ function external_check() {
 source $(dirname $0)/setup-pr-test-env.sh
 toolconf_file=$CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/python-paths.xml
 [ -f $toolconf_file ] || exit 0
-tool_conf=$(grep -E '/cms/cmssw-(patch-|)tool-conf/' $toolconf_file | tr ' ' '\n' | grep -E '/cmssw-(patch-|)tool-conf/' | sed 's|.*=||;s|"||g' | rev  | cut -d/ -f4- | rev)
+for n in tool-conf tools ; do
+  tool_conf=$(grep -E "/cms/cmssw-(patch-|)${n}/" $toolconf_file | tr ' ' '\n' | grep -E "/cmssw-(patch-|)${n}/" | head -1 | sed 's|.*=||;s|"||g' | rev  | cut -d/ -f4- | rev)
+  [ "${tool_conf}" = "" ] || break
+done
+if [ "${tool_conf}" = "" ] ;  then
+  if [ "${DRY_RUN}" = "" ] ; then
+    echo "ERROR: Unable to find cmssw-tools/cmssw-tool-conf path in python-paths.xml" > ${WORKSPACE}/externals-checks.log
+    echo 'CMSSWTOOLCONF_CHECKS_TOOLS;ERROR,Externals Tools,See Log,externals-checks.log' > ${RESULTS_DIR}/externals_checks.txt
+    prepare_upload_results
+  fi
+  exit 0
+fi
 tool_pkg=$(echo $tool_conf | rev | cut -d/ -f1-3 | rev | tr '/' '+')
 base_dir=$(echo $tool_conf | sed "s|/$SCRAM_ARCH/.*||")
 cmspkg="${base_dir}/common/cmspkg -a $SCRAM_ARCH"

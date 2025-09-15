@@ -73,13 +73,15 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     elif $REQUIRED_TEST ; then
      PR_COMMIT_STATUS="required"
     fi
-    readarray -t ALL_GPU_TYPES < <(tr '[:lower:]' '[:upper:]' < "${CMS_BOT_DIR}/gpu_flavors.txt")
-    ALL_GPU_BRANDS=($(for gpu in "${ALL_GPU_TYPES[@]}"; do echo "${gpu%%_*}"; done | sort -u))
+    readarray -t REQUIRED_GPU_TYPES < <(tr '[:lower:]' '[:upper:]' < "${CMS_BOT_DIR}/gpu_flavors.txt")
+    readarray -t ONDEMAND_GPU_TYPES < <(tr '[:lower:]' '[:upper:]' < "${CMS_BOT_DIR}/gpu_flavors_ondemand.txt")
+    ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
+    ALL_GPU_BRANDS=($(for gpu in "${REQUIRED_GPU_TYPES[@]}"; do echo "${gpu%%_*}"; done | sort -u))
     IFS=',' read -ra PARSED_TESTS <<< "$ENABLE_BOT_TESTS"
 
     if is_in_array "GPU" "${PARSED_TESTS[@]}"; then
       if [[ -z "$SELECTED_GPU_TYPES" ]]; then
-        SELECTED_GPU_TYPES=$(IFS=','; echo "${ALL_GPU_TYPES[*]}")
+        SELECTED_GPU_TYPES=$(IFS=','; echo "${REQUIRED_GPU_TYPES[*]}")
       fi
 
       IFS=',' read -ra SELECTED <<< "$(echo "$SELECTED_GPU_TYPES" | tr '[:lower:]' '[:upper:]')"
@@ -87,11 +89,15 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
 
       for gpu in "${SELECTED[@]}"; do
           if is_in_array "$gpu" "${ALL_GPU_BRANDS[@]}"; then
-              for full_gpu in "${ALL_GPU_TYPES[@]}"; do
+              for full_gpu in "${REQUIRED_GPU_TYPES[@]}"; do
                   [[ "$full_gpu" == "${gpu}_"* ]] && TMP+=("$full_gpu")
               done
           else
+            if is_in_array "$gpu" "${ALL_GPU_TYPES[@]}"; then
               TMP+=("$gpu")
+            else
+              echo "Unknown gpu: $gpu"
+            fi
           fi
       done
 

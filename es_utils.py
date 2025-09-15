@@ -13,6 +13,7 @@ CMSSDT_ES_QUERY = "https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = "https://os-cmssdt1.cern.ch/os"
 ES_NEW_SERVER = ES_SERVER
 ES_PASSWD = None
+SEND_ERROR = None
 
 
 def format(s, **kwds):
@@ -103,11 +104,13 @@ def send_request(
     ignore_doc=False,
     ignore_new=False,
 ):
+    global SEND_ERROR
     if (not ignore_new) and (ES_SERVER != ES_NEW_SERVER) and (es_ser == ES_SERVER):
         if not send_request(
             uri, payload, passwd_file, method, es_ser=ES_NEW_SERVER, ignore_doc=ignore_doc
         ):
             return False
+    SEND_ERROR = None
     header = {"Content-Type": "application/json"}
     xuri = uri.split("/")
     if (not ignore_doc) and (xuri[1] != "_doc"):
@@ -129,7 +132,8 @@ def send_request(
             request.get_method = lambda: method
         content = urlopen(request, context=get_ssl_context())
     except Exception as e:
-        print("ERROR:", url, str(e))
+        SEND_ERROR = str(e)
+        print("ERROR:", url, SEND_ERROR)
         print(payload)
         return False
     print("OK:", url)
@@ -156,6 +160,7 @@ def es_cache_payload(id, uri, payload, passwd_file):
 
 
 def send_cached_payload():
+    ok = True
     for cache_file in glob("%s/*/*.json" % es_cache_dir()):
         print("Processing: ", cache_file)
         with open(cache_file) as ref:
@@ -166,12 +171,12 @@ def send_cached_payload():
                 method="POST",
                 passwd_file=data["passwd_file"],
             ):
-                return False
+                ok = False
         try:
             remove(cache_file)
         except:
             pass
-    return True
+    return ok
 
 
 def send_payload(index, document, id, payload, passwd_file=None):

@@ -25,8 +25,9 @@ function external_check() {
 source $(dirname $0)/setup-pr-test-env.sh
 toolconf_file=$CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/python-paths.xml
 [ -f $toolconf_file ] || exit 0
-for n in tool-conf tools ; do
+for n in tool-conf ; do
   tool_conf=$(grep -E "/cms/cmssw-(patch-|)${n}/" $toolconf_file | tr ' ' '\n' | grep -E "/cmssw-(patch-|)${n}/" | head -1 | sed 's|.*=||;s|"||g' | rev  | cut -d/ -f4- | rev)
+  echo "Tool conf for $n: ${tool_conf}"
   [ "${tool_conf}" = "" ] || break
 done
 if [ "${tool_conf}" = "" ] ;  then

@@ -10,6 +10,7 @@ ARRAY=(
     "cms-externals/incubator-mxnet:mxnet-predict"
     "cms-externals/eigen-git-mirror:eigen"
     "cms-externals/tensorflow:tensorflow-sources"
+    "HLS_arbitrary_Precision_Types:hls"
     "cms-sw/cmssw-config:coral"
     "cms-externals/dxr:py3-dxr"
     )

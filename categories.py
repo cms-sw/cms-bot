@@ -102,7 +102,7 @@ CMSSW_L2 = {
     # dpgs
     "mdelcourt": ["trk-dpg"],
     "henriettepetersen": ["trk-dpg"],
-    "wang0jin": ["ecal-dpg"],
+    "bmarzocc": ["ecal-dpg"],
     "thomreis": ["ecal-dpg"],
     "wang-hui": ["hcal-dpg"],
     "jhakala": ["hcal-dpg"],
@@ -154,6 +154,8 @@ CMSSW_L2 = {
     # PPD
     "malbouis": ["ppd"],
     "vlimant": ["ppd"],
+    "nothingface0": ["dqm"],
+    "gabrielmscampos": ["dqm"],
     # ML
     "valsdav": ["ml", "egamma-pog"],
     "y19y19": ["ml"],

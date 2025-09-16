@@ -47,7 +47,6 @@ import yaml
 import logging
 import sys
 import os
-import itertools
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 from collections.abc import Iterable
@@ -149,6 +148,11 @@ ALL_GPUS = [
     for x in open(join(dirname(__file__), "gpu_flavors.txt"), "r").read().splitlines()
     if x.strip()
 ]
+ALL_GPUS.extend(
+    x.strip()
+    for x in open(join(dirname(__file__), "gpu_flavors_ondemand.txt"), "r").read().splitlines()
+    if x.strip()
+)
 ALL_GPU_BRANDS = sorted(list(set(x.strip().split("_", 1)[0] for x in ALL_GPUS)))
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
@@ -201,7 +205,7 @@ MULTILINE_COMMENTS_MAP = {
     + EXTRA_RELVALS_TESTS_OPTS
     + "|_input)?": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
     "gpu(_flavor|_type)?s?": [
-        format(r"%(gpu)s(,(%(gpu)s))*", gpu="|".join(itertools.chain(ALL_GPUS, ALL_GPU_BRANDS))),
+        format(r"%(gpu)s(,(%(gpu)s))*", gpu="|".join(f"{x}(?:_.+)?" for x in ALL_GPU_BRANDS)),
         "SELECTED_GPU_TYPES",
     ],
 }

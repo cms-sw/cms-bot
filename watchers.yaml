@@ -590,6 +590,10 @@ forthommel:
 - RecoPPS
 - SimPPS/DirectSimProducer
 fwyzard:
+- EventFilter/Configuration
+- EventFilter/OnlineMetaDataRawToDigi
+- EventFilter/RawDataCollector
+- EventFilter/Utilities
 - FWCore/ServiceRegistry
 - FWCore/Services
 - HLTrigger/HLTcore
@@ -1448,8 +1452,6 @@ hqucms:
 - PhysicsTools/MXNet
 - RecoBTag/MXNet
 - RecoBTag/FeatureTools
-adewit:
-- Alignment
 vargasa:
 - Configuration/Geometry
 - Geometry/TrackerCommonData

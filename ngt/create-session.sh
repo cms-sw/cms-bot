@@ -27,7 +27,7 @@ function usage() {
 
 #Supported/available GPUS
 #Format: gpu:<comma-separated-list-of-gpus> gpu:<comma-separated-list-of-gpus> ..."
-VALID_GPUS="amd:AMD_Instinct_MI300X_OAM nvidia:NVIDIA-H100-NVL,NVIDIA-L40S"
+VALID_GPUS="amd:AMD_Instinct_MI300X_OAM,AMD_Radeon_PRO_W7900 nvidia:NVIDIA-H100-NVL,NVIDIA-L40S"
 VALID_PRODUCTS="amd:product-name nvidia:product"
 
 THISDIR=$(dirname $0)

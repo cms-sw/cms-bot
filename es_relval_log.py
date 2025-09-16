@@ -66,25 +66,21 @@ def es_parse_jobreport(payload, logFile):
     for i in reports_p:
         summaries = i.iter("PerformanceSummary")
         for j in summaries:
-            if j.get("Metric") == "SystemMemory" or j.get("Metric") == "StorageStatistics":
+            metric = j.get("Metric")
+            if metric in ["SystemMemory", "StorageStatistics"]:
                 continue
-            if j.get("Metric") == "ApplicationMemory":
+            if metric in ["ApplicationMemory", "Timing"]:
                 metrics_list = j.iter()
                 for i in metrics_list:
                     name = i.get("Name")
+                    if not name:
+                        continue
                     val = i.get("Value")
                     if (not val) or ("nan" in val):
                         val = ""
-                    payload[name] = val
-            elif j.get("Metric") == "Timing":
-                metrics_list = j.iter()
-                for i in metrics_list:
-                    val = i.get("Value")
-                    if (not val) or ("nan" in val):
-                        val = ""
-                    elif "e" in val:
+                    elif (metric in ["Timing"]) and ("e" in val):
                         val = float(val)
-                    payload[i.get("Name")] = val
+                    payload[name] = val
     return payload
 
 
@@ -109,8 +105,11 @@ def es_parse_log(logFile):
     index = "ib-matrix-" + week
     document = "runTheMatrix-data"
     id_str = release + architecture + workflow + str(step)
+    gpu = "-"
     if pathInfo[9] == "gpu":
-        id_str = id_str + pathInfo[10]
+        gpu = pathInfo[10]
+        id_str = id_str + gpu
+    payload["gpu"] = gpu
     id = sha1(id_str.encode()).hexdigest()
     logdir = "/".join(logFile.split("/")[:-1])
     cmdfile = logdir + "/cmdLog"

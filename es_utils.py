@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import sys, json, re, ssl, base64
 from os.path import exists
-from os import getenv
+from glob import glob
+from os import getenv, remove
 from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile, epoch2week
-from _py2with3compatibility import Request, urlopen
+from _py2with3compatibility import Request, urlopen, run_cmd
 from os import stat as tstat
 from time import time
 
@@ -12,6 +13,7 @@ CMSSDT_ES_QUERY = "https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = "https://os-cmssdt1.cern.ch/os"
 ES_NEW_SERVER = ES_SERVER
 ES_PASSWD = None
+SEND_ERROR = None
 
 
 def format(s, **kwds):
@@ -102,11 +104,13 @@ def send_request(
     ignore_doc=False,
     ignore_new=False,
 ):
+    global SEND_ERROR
     if (not ignore_new) and (ES_SERVER != ES_NEW_SERVER) and (es_ser == ES_SERVER):
         if not send_request(
             uri, payload, passwd_file, method, es_ser=ES_NEW_SERVER, ignore_doc=ignore_doc
         ):
             return False
+    SEND_ERROR = None
     header = {"Content-Type": "application/json"}
     xuri = uri.split("/")
     if (not ignore_doc) and (xuri[1] != "_doc"):
@@ -128,11 +132,51 @@ def send_request(
             request.get_method = lambda: method
         content = urlopen(request, context=get_ssl_context())
     except Exception as e:
-        print("ERROR:", url, str(e))
+        SEND_ERROR = str(e)
+        print("ERROR:", url, SEND_ERROR)
         print(payload)
         return False
     print("OK:", url)
     return True
+
+
+def es_cache_dir():
+    return getenv("CMS_ES_CACHE_DIR", "")
+
+
+def es_cache_payload(id, uri, payload, passwd_file):
+    data = {"uri": uri, "payload": payload, "passwd_file": passwd_file}
+    cache_dir = "%s/%s" % (es_cache_dir(), id[0:2])
+    if not exists(cache_dir):
+        err, out = run_cmd("mkdir -p %s" % cache_dir)
+        if err:
+            print("ERROR:", out)
+            return False
+    cache_file = "%s/%s.json" % (cache_dir, id)
+    with open(cache_file, "w") as ref:
+        json.dump(data, ref)
+        print("OK Cached:", cache_file)
+    return True
+
+
+def send_cached_payload():
+    ok = True
+    for cache_file in glob("%s/*/*.json" % es_cache_dir()):
+        print("Processing: ", cache_file)
+        with open(cache_file) as ref:
+            data = json.load(ref, parse_float=lambda x: str(x))
+            if not send_request(
+                data["uri"],
+                payload=data["payload"],
+                method="POST",
+                passwd_file=data["passwd_file"],
+            ):
+                ok = False
+        try:
+            remove(cache_file)
+        except:
+            pass
+    return ok
 
 
 def send_payload(index, document, id, payload, passwd_file=None):
@@ -141,6 +185,9 @@ def send_payload(index, document, id, payload, passwd_file=None):
     uri = "%s/%s/" % (index, document)
     if id:
         uri = uri + id
+        cache_dir = es_cache_dir()
+        if cache_dir:
+            return es_cache_payload(id, uri, payload, passwd_file)
     return send_request(uri, payload=payload, method="POST", passwd_file=passwd_file)
 
 

@@ -318,6 +318,7 @@ CMSSW_CATEGORIES = {
         "IOPool/Provenance",
         "IOPool/SecondaryInput",
         "IOPool/Streamer",
+        "IOPool/Tests",
         "IOPool/TFileAdaptor",
         "IgTools/IgProf",
         "LICENSE",

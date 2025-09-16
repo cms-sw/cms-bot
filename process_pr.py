@@ -1026,8 +1026,6 @@ def process_pr(
 
     from github_utils import enable_github_loggin
 
-    enable_github_loggin()
-
     setup_logging("trace" if enableTraceLog else "debug")
 
     gh_user_char = "@"

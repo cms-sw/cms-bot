@@ -1517,15 +1517,14 @@
                         "Alignment/OfflineValidation/test/testingScripts/test_unitZmumu.sh"
                     ],
                     "squashed": false,
-                    "time": 1746022126
+                    "time": 1746014926
                 }
             },
             "emoji": {
                 "2842137555": "+1"
             },
             "last_seen_sha": "b6db3e643d2bd16deee12590d1312a3addcd2d75",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     },
     {

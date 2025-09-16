@@ -8,13 +8,12 @@
                         "FWCore/Utilities/BuildFile.xml"
                     ],
                     "squashed": false,
-                    "time": 1733485792
+                    "time": 1733482192
                 }
             },
             "emoji": {},
             "last_seen_sha": "9138474754099798ff50cb07287e7caa4786f247",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     },
     {
@@ -50,10 +49,6 @@
         }
     },
     {
-        "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"9138474754099798ff50cb07287e7caa4786f247\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733485792}},\"emoji\":{},\"last_seen_sha\":\"9138474754099798ff50cb07287e7caa4786f247\",\"signatures\":{},\"version\":3} -->"
-    },
-    {
         "type": "save-bot-cache",
         "data": {
             "commits": {
@@ -62,13 +57,12 @@
                         "FWCore/Utilities/BuildFile.xml"
                     ],
                     "squashed": false,
-                    "time": 1733485792
+                    "time": 1733482192
                 }
             },
             "emoji": {},
             "last_seen_sha": "9138474754099798ff50cb07287e7caa4786f247",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     }
 ]

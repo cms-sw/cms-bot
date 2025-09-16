@@ -6,8 +6,7 @@
             "emoji": {
                 "2769192218": "+1"
             },
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     },
     {
@@ -38,7 +37,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{},\"emoji\":{\"2769192218\":\"+1\",\"2769330515\":\"+1\"},\"signatures\":{},\"version\":3} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{},\"emoji\":{\"2769192218\":\"+1\",\"2769330515\":\"+1\"},\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -48,8 +47,7 @@
                 "2769192218": "+1",
                 "2769330515": "+1"
             },
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     }
 ]

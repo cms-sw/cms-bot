@@ -14,8 +14,8 @@ if [ $INSTALL_REQS -eq 1 ]; then
 fi
 
 if [ ! -e Framework.py ]; then
-  curl -L https://github.com/PyGithub/PyGithub/raw/v2.8.1/tests/Framework.py > Framework.py
-  #sed -i -e 's/self\.retry/self.retry, per_page=100/g' Framework.py
+  PYGITHUB_VERSION=$(grep test-requirements.txt -e PyGithub | cut -d '=' -f 3)
+  curl -L https://github.com/PyGithub/PyGithub/raw/v{$PYGITHUB_VERSION}/tests/Framework.py > Framework.py
   patch -p0 < Framework.patch
 fi
 

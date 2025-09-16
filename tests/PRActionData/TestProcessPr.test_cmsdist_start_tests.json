@@ -8,18 +8,17 @@
                         "root.spec"
                     ],
                     "squashed": false,
-                    "time": 1745834656
+                    "time": 1745827456
                 },
                 "97b8e6b89e86de19afb3a428f54f08313457374e": {
                     "files": [],
                     "squashed": false,
-                    "time": 1745917299
+                    "time": 1745910099
                 }
             },
             "emoji": {},
             "last_seen_sha": "97b8e6b89e86de19afb3a428f54f08313457374e",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     },
     {
@@ -28,7 +27,7 @@
             "commit": "97b8e6b89e86de19afb3a428f54f08313457374e",
             "state": "success",
             "target_url": "https://github.com/iarspider-cmssw/cmsdist/pull/1#issuecomment-2838027440",
-            "description": "Tests requested by iarspider at 2025-04-29 09:07:18+00:00 UTC.",
+            "description": "Tests requested by iarspider at 2025-04-29 09:07:18 UTC.",
             "context": "bot/1/jenkins"
         }
     },
@@ -59,8 +58,8 @@
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmsdist#1",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
-                "BUILD_ONLY": false,
-                "CONTEXT_PREFIX": "cms/1"
+                "CONTEXT_PREFIX": "cms/1",
+                "BUILD_ONLY": false
             }
         }
     },
@@ -74,7 +73,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"3796ce54fef5c2b00990949a4e3f7d49489561c3\":{\"files\":[\"root.spec\"],\"squashed\":false,\"time\":1745834656},\"97b8e6b89e86de19afb3a428f54f08313457374e\":{\"files\":[],\"squashed\":false,\"time\":1745917299}},\"emoji\":{\"2838027440\":\"+1\"},\"last_seen_sha\":\"97b8e6b89e86de19afb3a428f54f08313457374e\",\"signatures\":{},\"version\":3} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"3796ce54fef5c2b00990949a4e3f7d49489561c3\":{\"files\":[\"root.spec\"],\"squashed\":false,\"time\":1745827456},\"97b8e6b89e86de19afb3a428f54f08313457374e\":{\"files\":[],\"squashed\":false,\"time\":1745910099}},\"emoji\":{\"2838027440\":\"+1\"},\"last_seen_sha\":\"97b8e6b89e86de19afb3a428f54f08313457374e\",\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -85,20 +84,19 @@
                         "root.spec"
                     ],
                     "squashed": false,
-                    "time": 1745834656
+                    "time": 1745827456
                 },
                 "97b8e6b89e86de19afb3a428f54f08313457374e": {
                     "files": [],
                     "squashed": false,
-                    "time": 1745917299
+                    "time": 1745910099
                 }
             },
             "emoji": {
                 "2838027440": "+1"
             },
             "last_seen_sha": "97b8e6b89e86de19afb3a428f54f08313457374e",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     }
 ]

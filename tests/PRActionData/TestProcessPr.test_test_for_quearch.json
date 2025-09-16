@@ -8,13 +8,12 @@
                         "Validation/README"
                     ],
                     "squashed": false,
-                    "time": 1742469710
+                    "time": 1742466110
                 }
             },
             "emoji": {},
             "last_seen_sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     },
     {
@@ -31,7 +30,7 @@
             "commit": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
             "state": "success",
             "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2740383001",
-            "description": "Tests requested by iarspider at 2025-03-20 13:01:47+00:00 UTC.",
+            "description": "Tests requested by iarspider at 2025-03-20 13:01:47 UTC.",
             "context": "bot/24/jenkins"
         }
     },
@@ -65,8 +64,8 @@
                 "ENABLE_BOT_TESTS": "CUDA,HIGH_STATS,NANO,PROFILING,ROCM,THREADING",
                 "ARCHITECTURE_FILTER": "slc7_amd64_gcc930",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO CUDA ROCM",
-                "BUILD_ONLY": false,
-                "CONTEXT_PREFIX": "cms/24"
+                "CONTEXT_PREFIX": "cms/24",
+                "BUILD_ONLY": false
             }
         }
     },
@@ -80,7 +79,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\":{\"files\":[\"Validation/README\"],\"squashed\":false,\"time\":1742469710}},\"emoji\":{\"2740067147\":\"+1\",\"2740383001\":\"+1\"},\"last_seen_sha\":\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\",\"signatures\":{},\"version\":3} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\":{\"files\":[\"Validation/README\"],\"squashed\":false,\"time\":1742466110}},\"emoji\":{\"2740067147\":\"+1\",\"2740383001\":\"+1\"},\"last_seen_sha\":\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\",\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -91,7 +90,7 @@
                         "Validation/README"
                     ],
                     "squashed": false,
-                    "time": 1742469710
+                    "time": 1742466110
                 }
             },
             "emoji": {
@@ -99,8 +98,7 @@
                 "2740383001": "+1"
             },
             "last_seen_sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     }
 ]

@@ -6,8 +6,7 @@
             "emoji": {
                 "2769192218": "+1"
             },
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     },
     {
@@ -24,18 +23,13 @@
         ]
     },
     {
-        "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{},\"emoji\":{\"2769192218\":\"+1\"},\"signatures\":{},\"version\":3} -->"
-    },
-    {
         "type": "save-bot-cache",
         "data": {
             "commits": {},
             "emoji": {
                 "2769192218": "+1"
             },
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     }
 ]

@@ -16,28 +16,27 @@
                     "files": [
                         "Validation/TrackerHits/test/README"
                     ],
-                    "time": 1702387910
+                    "time": 1702384310
                 },
                 "4dfd0c268fa858e98fce9f9f9104e27e6e26fbac": {
                     "files": [
                         "SimTracker/TrackTriggerAssociation/doc/README"
                     ],
-                    "time": 1702389085
+                    "time": 1702385485
                 },
                 "5391c56598b2b29a7ab6a5a5f3dbac8ec511574f": {
                     "files": [
                         "SimTracker/TrackTriggerAssociation/doc/README"
                     ],
-                    "time": 1702387871
+                    "time": 1702384271
                 },
                 "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4": {
                     "files": [
                         "Validation/TrackerHits/test/README"
                     ],
-                    "time": 1702389427
+                    "time": 1702385827
                 }
-            },
-            "version": 3
+            }
         }
     },
     {
@@ -90,7 +89,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"17338beb185f1d28fdda4387ac6251c84c927eea\":{\"files\":[\"Validation/TrackerHits/test/README\"],\"time\":1702387910},\"4dfd0c268fa858e98fce9f9f9104e27e6e26fbac\":{\"files\":[\"SimTracker/TrackTriggerAssociation/doc/README\"],\"time\":1702389085},\"5391c56598b2b29a7ab6a5a5f3dbac8ec511574f\":{\"files\":[\"SimTracker/TrackTriggerAssociation/doc/README\"],\"time\":1702387871},\"5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4\":{\"files\":[\"Validation/TrackerHits/test/README\"],\"time\":1702389427}},\"emoji\":{\"1852068434\":\"+1\",\"2857856131\":\"+1\"},\"last_seen_sha\":\"5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4\",\"signatures\":{\"1852068434\":\"17338beb185f1d28fdda4387ac6251c84c927eea\"},\"version\":3} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"17338beb185f1d28fdda4387ac6251c84c927eea\":{\"files\":[\"Validation/TrackerHits/test/README\"],\"time\":1702384310},\"4dfd0c268fa858e98fce9f9f9104e27e6e26fbac\":{\"files\":[\"SimTracker/TrackTriggerAssociation/doc/README\"],\"time\":1702385485},\"5391c56598b2b29a7ab6a5a5f3dbac8ec511574f\":{\"files\":[\"SimTracker/TrackTriggerAssociation/doc/README\"],\"time\":1702384271},\"5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4\":{\"files\":[\"Validation/TrackerHits/test/README\"],\"time\":1702385827}},\"emoji\":{\"1852068434\":\"+1\",\"2857856131\":\"+1\"},\"last_seen_sha\":\"5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4\",\"signatures\":{\"1852068434\":\"17338beb185f1d28fdda4387ac6251c84c927eea\"}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -107,28 +106,27 @@
                     "files": [
                         "Validation/TrackerHits/test/README"
                     ],
-                    "time": 1702387910
+                    "time": 1702384310
                 },
                 "4dfd0c268fa858e98fce9f9f9104e27e6e26fbac": {
                     "files": [
                         "SimTracker/TrackTriggerAssociation/doc/README"
                     ],
-                    "time": 1702389085
+                    "time": 1702385485
                 },
                 "5391c56598b2b29a7ab6a5a5f3dbac8ec511574f": {
                     "files": [
                         "SimTracker/TrackTriggerAssociation/doc/README"
                     ],
-                    "time": 1702387871
+                    "time": 1702384271
                 },
                 "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4": {
                     "files": [
                         "Validation/TrackerHits/test/README"
                     ],
-                    "time": 1702389427
+                    "time": 1702385827
                 }
             },
-            "version": 3,
             "last_seen_sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4"
         }
     }

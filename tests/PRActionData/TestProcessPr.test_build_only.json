@@ -8,13 +8,12 @@
                         "RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc"
                     ],
                     "squashed": false,
-                    "time": 1747056240
+                    "time": 1747049040
                 }
             },
             "emoji": {},
             "last_seen_sha": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     },
     {
@@ -27,7 +26,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"06336c8884bcfbc516cc69fd99b0a161bb3a14d5\":{\"files\":[\"RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc\"],\"squashed\":false,\"time\":1747056240}},\"emoji\":{\"2872583904\":\"+1\"},\"last_seen_sha\":\"06336c8884bcfbc516cc69fd99b0a161bb3a14d5\",\"signatures\":{},\"version\":3} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"06336c8884bcfbc516cc69fd99b0a161bb3a14d5\":{\"files\":[\"RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc\"],\"squashed\":false,\"time\":1747049040}},\"emoji\":{\"2872583904\":\"+1\"},\"last_seen_sha\":\"06336c8884bcfbc516cc69fd99b0a161bb3a14d5\",\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -38,15 +37,14 @@
                         "RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc"
                     ],
                     "squashed": false,
-                    "time": 1747056240
+                    "time": 1747049040
                 }
             },
             "emoji": {
                 "2872583904": "+1"
             },
             "last_seen_sha": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
-            "signatures": {},
-            "version": 3
+            "signatures": {}
         }
     }
 ]

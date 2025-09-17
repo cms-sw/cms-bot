@@ -870,6 +870,9 @@ def parse_test_cmd(first_line: str) -> ParseResult:
         else:
             raise ParseError(f"Unexpected token: {t!r}")
 
+    if res.using and not (res.addpkg or res.full):
+        raise ParseError(f"Empty using statement")
+
     return res
 
 
@@ -1112,10 +1115,15 @@ def fetch_pr_result(url):  # pragma: no cover
 
 
 def preprocess_comment_text(comment_msg):
+    # Strip leading/trailing spaces
     comment_lines = [l.strip() for l in comment_msg.split("\n") if l.strip()]
+    # Remove extra spaces (2+ whitespaces -> 1 space)
     comment_lines = [re.sub(r"\s{2,}", " ", x) for x in comment_lines]
+    # Remove spaces around commas
+    comment_lines = [re.sub(r"\s?,\s?", ",", x) for x in comment_lines]
+    # Remove "@cmsbuild please" prefix
     comment_lines = [
-        re.sub(r"^(?:@?cmsbuild\s*[,]*\s+)?(?:please\s*[,]*\s+)?", "", x) for x in comment_lines
+        re.sub(r"^(@?cmsbuild\s?[,]*\s?)?(please\s?[,]*\s?)?", "", x) for x in comment_lines
     ]
     return comment_lines
 

@@ -148,7 +148,6 @@ CMSSW_L2 = {
     "cardinia": ["tau-pog"],
     "IzaakWN": ["tau-pog"],
     "mbluj": ["tau-pog"],
-    "kskovpen": ["tracking-pog"],
     "mmasciov": ["tracking-pog"],
     "elusian": ["tracking-pog"],
     # PPD

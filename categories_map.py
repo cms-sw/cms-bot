@@ -1799,6 +1799,14 @@ CMSSW_CATEGORIES = {
         "PhysicsTools/MVATrainer",
         "PhysicsTools/XGBoost",
     ],
+    "l1track": [
+        "L1Trigger/TrackFindingTracklet",
+        "L1Trigger/TrackFindingTMTT",
+        "L1Trigger/TrackerTFP",
+        "L1Trigger/TrackerDTC",
+        "L1Trigger/TrackTrigger",
+        "DataFormats/L1TrackTrigger",
+    ],
 }
 
 # Just like CMSSW_CATEGORIES but it creates non-blocking (no signature needed) github labels

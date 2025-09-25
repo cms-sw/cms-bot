@@ -63,7 +63,7 @@ CMSSW_L2 = {
     "mmusich": ["hlt"],
     "AdrianoDee": ["pdmv"],
     "antoniovagnerini": ["pdmv"],
-    "dickychant": ["pdmv"],
+    "DickyChant": ["pdmv"],
     "miquork": ["pdmv", "jetmet-pog"],
     "alja": ["visualization"],
     "civanch": ["simulation", "geometry", "fastsim"],

@@ -152,7 +152,7 @@ CMSSW_L2 = {
     "mmasciov": ["tracking-pog"],
     "elusian": ["tracking-pog"],
     # PPD
-    "malbouis": ["ppd"],
+    "abenecke": ["ppd"],
     "vlimant": ["ppd"],
     "nothingface0": ["dqm"],
     "gabrielmscampos": ["dqm"],

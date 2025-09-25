@@ -352,7 +352,14 @@
       "category": [
         "dqm"
       ],
+      "end_date": 1758758400,
       "start_date": 1695772800
+    },
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1758758400
     }
   ],
   "antoniovilela": [

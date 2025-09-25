@@ -47,6 +47,14 @@
       "start_date": 1656892800
     }
   ],
+  "DickyChant": [
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1758758400
+    }
+  ],
   "Dr15Jones": [
     {
       "category": [
@@ -830,6 +838,7 @@
       "category": [
         "pdmv"
       ],
+      "end_date": 1758758400,
       "start_date": 1730246400
     }
   ],

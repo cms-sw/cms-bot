@@ -1,0 +1,90 @@
+[
+    {
+        "type": "emoji",
+        "data": [
+            3337448316,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "code-checks-pending",
+            "new-package-pending",
+            "orp-pending",
+            "pending-signatures",
+            "tests-started",
+            "upgrade-pending"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": []
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-tests-iarspider-cmssw-cmssw-43.properties",
+            "data": {
+                "PULL_REQUESTS": "iarspider-cmssw/cmssw#43",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
+                "BUILD_ONLY": false,
+                "CONTEXT_PREFIX": "cms/43"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            3132711677,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-code-checks-iarspider-cmssw-cmssw-43.properties",
+            "data": {
+                "PULL_REQUEST": "43",
+                "CONTEXT_PREFIX": "cms/43",
+                "CMSSW_TOOL_CONF": "",
+                "APPLY_PATCH": "false"
+            }
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "19a3428337e73a0dfb5cc1c38d2c05927fb418bb",
+            "state": "pending",
+            "target_url": null,
+            "description": "code-checks requested",
+            "context": "cms/43/code-checks"
+        }
+    },
+    {
+        "type": "create-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"19a3428337e73a0dfb5cc1c38d2c05927fb418bb\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1753790769}},\"emoji\":{\"3337448316\":\"+1\"},\"last_seen_sha\":\"19a3428337e73a0dfb5cc1c38d2c05927fb418bb\",\"signatures\":{}} -->"
+    },
+    {
+        "type": "save-bot-cache",
+        "data": {
+            "emoji": {
+                "3337448316": "+1"
+            },
+            "signatures": {},
+            "commits": {
+                "19a3428337e73a0dfb5cc1c38d2c05927fb418bb": {
+                    "time": 1753790769,
+                    "squashed": false,
+                    "files": [
+                        "README"
+                    ]
+                }
+            },
+            "last_seen_sha": "19a3428337e73a0dfb5cc1c38d2c05927fb418bb"
+        }
+    }
+]

@@ -92,7 +92,7 @@ def file_processes(fileName):
     # raw_proc=  os.popen(f"grep -e 'Processing History:' -A {max_proc} {prov_file} | awk '{{print $1}}'").read().split('\n')[1:]
     raw_proc = (
         os.popen(
-            "grep -e 'Processing History:' -A %s %s | awk '{print $1}'" % (max_proc, prov_file)
+            "grep -e 'Processing History:\|-Processing histories-' -A %s %s | awk '{print $1}'" % (max_proc, prov_file)
         )
         .read()
         .split("\n")[1:]
@@ -101,7 +101,7 @@ def file_processes(fileName):
     if not raw_proc:
         print("WARNING: Unable to find 'Processing History:' in", prov_file)
     for proc_ in raw_proc:
-        if "--" in proc_:
+        if proc_.startswith("--") or proc_.startswith("}"):
             break
         processes.append(proc_)
     return processes

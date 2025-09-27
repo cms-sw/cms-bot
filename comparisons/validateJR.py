@@ -32,6 +32,10 @@ def compile_lib():
             os.environ["VALIDATE_C_SCRIPT"] = os.path.join(
                 os.environ["HOME"], "tools", "validate.C"
             )
+            if not os.path.isfile(os.environ["VALIDATE_C_SCRIPT"]):
+                os.environ["VALIDATE_C_SCRIPT"] = os.path.join(
+                    os.path.dirname(os.path.abspath(sys.argv[0])), "validate.C"
+                )
         if os.path.isfile(os.environ["VALIDATE_C_SCRIPT"]):
             # os.system(f"cp $VALIDATE_C_SCRIPT {lib_dir}/validate.C")
             os.system("cp $VALIDATE_C_SCRIPT %s/validate.C" % (lib_dir,))

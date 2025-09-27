@@ -92,7 +92,8 @@ def file_processes(fileName):
     # raw_proc=  os.popen(f"grep -e 'Processing History:' -A {max_proc} {prov_file} | awk '{{print $1}}'").read().split('\n')[1:]
     raw_proc = (
         os.popen(
-            "grep -e 'Processing History:\|-Processing histories-' -A %s %s | awk '{print $1}'" % (max_proc, prov_file)
+            "grep -e 'Processing History:\|-Processing histories-' -A %s %s | awk '{print $1}'"
+            % (max_proc, prov_file)
         )
         .read()
         .split("\n")[1:]

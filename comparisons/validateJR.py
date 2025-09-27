@@ -98,6 +98,8 @@ def file_processes(fileName):
         .split("\n")[1:]
     )
     processes = []
+    if not raw_proc:
+        print("WARNING: Unable to find 'Processing History:' in",prov_file)
     for proc_ in raw_proc:
         if "--" in proc_:
             break

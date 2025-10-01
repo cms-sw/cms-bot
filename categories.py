@@ -78,7 +78,7 @@ CMSSW_L2 = {
     "mandrenguyen": ["reconstruction", "operations"],
     "mdhildreth": ["simulation", "geometry", "fastsim"],
     "mkirsano": ["generators"],
-    "ssen": ["generators"],
+    "sensrcn": ["generators"],
     "lviliani": ["generators"],
     "theofil": ["generators"],
     "ftenchini": ["operations"],

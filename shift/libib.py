@@ -636,7 +636,7 @@ def check_ib(data, compilation_only=False):
                 logger.info(f"\tGPU flavor: {key}, status: {ut['passed']}")
                 if int(ut["details"]["num_fails"]) != 0:
                     arch = ut["arch"]
-                    release_name = f"{ut['release_queue']}/gpu/{ut['gpu']}"
+                    release_name = f"{data['release_name']}/gpu/{ut['gpu']}"
                     unitTestResults = get_ut_data(ut["file"])
                     ut_log_entries = process_ut_data(unitTestResults, arch, release_name)
                     res[key]["utest"] = ut_log_entries
@@ -645,7 +645,7 @@ def check_ib(data, compilation_only=False):
                 logger.info(f"\tGPU flavor: {key}, status: {rv['passed']}")
                 arch = rv["arch"]
                 queue = re.sub("_X.*", "_X", rv["release_name"])
-                release_name = f"{rv['release_name']}/gpu/{rv['gpu']}"
+                release_name = f"{data['release_name']}/gpu/{rv['gpu']}"
                 if not rv["passed"]:
                     try:
                         rvData = fetch(

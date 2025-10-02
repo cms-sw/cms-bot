@@ -39,6 +39,7 @@ TRIGGER_PR_TESTS = list(
             "sroychow",
             "silviodonato",
             "slava77",
+            "srimanob",
         ]
         + REQUEST_BUILD_RELEASE
         + [a for a in authors if authors[a] > 10 and not a in GITHUB_BLACKLIST_AUTHORS]
@@ -88,9 +89,7 @@ CMSSW_L2 = {
     "ctarricone": ["dqm"],
     "smorovic": ["daq"],
     "smuzaffar": ["core"],
-    "srimanob": ["upgrade"],
-    "subirsarkar": ["upgrade"],
-    "Moanwar": ["upgrade"],
+    "Moanwar": ["reconstruction"],
     "ssekmen": ["fastsim"],
     "francescobrivio": ["db"],
     "tvami": ["analysis"],

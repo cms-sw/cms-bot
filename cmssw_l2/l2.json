@@ -2359,6 +2359,14 @@
       "start_date": 1530835200
     }
   ],
+  "sensrcn": [
+    {
+      "category": [
+        "generators"
+      ],
+      "start_date": 1759363200
+    }
+  ],
   "sextonkennedy": [
     {
       "category": [
@@ -2532,6 +2540,7 @@
       "category": [
         "generators"
       ],
+      "end_date": 1759363200,
       "start_date": 1756684800
     }
   ],

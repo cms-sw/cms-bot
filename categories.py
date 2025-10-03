@@ -78,7 +78,7 @@ CMSSW_L2 = {
     "mandrenguyen": ["reconstruction", "operations"],
     "mdhildreth": ["simulation", "geometry", "fastsim"],
     "mkirsano": ["generators"],
-    "ssen": ["generators"],
+    "sensrcn": ["generators"],
     "lviliani": ["generators"],
     "theofil": ["generators"],
     "ftenchini": ["operations"],
@@ -158,6 +158,7 @@ CMSSW_L2 = {
     # ML
     "valsdav": ["ml", "egamma-pog"],
     "y19y19": ["ml"],
+    "hjkwon260": ["ml"],
 }
 
 # Automatically sign these categories if tests are passed

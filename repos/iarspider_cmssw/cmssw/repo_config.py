@@ -1,6 +1,7 @@
 from os.path import abspath, basename, dirname
 
 from cms_static import CMSBUILD_GH_USER, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO
+import datetime
 
 # GH read/write token: Use default ~/.github-token-cmsbot
 GH_TOKEN = "~/.github-token"
@@ -33,3 +34,4 @@ CMS_BRANCH_MAP = {}
 VALID_WEB_HOOKS = [".+"]
 NONBLOCKING_LABELS = True
 CHECK_DPG_POG = True
+LEGACY_CATEGORIES = {"upgrade": datetime.datetime.fromisoformat("2025-11-01T00:00:00+00:00")}

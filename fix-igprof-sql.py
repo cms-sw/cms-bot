@@ -5,11 +5,13 @@ import re
 
 unknown = 0
 
+
 def remove_ascii_control_characters(text):
     """Removes ASCII control characters from a string."""
     # Pattern matches characters from U+0000 to U+001F and U+007F (DEL)
-    pattern = r'[\x00-\x1F\x7F]'
-    return re.sub(pattern, '', text)
+    pattern = r"[\x00-\x1F\x7F]"
+    return re.sub(pattern, "", text)
+
 
 def fix_file(line):
     global unknown

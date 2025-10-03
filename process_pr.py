@@ -2693,7 +2693,7 @@ def process_pr(
         pkg_msg = []
         for pkg in packages:
             if pkg in package_categories:
-                pkg_msg.append("- %s (**%s**)" % (pkg, ", ".join(package_categories[pkg])))
+                pkg_msg.append("- %s (**%s**)" % (pkg, ", ".join(sorted(package_categories[pkg]))))
             else:
                 pkg_msg.append("- %s (**new**)" % pkg)
         messageNewPR = format(

@@ -45,5 +45,6 @@ for line in open(sys.argv[1], encoding="UTF-8", errors="ignore").readlines():
             continue
         else:
             line = fix_file(line)
+    line = re.sub(r"'", "_", line)
     line = re.sub(r'"', "'", line)
     print(line)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 import sys
 import re
@@ -24,7 +24,7 @@ def fix_file(line):
 
 
 xline = ""
-for line in open(sys.argv[1]).readlines():
+for line in open(sys.argv[1], encoding="latin-1", errors="ignore").readlines():
     line = line.strip("\n")
     if xline:
         xline = xline + line

@@ -39,7 +39,8 @@ if [ X`grep -e "architecture=$ARCHITECTURE;" releases.map | grep -e "label=$CMSS
     done
   fi
   echo "architecture=$ARCHITECTURE;label=$CMSSW_X_Y_Z;type=$RELEASE_TYPE;state=Announced;prodarch=${prodarch}${extra_tags}" >> releases.map
-  git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE ($archtype arch) as $RELEASE_TYPE release." releases.map
+  ./releases-map2json.py releases.map > releases.json
+  git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE ($archtype arch) as $RELEASE_TYPE release." releases.map releases.json
   git pull --rebase
   git push
 else

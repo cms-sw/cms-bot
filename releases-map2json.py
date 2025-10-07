@@ -4,6 +4,7 @@ import json
 import sys
 from collections import defaultdict, OrderedDict
 
+
 def parse_line(line):
     entry = {}
     for kv in line.strip().split(";"):
@@ -13,6 +14,7 @@ def parse_line(line):
             k, v = kv.split("=", 1)
             entry[k.strip()] = v.strip()
     return entry
+
 
 def normalize_label(label: str):
     """Extract (major, minor, patch, pre, patchN, extra_flavor) for sorting."""
@@ -34,10 +36,15 @@ def normalize_label(label: str):
                 patch = int(m2.group(1)) if m2 else 0
             else:
                 flavor_tokens.append(t)
-    return (major, minor, rev,
-            pre if pre is not None else float("inf"),
-            patch if patch is not None else -1,
-            "_".join(flavor_tokens))
+    return (
+        major,
+        minor,
+        rev,
+        pre if pre is not None else float("inf"),
+        patch if patch is not None else -1,
+        "_".join(flavor_tokens),
+    )
+
 
 def release_sort_key(label: str):
     key = normalize_label(label)
@@ -45,11 +52,12 @@ def release_sort_key(label: str):
         return (float("inf"), float("inf"), float("inf"), float("inf"), float("inf"), "")
     return key
 
+
 def detect_flavor(label: str) -> str:
     """Detect flavor token after CMSSW_<maj>_<min>_<rev>."""
     if not label.startswith("CMSSW_"):
         return None
-    rest = label[len("CMSSW_"):]
+    rest = label[len("CMSSW_") :]
     tokens = rest.split("_")
     if len(tokens) < 3:
         return "DEFAULT"
@@ -74,9 +82,11 @@ def detect_flavor(label: str) -> str:
         return t
     return "DEFAULT"
 
+
 def major_minor(label: str) -> str:
     m = re.match(r"(CMSSW_\d+_\d+)", label)
     return m.group(1) if m else "CMSSW_UNKNOWN"
+
 
 def major_minor_sort_key(mm: str):
     m = re.match(r"CMSSW_(\d+)_(\d+)", mm)
@@ -84,15 +94,10 @@ def major_minor_sort_key(mm: str):
         return (int(m.group(1)), int(m.group(2)))
     return (float("inf"), float("inf"))
 
+
 def build_structure(filename="./releases.map"):
     data = defaultdict(
-        lambda: defaultdict(
-            lambda: defaultdict(
-                lambda: defaultdict(
-                    lambda: defaultdict(list)
-                )
-            )
-        )
+        lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: defaultdict(list))))
     )
 
     with open(filename) as f:
@@ -112,9 +117,11 @@ def build_structure(filename="./releases.map"):
             flavor = detect_flavor(label)
             majmin = major_minor(label)
 
-            arch_entry = {k: (int(v) if k == "prodarch" else v)
-                          for k, v in entry.items()
-                          if k not in ("label", "type", "state")}
+            arch_entry = {
+                k: (int(v) if k == "prodarch" else v)
+                for k, v in entry.items()
+                if k not in ("label", "type", "state")
+            }
 
             found = False
             for rel in data[state][prodarch][type_][flavor][majmin]:
@@ -123,10 +130,9 @@ def build_structure(filename="./releases.map"):
                     found = True
                     break
             if not found:
-                data[state][prodarch][type_][flavor][majmin].append({
-                    "label": label,
-                    "architectures": [arch_entry]
-                })
+                data[state][prodarch][type_][flavor][majmin].append(
+                    {"label": label, "architectures": [arch_entry]}
+                )
 
     # Sort releases inside each major_minor bucket
     for state in data:
@@ -161,7 +167,7 @@ def build_structure(filename="./releases.map"):
 
     return order_dict(data)
 
+
 if __name__ == "__main__":
     structure = build_structure(sys.argv[1])
     print(json.dumps(structure, indent=2))
-

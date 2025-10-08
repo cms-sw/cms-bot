@@ -17803,6 +17803,16 @@
                   "default_micro_arch": "x86-64-v3"
                 }
               ]
+            },
+            {
+              "label": "CMSSW_15_0_15_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
             }
           ],
           "CMSSW_15_1": [

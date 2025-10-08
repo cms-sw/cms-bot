@@ -70,7 +70,7 @@ CMSSW_L2 = {
     "bsunanda": ["geometry"],
     "davidlange6": ["operations"],
     "emeschi": ["daq"],
-    "hqucms": ["xpog"],
+    "battibass": ["xpog"],
     "ftorrresd": ["xpog"],
     "fwyzard": ["heterogeneous"],
     "jfernan2": ["reconstruction"],

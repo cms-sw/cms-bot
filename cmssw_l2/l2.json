@@ -443,7 +443,16 @@
         "muon-dpg",
         "dt-dpg"
       ],
+      "end_date": 1759881600,
       "start_date": 1632873600
+    },
+    {
+      "category": [
+        "muon-dpg",
+        "dt-dpg",
+        "xpog"
+      ],
+      "start_date": 1759881600
     }
   ],
   "bbilin": [
@@ -1306,6 +1315,7 @@
       "category": [
         "xpog"
       ],
+      "end_date": 1759881600,
       "start_date": 1701993600
     }
   ],

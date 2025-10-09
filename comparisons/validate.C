@@ -1572,7 +1572,7 @@ void validateLumi(TString file, TString refFile, TString r="RECO", bool SHOW=fal
   int Nref = refEvents->GetEntries();
   int Nnew = Events->GetEntries();
   //normalize to the smallest number of entrie in the tree
-  Nmax = TMath::Min(Nref,Nnew);
+  Nmax = std::min(Nref,Nnew);
 
   refEvents->SetCacheSize(50000000);
   Events->SetCacheSize(50000000);
@@ -1649,7 +1649,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
   int Nref = refEvents->GetEntries();
   int Nnew = Events->GetEntries();
   //normalize to the smallest number of entrie in the tree
-  Nmax = TMath::Min(Nref,Nnew);
+  Nmax = std::min(Nref,Nnew);
 
   gROOT->cd();
 

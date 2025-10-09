@@ -32,6 +32,10 @@ def compile_lib():
             os.environ["VALIDATE_C_SCRIPT"] = os.path.join(
                 os.environ["HOME"], "tools", "validate.C"
             )
+            if not os.path.isfile(os.environ["VALIDATE_C_SCRIPT"]):
+                os.environ["VALIDATE_C_SCRIPT"] = os.path.join(
+                    os.path.dirname(os.path.abspath(sys.argv[0])), "validate.C"
+                )
         if os.path.isfile(os.environ["VALIDATE_C_SCRIPT"]):
             # os.system(f"cp $VALIDATE_C_SCRIPT {lib_dir}/validate.C")
             os.system("cp $VALIDATE_C_SCRIPT %s/validate.C" % (lib_dir,))
@@ -88,14 +92,17 @@ def file_processes(fileName):
     # raw_proc=  os.popen(f"grep -e 'Processing History:' -A {max_proc} {prov_file} | awk '{{print $1}}'").read().split('\n')[1:]
     raw_proc = (
         os.popen(
-            "grep -e 'Processing History:' -A %s %s | awk '{print $1}'" % (max_proc, prov_file)
+            "grep -e 'Processing History:\|-Processing histories-' -A %s %s | awk '{print $1}'"
+            % (max_proc, prov_file)
         )
         .read()
         .split("\n")[1:]
     )
     processes = []
+    if not raw_proc:
+        print("WARNING: Unable to find 'Processing History:' in", prov_file)
     for proc_ in raw_proc:
-        if "--" in proc_:
+        if proc_.startswith("--") or proc_.startswith("}"):
             break
         processes.append(proc_)
     return processes

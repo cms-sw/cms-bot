@@ -9,7 +9,7 @@ from categories import (
     EXTERNAL_REPOS,
     CMSDIST_REPOS,
 )
-from categories import CMSSW_CATEGORIES
+from categories import CMSSW_CATEGORIES as default_CMSSW_CATEGORIES
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
 from cms_static import (
     VALID_CMSDIST_BRANCHES,
@@ -31,7 +31,7 @@ import forward_ports_map
 import re, time
 from collections import defaultdict
 import zlib, base64
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from os.path import join, exists, dirname
 from os import environ
 from github_utils import (
@@ -50,6 +50,8 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 from collections.abc import Iterable
+
+CMSSW_CATEGORIES = {}
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -1129,6 +1131,11 @@ def ensure_ascii(string):
     return string.encode("ascii", "ignore").decode("ascii", "ignore")
 
 
+def currenttz():
+    tm = time.localtime()
+    return timezone(timedelta(seconds=tm.tm_gmtoff), tm.tm_zone)
+
+
 def process_pr(
     repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, enableTraceLog=True
 ):
@@ -1148,6 +1155,21 @@ def process_pr(
     repository = repo.full_name
     repo_org, repo_name = repository.split("/", 1)
     auto_test_repo = AUTO_TEST_REPOS
+
+    global CMSSW_CATEGORIES
+    CMSSW_CATEGORIES = copy.deepcopy(default_CMSSW_CATEGORIES)
+
+    # LEGACY_CATEGORIES is a mapping from name to datetime (when the category becomes legacy)
+    # Extract categories that are legacy at the moment of issue creation
+    legacy_cats = getattr(repo_config, "LEGACY_CATEGORIES", {})
+    issue_created_at: datetime = issue.created_at
+    if issue_created_at.tzinfo is None:
+        issue_created_at = issue_created_at.replace(tzinfo=timezone.utc)
+
+    for lc in (cat for cat, ts in legacy_cats.items() if issue_created_at > ts):
+        logger.info("Removing legacy category %s from CMSSW_CATEGORIES", lc)
+        del CMSSW_CATEGORIES[lc]
+
     try:
         if repo_config.AUTO_TEST_REPOS:
             auto_test_repo = [repository]
@@ -1155,6 +1177,7 @@ def process_pr(
             auto_test_repo = []
     except:
         pass
+
     if not cmsbuild_user:
         cmsbuild_user = repo_config.CMSBUILD_USER
     logger.info(
@@ -1823,7 +1846,7 @@ def process_pr(
                 set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji=emoji)
                 continue
 
-            # Check if the someone asked to trigger the tests
+            # Check if someone asked to trigger the tests
             if valid_commenter:
                 if re.match("^(" + "|".join(TEST_VERBS) + ")", first_line):
                     ok, v2, v3, v4, v5 = check_test_cmd(first_line, repository, global_test_params)
@@ -2822,7 +2845,7 @@ def process_pr(
         pkg_msg = []
         for pkg in packages:
             if pkg in package_categories:
-                pkg_msg.append("- %s (**%s**)" % (pkg, ", ".join(package_categories[pkg])))
+                pkg_msg.append("- %s (**%s**)" % (pkg, ", ".join(sorted(package_categories[pkg]))))
             else:
                 pkg_msg.append("- %s (**new**)" % pkg)
         messageNewPR = format(

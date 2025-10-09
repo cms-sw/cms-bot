@@ -47,6 +47,14 @@
       "start_date": 1656892800
     }
   ],
+  "DickyChant": [
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1730246400
+    }
+  ],
   "Dr15Jones": [
     {
       "category": [
@@ -226,6 +234,14 @@
       "start_date": 1691020800
     }
   ],
+  "abenecke": [
+    {
+      "category": [
+        "ppd"
+      ],
+      "start_date": 1758758400
+    }
+  ],
   "adrianodee": [
     {
       "category": [
@@ -344,7 +360,14 @@
       "category": [
         "dqm"
       ],
+      "end_date": 1758758400,
       "start_date": 1695772800
+    },
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1758758400
     }
   ],
   "antoniovilela": [
@@ -420,7 +443,16 @@
         "muon-dpg",
         "dt-dpg"
       ],
+      "end_date": 1759881600,
       "start_date": 1632873600
+    },
+    {
+      "category": [
+        "muon-dpg",
+        "dt-dpg",
+        "xpog"
+      ],
+      "start_date": 1759881600
     }
   ],
   "bbilin": [
@@ -808,14 +840,6 @@
       ],
       "end_date": 1389052800,
       "start_date": 1377043200
-    }
-  ],
-  "dickychant": [
-    {
-      "category": [
-        "pdmv"
-      ],
-      "start_date": 1730246400
     }
   ],
   "diguida": [
@@ -1278,11 +1302,20 @@
       "start_date": 1736208000
     }
   ],
+  "hjkwon260": [
+    {
+      "category": [
+        "ml"
+      ],
+      "start_date": 1759363200
+    }
+  ],
   "hqucms": [
     {
       "category": [
         "xpog"
       ],
+      "end_date": 1759881600,
       "start_date": 1701993600
     }
   ],
@@ -1581,6 +1614,7 @@
       "category": [
         "tracking-pog"
       ],
+      "end_date": 1758758400,
       "start_date": 1730246400
     }
   ],
@@ -1701,6 +1735,7 @@
       "category": [
         "ppd"
       ],
+      "end_date": 1758758400,
       "start_date": 1686182400
     }
   ],
@@ -2334,6 +2369,14 @@
       "start_date": 1530835200
     }
   ],
+  "sensrcn": [
+    {
+      "category": [
+        "generators"
+      ],
+      "start_date": 1759363200
+    }
+  ],
   "sextonkennedy": [
     {
       "category": [
@@ -2507,6 +2550,7 @@
       "category": [
         "generators"
       ],
+      "end_date": 1759363200,
       "start_date": 1756684800
     }
   ],

@@ -1,4 +1,5 @@
 import copy
+import datetime
 import functools
 import importlib
 import json
@@ -334,18 +335,16 @@ class TestProcessPr(Framework.TestCase):
     def setUpReactions(self):
         patcher_1 = patch(
             "github.IssueComment.IssueComment.reactions",
-            new_callable=PropertyMock,
+            new=property(github__issuecomment__reactions),
             create=True,
         )
-        patcher_1.__get__ = github__issuecomment__reactions
-
-        patcher_2 = patch("github.Issue.Issue.reactions", new_callable=PropertyMock, create=True)
-        patcher_2.__get__ = github__issue__reactions
-
         self.patchers.append(patcher_1)
-        self.patchers.append(patcher_2)
-
         patcher_1.start()
+
+        patcher_2 = patch(
+            "github.Issue.Issue.reactions", new=property(github__issue__reactions), create=True
+        )
+        self.patchers.append(patcher_2)
         patcher_2.start()
 
     def setUpHooks(self):
@@ -1044,3 +1043,38 @@ class TestProcessPr(Framework.TestCase):
 
     def test_build_only(self):
         self.runTest(pr_id=40)
+
+    # Test assigning a legacy category -> should not be assigned
+    def test_assign_legacy_cat(self):
+        import datetime
+
+        old_repo_config = copy.deepcopy(self.repo_config.LEGACY_CATEGORIES)
+        # Before the https://github.com/iarspider-cmssw/cmssw/pull/43
+        self.repo_config.LEGACY_CATEGORIES["upgrade"] = datetime.datetime(
+            year=2025, month=7, day=29, hour=16, minute=6, tzinfo=datetime.timezone.utc
+        ) - datetime.timedelta(days=1)
+        self.runTest(pr_id=43)
+        self.repo_config.LEGACY_CATEGORIES = old_repo_config
+
+    # Test assigning a legacy category in a PR opened before category became legacy -> should be assigned
+    def test_preserve_legacy_cat(self):
+        import datetime
+
+        old_repo_config = copy.deepcopy(self.repo_config.LEGACY_CATEGORIES)
+        # After the https://github.com/iarspider-cmssw/cmssw/pull/43
+        self.repo_config.LEGACY_CATEGORIES["upgrade"] = datetime.datetime(
+            year=2025, month=7, day=29, hour=16, minute=6, tzinfo=datetime.timezone.utc
+        ) + datetime.timedelta(days=1)
+        self.runTest(pr_id=43)
+        self.repo_config.LEGACY_CATEGORIES = old_repo_config
+
+    def test_autoassign_legacy_cat(self):
+        import datetime
+
+        old_repo_config = copy.deepcopy(self.repo_config.LEGACY_CATEGORIES)
+        # Before the https://github.com/iarspider-cmssw/cmssw/pull/44
+        self.repo_config.LEGACY_CATEGORIES["upgrade"] = datetime.datetime(
+            year=2025, month=10, day=2, hour=9, minute=7, tzinfo=datetime.timezone.utc
+        ) - datetime.timedelta(days=1)
+        self.runTest(pr_id=44)
+        self.repo_config.LEGACY_CATEGORIES = old_repo_config

@@ -1,0 +1,725 @@
+[
+  {
+    "id": 1,
+    "s": "cmsbuild test",
+    "should_match": true,
+    "expect": {
+      "action": "test"
+    }
+  },
+  {
+    "id": 2,
+    "s": "@cmsbuild test",
+    "should_match": true,
+    "expect": {
+      "action": "test"
+    }
+  },
+  {
+    "id": 3,
+    "s": "cmsbuild build",
+    "should_match": true,
+    "expect": {
+      "action": "build"
+    }
+  },
+  {
+    "id": 4,
+    "s": "please test",
+    "should_match": true,
+    "expect": {
+      "action": "test"
+    }
+  },
+  {
+    "id": 5,
+    "s": "  @cmsbuild,   please   test  ",
+    "should_match": true,
+    "expect": {
+      "action": "test"
+    }
+  },
+  {
+    "id": 6,
+    "s": "test",
+    "should_match": true,
+    "expect": {
+      "action": "test"
+    }
+  },
+  {
+    "id": 7,
+    "s": "build",
+    "should_match": true,
+    "expect": {
+      "action": "build"
+    }
+  },
+  {
+    "id": 10,
+    "s": "cmsbuild test workflow 2.3",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "2.3"
+      ]
+    }
+  },
+  {
+    "id": 11,
+    "s": "cmsbuild test workflows 2.3, 4.56",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "2.3",
+        "4.56"
+      ]
+    }
+  },
+  {
+    "id": 12,
+    "s": "please test workflow 101.0",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "101.0"
+      ]
+    }
+  },
+  {
+    "id": 13,
+    "s": "@cmsbuild please build workflows 138.1,138.2, 140.0",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "workflows": [
+        "138.1",
+        "138.2",
+        "140.0"
+      ]
+    }
+  },
+  {
+    "id": 20,
+    "s": "cmsbuild test with foo/bar#123",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 21,
+    "s": "please test with cms-sw/cmssw#43210",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "cms_prs": [
+        "cms-sw/cmssw#43210"
+      ]
+    }
+  },
+  {
+    "id": 22,
+    "s": "test with cms-sw/cmssw#12, baz/qux#34",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 23,
+    "s": "@cmsbuild build with cms-sw/cmsdist#1000, cms-sw/cmssw#2000",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "cms_prs": [
+        "cms-sw/cmsdist#1000",
+        "cms-sw/cmssw#2000"
+      ]
+    }
+  },
+  {
+    "id": 30,
+    "s": "cmsbuild test for CMSSW_14_0_X",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "release_queue": "CMSSW_14_0_X"
+    }
+  },
+  {
+    "id": 31,
+    "s": "please test for CMSSW_13_3_X",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "release_queue": "CMSSW_13_3_X"
+    }
+  },
+  {
+    "id": 32,
+    "s": "build for CMSSW_12_6_X",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "release_queue": "CMSSW_12_6_X"
+    }
+  },
+  {
+    "id": 40,
+    "s": "cmsbuild test using full cmssw",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "using": "full_cmssw"
+    }
+  },
+  {
+    "id": 41,
+    "s": "please build using full cmssw",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "using": "full_cmssw"
+    }
+  },
+  {
+    "id": 50,
+    "s": "cmsbuild test using addpkg Foo/Bar",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "using": "addpkg",
+      "pkgs": [
+        "Foo/Bar"
+      ]
+    }
+  },
+  {
+    "id": 51,
+    "s": "cmsbuild test using cms-addpkg Reco/Tracker",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "using": "addpkg",
+      "pkgs": [
+        "Reco/Tracker"
+      ]
+    }
+  },
+  {
+    "id": 52,
+    "s": "please test using addpkg DataFormats/FWLite, FWCore/Framework",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "using": "addpkg",
+      "pkgs": [
+        "DataFormats/FWLite",
+        "FWCore/Framework"
+      ]
+    }
+  },
+  {
+    "id": 53,
+    "s": "build using cms-addpkg Geometry/CMSCommonData,Configuration/StandardSequences, Reco/Tracker",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "using": "addpkg",
+      "pkgs": [
+        "Geometry/CMSCommonData",
+        "Configuration/StandardSequences",
+        "Reco/Tracker"
+      ]
+    }
+  },
+  {
+    "id": 60,
+    "s": "@cmsbuild please test workflows 2.3,4.56 with cms-sw/cmssw#1 for CMSSW_14_0_X using full cmssw",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "2.3",
+        "4.56"
+      ],
+      "cms_prs": [
+        "cms-sw/cmssw#1"
+      ],
+      "release_queue": "CMSSW_14_0_X",
+      "using": "full_cmssw"
+    }
+  },
+  {
+    "id": 61,
+    "s": "cmsbuild build with cms-sw/cmsdist#9999 workflow 200.0 for CMSSW_13_3_X using cms-addpkg Reco/Tracker,Reco/Vertexing",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "workflows": [
+        "200.0"
+      ],
+      "cms_prs": [
+        "cms-sw/cmsdist#9999"
+      ],
+      "release_queue": "CMSSW_13_3_X",
+      "using": "addpkg",
+      "pkgs": [
+        "Reco/Tracker",
+        "Reco/Vertexing"
+      ]
+    }
+  },
+  {
+    "id": 70,
+    "s": "please test with cms-sw/cmssw#1 workflow 2.3",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "2.3"
+      ],
+      "cms_prs": [
+        "cms-sw/cmssw#1"
+      ]
+    }
+  },
+  {
+    "id": 80,
+    "s": "@cmsbuild, please, test, workflows 2.3,4.56, 6.78",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 81,
+    "s": "cmsbuild   test   with   cms-sw/cmssw#10,cms-sw/cmsdist#20",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "cms_prs": [
+        "cms-sw/cmssw#10",
+        "cms-sw/cmsdist#20"
+      ]
+    }
+  },
+  {
+    "id": 82,
+    "s": "  please   build\tworkflow\t9.9\t",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "workflows": [
+        "9.9"
+      ]
+    }
+  },
+  {
+    "id": 83,
+    "s": "test workflows 1.0 , 2.0 ,3.0",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "1.0",
+        "2.0",
+        "3.0"
+      ]
+    }
+  },
+  {
+    "id": 90,
+    "s": "test workflow 1.1",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "1.1"
+      ]
+    }
+  },
+  {
+    "id": 91,
+    "s": "test workflows 1.1,2.2",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "1.1",
+        "2.2"
+      ]
+    }
+  },
+  {
+    "id": 100,
+    "s": "CMSBUILD TEST",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 101,
+    "s": "CmsBuild Test",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 110,
+    "s": "cmsbuild",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 111,
+    "s": "please",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 120,
+    "s": "cmsbuild test with cms-sw/cmssw#1; baz/qux#2",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 121,
+    "s": "cmsbuild test workflows 1.0|2.0",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 130,
+    "s": "cmsbuild test with foo#1",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 131,
+    "s": "cmsbuild test with foo/bar#abc",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 140,
+    "s": "cmsbuild test workflow abc",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "abc"
+      ]
+    }
+  },
+  {
+    "id": 141,
+    "s": "cmsbuild test workflows 1.0, 0nope",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 150,
+    "s": "cmsbuild test for CMSSW_14_X",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 151,
+    "s": "cmsbuild test for 14_0_X",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 160,
+    "s": "cmsbuild test using addpkg RecoTracker",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "pkgs": ["RecoTracker"]
+    }
+  },
+  {
+    "id": 161,
+    "s": "cmsbuild test using cms-addpkg Reco/Tracker, SomePkg",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "pkgs": ["Reco/Tracker", "SomePkg"]
+    }
+  },
+  {
+    "id": 170,
+    "s": "cmsbuild test using cms-addpkg Reco/Tracker using full cmssw",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 171,
+    "s": "cmsbuild test using full cmssw using cms-addpkg Reco/Tracker",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 180,
+    "s": "@cmsbuild, please test workflows 140.0, 140.1 with cms-sw/cmssw#45678, cms-sw/cmsdist#123 for CMSSW_14_0_X using cms-addpkg Reco/Tracker,Reco/Vertexing,PhysicsTools/NanoAOD",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "140.0",
+        "140.1"
+      ],
+      "cms_prs": [
+        "cms-sw/cmssw#45678",
+        "cms-sw/cmsdist#123"
+      ],
+      "release_queue": "CMSSW_14_0_X",
+      "using": "addpkg",
+      "pkgs": [
+        "Reco/Tracker",
+        "Reco/Vertexing",
+        "PhysicsTools/NanoAOD"
+      ]
+    }
+  },
+  {
+    "id": 190,
+    "s": "   cmsbuild test    ",
+    "should_match": true,
+    "expect": {
+      "action": "test"
+    }
+  },
+  {
+    "id": 191,
+    "s": "   @cmsbuild   please ,   build    ",
+    "should_match": true,
+    "expect": {
+      "action": "build"
+    }
+  },
+  {
+    "id": 200,
+    "s": "build workflows 2.0 for CMSSW_13_3_X",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "workflows": [
+        "2.0"
+      ],
+      "release_queue": "CMSSW_13_3_X"
+    }
+  },
+  {
+    "id": 201,
+    "s": "build with cms-sw/cmssw#11111 using full cmssw",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "cms_prs": [
+        "cms-sw/cmssw#11111"
+      ],
+      "using": "full_cmssw"
+    }
+  },
+  {
+    "id": 210,
+    "s": "can you test this please?",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 211,
+    "s": "@someone please test",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 220,
+    "s": "@cmsbuild   , please  ,  test   with  cms-sw/cmssw#1 ,  bar/baz#2   workflows 10.0 ,  20.0   for  CMSSW_14_0_X   using   addpkg  Reco/Tracker , Reco/Vertexing  ",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 221,
+    "s": "@cmsbuild   , please  ,  test   with  cms-sw/cmssw#1 ,  cms-sw/cms-bot#2   workflows 10.0 ,  20.0   for  CMSSW_14_0_X   using   addpkg  Reco/Tracker , Reco/Vertexing  ",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "10.0",
+        "20.0"
+      ],
+      "cms_prs": [
+        "cms-sw/cmssw#1",
+        "cms-sw/cms-bot#2"
+      ],
+      "release_queue": "CMSSW_14_0_X",
+      "using": "addpkg",
+      "pkgs": [
+        "Reco/Tracker",
+        "Reco/Vertexing"
+      ]
+    }
+  },
+  {
+    "id": 230,
+    "s": "@cmsbuild\tplease\ttest\tworkflows\t2.3,\t4.5",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "2.3",
+        "4.5"
+      ]
+    }
+  },
+  {
+    "id": 231,
+    "s": "@cmsbuild please test\nworkflows 2.3, 4.5",
+    "should_match": true,
+    "expect": {
+      "action":  "test"
+      }
+  },
+  {
+    "id": 240,
+    "s": "test test workflows 2.3",
+    "should_match": false,
+    "expect": { }
+  },
+  {
+    "id": 250,
+    "s": "cmsbuild test workflows",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 251,
+    "s": "cmsbuild test with",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 252,
+    "s": "cmsbuild test for",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 253,
+    "s": "cmsbuild test using",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 260,
+    "s": "note: @cmsbuild please test workflows 2.3",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 261,
+    "s": "random text then test workflows 2.3",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 262,
+    "s": "prefix @cmsbuild, please build with cms-sw/cmssw#1",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 263,
+    "s": "cmsbuild test with #123",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "cms_prs": [
+        "#123"
+      ]
+    }
+  },
+  {
+    "id": 264,
+    "s": "please build with #9999",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "cms_prs": [
+        "#9999"
+      ]
+    }
+  },
+  {
+    "id": 265,
+    "s": "@cmsbuild, please test workflows 140.0 with #42 for CMSSW_14_0_X",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "workflows": [
+        "140.0"
+      ],
+      "cms_prs": [
+        "#42"
+      ],
+      "release_queue": "CMSSW_14_0_X"
+    }
+  },
+  {
+    "id": 266,
+    "s": "test with #1,#2,#3",
+    "should_match": true,
+    "expect": {
+      "action": "test",
+      "cms_prs": [
+        "#1",
+        "#2",
+        "#3"
+      ]
+    }
+  },
+  {
+    "id": 267,
+    "s": "build with #1000 workflows 200.0,201.0",
+    "should_match": true,
+    "expect": {
+      "action": "build",
+      "workflows": [
+        "200.0",
+        "201.0"
+      ],
+      "cms_prs": [
+        "#1000"
+      ]
+    }
+  },
+  {
+    "id": 268,
+    "s": "cmsbuild test with #",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 269,
+    "s": "please test with #abc",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 270,
+    "s": "test with #12a",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 271,
+    "s": "build with #0",
+    "should_match": false,
+    "expect": {}
+  },
+  {
+    "id": 272,
+    "s": "cmsbuild test with #-1",
+    "should_match": false,
+    "expect": {}
+  }
+]

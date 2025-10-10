@@ -6,15 +6,20 @@ import os
 
 try:
     from datetime import timezone
+
     utc = timezone.utc
 except ImportError:
+
     class UTC(datetime.tzinfo):
         def utcoffset(self, dt):
             return datetime.timedelta(0)
+
         def tzname(self, dt):
             return "UTC"
+
         def dst(self, dt):
             return datetime.timedelta(0)
+
     utc = UTC()
 
 GH_TOKEN = os.getenv("GH_TOKEN_FILE", "~/.github-token")

@@ -523,13 +523,12 @@ cbaus:
 - GeneratorInterface/HydjetInterface
 - GeneratorInterface/PyquenInterface
 pixel-offline:
-- RecoLocalTracker/SiPixelClusterizer
-- RecoLocalTracker/SiPixelRecHits
-- SimTracker/SiPixelDigitizer
-- EventFilter/SiPixelRawToDigi
+- RecoLocalTracker/SiPixel
+- SimTracker/SiPixel
+- EventFilter/SiPixel
 - DataFormats/SiPixel
 - CalibTracker/SiPixel
-- CondCore/SiPixelPlugins
+- CondCore/SiPixel
 - CondFormats/SiPixel
 - CondTools/SiPixel
 ecal-offline:

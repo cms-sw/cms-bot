@@ -20,7 +20,6 @@ ecal-offline:
 pixel-offline:
   - dkotlins
   - ferencek
-  - tvami
   - mroguljic
   - tsusa
 trk-dqm:

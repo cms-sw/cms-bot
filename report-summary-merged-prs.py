@@ -1700,7 +1700,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = (
         "ls "
         + JENKINS_ARTIFACTS_DIR
-        + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/*/sorted_RES_CPU_step3.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||"'
+        + '/igprof/RELEASE_NAME/ARCHITECTURE/pp/*/RES_CPU_igprofCPU_step3.1.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3 = (
         "ls "

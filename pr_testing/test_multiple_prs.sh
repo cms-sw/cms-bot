@@ -1173,7 +1173,7 @@ if $IS_DEV_BRANCH ; then
     echo 'END OF HEADER CHEKS LOG'
     for h in $(grep '^gmake: ' $WORKSPACE/headers_chks.log | grep '\.chk_header' | sed  -e "s|.*tmp/$ARCHITECTURE/*||;s|^check_header/*||;s|^src/*||;s|].*||;s|\.chk_header.*||;s|/src/[^/]*/|/interface/|") ; do
       [ $(grep -E "/$h(:[0-9][0-9]*)*: error: #error " $WORKSPACE/headers_chks.log | wc -l) -gt 0 ] &&  continue
-      echo $h > ${WORKSPACE}/headers_with_error.log
+      echo $h >> ${WORKSPACE}/headers_with_error.log
     done
     CHK_HEADER_LOG_RES="OK"
     CHK_HEADER_OK=true

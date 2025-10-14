@@ -139,7 +139,7 @@ CMSSW_L2 = {
     "knollejo": ["lumi-pog"],
     "cschwick": ["lumi-pog"],
     "bonanomi": ["muon-pog"],
-    "Fedespring": ["muon-pog"],
+    "CeliaFernandez": ["muon-pog"],
     "SWuchterl": ["btv-pog"],
     "mondalspandan": ["btv-pog"],
     "AndreaBellora": ["proton-pog"],

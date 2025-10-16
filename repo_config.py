@@ -29,4 +29,4 @@ JENKINS_SERVER = get_jenkins("jenkins")
 IGNORE_ISSUES = {
     GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO: [12368],
 }
-LEGACY_CATEGORIES = {"upgrade": datetime.datetime(2025, 10, 10, 0, 0, tzinfo=utc)}
+LEGACY_CATEGORIES = {"cmssw": {"upgrade": datetime.datetime(2025, 10, 10, 0, 0, tzinfo=utc)}}

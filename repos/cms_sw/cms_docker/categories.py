@@ -25,6 +25,8 @@ CMSSW_CONTAINERS = [
     "ubi8",
 ]
 
-CMSSW_LABELS = {}
+CMSSW_DOCKER_LABELS = {}
 for item in CMSSW_CONTAINERS:
-    CMSSW_LABELS[item] = [item + "/"]
+    CMSSW_DOCKER_LABELS[item] = [item + "/"]
+
+CMSSW_LABELS = {"cms-docker": CMSSW_DOCKER_LABELS}

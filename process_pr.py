@@ -48,7 +48,10 @@ import logging
 import sys
 import os
 
-from categories import CMSSW_LABELS as CMSSW_LABELS_all
+try:
+    from categories import CMSSW_LABELS as CMSSW_LABELS_all
+except ImportError:
+    CMSSW_LABELS_all = {}
 
 CMSSW_CATEGORIES = {}
 CMSSW_LABELS = {}

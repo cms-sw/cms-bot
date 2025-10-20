@@ -42,4 +42,4 @@ jobs:
           pytest -v -s tests/test_process_pr.py --auth_with_token
       - name: Test regexes
         run: |
-          python tests/test_regexes.py
+          pytest -v tests/test_regexes.py

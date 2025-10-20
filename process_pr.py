@@ -108,7 +108,7 @@ TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
 IGNORING_TESTS_MSG = "Ignoring test request."
-TESTS_RESULTS_MSG = r"^\s*([-|+]1|I had the issue.*)\s*$"
+TESTS_RESULTS_MSG = r"[-+]1|I had the issue.*"
 FAILED_TESTS_MSG = "The jenkins tests job failed, please try again."
 PUSH_TEST_ISSUE_MSG = r"^\[Jenkins CI\] Testing commit: [0-9a-f]+$"
 HOLD_MSG = "Pull request has been put on hold by "
@@ -124,8 +124,8 @@ CMSSW_RELEASE_QUEUE_PATTERN = (
     f"(?:{CMSSW_QUEUE_PATTERN}|{ARCH_PATTERN}|{CMSSW_QUEUE_PATTERN}/{ARCH_PATTERN})"
 )
 RELVAL_OPTS = r"[-][a-zA-Z0-9_.,\s/'-]+"
-CLOSE_REQUEST = re.compile(r"^close$", re.I)
-REOPEN_REQUEST = re.compile(r"^(re)?open$", re.I)
+CLOSE_REQUEST = re.compile(r"close", re.I)
+REOPEN_REQUEST = re.compile(r"(?:re)?open", re.I)
 CMS_PR_PATTERN = "(?:#[1-9][0-9]*|(?:{cmsorgs})/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(?:{cmsorgs})/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)".format(
     cmsorgs="|".join(EXTERNAL_REPOS),
 )
@@ -136,9 +136,9 @@ RE_QUEUE = re.compile(CMSSW_RELEASE_QUEUE_PATTERN)
 TEST_VERBS = ("build", "test")
 
 AUTO_TEST_REPOS = ["cms-sw/cmssw"]
-REGEX_TEST_ABORT = re.compile(r"^abort( test)?$", re.I)
+REGEX_TEST_ABORT = re.compile(r"abort(?: test)?", re.I)
 REGEX_TEST_IGNORE = re.compile(
-    r"^ignore tests-rejected (?:with )?([a-z -]+)$",
+    r"ignore tests-rejected (?:with )?(?P<reason>[a-z -]+)",
     re.I,
 )
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
@@ -661,7 +661,7 @@ def check_type_labels(first_line, extra_labels, state_labels):
         if type_cmd[0] in ["-", "+"]:
             type_cmd = type_cmd[1:]
         for lab in TYPE_COMMANDS:
-            if re.match("^%s$" % TYPE_COMMANDS[lab][1], type_cmd, re.I):
+            if re.fullmatch(TYPE_COMMANDS[lab][1], type_cmd, re.I):
                 lab_type = TYPE_COMMANDS[lab][2]
                 obj_labels = rem_labels if rem_lab else ex_labels
                 if lab_type not in obj_labels:
@@ -748,7 +748,7 @@ def check_release_format(first_line, repo, params, *args):
     ra = ""
     if "/" in rq:
         rq, ra = rq.split("/", 1)
-    elif re.match("^" + ARCH_PATTERN + "$", rq):
+    elif re.fullmatch(ARCH_PATTERN, rq):
         ra = rq
         rq = ""
     params["ARCHITECTURE_FILTER"] = ra
@@ -1210,15 +1210,17 @@ def process_pr(
     # Process Pull Request
     pkg_categories = set([])
     REGEX_TYPE_CMDS = (
-        r"^(type|(build-|)state)\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
+        r"^(type|(build-)?state)\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
     )
     REGEX_EX_CMDS = (
         rf"^(?:urgent|backport (?:of )?(?:#|https?://github\.com/{repo.full_name}/pull/)\d+)$"
     )
     known_ignore_tests = MULTILINE_COMMENTS_MAP["ignore_tests?"][0]
-    REGEX_EX_IGNORE_CHKS = rf"^ignore\s+(({known_ignore_tests})(,({known_ignore_tests}))*|none)$"
+    REGEX_EX_IGNORE_CHKS = (
+        f"ignore (?:(?:{known_ignore_tests})(?:,(?:{known_ignore_tests}))*|none)"
+    )
     known_enable_tests = MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
-    REGEX_EX_ENABLE_TESTS = rf"^enable ({known_enable_tests})$"
+    REGEX_EX_ENABLE_TESTS = rf"enable (?:{known_enable_tests})"
     L2_DATA = init_l2_data(repo_config, cms_repo)
     last_commit_date = None
     last_commit_obj = None
@@ -1604,17 +1606,17 @@ def process_pr(
                     if check_type_labels(first_line.lower(), extra_labels, state_labels)
                     else "-1"
                 )
-        elif re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
+        elif re.fullmatch(REGEX_EX_IGNORE_CHKS, first_line, re.I):
             comment_emoji = "-1"
             if valid_commenter:
                 ignore_tests = check_ignore_bot_tests(first_line.split(" ", 1)[-1])
                 comment_emoji = "+1"
-        elif re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
+        elif re.fullmatch(REGEX_EX_ENABLE_TESTS, first_line, re.I):
             comment_emoji = "-1"
             if valid_commenter:
                 enable_tests, _ = check_enable_bot_tests(first_line.split(" ", 1)[-1])
                 comment_emoji = "+1"
-        elif re.match(r"^allow\s+@([^ ]+)\s+test\s+rights$", first_line, re.I):
+        elif re.fullmatch(r"allow @([^ ]+) test rights", first_line, re.I):
             comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers):
                 tester = first_line.split("@", 1)[-1].split(" ", 1)[0]
@@ -1623,7 +1625,7 @@ def process_pr(
                     extra_testers.append(tester)
                     logger.info("Added user in test category: %s", tester)
                 comment_emoji = "+1"
-        elif re.match("^unhold$", first_line, re.I):
+        elif re.fullmatch("unhold", first_line, re.I):
             comment_emoji = "-1"
             if "orp" in commenter_categories:
                 hold = {}
@@ -1632,7 +1634,7 @@ def process_pr(
                 if commenter in hold:
                     del hold[commenter]
                     comment_emoji = "+1"
-        elif CLOSE_REQUEST.match(first_line):
+        elif CLOSE_REQUEST.fullmatch(first_line):
             comment_emoji = "-1"
             if (commenter_categories or (commenter in releaseManagers)) or (
                 (not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)
@@ -1642,7 +1644,7 @@ def process_pr(
                     mustClose = True
                 comment_emoji = "+1"
                 logger.info("==> Closing request received from %s", commenter)
-        elif REOPEN_REQUEST.match(first_line):
+        elif REOPEN_REQUEST.fullmatch(first_line):
             comment_emoji = "-1"
             if (commenter_categories or (commenter in releaseManagers)) or (
                 (not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)
@@ -1697,13 +1699,13 @@ def process_pr(
 
         selected_cats = []
 
-        if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
+        if re.fullmatch(r"\+1|approved?|sign(?:ed)?", first_line, re.I):
             ctype = "+1"
             selected_cats = commenter_categories[:]
-        elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
+        elif re.fullmatch(r"-1|reject(?:ed)?", first_line, re.I):
             ctype = "-1"
             selected_cats = commenter_categories[:]
-        elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
+        elif re.fullmatch("[+-][a-z][a-z0-9-]+", first_line, re.I):
             category_name = first_line[1:].lower()
             if category_name in commenter_categories:
                 ctype = first_line[0] + "1"
@@ -1783,29 +1785,29 @@ def process_pr(
             elif "+code-checks" == first_line:
                 signatures["code-checks"] = "approved"
                 pre_checks_url["code-checks"] = comment.html_url
-            elif re.match("^Comparison not run.+", first_line):
+            elif first_line.startswith("Comparison not run"):
                 if ("tests" in signatures) and signatures["tests"] != "pending":
                     comparison_notrun = True
             elif re.match(FAILED_TESTS_MSG, first_line) or re.match(
                 IGNORING_TESTS_MSG, first_line
             ):
                 signatures["tests"] = "pending"
-            elif re.match("Pull request ([^ #]+)?[#][0-9]+ was updated[.].*", first_line):
+            elif re.match(r"Pull request (?:[^ #]+)?#\d+ was updated[.].*", first_line):
                 pull_request_updated = False
-            elif re.match(TRIGERING_TESTS_MSG, first_line) or re.match(
-                TRIGERING_TESTS_MSG1, first_line
+            elif first_line.startswith(TRIGERING_TESTS_MSG) or first_line.startswith(
+                TRIGERING_TESTS_MSG1
             ):
                 signatures["tests"] = "started"
                 last_test_start_time = comment.created_at
                 abort_test = None
                 need_external = False
-                if sec_line.startswith("Using externals from cms-sw/cmsdist#"):
+                if (
+                    sec_line.startswith("Using externals from cms-sw/cmsdist#")
+                    or sec_line.startswith("Tested with other pull request")
+                    or sec_line.startswith("Using extra pull request")
+                ):
                     need_external = True
-                elif sec_line.startswith("Tested with other pull request"):
-                    need_external = True
-                elif sec_line.startswith("Using extra pull request"):
-                    need_external = True
-            elif re.match(TESTS_RESULTS_MSG, first_line):
+            elif re.fullmatch(TESTS_RESULTS_MSG, first_line):
                 test_sha = sec_line.replace("Tested at: ", "").strip()
                 if (
                     (not push_test_issue)
@@ -1889,13 +1891,13 @@ def process_pr(
                     else:
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "-1")
                         continue
-                elif REGEX_TEST_ABORT.match(first_line) and (signatures["tests"] == "pending"):
+                elif REGEX_TEST_ABORT.fullmatch(first_line) and (signatures["tests"] == "pending"):
                     abort_test = comment
                     test_comment = None
                     signatures["tests"] = "pending"
                     continue
-                elif REGEX_TEST_IGNORE.match(first_line):
-                    reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
+                elif REGEX_TEST_IGNORE.fullmatch(first_line):
+                    reason = REGEX_TEST_IGNORE.fullmatch(first_line).group("reason").strip()
                     if reason not in TEST_IGNORE_REASON:
                         logger.error("Invalid ignore reason: %s", reason)
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "-1")

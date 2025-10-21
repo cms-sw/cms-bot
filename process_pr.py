@@ -7,7 +7,6 @@ from categories import (
     CMSSW_ISSUES_TRACKERS,
     PR_HOLD_MANAGERS,
     EXTERNAL_REPOS,
-    CMSDIST_REPOS,
 )
 from categories import CMSSW_CATEGORIES as default_CMSSW_CATEGORIES
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
@@ -33,7 +32,6 @@ from collections import defaultdict
 import zlib, base64
 from datetime import datetime, timezone, timedelta
 from os.path import join, exists, dirname
-from os import environ
 from github_utils import (
     api_rate_limits,
     get_pr_commits_reversed,
@@ -42,7 +40,7 @@ from github_utils import (
 from github_utils import set_gh_user, get_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
-from json import dumps, dump, load, loads
+from json import dumps, load, loads
 import yaml
 import logging
 import sys
@@ -52,7 +50,6 @@ CMSSW_CATEGORIES = {}
 import itertools
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
-from collections.abc import Iterable
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper

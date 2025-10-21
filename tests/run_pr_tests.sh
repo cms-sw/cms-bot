@@ -1,4 +1,5 @@
 #!/bin/bash -xe
+ulimit -n 2048 || true
 INSTALL_REQS=0
 if [ ! -d venv ];  then
   python3 -m venv venv

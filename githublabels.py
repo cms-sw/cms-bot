@@ -30,12 +30,12 @@ LABEL_TYPES = {
 #                                type: only apply the last comment
 #                                mtype: accomulate all comments]
 TYPE_COMMANDS = {
-    "bug-fix": [LABEL_COLORS["bug"], "bug(-fix|fix|)", "type"],
-    "new-feature": [LABEL_COLORS["info"], "(new-|)(feature|idea)", "type"],
+    "bug-fix": [LABEL_COLORS["bug"], "bug(?:-?fix)?", "type"],
+    "new-feature": [LABEL_COLORS["info"], "(?:new-)?(?:feature|idea)", "type"],
     "root": [LABEL_COLORS["info"], "root", "mtype"],
-    "documentation": [LABEL_COLORS["doc"], "doc(umentation|)", "mtype"],
-    "hlt-integration": [LABEL_COLORS["doc"], "hlt-int(egration|)", "mtype"],
-    "changes-dataformats": [LABEL_COLORS["doc"], "(change(s|)-|)dataformat(s|)", "mtype"],
+    "documentation": [LABEL_COLORS["doc"], "doc(?:umentation)?", "mtype"],
+    "hlt-integration": [LABEL_COLORS["doc"], "hlt-int(?:egration)?", "mtype"],
+    "changes-dataformats": [LABEL_COLORS["doc"], "(?:changes?-)?dataformats?", "mtype"],
     "performance-improvements": [
         LABEL_COLORS["performance"],
         "performance|improvements|performance-improvements",

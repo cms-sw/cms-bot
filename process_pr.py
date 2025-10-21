@@ -55,6 +55,7 @@ CMSSW_CATEGORIES = {}
 import itertools
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
+
 CMSSW_LABELS = {}
 
 try:

@@ -34,4 +34,6 @@ CMS_BRANCH_MAP = {}
 VALID_WEB_HOOKS = [".+"]
 NONBLOCKING_LABELS = True
 CHECK_DPG_POG = True
-LEGACY_CATEGORIES = {"cmssw": {"upgrade": datetime.datetime.fromisoformat("2025-11-01T00:00:00+00:00")}}
+LEGACY_CATEGORIES = {
+    "cmssw": {"upgrade": datetime.datetime.fromisoformat("2025-11-01T00:00:00+00:00")}
+}

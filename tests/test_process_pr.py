@@ -1050,7 +1050,7 @@ class TestProcessPr(Framework.TestCase):
 
         old_repo_config = copy.deepcopy(self.repo_config.LEGACY_CATEGORIES)
         # Before the https://github.com/iarspider-cmssw/cmssw/pull/43
-        self.repo_config.LEGACY_CATEGORIES["cmssw"]["upgrade"] = datetime.datetime(
+        self.repo_config.LEGACY_CATEGORIES["upgrade"] = datetime.datetime(
             year=2025, month=7, day=29, hour=16, minute=6, tzinfo=datetime.timezone.utc
         ) - datetime.timedelta(days=1)
         self.runTest(pr_id=43)
@@ -1062,7 +1062,7 @@ class TestProcessPr(Framework.TestCase):
 
         old_repo_config = copy.deepcopy(self.repo_config.LEGACY_CATEGORIES)
         # After the https://github.com/iarspider-cmssw/cmssw/pull/43
-        self.repo_config.LEGACY_CATEGORIES["cmssw"]["upgrade"] = datetime.datetime(
+        self.repo_config.LEGACY_CATEGORIES["upgrade"] = datetime.datetime(
             year=2025, month=7, day=29, hour=16, minute=6, tzinfo=datetime.timezone.utc
         ) + datetime.timedelta(days=1)
         self.runTest(pr_id=43)
@@ -1073,7 +1073,7 @@ class TestProcessPr(Framework.TestCase):
 
         old_repo_config = copy.deepcopy(self.repo_config.LEGACY_CATEGORIES)
         # Before the https://github.com/iarspider-cmssw/cmssw/pull/44
-        self.repo_config.LEGACY_CATEGORIES["cmssw"]["upgrade"] = datetime.datetime(
+        self.repo_config.LEGACY_CATEGORIES["upgrade"] = datetime.datetime(
             year=2025, month=10, day=2, hour=9, minute=7, tzinfo=datetime.timezone.utc
         ) - datetime.timedelta(days=1)
         self.runTest(pr_id=44)

@@ -20,14 +20,12 @@ from socket import setdefaulttimeout
 from github_utils import api_rate_limits
 from cmsutils import get_config_map_properties
 from sys import argv
-import importlib
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
 
-def setRepoLabels(gh, repo_name, all_labels, dryRun=False, ignore=None):
-    ignore = ignore or []
+def setRepoLabels(gh, repo_name, all_labels, dryRun=False, ignore=[]):
     repos = []
     if not "/" in repo_name:
         user = gh.get_user(repo_name)
@@ -143,9 +141,7 @@ if __name__ == "__main__":
 
     if opts.cmssw or opts.externals:
         all_labels = COMMON_LABELS
-        for cat in (
-            COMMON_CATEGORIES + EXTERNAL_CATEGORIES + list(CMSSW_CATEGORIES["cmssw"].keys())
-        ):
+        for cat in COMMON_CATEGORIES + EXTERNAL_CATEGORIES + list(CMSSW_CATEGORIES.keys()):
             for lab in LABEL_TYPES:
                 all_labels[cat + "-" + lab] = LABEL_TYPES[lab]
         for lab in COMPARISON_LABELS:
@@ -187,21 +183,19 @@ if __name__ == "__main__":
 
         for rconf in glob(join(SCRIPT_DIR, "repos", "*", "*", "repo_config.py")):
             repo_data = rconf.split("/")[-4:-1]
-            repo_config = importlib.import_module(".".join(repo_data)).repo_config
+            exec("from " + ".".join(repo_data) + " import repo_config")
             try:
                 if not repo_config.ADD_LABELS:
                     continue
             except:
                 continue
-            categories = importlib.import_module(".".join(repo_data)).categories
+            exec("from " + ".".join(repo_data) + " import categories")
             print(repo_config.GH_TOKEN, repo_config.GH_REPO_FULLNAME)
             gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
             all_labels = COMMON_LABELS
             for lab in COMPARISON_LABELS:
                 all_labels[lab] = COMPARISON_LABELS[lab]
-            for cat in categories.COMMON_CATEGORIES + list(
-                categories.CMSSW_CATEGORIES.get(repo_config.GH_REPO_NAME, {}).keys()
-            ):
+            for cat in categories.COMMON_CATEGORIES + list(categories.CMSSW_CATEGORIES.keys()):
                 for lab in LABEL_TYPES:
                     all_labels[cat + "-" + lab] = LABEL_TYPES[lab]
             setRepoLabels(gh, repo_config.GH_REPO_FULLNAME, all_labels, opts.dryRun)

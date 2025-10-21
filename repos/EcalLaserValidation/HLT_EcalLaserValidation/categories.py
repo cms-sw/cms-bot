@@ -32,9 +32,7 @@ CMSSW_L2 = {
 }
 
 CMSSW_CATEGORIES = {
-    GH_REPO_NAME: {
-        "ecal-laser": [GH_REPO_NAME],
-    }
+    "ecal-laser": [GH_REPO_NAME],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))

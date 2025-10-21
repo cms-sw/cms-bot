@@ -17,7 +17,7 @@ OUTPUT_FILE = "categories.json"
 # Start of execution
 # -----------------------------------------------------------------------------
 
-all_categories = list(CMSSW_CATEGORIES.keys())
+all_categories = list(CMSSW_CATEGORIES["cmssw"].keys())
 # schema of categories_to_people:
 # {
 #   "<category>" : [ "<person1>" , "person2" , ... , "personN" ]

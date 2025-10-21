@@ -35,3 +35,4 @@ VALID_WEB_HOOKS = [".+"]
 NONBLOCKING_LABELS = True
 CHECK_DPG_POG = True
 LEGACY_CATEGORIES = {"upgrade": datetime.datetime.fromisoformat("2025-11-01T00:00:00+00:00")}
+AUTO_ASSIGN_CATEGORIES = True

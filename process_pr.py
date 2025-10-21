@@ -1186,9 +1186,7 @@ def process_pr(
     set_gh_user(cmsbuild_user)
     cmssw_repo = repo_name == GH_CMSSW_REPO
     cms_repo = repo_org in EXTERNAL_REPOS
-    external_repo = (repository != CMSSW_REPO_NAME) and (
-        len([e for e in EXTERNAL_REPOS if repo_org == e]) > 0
-    )
+    external_repo = (repository != CMSSW_REPO_NAME) and (repo_org in EXTERNAL_REPOS)
     create_test_property = False
     repo_cache = {repository: repo}
     packages = set([])
@@ -1327,12 +1325,17 @@ def process_pr(
             create_test_property = False
 
         logger.info("Following packages affected: %s", ", ".join(packages))
-        for package in packages:
-            package_categories[package] = set([])
-            for category in get_package_categories(package):
-                package_categories[package].add(category)
-                pkg_categories.add(category)
-        signing_categories.update(pkg_categories)
+        if getattr(repo_config, "AUTO_ASSIGN_CATEGORIES", False):
+            for package in packages:
+                package_categories[package] = set([])
+                for category in get_package_categories(package):
+                    package_categories[package].add(category)
+                    pkg_categories.add(category)
+            signing_categories.update(pkg_categories)
+        else:
+            logger.info(
+                "Category assignment based on packages name is not enabled in repo_config, skipping"
+            )
 
         # For PR, we always require tests.
         signing_categories.add("tests")
@@ -1428,11 +1431,7 @@ def process_pr(
         logger.info("Time UTC: %s", datetime.utcnow())
         if last_commit_date > datetime.utcnow():
             logger.warning("==== Future commit found ====")
-            add_labels = True
-            try:
-                add_labels = repo_config.ADD_LABELS
-            except:
-                pass
+            add_labels = getattr(repo_config, "ADD_LABELS", True)
             if (not dryRun) and add_labels:
                 labels = [ensure_ascii(x.name) for x in issue.labels]
                 if not "future-commit" in labels:
@@ -2595,11 +2594,7 @@ def process_pr(
     if old_labels == labels:
         logger.info("Labels unchanged.")
     elif not dryRunOrig:
-        add_labels = True
-        try:
-            add_labels = repo_config.ADD_LABELS
-        except:
-            pass
+        add_labels = getattr(repo_config, "ADD_LABELS", True)
         if add_labels:
             issue.edit(labels=list(labels))
 

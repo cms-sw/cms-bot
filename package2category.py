@@ -20,16 +20,9 @@ def package2category(filename):
 
 
 parser = ArgumentParser()
-parser.add_argument("-r", "--repo", help="Repository name")
 parser.add_argument("-i", "--stdin", action="store_true", help="Also read file name(s) from stdin")
 parser.add_argument("files", nargs="*", help="File name(s)")
 args = parser.parse_args()
-
-repo = args.repo
-if "/" in repo:
-    repo = repo.rsplit("/", 1)[1]
-
-CMSSW_CATEGORIES = CMSSW_CATEGORIES.get(repo, {})
 
 pack2cat = defaultdict(list)
 for cat in CMSSW_CATEGORIES:

@@ -46,10 +46,16 @@ import logging
 import sys
 import os
 
+try:
+    from categories import CMSSW_LABELS as CMSSW_LABELS_all
+except ImportError:
+    CMSSW_LABELS_all = {}
+
 CMSSW_CATEGORIES = {}
 import itertools
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
+CMSSW_LABELS = {}
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -59,10 +65,6 @@ try:
     from categories import CATS_TO_APPROVE_ON_TEST
 except:  # pragma: no cover
     CATS_TO_APPROVE_ON_TEST = []
-try:
-    from categories import CMSSW_LABELS
-except:  # pragma: no cover
-    CMSSW_LABELS = {}
 try:
     from categories import get_dpg_pog
 except:  # pragma: no cover
@@ -1154,12 +1156,13 @@ def process_pr(
     repo_org, repo_name = repository.split("/", 1)
     auto_test_repo = AUTO_TEST_REPOS
 
-    global CMSSW_CATEGORIES
-    CMSSW_CATEGORIES = copy.deepcopy(default_CMSSW_CATEGORIES)
+    global CMSSW_CATEGORIES, CMSSW_LABELS
+    CMSSW_CATEGORIES = copy.deepcopy(default_CMSSW_CATEGORIES.get(repo_name, {}))
+    CMSSW_LABELS = CMSSW_LABELS_all.get(repo_name, {})
 
     # LEGACY_CATEGORIES is a mapping from name to datetime (when the category becomes legacy)
     # Extract categories that are legacy at the moment of issue creation
-    legacy_cats = getattr(repo_config, "LEGACY_CATEGORIES", {})
+    legacy_cats = getattr(repo_config, "LEGACY_CATEGORIES", {}).get(repo_name, {})
     issue_created_at: datetime = issue.created_at
     if issue_created_at.tzinfo is None:
         issue_created_at = issue_created_at.replace(tzinfo=timezone.utc)

@@ -2,7 +2,8 @@
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
-from categories_map import CMSSW_CATEGORIES, CMSSW_LABELS
+from categories_map import CMSSW_CATEGORIES as CMSSW_CATEGORIES_INNER
+from categories_map import CMSSW_LABELS as CMSSW_LABELS_INNER
 from repo_config import CMSBUILD_USER
 from releases import SPECIAL_RELEASE_MANAGERS
 
@@ -139,7 +140,7 @@ CMSSW_L2 = {
     "knollejo": ["lumi-pog"],
     "cschwick": ["lumi-pog"],
     "bonanomi": ["muon-pog"],
-    "Fedespring": ["muon-pog"],
+    "CeliaFernandez": ["muon-pog"],
     "SWuchterl": ["btv-pog"],
     "mondalspandan": ["btv-pog"],
     "AndreaBellora": ["proton-pog"],
@@ -182,8 +183,11 @@ CMS_REPOS = set(CMSDIST_REPOS + CMSSW_REPOS + EXTERNAL_REPOS)
 
 for user in CMSSW_L2:
     for cat in CMSSW_L2[user]:
-        if cat not in CMSSW_CATEGORIES:
-            CMSSW_CATEGORIES[cat] = []
+        if cat not in CMSSW_CATEGORIES_INNER:
+            CMSSW_CATEGORIES_INNER[cat] = []
+
+CMSSW_CATEGORIES = {"cmssw": CMSSW_CATEGORIES_INNER}
+CMSSW_LABELS = {"cmssw": CMSSW_LABELS_INNER}
 
 
 def external_to_package(repo_fullname):

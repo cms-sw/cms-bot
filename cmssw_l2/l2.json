@@ -439,6 +439,14 @@
       "start_date": 1726790400
     }
   ],
+  "barbaralvarez": [
+    {
+      "category": [
+        "dt-dpg"
+      ],
+      "start_date": 1761091200
+    }
+  ],
   "battibass": [
     {
       "category": [
@@ -461,7 +469,15 @@
         "dt-dpg",
         "xpog"
       ],
+      "end_date": 1761091200,
       "start_date": 1759881600
+    },
+    {
+      "category": [
+        "muon-dpg",
+        "xpog"
+      ],
+      "start_date": 1761091200
     }
   ],
   "bbilin": [
@@ -1292,6 +1308,14 @@
       ],
       "end_date": 1566777600,
       "start_date": 1506297600
+    }
+  ],
+  "gumoret": [
+    {
+      "category": [
+        "dt-dpg"
+      ],
+      "start_date": 1761091200
     }
   ],
   "hengne": [

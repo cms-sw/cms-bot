@@ -163,7 +163,6 @@ KNOWN_ERRORS["relvals"][RelFilter][".+_ppc64le_.+"] = deepcopy(
 RelFilter = "CMSSW_[0-9]+_[0-9]+_(.*ASAN.*)_X_.+"
 KNOWN_ERRORS["relvals"][RelFilter] = {}
 KNOWN_ERRORS["relvals"][RelFilter][".+"] = {
-    "511.0": {"step": 1, "exitcode": 31744, "reason": MSG_ASAN_INCOMPETIBILITY},
     "534.0": {"step": 1, "exitcode": 256, "reason": MSG_ASAN_INCOMPETIBILITY},
     "536.0": {"step": 1, "exitcode": 256, "reason": MSG_ASAN_INCOMPETIBILITY},
 }

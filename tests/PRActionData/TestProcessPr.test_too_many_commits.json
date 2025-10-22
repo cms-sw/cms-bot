@@ -1065,7 +1065,8 @@
                 "2058816831": "+1"
             },
             "last_seen_sha": "fd99bd146e87a00eb90eccef12f487ecc8f4c496",
-            "signatures": {}
+            "signatures": {},
+            "packages": {}
         }
     },
     {

@@ -99,7 +99,7 @@ def format(s, **kwds):
     return s % kwds
 
 
-BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
+BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}, "packages": {}}
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
@@ -318,10 +318,7 @@ except ImportError as e:  # pragma: no cover
 
 
 def update_CMSSW_LABELS(repo_config):
-    try:
-        check_dpg_pog = repo_config.CHECK_DPG_POG
-    except:
-        check_dpg_pog = False
+    check_dpg_pog = getattr(repo_config, "CHECK_DPG_POG", False)
     dpg_pog = {} if not check_dpg_pog else get_dpg_pog()
     for l in CMSSW_LABELS.keys():
         if check_dpg_pog and (not l in dpg_pog) and (not l in TYPE_COMMANDS):
@@ -504,11 +501,8 @@ def create_properties_file_tests(
         pr_number,
     )
 
-    try:
-        if repo_config.JENKINS_SLAVE_LABEL:
-            parameters["RUN_LABEL"] = repo_config.JENKINS_SLAVE_LABEL
-    except:
-        pass
+    if getattr(repo_config, "JENKINS_SLAVE_LABEL", ""):
+        parameters["RUN_LABEL"] = repo_config.JENKINS_SLAVE_LABEL
     logger.debug("PropertyFile: %s", out_file_name)
     logger.debug("Data: %s", parameters)
     create_property_file(out_file_name, parameters, dryRun)
@@ -1062,9 +1056,7 @@ def process_pr(
     set_gh_user(cmsbuild_user)
     cmssw_repo = repo_name == GH_CMSSW_REPO
     cms_repo = repo_org in EXTERNAL_REPOS
-    external_repo = (repository != CMSSW_REPO_NAME) and (
-        len([e for e in EXTERNAL_REPOS if repo_org == e]) > 0
-    )
+    external_repo = (repository != CMSSW_REPO_NAME) and (repo_org in EXTERNAL_REPOS)
     create_test_property = False
     repo_cache = {repository: repo}
     packages = set([])
@@ -1192,12 +1184,10 @@ def process_pr(
             ):
                 logger.error("Skipping PR as it does not belong to valid CMSDIST branch")
                 return
-            try:
-                if repo_config.NONBLOCKING_LABELS:
-                    chg_files = get_changed_files(repo, pr)
-                    add_nonblocking_labels(chg_files, extra_labels)
-            except:
-                pass
+
+            if getattr(repo_config, "NONBLOCKING_LABELS", False):
+                chg_files = get_changed_files(repo, pr)
+                add_nonblocking_labels(chg_files, extra_labels)
 
         if pr.state == "closed":
             create_test_property = False
@@ -1304,11 +1294,7 @@ def process_pr(
         logger.info("Time UTC: %s", datetime.utcnow())
         if last_commit_date > datetime.utcnow():
             logger.warning("==== Future commit found ====")
-            add_labels = True
-            try:
-                add_labels = repo_config.ADD_LABELS
-            except:
-                pass
+            add_labels = getattr(repo_config, "ADD_LABELS", True)
             if (not dryRun) and add_labels:
                 labels = [ensure_ascii(x.name) for x in issue.labels]
                 if not "future-commit" in labels:
@@ -1405,6 +1391,10 @@ def process_pr(
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in bot_cache:
             bot_cache[k] = copy.deepcopy(v)
+
+    if issue.pull_request:
+        if not bot_cache["packages"]:
+            bot_cache["packages"] = list(packages)
 
     for comment in all_comments:
         commenter = ensure_ascii(comment.user.login)
@@ -2053,11 +2043,7 @@ def process_pr(
     #     test_comment = auto_test_comment
 
     if push_test_issue:
-        auto_close_push_test_issue = True
-        try:
-            auto_close_push_test_issue = repo_config.AUTO_CLOSE_PUSH_TESTS_ISSUE
-        except:
-            pass
+        auto_close_push_test_issue = getattr(repo_config, "AUTO_CLOSE_PUSH_TESTS_ISSUE", True)
         if (
             auto_close_push_test_issue
             and (issue.state == "open")
@@ -2466,11 +2452,7 @@ def process_pr(
     if old_labels == labels:
         logger.info("Labels unchanged.")
     elif not dryRunOrig:
-        add_labels = True
-        try:
-            add_labels = repo_config.ADD_LABELS
-        except:
-            pass
+        add_labels = getattr(repo_config, "ADD_LABELS", True)
         if add_labels:
             issue.edit(labels=list(labels))
 
@@ -2719,6 +2701,17 @@ def process_pr(
                 pkg_msg.append("- %s (**%s**)" % (pkg, ", ".join(sorted(package_categories[pkg]))))
             else:
                 pkg_msg.append("- %s (**new**)" % pkg)
+
+        pkg_msg_new = []
+        new_packages = set(packages) - set(bot_cache["packages"])
+        for pkg in new_packages:
+            if pkg in package_categories:
+                pkg_msg_new.append(
+                    "- %s (**%s**)" % (pkg, ", ".join(sorted(package_categories[pkg])))
+                )
+            else:
+                pkg_msg_new.append("- %s (**new**)" % pkg)
+
         messageNewPR = format(
             "%(msgPrefix)s %(gh_user_char)s%(user)s"
             " for %(branch)s.\n\n"
@@ -2747,6 +2740,11 @@ def process_pr(
             "Pull request #%(pr)s was updated.",
             pr=pr.number,
         )
+
+        if new_packages:
+            messageUpdatedPR += " It now involves the following additional packages:\n\n"
+            messageUpdatedPR += "\n".join(pkg_msg_new) + "\n\n"
+            bot_cache["packages"] = packages
 
         if not is_draft_pr:
             messageUpdatedPR += format(

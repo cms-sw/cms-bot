@@ -13,7 +13,8 @@
             },
             "emoji": {},
             "last_seen_sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
-            "signatures": {}
+            "signatures": {},
+            "packages": {}
         }
     },
     {
@@ -94,7 +95,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\":{\"files\":[\"Validation/README\"],\"squashed\":false,\"time\":1742466110}},\"emoji\":{\"2740067147\":\"+1\",\"2750911403\":\"+1\"},\"last_seen_sha\":\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\":{\"files\":[\"Validation/README\"],\"squashed\":false,\"time\":1742466110}},\"emoji\":{\"2740067147\":\"+1\",\"2750911403\":\"+1\"},\"last_seen_sha\":\"72cc05e17ee74e5ace3c4e5d5d066de49e364edb\",\"packages\":[\"Validation/README\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -113,7 +114,10 @@
                 "2740067147": "+1"
             },
             "last_seen_sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
-            "signatures": {}
+            "signatures": {},
+            "packages": [
+                "Validation/README"
+            ]
         }
     }
 ]

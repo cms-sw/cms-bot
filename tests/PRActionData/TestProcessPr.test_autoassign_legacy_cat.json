@@ -47,7 +47,7 @@
     },
     {
         "type": "create-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"ae95901aec4a9922ee0e75d76a5b194e0c33a27e\":{\"files\":[\"CondFormats/HGCalObjects/src/HGCalMappingModuleIndexer.cc\"],\"squashed\":false,\"time\":1759388857}},\"emoji\":{},\"last_seen_sha\":\"ae95901aec4a9922ee0e75d76a5b194e0c33a27e\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"ae95901aec4a9922ee0e75d76a5b194e0c33a27e\":{\"files\":[\"CondFormats/HGCalObjects/src/HGCalMappingModuleIndexer.cc\"],\"squashed\":false,\"time\":1759388857}},\"emoji\":{},\"last_seen_sha\":\"ae95901aec4a9922ee0e75d76a5b194e0c33a27e\",\"packages\":[\"CondFormats/HGCalObjects\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -63,6 +63,9 @@
                     ]
                 }
             },
+            "packages": [
+                "CondFormats/HGCalObjects"
+            ],
             "last_seen_sha": "ae95901aec4a9922ee0e75d76a5b194e0c33a27e"
         }
     }

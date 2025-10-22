@@ -1524,7 +1524,8 @@
                 "2842137555": "+1"
             },
             "last_seen_sha": "b6db3e643d2bd16deee12590d1312a3addcd2d75",
-            "signatures": {}
+            "signatures": {},
+            "packages": {}
         }
     },
     {

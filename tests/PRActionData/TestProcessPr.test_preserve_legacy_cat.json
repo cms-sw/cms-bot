@@ -66,7 +66,7 @@
     },
     {
         "type": "create-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"19a3428337e73a0dfb5cc1c38d2c05927fb418bb\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1753790769}},\"emoji\":{\"3337448316\":\"+1\"},\"last_seen_sha\":\"19a3428337e73a0dfb5cc1c38d2c05927fb418bb\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"19a3428337e73a0dfb5cc1c38d2c05927fb418bb\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1753790769}},\"emoji\":{\"3337448316\":\"+1\"},\"last_seen_sha\":\"19a3428337e73a0dfb5cc1c38d2c05927fb418bb\",\"packages\":[\"README\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -84,6 +84,9 @@
                     ]
                 }
             },
+            "packages": [
+                "README"
+            ],
             "last_seen_sha": "19a3428337e73a0dfb5cc1c38d2c05927fb418bb"
         }
     }

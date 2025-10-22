@@ -44,7 +44,7 @@
     },
     {
         "type": "create-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711538467}},\"emoji\":{},\"last_seen_sha\":\"2a9454e30606b17e52000110972998326ce9e428\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711538467}},\"emoji\":{},\"last_seen_sha\":\"2a9454e30606b17e52000110972998326ce9e428\",\"packages\":[\"Utilities/ReleaseScripts\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -60,6 +60,9 @@
                     ]
                 }
             },
+            "packages": [
+                "Utilities/ReleaseScripts"
+            ],
             "last_seen_sha": "2a9454e30606b17e52000110972998326ce9e428"
         }
     }

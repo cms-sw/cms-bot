@@ -22,7 +22,8 @@
                 "2523442237": "+1"
             },
             "last_seen_sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
-            "signatures": {}
+            "signatures": {},
+            "packages": {}
         }
     },
     {
@@ -70,8 +71,8 @@
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#21",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
-                "CONTEXT_PREFIX": "cms/21",
-                "BUILD_ONLY": false
+                "BUILD_ONLY": false,
+                "CONTEXT_PREFIX": "cms/21"
             }
         }
     },
@@ -85,7 +86,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"28ce3f5888b5433dcae409ee336b2ad422595246\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733495641},\"9138474754099798ff50cb07287e7caa4786f247\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733482192}},\"emoji\":{\"2523442237\":\"+1\",\"2532358732\":\"+1\"},\"last_seen_sha\":\"28ce3f5888b5433dcae409ee336b2ad422595246\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"28ce3f5888b5433dcae409ee336b2ad422595246\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733495641},\"9138474754099798ff50cb07287e7caa4786f247\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733482192}},\"emoji\":{\"2523442237\":\"+1\",\"2532358732\":\"+1\"},\"last_seen_sha\":\"28ce3f5888b5433dcae409ee336b2ad422595246\",\"packages\":[\"FWCore/Utilities\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -111,7 +112,10 @@
                 "2532358732": "+1"
             },
             "last_seen_sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
-            "signatures": {}
+            "signatures": {},
+            "packages": [
+                "FWCore/Utilities"
+            ]
         }
     }
 ]

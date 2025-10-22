@@ -1,0 +1,84 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "ba5ba8991f6e50e5b522ca414964abe6645128ec": {
+                    "files": [
+                        "Alignment/APEEstimation/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1760696282
+                }
+            },
+            "emoji": {},
+            "last_seen_sha": "ba5ba8991f6e50e5b522ca414964abe6645128ec",
+            "signatures": {},
+            "packages": [
+                "Alignment/APEEstimation"
+            ]
+        }
+    },
+    {
+        "type": "add-label",
+        "data": []
+    },
+    {
+        "type": "remove-label",
+        "data": []
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-code-checks-iarspider-cmssw-cmssw-45.properties",
+            "data": {
+                "PULL_REQUEST": "45",
+                "CONTEXT_PREFIX": "cms/45",
+                "CMSSW_TOOL_CONF": "",
+                "APPLY_PATCH": "false"
+            }
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "14b3dbf549775639ee2fd23b6424923052f4c7b1",
+            "state": "pending",
+            "target_url": null,
+            "description": "code-checks requested",
+            "context": "cms/45/code-checks"
+        }
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"14b3dbf549775639ee2fd23b6424923052f4c7b1\":{\"files\":[\"DQM/BeamMonitor/plugins/BuildFile.xml\"],\"squashed\":false,\"time\":1760696770},\"ba5ba8991f6e50e5b522ca414964abe6645128ec\":{\"files\":[\"Alignment/APEEstimation/BuildFile.xml\"],\"squashed\":false,\"time\":1760696282}},\"emoji\":{},\"last_seen_sha\":\"14b3dbf549775639ee2fd23b6424923052f4c7b1\",\"packages\":[\"Alignment/APEEstimation\",\"DQM/BeamMonitor\"],\"signatures\":{}} -->"
+    },
+    {
+        "type": "save-bot-cache",
+        "data": {
+            "commits": {
+                "ba5ba8991f6e50e5b522ca414964abe6645128ec": {
+                    "files": [
+                        "Alignment/APEEstimation/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1760696282
+                },
+                "14b3dbf549775639ee2fd23b6424923052f4c7b1": {
+                    "time": 1760696770,
+                    "squashed": false,
+                    "files": [
+                        "DQM/BeamMonitor/plugins/BuildFile.xml"
+                    ]
+                }
+            },
+            "emoji": {},
+            "last_seen_sha": "14b3dbf549775639ee2fd23b6424923052f4c7b1",
+            "signatures": {},
+            "packages": [
+                "Alignment/APEEstimation",
+                "DQM/BeamMonitor"
+            ]
+        }
+    }
+]

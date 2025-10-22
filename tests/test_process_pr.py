@@ -1078,3 +1078,6 @@ class TestProcessPr(Framework.TestCase):
         ) - datetime.timedelta(days=1)
         self.runTest(pr_id=44)
         self.repo_config.LEGACY_CATEGORIES = old_repo_config
+
+    def test_message_new_commit_new_cats(self):
+        self.runTest(pr_id=45)

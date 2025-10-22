@@ -15,7 +15,8 @@
                 "2801525714": "+1"
             },
             "last_seen_sha": "ceea69106c5e0e17c03c87c13bdf187f03214fec",
-            "signatures": {}
+            "signatures": {},
+            "packages": {}
         }
     },
     {
@@ -54,7 +55,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"ceea69106c5e0e17c03c87c13bdf187f03214fec\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743158481}},\"emoji\":{\"2801525714\":\"+1\",\"2801609055\":\"-1\"},\"last_seen_sha\":\"ceea69106c5e0e17c03c87c13bdf187f03214fec\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"ceea69106c5e0e17c03c87c13bdf187f03214fec\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743158481}},\"emoji\":{\"2801525714\":\"+1\",\"2801609055\":\"-1\"},\"last_seen_sha\":\"ceea69106c5e0e17c03c87c13bdf187f03214fec\",\"packages\":[\"README\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -73,7 +74,10 @@
                 "2801609055": "-1"
             },
             "last_seen_sha": "ceea69106c5e0e17c03c87c13bdf187f03214fec",
-            "signatures": {}
+            "signatures": {},
+            "packages": [
+                "README"
+            ]
         }
     }
 ]

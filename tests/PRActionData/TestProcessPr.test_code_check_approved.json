@@ -13,7 +13,8 @@
             },
             "emoji": {},
             "last_seen_sha": "2a9454e30606b17e52000110972998326ce9e428",
-            "signatures": {}
+            "signatures": {},
+            "packages": {}
         }
     },
     {
@@ -53,6 +54,10 @@
         "data": "A new Pull Request was created by  @iarspider for master.\n\nIt involves the following packages:\n\n- Utilities/ReleaseScripts (**core**)\n\n\n@Dr15Jones, @iarspider, @makortel, @smuzaffar can you please review it and eventually sign? Thanks.\n@wddgit this is something you requested to watch as well.\n@iarspider you are the release manager for this.\n\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n"
     },
     {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711538467}},\"emoji\":{},\"last_seen_sha\":\"2a9454e30606b17e52000110972998326ce9e428\",\"packages\":[\"Utilities/ReleaseScripts\"],\"signatures\":{}} -->"
+    },
+    {
         "type": "save-bot-cache",
         "data": {
             "commits": {
@@ -66,7 +71,10 @@
             },
             "emoji": {},
             "last_seen_sha": "2a9454e30606b17e52000110972998326ce9e428",
-            "signatures": {}
+            "signatures": {},
+            "packages": [
+                "Utilities/ReleaseScripts"
+            ]
         }
     }
 ]

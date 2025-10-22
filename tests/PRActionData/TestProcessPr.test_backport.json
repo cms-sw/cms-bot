@@ -55,7 +55,7 @@
     },
     {
         "type": "create-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"551c95f59caff42369887b5fee86583fe2bff161\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743163702}},\"emoji\":{\"2761370733\":\"+1\"},\"last_seen_sha\":\"551c95f59caff42369887b5fee86583fe2bff161\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"551c95f59caff42369887b5fee86583fe2bff161\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743163702}},\"emoji\":{\"2761370733\":\"+1\"},\"last_seen_sha\":\"551c95f59caff42369887b5fee86583fe2bff161\",\"packages\":[\"README\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -73,6 +73,9 @@
                     ]
                 }
             },
+            "packages": [
+                "README"
+            ],
             "last_seen_sha": "551c95f59caff42369887b5fee86583fe2bff161"
         }
     }

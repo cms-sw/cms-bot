@@ -13,7 +13,8 @@
             },
             "emoji": {},
             "last_seen_sha": "9138474754099798ff50cb07287e7caa4786f247",
-            "signatures": {}
+            "signatures": {},
+            "packages": {}
         }
     },
     {
@@ -40,7 +41,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"9138474754099798ff50cb07287e7caa4786f247\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733482192}},\"emoji\":{\"2523442237\":\"+1\"},\"last_seen_sha\":\"9138474754099798ff50cb07287e7caa4786f247\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"9138474754099798ff50cb07287e7caa4786f247\":{\"files\":[\"FWCore/Utilities/BuildFile.xml\"],\"squashed\":false,\"time\":1733482192}},\"emoji\":{\"2523442237\":\"+1\"},\"last_seen_sha\":\"9138474754099798ff50cb07287e7caa4786f247\",\"packages\":[\"FWCore/Utilities\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -58,7 +59,10 @@
                 "2523442237": "+1"
             },
             "last_seen_sha": "9138474754099798ff50cb07287e7caa4786f247",
-            "signatures": {}
+            "signatures": {},
+            "packages": [
+                "FWCore/Utilities"
+            ]
         }
     }
 ]

@@ -15,7 +15,8 @@
                 "2801525714": "+1"
             },
             "last_seen_sha": "ceea69106c5e0e17c03c87c13bdf187f03214fec",
-            "signatures": {}
+            "signatures": {},
+            "packages": {}
         }
     },
     {
@@ -67,8 +68,8 @@
                     null
                 ],
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
-                "CONTEXT_PREFIX": "cms/25",
-                "BUILD_ONLY": false
+                "BUILD_ONLY": false,
+                "CONTEXT_PREFIX": "cms/25"
             }
         }
     },
@@ -82,7 +83,7 @@
     },
     {
         "type": "edit-comment",
-        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"ceea69106c5e0e17c03c87c13bdf187f03214fec\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743158481}},\"emoji\":{\"2801525714\":\"+1\",\"2809041970\":\"+1\",\"2809060887\":\"+1\"},\"last_seen_sha\":\"ceea69106c5e0e17c03c87c13bdf187f03214fec\",\"signatures\":{}} -->"
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"ceea69106c5e0e17c03c87c13bdf187f03214fec\":{\"files\":[\"README\"],\"squashed\":false,\"time\":1743158481}},\"emoji\":{\"2801525714\":\"+1\",\"2809041970\":\"+1\",\"2809060887\":\"+1\"},\"last_seen_sha\":\"ceea69106c5e0e17c03c87c13bdf187f03214fec\",\"packages\":[\"README\"],\"signatures\":{}} -->"
     },
     {
         "type": "save-bot-cache",
@@ -102,7 +103,10 @@
                 "2809060887": "+1"
             },
             "last_seen_sha": "ceea69106c5e0e17c03c87c13bdf187f03214fec",
-            "signatures": {}
+            "signatures": {},
+            "packages": [
+                "README"
+            ]
         }
     }
 ]

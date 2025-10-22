@@ -250,11 +250,8 @@ barvic:
 batinkov:
 - DQM/Integration
 battibass:
-- CalibMuon/Configuration
-- CalibMuon/DTCalibration
 - CalibMuon/DTDigiSync
 - CondFormats/DTObjects
-- CondFormats/RecoMuonObjects
 - DataFormats/DTDigi
 - DataFormats/DTRecHit
 - DataFormats/L1DTTrackFinder
@@ -263,7 +260,6 @@ battibass:
 - DPGAnalysis/MuonTools
 - DQM/DTMonitorClient
 - DQM/DTMonitorModule
-- DQMOffline/CalibMuon
 - EventFilter/DTRawToDigi
 - EventFilter/L1TXRawToDigi
 - Geometry/DTGeometry
@@ -271,7 +267,6 @@ battibass:
 - L1Trigger/DTBti
 - L1Trigger/DTSectorCollector
 - L1Trigger/DTTraco
-- MuonAnalysis/MuonAssociators
 - L1Trigger/DTTrigger
 - L1Trigger/DTTriggerServerPhi
 - L1Trigger/DTTriggerServerTheta
@@ -282,13 +277,6 @@ battibass:
 - RecoLocalMuon/Configuration
 - RecoLocalMuon/DTRecHit
 - RecoLocalMuon/DTSegment
-- SimDataFormats/DigiSimLinks
-- SimMuon/Configuration
-- SimMuon/DTDigitizer
-- SimMuon/Neutron
-- SimMuon/MCTruth
-- Validation/DTRecHits
-- Validation/MuonDTDigis
 CeliaFernandez:
 - Alignment/MuonAlignment
 - Alignment/MuonAlignmentAlgorithms

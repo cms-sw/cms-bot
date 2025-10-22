@@ -11,7 +11,8 @@ spec:
   containers:
     - name: container
       image: cmssw/el9:x86_64
-      command: ["sleep", "infinity"]
+      command: ["/usr/bin/tini", "--"]
+      args: ["sleep", "infinity"]
       env:
         - name: TZ
           value: Europe/Zurich

@@ -10,7 +10,7 @@ metadata:
 spec:
   containers:
     - name: container
-      image: cmssw/el9:x86_64
+      image: cmssw/el9:x86_64-d20251023
       command: ["/usr/bin/tini", "--"]
       args: ["sleep", "infinity"]
       env:

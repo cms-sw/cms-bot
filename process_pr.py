@@ -99,7 +99,7 @@ def format(s, **kwds):
     return s % kwds
 
 
-BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}, "packages": {}}
+BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
@@ -1393,7 +1393,7 @@ def process_pr(
             bot_cache[k] = copy.deepcopy(v)
 
     if issue.pull_request:
-        if not bot_cache["packages"]:
+        if not "packages" in bot_cache:
             bot_cache["packages"] = list(packages)
 
     for comment in all_comments:

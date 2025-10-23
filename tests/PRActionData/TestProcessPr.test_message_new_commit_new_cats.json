@@ -1,0 +1,59 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "ba5ba8991f6e50e5b522ca414964abe6645128ec": {
+                    "files": [
+                        "Alignment/APEEstimation/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1760696282
+                }
+            },
+            "emoji": {},
+            "last_seen_sha": "ba5ba8991f6e50e5b522ca414964abe6645128ec",
+            "signatures": {}
+        }
+    },
+    {
+        "type": "add-label",
+        "data": []
+    },
+    {
+        "type": "remove-label",
+        "data": []
+    },
+    {
+        "type": "create-comment",
+        "data": "Pull request #45 was updated. It now involves the following additional packages:\n\n- DQM/BeamMonitor (**db, dqm**)\n\n antoniovagnerini, consuegs, francescobrivio, iarspider, nothingface0, perrotta, rvenditti, saumyaphor4252, syuvivida, tjavaid can you please check and sign again.\n"
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"14b3dbf549775639ee2fd23b6424923052f4c7b1\":{\"files\":[\"DQM/BeamMonitor/plugins/BuildFile.xml\"],\"squashed\":false,\"time\":1760696770},\"ba5ba8991f6e50e5b522ca414964abe6645128ec\":{\"files\":[\"Alignment/APEEstimation/BuildFile.xml\"],\"squashed\":false,\"time\":1760696282}},\"emoji\":{},\"last_seen_sha\":\"14b3dbf549775639ee2fd23b6424923052f4c7b1\",\"signatures\":{}} -->"
+    },
+    {
+        "type": "save-bot-cache",
+        "data": {
+            "commits": {
+                "ba5ba8991f6e50e5b522ca414964abe6645128ec": {
+                    "files": [
+                        "Alignment/APEEstimation/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1760696282
+                },
+                "14b3dbf549775639ee2fd23b6424923052f4c7b1": {
+                    "time": 1760696770,
+                    "squashed": false,
+                    "files": [
+                        "DQM/BeamMonitor/plugins/BuildFile.xml"
+                    ]
+                }
+            },
+            "emoji": {},
+            "last_seen_sha": "14b3dbf549775639ee2fd23b6424923052f4c7b1",
+            "signatures": {}
+        }
+    }
+]

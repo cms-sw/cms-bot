@@ -310,10 +310,7 @@ except ImportError as e:  # pragma: no cover
 
 
 def update_CMSSW_LABELS(repo_config):
-    try:
-        check_dpg_pog = repo_config.CHECK_DPG_POG
-    except:
-        check_dpg_pog = False
+    check_dpg_pog = getattr(repo_config, "CHECK_DPG_POG", False)
     dpg_pog = {} if not check_dpg_pog else get_dpg_pog()
     for l in CMSSW_LABELS.keys():
         if check_dpg_pog and (not l in dpg_pog) and (not l in TYPE_COMMANDS):
@@ -496,11 +493,9 @@ def create_properties_file_tests(
         pr_number,
     )
 
-    try:
-        if repo_config.JENKINS_SLAVE_LABEL:
-            parameters["RUN_LABEL"] = repo_config.JENKINS_SLAVE_LABEL
-    except:
-        pass
+    if getattr(repo_config, "JENKINS_SLAVE_LABEL", ""):
+        parameters["RUN_LABEL"] = repo_config.JENKINS_SLAVE_LABEL
+
     logger.debug("PropertyFile: %s", out_file_name)
     logger.debug("Data: %s", parameters)
     create_property_file(out_file_name, parameters, dryRun)
@@ -1186,12 +1181,11 @@ def process_pr(
     set_gh_user(cmsbuild_user)
     cmssw_repo = repo_name == GH_CMSSW_REPO
     cms_repo = repo_org in EXTERNAL_REPOS
-    external_repo = (repository != CMSSW_REPO_NAME) and (
-        len([e for e in EXTERNAL_REPOS if repo_org == e]) > 0
-    )
+    external_repo = (repository != CMSSW_REPO_NAME) and (repo_org in EXTERNAL_REPOS)
     create_test_property = False
     repo_cache = {repository: repo}
-    packages = set([])
+    packages = set()
+    old_packages = set()
     chg_files = []
     package_categories = {}
     extra_labels = {"mtype": []}
@@ -1203,7 +1197,7 @@ def process_pr(
     reOpen = False
     releaseManagers = []
     signatures = {}
-    watchers = []
+    watchers = set()
     # Process Pull Request
     pkg_categories = set([])
     REGEX_TYPE_CMDS = (
@@ -1298,14 +1292,12 @@ def process_pr(
                     signing_categories.add("code-checks")
                 updateMilestone(repo, issue, pr, dryRun)
             chg_files = get_changed_files(repo, pr)
-            packages = sorted(
-                [x for x in set([cmssw_file2Package(repo_config, f) for f in chg_files])]
-            )
+            packages = {cmssw_file2Package(repo_config, f) for f in chg_files}
             add_nonblocking_labels(chg_files, extra_labels)
             create_test_property = True
         else:
             add_external_category = True
-            packages = set(["externals/" + repository])
+            packages = {"externals/" + repository}
             ex_pkg = external_to_package(repository)
             if ex_pkg:
                 packages.add(ex_pkg)
@@ -1316,17 +1308,14 @@ def process_pr(
             ):
                 logger.error("Skipping PR as it does not belong to valid CMSDIST branch")
                 return
-            try:
-                if repo_config.NONBLOCKING_LABELS:
-                    chg_files = get_changed_files(repo, pr)
-                    add_nonblocking_labels(chg_files, extra_labels)
-            except:
-                pass
+            if getattr(repo_config, "NONBLOCKING_LABELS", False):
+                chg_files = get_changed_files(repo, pr)
+                add_nonblocking_labels(chg_files, extra_labels)
 
         if pr.state == "closed":
             create_test_property = False
 
-        logger.info("Following packages affected: %s", ", ".join(packages))
+        logger.info("Following packages affected: %s", ", ".join(sorted(packages)))
         for package in packages:
             package_categories[package] = set([])
             for category in get_package_categories(package):
@@ -1346,18 +1335,12 @@ def process_pr(
 
         if cmssw_repo:
             # If there is a new package, add also a dummy "new" category.
-            all_packages = [
-                package
-                for category_packages in list(CMSSW_CATEGORIES.values())
-                for package in category_packages
-            ]
-            has_category = all([package in all_packages for package in packages])
+            all_packages = set(itertools.chain.from_iterable(CMSSW_CATEGORIES.values()))
+            has_category = packages.issubset(all_packages)
+
             if not has_category:
                 new_package_message = "\nThe following packages do not have a category, yet:\n\n"
-                new_package_message += (
-                    "\n".join([package for package in packages if not package in all_packages])
-                    + "\n"
-                )
+                new_package_message += "\n".join(packages - all_packages) + "\n"
                 new_package_message += "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py to assign category\n"
                 logger.debug(new_package_message)
                 signing_categories.add("new-package")
@@ -1366,20 +1349,18 @@ def process_pr(
         WATCHERS = read_repo_file(repo_config, "watchers.yaml", {})
         # Given the files modified by the PR, check if there are additional developers watching one or more.
         author = pr.user.login
-        watchers = set(
-            [
-                user
-                for chg_file in chg_files
-                for user, watched_regexp in list(WATCHERS.items())
-                for regexp in watched_regexp
-                if re.match("^" + regexp + ".*", chg_file) and user != author
-            ]
-        )
-        # Handle category watchers
+        watchers = {
+            user
+            for chg_file in chg_files
+            for user, watched_regexp in WATCHERS.items()
+            for regexp in watched_regexp
+            if re.match("^" + regexp + ".*", chg_file) and user != author
+        }
 
+        # Handle category watchers
         catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
-        non_block_cats = [] if not "mtype" in extra_labels else extra_labels["mtype"]
-        for user, cats in list(catWatchers.items()):
+        non_block_cats = extra_labels.get("mtype", [])
+        for user, cats in catWatchers.items():
             for cat in cats:
                 if (cat in signing_categories) or (cat in non_block_cats):
                     logger.debug("Added %s to watch due to cat %s", user, cat)
@@ -1387,7 +1368,7 @@ def process_pr(
 
         # Handle watchers
         watchingGroups = read_repo_file(repo_config, "groups.yaml", {})
-        for watcher in [x for x in watchers]:
+        for watcher in copy.copy(watchers):
             if not watcher in watchingGroups:
                 continue
             watchers.remove(watcher)
@@ -1401,6 +1382,7 @@ def process_pr(
         if all_commits:
             last_commit_obj = all_commits[0]
         else:
+            logger.warning("No commits in this PR, quitting...")
             return
 
         last_commit = last_commit_obj.commit
@@ -1428,11 +1410,7 @@ def process_pr(
         logger.info("Time UTC: %s", datetime.utcnow())
         if last_commit_date > datetime.utcnow():
             logger.warning("==== Future commit found ====")
-            add_labels = True
-            try:
-                add_labels = repo_config.ADD_LABELS
-            except:
-                pass
+            add_labels = getattr(repo_config, "ADD_LABELS", True)
             if (not dryRun) and add_labels:
                 labels = [ensure_ascii(x.name) for x in issue.labels]
                 if not "future-commit" in labels:
@@ -1530,14 +1508,24 @@ def process_pr(
         if k not in bot_cache:
             bot_cache[k] = copy.deepcopy(v)
 
+    #
+    if cmssw_repo or not external_repo:
+        for commit in bot_cache["commits"].values():
+            if commit.get("squashed", False):
+                continue
+            old_packages.update(cmssw_file2Package(repo_config, f) for f in commit["files"])
+    else:
+        old_packages = {"externals/" + repository}
+
     for comment in all_comments:
         commenter = ensure_ascii(comment.user.login)
         commenter_categories = get_commenter_categories(
             commenter, int(comment.created_at.strftime("%s"))
         )
-        valid_commenter = (commenter in TRIGGER_PR_TESTS + releaseManagers + [repo_org]) or (
-            len(commenter_categories) > 0
-        )
+        valid_commenter = (
+            commenter in TRIGGER_PR_TESTS + releaseManagers + [repo_org]
+        ) or commenter_categories
+
         if (not valid_commenter) and (requestor != commenter):
             continue
         comment_msg = ensure_ascii(comment.body) if comment.body else ""
@@ -2182,11 +2170,7 @@ def process_pr(
     #     test_comment = auto_test_comment
 
     if push_test_issue:
-        auto_close_push_test_issue = True
-        try:
-            auto_close_push_test_issue = repo_config.AUTO_CLOSE_PUSH_TESTS_ISSUE
-        except:
-            pass
+        auto_close_push_test_issue = getattr(repo_config, "AUTO_CLOSE_PUSH_TESTS_ISSUE", True)
         if (
             auto_close_push_test_issue
             and (issue.state == "open")
@@ -2595,11 +2579,7 @@ def process_pr(
     if old_labels == labels:
         logger.info("Labels unchanged.")
     elif not dryRunOrig:
-        add_labels = True
-        try:
-            add_labels = repo_config.ADD_LABELS
-        except:
-            pass
+        add_labels = getattr(repo_config, "ADD_LABELS", True)
         if add_labels:
             issue.edit(labels=list(labels))
 
@@ -2848,6 +2828,17 @@ def process_pr(
                 pkg_msg.append("- %s (**%s**)" % (pkg, ", ".join(sorted(package_categories[pkg]))))
             else:
                 pkg_msg.append("- %s (**new**)" % pkg)
+
+        pkg_msg_new = []
+        new_packages = set(packages) - set(old_packages)
+        for pkg in new_packages:
+            if pkg in package_categories:
+                pkg_msg_new.append(
+                    "- %s (**%s**)" % (pkg, ", ".join(sorted(package_categories[pkg])))
+                )
+            else:
+                pkg_msg_new.append("- %s (**new**)" % pkg)
+
         messageNewPR = format(
             "%(msgPrefix)s %(gh_user_char)s%(user)s"
             " for %(branch)s.\n\n"
@@ -2876,6 +2867,10 @@ def process_pr(
             "Pull request #%(pr)s was updated.",
             pr=pr.number,
         )
+
+        if new_packages:
+            messageUpdatedPR += " It now involves the following additional packages:\n\n"
+            messageUpdatedPR += "\n".join(pkg_msg_new) + "\n\n"
 
         if not is_draft_pr:
             messageUpdatedPR += format(

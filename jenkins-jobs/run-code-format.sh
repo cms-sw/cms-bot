@@ -15,7 +15,7 @@ CMSSW_QUEUE="$7"
 mkdir $WORKSPACE/upload
 if [ "${CMSSW_DIR}" != "" ] ; then
   CMSSW_PROJECT=$(basename ${CMSSW_DIR})
-  SCRAM_ARCH=$(ls ${CMSW_DIR}/config/toolbox/)
+  SCRAM_ARCH=$(ls ${CMSSW_DIR}/config/toolbox/)
   scram -a ${SCRAM_ARCH} project ${CMSSW_DIR}
 else
   eval $(grep 'RELEASE_BRANCH=master;' cms-bot/config.map | grep PROD_ARCH=1 )

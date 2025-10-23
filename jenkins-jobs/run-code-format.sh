@@ -47,11 +47,17 @@ popd
 cp -r src src.orig
 if [ "${CMSSW_RELEASE_BASE}" = "" ] ; then
   CMSSW_RELEASE_BASE=$(scram l -c ${CMSSW_VERSION} | sed 's|.* ||') \
-  $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
+    $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
 else
-  $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
+  if [ ! -e ${CMSSW_RELEASE_BASE}/etc/dependencies/uses.out.gz ] ; then
+    CMSSW_RELEASE_BASE=$(scram l -c ${CMSSW_VERSION} | sed 's|.* ||') \
+      $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
+  else
+    $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
+  fi
 fi
 cat $CMSSW_BASE/selected-source-files.txt | grep -v '/test/' > $CMSSW_BASE/selected-source-files.txt.filtered || true
+wc -l $CMSSW_BASE/selected-source-files.txt.filtered
 
 ERR=0
 if $CLANG_TIDY ; then
@@ -60,6 +66,7 @@ if $CLANG_TIDY ; then
     git diff --name-only > $WORKSPACE/upload/code-checks.txt
     git diff > $WORKSPACE/upload/code-checks.patch
   popd
+  wc -l $WORKSPACE/upload/code-checks.txt
   echo "Files need clang-tidy fixes ....."
   cat $WORKSPACE/upload/code-checks.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-checks-pkgs.log
   scram b clean

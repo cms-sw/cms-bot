@@ -2549,7 +2549,14 @@
       "category": [
         "upgrade"
       ],
+      "end_date": 1761350400,
       "start_date": 1609632000
+    },
+    {
+      "category": [
+        "reconstruction"
+      ],
+      "start_date": 1761350400
     }
   ],
   "sroychow": [

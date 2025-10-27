@@ -2,7 +2,7 @@
 cd $WORKSPACE
 
 if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
-  #Wait for CMSSW deployment of CVMFS
+  #Wait for CMSSW deployment on CVMFS
   WAIT_TIME=3600
   while [ $WAIT_TIME -gt 0 ] ; do
     if [ -d "${CMSSW_CVMFS_PATH}" ] ; then break ; fi

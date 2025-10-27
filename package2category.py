@@ -2,9 +2,16 @@
 import sys
 from argparse import ArgumentParser
 from collections import defaultdict
-
+import repo_config
+import datetime
 from categories_map import CMSSW_CATEGORIES
 
+# LEGACY_CATEGORIES is a mapping from name to datetime (when the category becomes legacy)
+# Extract categories that are legacy at the moment of issue creation
+legacy_cats = getattr(repo_config, "LEGACY_CATEGORIES", {})
+now = datetime.datetime.now(tz=datetime.timezone.utc)
+for lc in (cat for cat, ts in legacy_cats.items() if now > ts):
+    del CMSSW_CATEGORIES[lc]
 
 def package2category(filename):
     if not filename:

@@ -1078,3 +1078,6 @@ class TestProcessPr(Framework.TestCase):
         ) - datetime.timedelta(days=1)
         self.runTest(pr_id=44)
         self.repo_config.LEGACY_CATEGORIES = old_repo_config
+
+    def test_please_test_missing_repo(self):
+        self.runTest(pr_id=46)

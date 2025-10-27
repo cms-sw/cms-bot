@@ -887,7 +887,7 @@ def check_test_cmd(first_line, repo, params):
         wfs = ",".join(set(res.workflows))
 
     if res.prs:
-        prs = get_prs_list_from_string(",".join(res.prs))
+        prs = get_prs_list_from_string(",".join(res.prs), repo)
 
     if res.full:
         params["BUILD_FULL_CMSSW"] = "true"

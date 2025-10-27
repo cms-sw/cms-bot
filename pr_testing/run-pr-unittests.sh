@@ -1,5 +1,16 @@
 #!/bin/bash -ex
 cd $WORKSPACE
+
+if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
+  #Wait for CMSSW deployment of CVMFS
+  WAIT_TIME=3600
+  while [ $WAIT_TIME -gt 0 ] ; do
+    if [ -d "${CMSSW_CVMFS_PATH}" ] ; then break ; fi
+    sleep 60
+    let WAIT_TIME=${WAIT_TIME}-60 || true
+  done
+fi
+
 $CMSSW_CVMFS_PATH/../install.sh
 export CMSSW_IB=$(basename $CMSSW_CVMFS_PATH)
 export CMSSW_VERSION=${CMSSW_IB}

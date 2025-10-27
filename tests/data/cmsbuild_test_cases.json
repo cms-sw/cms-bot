@@ -634,7 +634,7 @@
     "expect": {
       "action": "test",
       "cms_prs": [
-        "#123"
+        "cms-sw/cmssw#123"
       ]
     }
   },
@@ -645,7 +645,7 @@
     "expect": {
       "action": "build",
       "cms_prs": [
-        "#9999"
+        "cms-sw/cmssw#9999"
       ]
     }
   },
@@ -659,7 +659,7 @@
         "140.0"
       ],
       "cms_prs": [
-        "#42"
+        "cms-sw/cmssw#42"
       ],
       "release_queue": "CMSSW_14_0_X"
     }
@@ -671,9 +671,9 @@
     "expect": {
       "action": "test",
       "cms_prs": [
-        "#1",
-        "#2",
-        "#3"
+        "cms-sw/cmssw#1",
+        "cms-sw/cmssw#2",
+        "cms-sw/cmssw#3"
       ]
     }
   },
@@ -688,7 +688,7 @@
         "201.0"
       ],
       "cms_prs": [
-        "#1000"
+        "cms-sw/cmssw#1000"
       ]
     }
   },

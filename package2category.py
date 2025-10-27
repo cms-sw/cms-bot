@@ -13,6 +13,7 @@ now = datetime.datetime.now(tz=datetime.timezone.utc)
 for lc in (cat for cat, ts in legacy_cats.items() if now > ts):
     del CMSSW_CATEGORIES[lc]
 
+
 def package2category(filename):
     if not filename:
         return

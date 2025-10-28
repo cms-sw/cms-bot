@@ -798,7 +798,9 @@ if ${BUILD_EXTERNAL} ; then
           continue
         fi
         echo "Checking ${name}"
-		if ! diff -u <(sed -r 's|"/([^/]+/)+([^"]+)"|"/PATH/\2"|g; s|^[[:space:]]+||; s|[[:space:]\r]+$||' $xml) <(sed -r 's|"/([^/]+/)+([^"]+)"|"/PATH/\2"|g; s|^[[:space:]]+||; s|[[:space:]\r]+$||' ${BTOOLS}/$name) ; then
+		if ! diff -u \
+             <(sed -r 's|"/([^/]+/)+([^"]+)"|"/PATH/\2"|g; s|^[[:space:]]+||; s|[[:space:]\r]+$||; s|[[:space:]]+| |g' ${xml}) \
+             <(sed -r 's|"/([^/]+/)+([^"]+)"|"/PATH/\2"|g; s|^[[:space:]]+||; s|[[:space:]\r]+$||; s|[[:space:]]+| |g' ${BTOOLS}/$name  ; then
           DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
           echo "  Tool changed/updated: ${name}"
         fi

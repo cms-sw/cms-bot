@@ -797,14 +797,13 @@ if ${BUILD_EXTERNAL} ; then
           scram setup $xml >> $WORKSPACE/scram-tool-setup.log 2>&1 || TOOL_SETUP=false
           continue
         fi
-        nver=$(grep '<tool ' $xml            | tr ' ' '\n' | grep 'version='  | sed 's|version="||;s|".*||g')
-        over=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'version='  | sed 's|version="||;s|".*||g')
-        nrev=$(grep '<tool ' $xml            | tr ' ' '\n' | grep 'revision=' | sed 's|revision="||;s|".*||g')
-        orev=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'revision=' | sed 's|revision="||;s|".*||g')
-        echo "Checking version in release: ${over}(${orev}) vs $nver(${nrev})"
-        if [ "$nver" = "$over" -a "$nrev" = "$orev" ] ; then continue ; fi
-        echo "Setting up $name: Version: $over vs $nver / Revision: $orev vs $nrev"
-        DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
+        echo "Checking ${name}"
+		if ! diff -u \
+             <(sed -r 's|"/([^/]+/)+([^"]+)"|"/PATH/\2"|g; s|^[[:space:]]+||; s|[[:space:]\r]+$||; s|[[:space:]]+| |g' ${xml}) \
+             <(sed -r 's|"/([^/]+/)+([^"]+)"|"/PATH/\2"|g; s|^[[:space:]]+||; s|[[:space:]\r]+$||; s|[[:space:]]+| |g' ${BTOOLS}/$name)  ; then
+          DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
+          echo "  Tool changed/updated: ${name}"
+        fi
       done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
       touch $CTOOLS/*.xml

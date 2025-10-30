@@ -158,6 +158,21 @@ def get_commit_files_pygithub(*args, **kwargs):
 
 
 # TODO: remove once we update pygithub
+def github__commitcombinedstatus__statuses(self):
+    """
+    :type: list of :class:`CommitStatus`
+    """
+    return github.PaginatedList.PaginatedList(
+        contentClass=github.CommitStatus.CommitStatus,
+        requester=self._requester,
+        firstUrl=self.url,
+        firstParams={},
+        headers=None,
+        list_item="statuses",
+    )
+
+
+# TODO: remove once we update pygithub
 def github__issue__reactions(self):
     """
     :type: dict
@@ -346,6 +361,14 @@ class TestProcessPr(Framework.TestCase):
         )
         self.patchers.append(patcher_2)
         patcher_2.start()
+
+        patcher_3 = patch(
+            "github.CommitCombinedStatus.CommitCombinedStatus.statuses",
+            new=property(github__commitcombinedstatus__statuses),
+            create=True,
+        )
+        self.patchers.append(patcher_3)
+        patcher_3.start()
 
     def setUpHooks(self):
         self.patchers = []
@@ -547,6 +570,23 @@ class TestProcessPr(Framework.TestCase):
         self.process_pr_module = None
 
     @staticmethod
+    def enable_github_loggin():
+        import logging, inspect, os
+
+        class CallsiteFormatter(logging.Formatter):
+            def format(self, record):
+                # Walk the call stack to find the first frame outside of PyGithub
+                for frame_info in inspect.stack():
+                    filename = frame_info.filename
+                    if "site-packages/github/" not in filename.replace(
+                        "\\", "/"
+                    ) and "PyGithub/github/" not in filename.replace("\\", "/"):
+                        record.filename = os.path.basename(filename)
+                        record.lineno = frame_info.lineno
+                        break
+                return super().format(record)
+
+    @staticmethod
     def compareActions(res_, expected_, skip_missing_write_cache):
         def normalize_data(data):
             if isinstance(data, dict):
@@ -636,6 +676,7 @@ class TestProcessPr(Framework.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        TestProcessPr.enable_github_loggin()
         cls.actionDataFolder = "PRActionData"
         if not os.path.exists(cls.actionDataFolder):
             os.mkdir(cls.actionDataFolder)

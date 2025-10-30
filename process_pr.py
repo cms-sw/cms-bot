@@ -790,7 +790,7 @@ def parse_test_cmd(first_line: str) -> ParseResult:
         raise ParseError("empty input")
 
     seen = set()
-    res = ParseResult(verb=tokens.pop(0))
+    res = ParseResult(verb=tokens.pop(0).lower())
 
     params: List[TestCmdParam] = [
         TestCmdParam(
@@ -1120,7 +1120,8 @@ def preprocess_comment_text(comment_msg):
     comment_lines = [re.sub(r"\s?,\s?", ",", x) for x in comment_lines]
     # Remove "@cmsbuild please" prefix
     comment_lines = [
-        re.sub(r"^(@?cmsbuild\s?[,]*\s?)?(please\s?[,]*\s?)?", "", x) for x in comment_lines
+        re.sub(r"^(@?cmsbuild\s?[,]*\s?)?(please\s?[,]*\s?)?", "", x, flags=re.I)
+        for x in comment_lines
     ]
     return comment_lines
 

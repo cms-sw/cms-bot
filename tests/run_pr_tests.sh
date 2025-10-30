@@ -2,13 +2,13 @@
 ulimit -n 2048 || true
 INSTALL_REQS=0
 if [ ! -d venv ];  then
-  python3 -m venv venv
+  python3.9 -m venv venv
   INSTALL_REQS=1
 fi
 
 source venv/bin/activate
 if [ $INSTALL_REQS -eq 1 ]; then
-  python3 -m pip install --upgrade pip
+  python3.9 -m pip install --upgrade pip
   pip install -r test-requirements.txt
 fi
 

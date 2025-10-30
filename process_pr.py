@@ -1405,7 +1405,7 @@ def process_pr(
             return
 
         last_commit = last_commit_obj.commit
-        commit_statuses = last_commit_obj.get_combined_status().statuses
+        commit_statuses = list(last_commit_obj.get_combined_status().statuses)
         bot_status = get_status(bot_status_name, commit_statuses)
         if not bot_status:
             bot_status_name = "bot/%s/jenkins" % prId

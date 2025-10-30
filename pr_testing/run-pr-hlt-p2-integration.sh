@@ -32,7 +32,7 @@ popd
 
 # Upload results
 source $WORKSPACE/cms-bot/jenkins-artifacts
-touch ${RESULTS_DIR}/15-hlt-p2-integration-failed.res
+touch ${RESULTS_DIR}/11-hlt-p2-integration-failed.res
 
 if grep -iE 'Error|failure' "${INTEGRTESTS_LOG}"; then
   HLT_P2_RES="ERROR"
@@ -44,7 +44,7 @@ echo "HLT_P2_INTEGRATION;${HLT_P2_RES},HLT Phase 2 integration Test,See Logs,hlt
 if [ "${HLT_P2_RES}" = "SUCCESS" ] ; then
     mark_commit_status_all_prs 'hlt-p2-integration' 'success' -u "${BUILD_URL}" -d "HLT Phase2 integration data collected"
 else
-  echo "HLTP2Integration" > ${RESULTS_DIR}/15-hlt-p2-integration-failed.res
+  echo "HLTP2Integration" > ${RESULTS_DIR}/11-hlt-p2-integration-failed.res
   mark_commit_status_all_prs 'hlt-p2-integration' 'error' -u "${BUILD_URL}" -d "HLT Phase2 integration script failed"
 fi
 

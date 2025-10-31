@@ -166,6 +166,7 @@ function get_result_file_name () {
   SUFFIX=$1
 
   UC_TEST_FLAVOR=$(echo "${TEST_FLAVOR}" | tr 'a-z' 'A-Z')
+  [ "${UC_TEST_FLAVOR}" != "" ] && UC_TEST_FLAVOR="-{UC_TEST_FLAVOR}"
 
   case $TEST_TYPE in
     relval)

@@ -196,7 +196,7 @@ def read_matrix_log_file(matrix_log):
             common_errors.append(line + "\n")
 
     # check if it was timeout
-    message = "\n## RelVals\n\n"
+    message = ""
     if "ERROR TIMEOUT" in line:
         message += "The relvals timed out after 4 hours.\n"
     if common_errors:
@@ -225,6 +225,10 @@ def read_matrix_log_file(matrix_log):
             message += "- " + wnum + "\n"
     if extra_msg:
         message += "</details>\n\n"
+    mtype = ""
+    if message:
+        mtype = " Failed"
+    message = "\n##%s RelVals\n\n" % (mtypem, message)
     send_message_pr(message)
 
 
@@ -248,7 +252,7 @@ def cmd_to_addon_test(command, addon_dir):
 
 
 def read_addon_log_file(unit_tests_file):
-    message = "\n## AddOn Tests\n\n"
+    message = ""
     addon_dir = join(dirname(unit_tests_file), "addOnTests")
     cnt = 0
     max_show = 3
@@ -275,6 +279,10 @@ def read_addon_log_file(unit_tests_file):
                 message += "- " + tname + "\n"
     if extra_msg:
         message += "</details>\n\n"
+    mtype = ""
+    if message:
+        mtype = " Failed"
+    message = "\n##%s AddOn Tests\n\n" % (mtypem, message)
     send_message_pr(message)
 
 
@@ -368,13 +376,15 @@ def read_build_log_file(build_log, isClang=False, toolconf=False):
     if isClang:
         cmd = openlog(build_log).readline()
         message += (
-            "\n## Clang Build\n\nI found " + err_type + " while trying to compile with clang. "
+            "\n## Failed Clang Build\n\nI found "
+            + err_type
+            + " while trying to compile with clang. "
         )
         message += "Command used:\n```\n" + cmd + "\n```\n"
     elif toolconf:
-        message += "\n## External Build\n\nI found " + err_type + " when building: "
+        message += "\n## Failed External Build\n\nI found " + err_type + " when building: "
     else:
-        message += "\n## Build\n\nI found " + err_type + " when building: "
+        message += "\n## Failed Build\n\nI found " + err_type + " when building: "
 
     if error_found:
         message += "\n\n<pre>"
@@ -405,7 +415,7 @@ def read_unit_tests_file(unit_tests_file):
             errors_found += line
 
     message = (
-        "\n## Unit Tests\n\nI found %s errors in the following unit tests:\n\n<pre>%s</pre>"
+        "\n## Failed Unit Tests\n\nI found %s errors in the following unit tests:\n\n<pre>%s</pre>"
         % (err_cnt, errors_found)
     )
     send_message_pr(message)
@@ -423,7 +433,7 @@ def read_gpu_tests_file(unit_tests_file, gpu_flavor="GPU"):
                 continue
             errors_found += line
     message = (
-        "\n## %s Unit Tests\n\nI found %s errors in the following unit tests:\n\n<pre>%s</pre>"
+        "\n## Failed %s Unit Tests\n\nI found %s errors in the following unit tests:\n\n<pre>%s</pre>"
         % (gpu_flavor, err_cnt, errors_found)
     )
     send_message_pr(message)
@@ -443,7 +453,10 @@ def read_python3_file(python3_file):
             if err_cnt > 3:
                 continue
             errors_found += line
-    message = "\n#Python3\n\nI found %s errors: \n\n <pre>%s</pre>" % (err_cnt, errors_found)
+    message = "\n## Failed Python3\n\nI found %s errors: \n\n <pre>%s</pre>" % (
+        err_cnt,
+        errors_found,
+    )
     send_message_pr(message)
 
 

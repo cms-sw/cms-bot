@@ -91,11 +91,11 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   ALL_OK=false
   RELVALS_OK=false
   $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/${RESULT_FILE_NAME} --report-url ${PR_RESULT_URL} $NO_POST
-  if [ $(grep -v '## RelVals' ${RESULTS_DIR}/${RESULT_FILE_NAME} | grep -v '^ *$' | wc -l) -eq 0 ] ; then
-    echo -e "## RelVals\n\n\`\`\`\n${TEST_ERRORS}\n\`\`\`\n" > ${RESULTS_DIR}/${RESULT_FILE_NAME}
+  if [ $(grep -E -v '##( Failed|) RelVals' ${RESULTS_DIR}/${RESULT_FILE_NAME} | grep -v '^ *$' | wc -l) -eq 0 ] ; then
+    echo -e "## Failed RelVals\n\n\`\`\`\n${TEST_ERRORS}\n\`\`\`\n" > ${RESULTS_DIR}/${RESULT_FILE_NAME}
   fi
   if [ "${TEST_FLAVOR}" != "" ] ; then
-    sed -i -e "s|## RelVals|## RelVals-${UC_TEST_FLAVOR}|;s|/runTheMatrix-results|/runTheMatrix${UC_TEST_FLAVOR}-results|g" ${RESULTS_DIR}/${RESULT_FILE_NAME}
+    sed -i -e "s|## Failed RelVals|## Failed RelVals-${UC_TEST_FLAVOR}|;s|/runTheMatrix-results|/runTheMatrix${UC_TEST_FLAVOR}-results|g" ${RESULTS_DIR}/${RESULT_FILE_NAME}
     echo "RelVals-${UC_TEST_FLAVOR}" > ${RESULTS_DIR}/${FAILED_FILE_NAME}
   else
     echo "RelVals" > ${RESULTS_DIR}/${FAILED_FILE_NAME}
@@ -108,7 +108,7 @@ else
   echo "MATRIX${UC_TEST_FLAVOR}_TESTS;OK,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/$(get_status_file_name relval "$TEST_FLAVOR")
 
   if [[ -s "$WORKSPACE/bad-workflow-lists.txt" ]]; then
-    echo '* **Invalid workflow lists**: ${\color{red}\Huge{\textsf{'$(cat $WORKSPACE/bad-workflow-lists.txt)'}}}$' >  ${RESULTS_DIR}/0a-bad-workflows-report.res
+    echo '**Invalid workflow lists**: ${\color{red}\Huge{\textsf{'$(cat $WORKSPACE/bad-workflow-lists.txt)'}}}$' >  ${RESULTS_DIR}/0a-bad-workflows-report.res
   fi
 
   if $DO_COMPARISON ; then

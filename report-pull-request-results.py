@@ -228,7 +228,7 @@ def read_matrix_log_file(matrix_log):
     mtype = ""
     if message:
         mtype = " Failed"
-    message = "\n##%s RelVals\n\n" % (mtypem, message)
+    message = "\n##%s RelVals\n\n" % (mtype, message)
     send_message_pr(message)
 
 
@@ -282,7 +282,7 @@ def read_addon_log_file(unit_tests_file):
     mtype = ""
     if message:
         mtype = " Failed"
-    message = "\n##%s AddOn Tests\n\n" % (mtypem, message)
+    message = "\n##%s AddOn Tests\n\n" % (mtype, message)
     send_message_pr(message)
 
 

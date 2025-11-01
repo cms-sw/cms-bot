@@ -35668,6 +35668,15 @@
                   "default_micro_arch": "x86-64-v3"
                 }
               ]
+            },
+            {
+              "label": "CMSSW_16_0_0_pre2",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
             }
           ]
         },

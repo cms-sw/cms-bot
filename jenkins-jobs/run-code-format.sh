@@ -22,6 +22,7 @@ else
   export SCRAM_ARCH
   [ "${CMSSW_QUEUE}" = "" ] || RELEASE_QUEUE="${CMSSW_QUEUE}"
   CMSSW_PROJECT=$(scram -a $SCRAM_ARCH l -c $RELEASE_QUEUE | grep -v 'cmssw-patch' | tr -s ' ' |  cut -d ' '   -f2 | tail -n 1)
+  scram -a ${SCRAM_ARCH} project ${CMSSW_PROJECT}
 fi
 cd $CMSSW_PROJECT
 

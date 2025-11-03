@@ -43,6 +43,7 @@ pushd src
   for pr in ${EXTRA_PRS} ; do
     git cms-merge-topic -u ${pr}
   done
+  [ "${PATCH_CMD}" != "" ] && eval "${PATCH_CMD}"
 popd
 #Keep original sources to be used by clang-format
 cp -r src src.orig

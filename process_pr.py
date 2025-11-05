@@ -1,5 +1,7 @@
 import copy
 
+from github.CommitStatus import CommitStatus
+
 from categories import (
     CMSSW_L2,
     CMSSW_ORP,
@@ -36,6 +38,7 @@ from github_utils import (
     api_rate_limits,
     get_pr_commits_reversed,
     get_commit,
+    get_combined_statuses,
 )
 from github_utils import set_gh_user, get_gh_user
 from socket import setdefaulttimeout
@@ -1135,6 +1138,16 @@ def currenttz():
     return timezone(timedelta(seconds=tm.tm_gmtoff), tm.tm_zone)
 
 
+# Will be replaced with PyGithub version during tests
+def get_combined_status_list(gh, last_commit, repository):
+    return [
+        CommitStatus(
+            requester=gh._Github__requester, headers={}, attributes=status, completed=True
+        )
+        for status in get_combined_statuses(last_commit.sha, repository)["statuses"]
+    ]
+
+
 def process_pr(
     repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, enableTraceLog=True
 ):
@@ -1405,7 +1418,7 @@ def process_pr(
             return
 
         last_commit = last_commit_obj.commit
-        commit_statuses = list(last_commit_obj.get_combined_status().statuses)
+        commit_statuses = get_combined_status_list(gh, last_commit_obj, repository)
         bot_status = get_status(bot_status_name, commit_statuses)
         if not bot_status:
             bot_status_name = "bot/%s/jenkins" % prId

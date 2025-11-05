@@ -158,6 +158,15 @@ def get_commit_files_pygithub(*args, **kwargs):
 
 
 # TODO: remove once we update pygithub
+def get_combined_status_list_pygithub(*args, **kwargs):
+    kwargs.pop("res")
+    assert len(args) == 3, "Signature of process_pr.get_combined_status_list_pygithub changed"
+    assert len(kwargs) == 0, "Signature of process_pr.get_combined_status_list_pygithub changed"
+    last_commit_obj = args[1]
+    return list(last_commit_obj.get_combined_status().statuses)
+
+
+# TODO: remove once we update pygithub
 def github__commitcombinedstatus__statuses(self):
     """
     :type: list of :class:`CommitStatus`
@@ -430,6 +439,13 @@ class TestProcessPr(Framework.TestCase):
                 "class_name": None,
                 "function_name": "get_commit_files",
                 "hook_function": get_commit_files_pygithub,
+                "call_original": False,
+            },
+            {
+                "module_path": "process_pr",
+                "class_name": None,
+                "function_name": "get_combined_status_list",
+                "hook_function": get_combined_status_list_pygithub,
                 "call_original": False,
             },
             {

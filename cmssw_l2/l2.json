@@ -22,6 +22,14 @@
       "start_date": 1700524800
     }
   ],
+  "AlexDeMoor": [
+    {
+      "category": [
+        "btv-pog"
+      ],
+      "start_date": 1762300800
+    }
+  ],
   "AndreaBellora": [
     {
       "category": [
@@ -178,6 +186,7 @@
       "category": [
         "btv-pog"
       ],
+      "end_date": 1762300800,
       "start_date": 1693353600
     }
   ],
@@ -249,6 +258,14 @@
         "ppd"
       ],
       "start_date": 1758758400
+    }
+  ],
+  "acalandr": [
+    {
+      "category": [
+        "btv-pog"
+      ],
+      "start_date": 1762300800
     }
   ],
   "adrianodee": [
@@ -1991,6 +2008,7 @@
       "category": [
         "btv-pog"
       ],
+      "end_date": 1762300800,
       "start_date": 1693353600
     }
   ],

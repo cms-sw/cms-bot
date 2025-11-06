@@ -731,7 +731,9 @@ def get_gh_user():
 
 def get_combined_statuses(commit, repository):
     get_gh_token(repository)
-    return github_api("/repos/%s/commits/%s/status" % (repository, commit), method="GET")
+    return github_api(
+        "/repos/%s/commits/%s/status" % (repository, commit), method="GET", merge_dict=True
+    )
 
 
 def get_pr_commits(pr, repository, per_page=None, last_page=False):

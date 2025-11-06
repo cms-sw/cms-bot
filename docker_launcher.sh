@@ -79,7 +79,12 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   fi
   BUILD_BASEDIR=$(dirname $WORKSPACE)
   export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
-  MOUNT_POINTS="/cvmfs,/tmp,$(echo $WORKSPACE | cut -d/ -f1,2),/var/run/user,/run/user,/etc/pki/ca-trust,${EXTRA_MOUNTS}"
+  MOUNT_POINTS="/cvmfs,/tmp,$(echo $WORKSPACE | cut -d/ -f1,2),/var/run/user,/run/user,${EXTRA_MOUNTS}"
+  # el10 ca-certificate issue
+  # Python3: urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate
+  if [[ $DOCKER_IMG != */el10:* ]] ; then
+    MOUNT_POINTS="/etc/pki/ca-trust,${MOUNT_POINTS}"
+  fi
   grid_dirs="/cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security /cvmfs/grid.cern.ch/etc/grid-security/vomses:/etc/vomses"
   if [ -e "/cvmfs/grid.cern.ch/etc/grid-security/vomses/voms-cms-auth.app.cern.ch" ] ; then
     grid_dirs="${grid_dirs} /cvmfs/grid.cern.ch/etc/grid-security/vomses/voms-cms-auth.cern.ch:/etc/vomses/voms-cms-auth.app.cern.ch"

@@ -26,7 +26,7 @@ done
 
 RUNS_TO_KEEP=1
 #Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
-EXTRA_RELVAL_TESTS=$(PYTHONPATH=${CMS_BOT_DIR}:${YTHONPATH} python3 -c 'from process_pr import EXTRA_RELVALS_TESTS;print(" ".join([x.upper().replace("-","_") for x in EXTRA_RELVALS_TESTS if x]))')
+EXTRA_RELVAL_TESTS=$(PYTHONPATH=${CMS_BOT_DIR}:${PYTHONPATH} python3 -c 'from process_pr import EXTRA_RELVALS_TESTS;print(" ".join([x.upper().replace("-","_") for x in EXTRA_RELVALS_TESTS if x]))')
 EXTRA_RELVAL_TESTS="${EXTRA_RELVAL_TESTS} $(ls -d $JENKINS_ARTIFACTS/baseLineComparisonsNVIDIA_* $JENKINS_ARTIFACTS/baseLineComparisonsAMD_* | sed 's|.*/baseLineComparisons||')"
 for type in "" ${EXTRA_RELVAL_TESTS} ; do
   dir=baseLineComparisons${type}

@@ -62,6 +62,8 @@
                 "RUN_ON_SLAVE": "cmssdt",
                 "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
                 "BUILD_ONLY": false,
+                "ENABLE_BOT_TESTS": "GPU",
+                "SELECTED_GPU_TYPES": "nvidia_h100,amd_mi300x",
                 "CONTEXT_PREFIX": "cms/24"
             }
         }
@@ -80,7 +82,7 @@
             "commit": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
             "state": "success",
             "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2740067147",
-            "description": "2740067147:{\"BUILD_FULL_CMSSW\": \"true\", \"DISABLE_POISON\": \"true\", \"DOCKER_IMGAGE\": \"cmssw/cc7\", \"MATRIX_EXTRAS\": \"123.4\", \"PULL_REQUEST...",
+            "description": "2740067147:{\"BUILD_FULL_CMSSW\": \"true\", \"DISABLE_POISON\": \"true\", \"DOCKER_IMGAGE\": \"cmssw/cc7\", \"ENABLE_BOT_TESTS\": \"GPU\", \"MATRIX_EXTR...",
             "context": "bot/24/test_parameters"
         }
     },

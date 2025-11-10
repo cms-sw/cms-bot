@@ -927,6 +927,7 @@ CMSSW_CATEGORIES = {
         "HeterogeneousTest/ROCmKernel",
         "HeterogeneousTest/ROCmOpaque",
         "HeterogeneousTest/ROCmWrapper",
+        "MagneticField/Portable",
     ],
     "hlt": [
         "CommonTools/TriggerUtils",
@@ -1232,6 +1233,7 @@ CMSSW_CATEGORIES = {
         "MagneticField/Interpolation",
         "MagneticField/Layers",
         "MagneticField/ParametrizedEngine",
+        "MagneticField/Portable",
         "MagneticField/Records",
         "MagneticField/UniformEngine",
         "MagneticField/VolumeBasedEngine",

@@ -103,13 +103,15 @@ echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
 if [ "${JAVA_CMD}" = "java" ] ; then
-  JAVA17=$(ls -d /usr/lib/jvm/jdk-17.*/bin/java 2>/dev/null || true)
-  if [ -e "/etc/alternatives/jre_17/bin/java" ] ; then
-    JAVA_CMD="/etc/alternatives/jre_17/bin/java"
-  elif [ "${JAVA17}" != "" ] ; then
-    JAVA_CMD="${JAVA17}"
-  elif [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
-    JAVA_CMD="/etc/alternatives/jre_11/bin/java"
+  for java_ver in 21 17 ; do
+    JCMD="/etc/alternatives/jre_${java_ver}/bin/java"
+    if [ ! -e "${JCMD}" ] ; then
+      JCMD=$(ls -d /usr/lib/jvm/jdk-${java_ver}.*/bin/java 2>/dev/null || true)
+    fi
+    [ "${JCMD}" = "" ] || break
+  done
+  if  [ "${JCMD}" != "" ] ; then
+    JAVA_CMD="${JCMD}"
   else
     SLAVE_LABELS="${SLAVE_LABELS} java-default"
   fi

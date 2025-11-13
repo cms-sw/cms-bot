@@ -1153,7 +1153,7 @@ def process_pr(
     global L2_DATA, create_status
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
-
+    print("I am here")
     setup_logging("trace" if enableTraceLog else "debug")
 
     gh_user_char = "@"

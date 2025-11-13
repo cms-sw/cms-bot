@@ -1275,7 +1275,7 @@ def process_pr(
             cats = get_commenter_categories(author_, int(issue.created_at.strftime("%s")))
             if "externals" in cats or "core" in cats:
                 with open("cms-bot.properties", "w") as f:
-                    f.write("CMS_BOT_TEST_BRANCH={0}\n".format(pr.head.ref))
+                    f.write("CMS_BOT_TEST_BRANCH=pull/{0}/head\n".format(pr.number))
                     f.write("FORCE_PULL_REQUEST={0}\n".format(pr.number))
                     f.write("CMS_BOT_TEST_PRS=cms-sw/cms-bot#{0}\n".format(pr.number))
                 return

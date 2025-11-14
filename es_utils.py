@@ -8,6 +8,7 @@ from cmsutils import cmsswIB2Week, percentile, epoch2week
 from _py2with3compatibility import Request, urlopen, run_cmd
 from os import stat as tstat
 from time import time
+from datetime import datetime
 
 CMSSDT_ES_QUERY = "https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = "https://os-cmssdt1.cern.ch/os"
@@ -465,7 +466,9 @@ def es_send_external_stats(
         print(str(e))
 
 
-def getExternalsESstats(arch="*", externalsList="", lastNdays=30, page_size=0, fields=None):
+def getExternalsESstats(
+    arch="*", externalsList="", lastNdays=30, page_size=0, fields=None, extra_query=""
+):
     externals_names = ""
     if externalsList == "":
         externals_names = "*"
@@ -474,9 +477,10 @@ def getExternalsESstats(arch="*", externalsList="", lastNdays=30, page_size=0, f
     stats = es_query(
         index="externals_stats_summary-*",
         query=format(
-            "architecture:%(architecture)s AND name.keyword:(%(names)s)",
+            "architecture:%(architecture)s AND name.keyword:(%(names)s) %(extra_query)s",
             architecture=arch,
             names=externals_names,
+            extra_query=extra_query,
         ),
         start_time=1000 * int(time() - (86400 * lastNdays)),
         end_time=1000 * int(time()),
@@ -499,6 +503,58 @@ def orderStatsByName(externalsStats=None):
     for ext in namedStats:
         namedStats[ext] = sorted(namedStats[ext], key=lambda x: x["@timestamp"], reverse=True)
     return namedStats
+
+
+def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
+    fields = ["time", "num_fds", "num_threads", "processes"]
+    for s in ["cpu", "data", "pss", "shared", "rss", "vms", "uss"]:
+        for k in ["25", "75", "90", "max"]:
+            fields.append("%s_%s" % (s, k))
+    req_fields = fields + ["name", "build_jobs", "architecture"]
+    items = getExternalsESstats(
+        arch=arch, lastNdays=lastNdays, fields=req_fields, extra_query=extra_query
+    )
+    all_data = {}
+    for item in items:
+        name = item["_source"]["name"]
+        jobs = item["_source"]["build_jobs"]
+        arch = item["_source"]["architecture"]
+        if not arch in all_data:
+            all_data[arch] = {}
+        if not name in all_data[arch]:
+            all_data[arch][name] = {"architecture": arch, "name": name, "build_jobs": 1}
+            for k in fields:
+                all_data[arch][name][k] = []
+        for k in fields:
+            val = int(item["_source"][k])
+            # If value is < 1 then take the avg of last runs
+            if val < 1:
+                if len(all_data[arch][name][k]):
+                    val = sum(all_data[arch][name][k]) / len(all_data[arch][name][k])
+            # If value is still < 1 then use jobs
+            if val < 1:
+                val = jobs
+            all_data[arch][name][k].append(val / jobs)
+    # Take latest first_N entries and then use the max_N highest values
+    first_N = 10
+    max_N = 5
+    midday = (
+        int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()) * 1000
+    )
+    es_index = "externals_stats_avgs"
+    for arch in all_data:
+        for name in all_data[arch]:
+            for k in fields:
+                top_values = sorted(all_data[arch][name][k][:first_N], reverse=True)[:max_N]
+                all_data[arch][name][k] = sum(top_values) / len(top_values)
+            all_data[arch][name]["@timestamp"] = midday
+            sha_str = "%s:%s" % (arch, name)
+            index_sha = sha1(sha_str.encode()).hexdigest()
+            try:
+                send_payload(es_index, "_doc", index_sha, json.dumps(all_data[arch][name]))
+            except Exception as e:
+                print(str(e))
+    return
 
 
 def get_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, default_key="90"):

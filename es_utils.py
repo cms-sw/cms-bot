@@ -522,6 +522,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
         arch=arch, lastNdays=lastNdays, fields=req_fields, extra_query=extra_query
     )
     all_data = {}
+    job_max_cpu = "job_max_cpu"
     for item in items:
         name = item["_source"]["name"]
         jobs = item["_source"]["build_jobs"]
@@ -529,7 +530,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
         if not arch in all_data:
             all_data[arch] = {}
         if not name in all_data[arch]:
-            all_data[arch][name] = {"architecture": arch, "name": name, "build_jobs": 1}
+            all_data[arch][name] = {"architecture": arch, "name": name, "build_jobs": 1, job_max_cpu: []}
             for k in fields:
                 all_data[arch][name][k] = []
         cpu_max = 99
@@ -541,6 +542,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
                     val = sum(all_data[arch][name][k]) / len(all_data[arch][name][k])
             if k == "cpu_max":
                 cpu_max = val
+                all_data[arch][name][job_max_cpu].append(val)
             # Assume cpu_max<100 as single threaded job and use the values as it is
             if cpu_max < 100:
                 if val < 1:
@@ -561,7 +563,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
     for arch in all_data:
         for name in all_data[arch]:
             total_entries = len(all_data[arch][name]["time"])
-            for k in fields:
+            for k in fields + [job_max_cpu]:
                 top_values = sorted(all_data[arch][name][k][:first_N], reverse=True)[:max_N]
                 all_data[arch][name][k] = sum(top_values) / len(top_values)
             all_data[arch][name]["@timestamp"] = midday
@@ -602,7 +604,7 @@ def get_avg_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, de
         "known": [("^.+-toolfile$", 0), ("^data-.+$", 0), ("^.+$", 1)],
     }
     default_keys = {"cpu": "cpu_" + default_key, "rss": "rss_" + default_key, "time": "time"}
-    fields = ["cpu_max"] + list(default_keys.values()) + ["name", "architecture"]
+    fields = ["job_max_cpu"] + list(default_keys.values()) + ["name", "architecture"]
     items = getExternalsESstats(
         arch=arch, lastNdays=lastNdays, fields=fields, es_index="externals_stats_avgs"
     )
@@ -611,7 +613,7 @@ def get_avg_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, de
         if name in data["packages"]:
             continue
         data["packages"][name] = {"name": name}
-        cpu_max = item["_source"]["cpu_max"]
+        cpu_max = item["_source"]["job_max_cpu"]
         for k in default_keys:
             val = item["_source"][default_keys[k]]
             if cpu_max >= 100:

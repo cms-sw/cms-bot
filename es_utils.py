@@ -516,7 +516,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
     for s in ["cpu", "data", "pss", "shared", "rss", "vms", "uss"]:
         for k in ["max", "25", "75", "90"]:
             fields.append("%s_%s" % (s, k))
-    fields = fileds + ["time", "num_fds", "num_threads", "processes"]
+    fields = fields + ["time", "num_fds", "num_threads", "processes"]
     req_fields = fields + ["name", "build_jobs", "architecture"]
     items = getExternalsESstats(
         arch=arch, lastNdays=lastNdays, fields=req_fields, extra_query=extra_query

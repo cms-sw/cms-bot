@@ -530,7 +530,12 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
         if not arch in all_data:
             all_data[arch] = {}
         if not name in all_data[arch]:
-            all_data[arch][name] = {"architecture": arch, "name": name, "build_jobs": 1, job_max_cpu: []}
+            all_data[arch][name] = {
+                "architecture": arch,
+                "name": name,
+                "build_jobs": 1,
+                job_max_cpu: [],
+            }
             for k in fields:
                 all_data[arch][name][k] = []
         cpu_max = 99

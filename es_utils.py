@@ -467,7 +467,13 @@ def es_send_external_stats(
 
 
 def getExternalsESstats(
-    arch="*", externalsList="", lastNdays=30, page_size=0, fields=None, extra_query=""
+    arch="*",
+    externalsList="",
+    lastNdays=30,
+    page_size=0,
+    fields=None,
+    extra_query="",
+    es_index="externals_stats_summary-*",
 ):
     externals_names = ""
     if externalsList == "":
@@ -475,7 +481,7 @@ def getExternalsESstats(
     else:
         externals_names = (" OR ").join(externalsList.split(","))
     stats = es_query(
-        index="externals_stats_summary-*",
+        index=es_index,
         query=format(
             "architecture:%(architecture)s AND name.keyword:(%(names)s) %(extra_query)s",
             architecture=arch,
@@ -506,10 +512,11 @@ def orderStatsByName(externalsStats=None):
 
 
 def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
-    fields = ["time", "num_fds", "num_threads", "processes"]
+    fields = []
     for s in ["cpu", "data", "pss", "shared", "rss", "vms", "uss"]:
-        for k in ["25", "75", "90", "max"]:
+        for k in ["max", "25", "75", "90"]:
             fields.append("%s_%s" % (s, k))
+    fields = fileds + ["time", "num_fds", "num_threads", "processes"]
     req_fields = fields + ["name", "build_jobs", "architecture"]
     items = getExternalsESstats(
         arch=arch, lastNdays=lastNdays, fields=req_fields, extra_query=extra_query
@@ -525,16 +532,25 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
             all_data[arch][name] = {"architecture": arch, "name": name, "build_jobs": 1}
             for k in fields:
                 all_data[arch][name][k] = []
+        cpu_max = 99
         for k in fields:
             val = int(item["_source"][k])
             # If value is < 1 then take the avg of last runs
             if val < 1:
                 if len(all_data[arch][name][k]):
                     val = sum(all_data[arch][name][k]) / len(all_data[arch][name][k])
-            # If value is still < 1 then use jobs
-            if val < 1:
-                val = jobs
-            all_data[arch][name][k].append(val / jobs)
+            if k == "cpu_max":
+                cpu_max = val
+            # Assume cpu_max<100 as single threaded job and use the values as it is
+            if cpu_max < 100:
+                if val < 1:
+                    val = 1
+            else:
+                if k == "time":
+                    val = val * jobs
+                else:
+                    val = 1 if (val <= jobs) else (val / jobs)
+            all_data[arch][name][k].append(val)
     # Take latest first_N entries and then use the max_N highest values
     first_N = 10
     max_N = 5
@@ -559,9 +575,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
     return
 
 
-def get_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, default_key="90"):
-    default_keys = {"cpu": "cpu_" + default_key, "rss": "rss_" + default_key, "time": "time"}
-    all_data = {}
+def get_avg_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, default_key="90"):
     if cpus <= 0:
         from cmsutils import MachineCPUCount
 
@@ -571,20 +585,6 @@ def get_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, defaul
 
         memoryGB = MachineMemoryGB
     mem = memoryGB * 1024 * 1024 * 1024
-
-    fields = list(default_keys.values()) + ["name", "build_jobs"]
-    items = getExternalsESstats(arch=arch, lastNdays=lastNdays, fields=fields)
-    for item in items:
-        name = item["_source"]["name"]
-        jobs = item["_source"]["build_jobs"]
-        if name not in all_data:
-            all_data[name] = {}
-            for k in default_keys:
-                all_data[name][k] = []
-        for k in default_keys:
-            xk = default_keys[k]
-            all_data[name][k].append(int(item["_source"][xk] * cpus / jobs))
-
     default_res = 4
     if cpus < 4:
         default_res = 1
@@ -601,33 +601,25 @@ def get_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, defaul
         "packages": {},
         "known": [("^.+-toolfile$", 0), ("^data-.+$", 0), ("^.+$", 1)],
     }
-    for name in all_data:
-        data["packages"][name] = {"cpu": 0, "rss": 0, "time": -1, "name": name}
+    default_keys = {"cpu": "cpu_" + default_key, "rss": "rss_" + default_key, "time": "time"}
+    fields = ["cpu_max"] + list(default_keys.values()) + ["name", "architecture"]
+    items = getExternalsESstats(
+        arch=arch, lastNdays=lastNdays, fields=fields, es_index="externals_stats_avgs"
+    )
+    for item in items:
+        name = item["_source"]["name"]
+        if name in data["packages"]:
+            continue
+        data["packages"][name] = {"name": name}
+        cpu_max = item["_source"]["cpu_max"]
         for k in default_keys:
-            if all_data[name][k]:
-                data["packages"][name][k] = int(sum(all_data[name][k]) / len(all_data[name][k]))
-        # Default resources if no data found for a package
-        if data["packages"][name]["time"] == -1:
-            idx = 1
-            for exp in data["known"]:
-                if re.match(exp[0], name):
-                    idx = exp[1]
-                    break
-            for k in data["defaults"]:
-                data["packages"][name][k] = data["defaults"][k][idx]
-        # for small package with build time 1 or less use min resources
-        elif data["packages"][name]["time"] == 0:
-            for k in data["defaults"]:
-                data["packages"][name][k] = data["defaults"][k][0]
-        else:
-            # Make sure resources are not more than the total
-            for k in data["defaults"]:
-                if k == "time":
-                    continue
-                v = data["packages"][name][k]
-                if v > data["resources"][k]:
-                    v = data["resources"][k]
-                elif v == 0:
-                    v = data["defaults"][k][0]
-                data["packages"][name][k] = v
+            val = item["_source"][default_keys[k]]
+            if cpu_max >= 100:
+                val = (val / cpus) if (k == "time") else (val * cpus)
+            if k in data["resources"]:
+                if val > data["resources"][k]:
+                    val = data["resources"][k]
+                elif val < data["defaults"][k][0]:
+                    val = data["defaults"][k][0]
+            data["packages"][name][k] = val
     return data

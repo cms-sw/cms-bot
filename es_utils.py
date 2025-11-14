@@ -549,7 +549,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
                 top_values = sorted(all_data[arch][name][k][:first_N], reverse=True)[:max_N]
                 all_data[arch][name][k] = sum(top_values) / len(top_values)
             all_data[arch][name]["@timestamp"] = midday
-            all_data[arch][name]["entries"] = total_entries
+            all_data[arch][name]["total_entries"] = total_entries
             sha_str = "%s:%s" % (arch, name)
             index_sha = sha1(sha_str.encode()).hexdigest()
             try:

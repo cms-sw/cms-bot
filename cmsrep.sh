@@ -8,7 +8,7 @@ umask 0002
 export CMS_PYTHON_TO_USE="python"
 if which python3 >/dev/null 2>&1 ; then export CMS_PYTHON_TO_USE="python3" ; fi
 
-#called with $BUILD_OPTS $MULTIARCH_OPTS $ARCH
+#called with $BUILD_OPTS $MULTIARCH_OPTS $ARCH $PKGTOOLS_VER(e.g. 33, 34 etc.)
 function cmsbuild_args()
 {
   arg=""
@@ -17,6 +17,7 @@ function cmsbuild_args()
     for x in $(echo "$1" | tr ',' ' ') ; do
       case $x in
         upload_store ) ;;
+        estats ) ;;
         without:* )    arg="${arg} --build-without=$(echo $x    | sed 's|^without:||;s|:|,|g')" ;;
         system:* )     arg="${arg} --use-system-tools=$(echo $x | sed 's|^system:||;s|:|,|g')" ;;
         microarchs:* ) arg="${arg} --vectorization=$(echo $x    | sed 's|^microarchs:||;s|:|,|g')" ;;

@@ -553,7 +553,10 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--tag ${PR_NUM}"
+    CMSBUILD_ARGS="--builders 2  --tag ${PR_NUM}"
+    BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
+    MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')
+
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cmsswdata_version_link  --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
       if [ "${ALLOW_VERSION_SUFFIX}" = "true" ] ; then
@@ -562,6 +565,13 @@ if ${BUILD_EXTERNAL} ; then
       if [ $(echo "${CONFIG_LINE}" | grep "DEBUG_EXTERNALS=" | wc -l) -gt 0 ] ; then
         dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
         CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
+      fi
+      if [ ${PKG_TOOL_VERSION} -ge 34 ] ; then
+        if [ $(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$') = "estats" ] ; then
+          if ${CMS_BOT_DIR}/get-external-avg-stats.py ${ARCHITECTURE} > ${WORKSPACE}/externals-resource-usage.json ; then
+            CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json --builders ${NCPU}"
+          if
+        fi
       fi
     fi
     if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
@@ -572,13 +582,10 @@ if ${BUILD_EXTERNAL} ; then
         CMSBUILD_ARGS="${CMSBUILD_ARGS} --no-package-store"
       fi
     fi
-    #Process cmsdist Build options
-    BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
-    MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')
 
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
-        ${CMSBUILD_ARGS} --builders 2 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
+        ${CMSBUILD_ARGS} -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     if [ -e cmsdist/cmssw-tool-conf.spec ] ; then

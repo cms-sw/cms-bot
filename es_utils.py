@@ -582,7 +582,9 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
     return
 
 
-def get_avg_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, default_key="90", default_builders=2):
+def get_avg_externals_build_stats(
+    arch="*", lastNdays=30, cpus=0, memoryGB=0, default_key="90", default_builders=2
+):
     if cpus <= 0:
         from cmsutils import MachineCPUCount
 

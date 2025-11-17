@@ -566,11 +566,11 @@ if ${BUILD_EXTERNAL} ; then
         dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
         CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
       fi
-      if [ ${PKG_TOOL_VERSION} -ge 34 ] ; then
-        if [ $(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$') = "estats" ] ; then
+      if [ $(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$') = "estats" ] ; then
+        if [ ${PKG_TOOL_VERSION} -ge 34 ] ; then
           if ${CMS_BOT_DIR}/get-external-avg-stats.py ${ARCHITECTURE} > ${WORKSPACE}/externals-resource-usage.json ; then
             CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json --builders ${NCPU}"
-          if
+          fi
         fi
       fi
     fi

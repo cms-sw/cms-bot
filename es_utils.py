@@ -615,18 +615,25 @@ def get_avg_externals_build_stats(
         },
         "resources": {"cpu": total_cpus, "rss": mem},
         "packages": {},
-        "known": [("^.+-toolfile$", 0), ("^data-.+$", 0), ("^.+$", 1)],
+        "known": [
+            ("^.+-toolfile$", 0),
+            ("^data-.+$", 0),
+            ("^build_type:(prep|install|srpm|rpms)$", 0),
+        ],
     }
     default_keys = {"cpu": "cpu_" + default_key, "rss": "rss_" + default_key, "time": "time"}
-    fields = ["job_max_cpu"] + list(default_keys.values()) + ["name", "architecture"]
+    fields = ["job_max_cpu"] + list(default_keys.values()) + ["name", "architecture", "build_type"]
     items = getExternalsESstats(
         arch=arch, lastNdays=lastNdays, fields=fields, es_index="externals_stats_avgs"
     )
     for item in items:
+        btype = item["_source"]["build_type"]
+        if not btype in data["packages"]:
+            data["packages"][btype] = {}
         name = item["_source"]["name"]
-        if name in data["packages"]:
+        if name in data["packages"][btype]:
             continue
-        data["packages"][name] = {"name": name}
+        data["packages"][btype][name] = {"name": name}
         cpu_max = item["_source"]["job_max_cpu"]
         for k in default_keys:
             val = item["_source"][default_keys[k]]
@@ -637,5 +644,5 @@ def get_avg_externals_build_stats(
                     val = data["resources"][k]
                 elif val < data["defaults"][k][0]:
                     val = data["defaults"][k][0]
-            data["packages"][name][k] = val
+            data["packages"][btype][name][k] = val
     return data

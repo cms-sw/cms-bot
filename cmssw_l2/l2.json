@@ -22,6 +22,15 @@
       "start_date": 1700524800
     }
   ],
+  "Alejandro1400": [
+    {
+      "category": [
+        "alca",
+        "db"
+      ],
+      "start_date": 1763510400
+    }
+  ],
   "AlexDeMoor": [
     {
       "category": [
@@ -121,6 +130,15 @@
         "tau-pog"
       ],
       "start_date": 1753747200
+    }
+  ],
+  "JanChyczynski": [
+    {
+      "category": [
+        "alca",
+        "db"
+      ],
+      "start_date": 1763510400
     }
   ],
   "JanFSchulte": [

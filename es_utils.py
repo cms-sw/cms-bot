@@ -574,14 +574,18 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
             for name in all_data[btype][arch]:
                 total_entries = len(all_data[btype][arch][name]["time"])
                 for k in fields + [job_max_cpu]:
-                    top_values = sorted(all_data[btype][arch][name][k][:first_N], reverse=True)[:max_N]
+                    top_values = sorted(all_data[btype][arch][name][k][:first_N], reverse=True)[
+                        :max_N
+                    ]
                     all_data[btype][arch][name][k] = sum(top_values) / len(top_values)
                 all_data[btype][arch][name]["@timestamp"] = midday
                 all_data[btype][arch][name]["total_entries"] = total_entries
                 sha_str = "%s:%s:%s" % (arch, name, btype)
                 index_sha = sha1(sha_str.encode()).hexdigest()
                 try:
-                    send_payload(es_index, "_doc", index_sha, json.dumps(all_data[btype][arch][name]))
+                    send_payload(
+                        es_index, "_doc", index_sha, json.dumps(all_data[btype][arch][name])
+                    )
                 except Exception as e:
                     print(str(e))
     return

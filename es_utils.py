@@ -615,11 +615,10 @@ def get_avg_externals_build_stats(
         },
         "resources": {"cpu": total_cpus, "rss": mem},
         "packages": {},
-        "known": [
-            ("^.+-toolfile$", 0),
-            ("^data-.+$", 0),
-            ("^build_type:(prep|install|srpm|rpms)$", 0),
-        ],
+        "known": {
+            "packages": [("^.+-toolfile$", 0), ("^data-.+$", 0)],
+            "build_type": [("^(prep|install|srpm|rpms)$", 0)],
+        },
     }
     default_keys = {"cpu": "cpu_" + default_key, "rss": "rss_" + default_key, "time": "time"}
     fields = ["job_max_cpu"] + list(default_keys.values()) + ["name", "architecture", "build_type"]

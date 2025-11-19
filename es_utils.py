@@ -517,7 +517,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
         for k in ["max", "25", "75", "90"]:
             fields.append("%s_%s" % (s, k))
     fields = fields + ["time", "num_fds", "num_threads", "processes"]
-    req_fields = fields + ["name", "build_jobs", "architecture"]
+    req_fields = fields + ["name", "build_jobs", "architecture", "build_type"]
     items = getExternalsESstats(
         arch=arch, lastNdays=lastNdays, fields=req_fields, extra_query=extra_query
     )
@@ -527,27 +527,31 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
         name = item["_source"]["name"]
         jobs = item["_source"]["build_jobs"]
         arch = item["_source"]["architecture"]
-        if not arch in all_data:
-            all_data[arch] = {}
-        if not name in all_data[arch]:
-            all_data[arch][name] = {
+        btype = "build" if not "build_type" in item["_source"] else item["_source"]["build_type"]
+        if not btype in all_data:
+            all_data[btype] = {}
+        if not arch in all_data[btype]:
+            all_data[btype][arch] = {}
+        if not name in all_data[btype][arch]:
+            all_data[btype][arch][name] = {
                 "architecture": arch,
                 "name": name,
                 "build_jobs": 1,
+                "build_type": btype,
                 job_max_cpu: [],
             }
             for k in fields:
-                all_data[arch][name][k] = []
+                all_data[btype][arch][name][k] = []
         cpu_max = 99
         for k in fields:
             val = int(item["_source"][k])
             # If value is < 1 then take the avg of last runs
             if val < 1:
-                if len(all_data[arch][name][k]):
-                    val = sum(all_data[arch][name][k]) / len(all_data[arch][name][k])
+                if len(all_data[btype][arch][name][k]):
+                    val = sum(all_data[btype][arch][name][k]) / len(all_data[btype][arch][name][k])
             if k == "cpu_max":
                 cpu_max = val
-                all_data[arch][name][job_max_cpu].append(val)
+                all_data[btype][arch][name][job_max_cpu].append(val)
             # Assume cpu_max<100 as single threaded job and use the values as it is
             if cpu_max < 100:
                 if val < 1:
@@ -557,7 +561,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
                     val = val * jobs
                 else:
                     val = 1 if (val <= jobs) else (val / jobs)
-            all_data[arch][name][k].append(val)
+            all_data[btype][arch][name][k].append(val)
     # Take latest first_N entries and then use the max_N highest values
     first_N = 10
     max_N = 5
@@ -565,20 +569,21 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
         int(datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()) * 1000
     )
     es_index = "externals_stats_avgs"
-    for arch in all_data:
-        for name in all_data[arch]:
-            total_entries = len(all_data[arch][name]["time"])
-            for k in fields + [job_max_cpu]:
-                top_values = sorted(all_data[arch][name][k][:first_N], reverse=True)[:max_N]
-                all_data[arch][name][k] = sum(top_values) / len(top_values)
-            all_data[arch][name]["@timestamp"] = midday
-            all_data[arch][name]["total_entries"] = total_entries
-            sha_str = "%s:%s" % (arch, name)
-            index_sha = sha1(sha_str.encode()).hexdigest()
-            try:
-                send_payload(es_index, "_doc", index_sha, json.dumps(all_data[arch][name]))
-            except Exception as e:
-                print(str(e))
+    for btype in all_data:
+        for arch in all_data[btype]:
+            for name in all_data[btype][arch]:
+                total_entries = len(all_data[btype][arch][name]["time"])
+                for k in fields + [job_max_cpu]:
+                    top_values = sorted(all_data[btype][arch][name][k][:first_N], reverse=True)[:max_N]
+                    all_data[btype][arch][name][k] = sum(top_values) / len(top_values)
+                all_data[btype][arch][name]["@timestamp"] = midday
+                all_data[btype][arch][name]["total_entries"] = total_entries
+                sha_str = "%s:%s:%s" % (arch, name, btype)
+                index_sha = sha1(sha_str.encode()).hexdigest()
+                try:
+                    send_payload(es_index, "_doc", index_sha, json.dumps(all_data[btype][arch][name]))
+                except Exception as e:
+                    print(str(e))
     return
 
 

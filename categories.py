@@ -97,6 +97,8 @@ CMSSW_L2 = {
     "atpathak": ["alca", "db"],
     "perrotta": ["alca", "db"],
     "arunhep": ["alca", "db"],
+    "JanChyczynski": ["alca", "db"],
+    "Alejandro1400": ["alca", "db"],
     "kpedro88": ["simulation", "geometry", "fastsim"],
     CMSBUILD_USER: ["tests"],
     # dpgs

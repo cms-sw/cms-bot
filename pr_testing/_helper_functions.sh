@@ -104,8 +104,8 @@ function prepare_upload_results (){
           mkdir -p ${LOCAL_LOGDIR}/${xdir}
           mv ${dir}/log ${LOCAL_LOGDIR}/${xdir}/
           [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${xdir}/
-          json=$(basename $(dirname $dir)).json
-          [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${xdir}/
+          pkg=$(basename $(dirname $dir))
+          [ -e "${dir}/${pkg}.json" ] && mv ${dir}/${pkg}*.json ${LOCAL_LOGDIR}/${xdir}/
           [ -e "${dir}/opts.json" ] && mv ${dir}/opts.json ${LOCAL_LOGDIR}/${xdir}/
         done
       popd

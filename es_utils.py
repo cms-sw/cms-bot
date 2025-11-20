@@ -444,6 +444,7 @@ def es_send_resource_stats(
 
 
 def es_send_external_stats(
+    build_type,
     stats_dict_file_path,
     opts_dict_file_path,
     cpu_normalize=1,
@@ -454,6 +455,7 @@ def es_send_external_stats(
     week = epoch2week(file_stamp)
     with open(opts_dict_file_path, "r") as opts_dict_f:
         opts_dict = json.load(opts_dict_f)
+    opts_dict["build_type"] = build_type
     index_sha = sha1(
         ("".join([str(x) for x in opts_dict.values()]) + stats_dict_file_path).encode()
     ).hexdigest()

@@ -309,7 +309,7 @@ for maxmem in $(find $WORKSPACE/data/PR-${PR_NUM} -follow -name 'maxmem_profile_
 done
 $CMS_BOT_DIR/comparisons/compare-maxmem-summary.py -i $OUTPUT_DIR -f '*.json' -F html -o $OUTPUT_DIR/index.html -u $JENKINS_ARTIFACTS_URL/$PR_BASELINE_DIR || true
 if grep "exceeds threshold" $OUTPUT_DIR/*.err 2>/dev/null; then
-  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
+  echo "FAILED_MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison failed,See failed results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
 else
   echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
 fi

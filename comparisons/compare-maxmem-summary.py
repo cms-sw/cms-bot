@@ -226,7 +226,7 @@ def compare_maxmem_summary(**kwargs):
             '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
         ]
 
-               for step in sorted(workflows[workflow].keys(), key=stepfn):
+            for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
                 '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["max memory pdiff"]),

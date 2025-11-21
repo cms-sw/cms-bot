@@ -520,6 +520,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
             fields.append("%s_%s" % (s, k))
     fields = fields + ["time", "num_fds", "num_threads", "processes"]
     req_fields = fields + ["name", "build_jobs", "architecture", "build_type"]
+    extra_query = "%s AND (_exists_:build_type.keyword)" % extra_query
     items = getExternalsESstats(
         arch=arch, lastNdays=lastNdays, fields=req_fields, extra_query=extra_query
     )
@@ -589,7 +590,7 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
                         es_index, "_doc", index_sha, json.dumps(all_data[btype][arch][name])
                     )
                 except Exception as e:
-                    print(str(e))
+                    print("ERROR:", e)
     return
 
 

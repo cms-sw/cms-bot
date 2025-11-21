@@ -222,7 +222,7 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
-         summaryLine += [
+        summaryLine += [
             '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
         ]
 

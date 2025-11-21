@@ -9,8 +9,8 @@ import json
 import glob
 import re
 
-MAXMEM_WARN_THRESHOLD = 1.0
-MAXMEM_ERROR_THRESHOLD = 10.0
+MAXMEM_WARN_THRESHOLD = 10.0
+MAXMEM_ERROR_THRESHOLD = 100.0
 
 
 def KILL(message):
@@ -200,40 +200,42 @@ def compare_maxmem_summary(**kwargs):
             '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
-            summaryLine += [
-                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["max memory adiff"]),
-                "</td>",
-            ]
-        summaryLine += [
-            "</tr>",
-        ]
-        summaryLine += [
-            '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
-        ]
-        for step in sorted(workflows[workflow].keys(), key=stepfn):
             threshold = workflows[workflow][step]["threshold"]
             if not threshold:
-                threshold = 1.0
+                threshold = 10.0
             error_threshold = workflows[workflow][step].get("error_threshold")
             if not error_threshold:
-                error_threshold = 10.0
+                error_threshold = 100.0
             cellString = '<td style="border-top-style:hidden" '
             color = ""
-            if abs(workflows[workflow][step]["max memory pdiff"]) > MAXMEM_WARN_THRESHOLD:
+            if workflows[workflow][step]["max memory adiff"] > MAXMEM_WARN_THRESHOLD:
                 color = 'bgcolor="orange"'
-            if abs(workflows[workflow][step]["max memory pdiff"]) > MAXMEM_ERROR_THRESHOLD:
+            if workflows[workflow][step]["max memory adiff"] > MAXMEM_ERROR_THRESHOLD:
                 color = 'bgcolor="red"'
             cellString += color
             cellString += ">"
             summaryLine += [
                 cellString,
-                "{:,.3f}".format(workflows[workflow][step]["max memory pdiff"]),
+                "{:,.3f}".format(workflows[workflow][step]["max memory adiff"]),
                 "%</td>",
             ]
         summaryLine += [
             "</tr>",
         ]
+         summaryLine += [
+            '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
+        ]
+
+               for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
+                "{:,.2f}".format(workflows[workflow][step]["max memory pdiff"]),
+                "</td>",
+            ]
+        summaryLine += [
+            "</tr>",
+        ]
+
 
         summaryLine += [
             '<tr><th rowspan="5" style="white-space:nowrap"> total memory request:</th>'

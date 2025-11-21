@@ -65,7 +65,7 @@ for k in sorted(mem_prof_diffs_dicts.keys()):
             errs = errs + 1
             sys.stderr.write(
                 "Workflow %s %s max memory used diff %2f exceeds error threshold %2f"
-                % (mem_prof["workflow"], k, abs(mmu), ERROR_THRESHOLD)
+                % (mem_prof["workflow"], k, mmu, ERROR_THRESHOLD)
             )
             sys.stderr.write("\n")
 

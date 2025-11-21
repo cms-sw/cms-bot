@@ -28,17 +28,21 @@ mem_prof_pdiffs_dicts = dict(dict())
 
 for k in mem_prof_pr_dicts.keys():
     mem_prof_pdiffs_dict = dict()
+    mem_prof_diffs_dicts = dict()
     mem_prof_pr_subdict = mem_prof_pr_dicts[k]
     for j, v in mem_prof_pr_subdict.items():
         if j == "step":
             mem_prof_pdiffs_dict[j] = v
+            mem_prof_diffs_dicts[j] = v
         else:
             mem_prof_pdiffs_dict[j] = (
                 100
                 * (mem_prof_pr_dicts[k][j] - mem_prof_base_dicts[k][j])
                 / mem_prof_base_dicts[k][j]
             )
+            mem_prof_diffs_dicts[j] = mem_prof_pr_dicts[k][j] - mem_prof_base_dicts[k][j]
     mem_prof_pdiffs_dicts[k] = mem_prof_pdiffs_dict
+    mem_prof_diffs_dicts[k] = mem_prof_diffs_dict
 
 mem_prof = {}
 
@@ -54,13 +58,13 @@ sys.stdout.write(json.dumps(mem_prof))
 sys.stdout.write("\n")
 
 errs = 0
-for k in sorted(mem_prof_pdiffs_dicts.keys()):
-    mmu = mem_prof_pdiffs_dicts[k].get("max memory used")
+for k in sorted(mem_prof_diffs_dicts.keys()):
+    mmu = mem_prof_diffs_dicts[k].get("max memory used")
     if mmu:
-        if abs(mmu) > ERROR_THRESHOLD:
+        if mmu > ERROR_THRESHOLD:
             errs = errs + 1
             sys.stderr.write(
-                "Workflow %s %s max memory used percentage diff %2f%% exceeds error threshold %2f%%"
+                "Workflow %s %s max memory used diff %2f exceeds error threshold %2f"
                 % (mem_prof["workflow"], k, abs(mmu), ERROR_THRESHOLD)
             )
             sys.stderr.write("\n")

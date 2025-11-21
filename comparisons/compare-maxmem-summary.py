@@ -236,7 +236,6 @@ def compare_maxmem_summary(**kwargs):
             "</tr>",
         ]
 
-
         summaryLine += [
             '<tr><th rowspan="5" style="white-space:nowrap"> total memory request:</th>'
         ]

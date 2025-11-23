@@ -25,6 +25,10 @@ else
   fi
 fi
 USE_GHRC_IMAGE=true
+case ${HOSTNAME} in
+  ngt-* ) USE_GHRC_IMAGE=false ;;
+  * ) ;;
+esac
 SCRIPTPATH="$(cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1

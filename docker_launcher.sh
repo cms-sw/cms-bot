@@ -165,7 +165,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       fi
     fi
     CLEAN_UP_CACHE=true
-    export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
+    export SINGULARITY_CACHEDIR="$(dirname ${WORKSPACE})/.singularity"
     mkdir -p $SINGULARITY_CACHEDIR
     export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
     EX_OPTIONS="${SINGULARITY_OPTIONS} ${APPTAINER_OPTIONS} ${CMSCI_CONTAINER_OPTS}"

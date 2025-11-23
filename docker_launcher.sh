@@ -24,6 +24,7 @@ else
     ulimit -a
   fi
 fi
+USE_GHRC_IMAGE=true
 SCRIPTPATH="$(cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
@@ -156,7 +157,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     elif [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     fi
-    DOCKER_IMGX="docker://ghcr.io/cms-sw/$DOCKER_IMG"
+    if [ "$USE_GHRC_IMAGE" = "true" ] ; then DOCKER_IMGX="docker://ghcr.io/cms-sw/$DOCKER_IMG" ; fi
     if [ "$DOCKER_IMGX" = "" ] ; then
       if [ "$USE_GITHUB_REGISTRY" = "true" ] ; then
         DOCKER_IMGX="docker://ghcr.io/cms-sw/$DOCKER_IMG"

@@ -25,7 +25,7 @@ else
   fi
 fi
 USE_GHRC_IMAGE=true
-case ${HOSTNAME} in
+case ${NODE_NAME} in
   ngt-* ) USE_GHRC_IMAGE=false ;;
   * ) ;;
 esac

@@ -156,6 +156,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     elif [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     fi
+    DOCKER_IMGX="docker://ghcr.io/cms-sw/$DOCKER_IMG"
     if [ "$DOCKER_IMGX" = "" ] ; then
       if [ "$USE_GITHUB_REGISTRY" = "true" ] ; then
         DOCKER_IMGX="docker://ghcr.io/cms-sw/$DOCKER_IMG"
@@ -211,7 +212,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       EX_OPTIONS="${EX_OPTIONS} $(${SCRIPTPATH}/${CMSCI_CONTAINER_OPTS_SCRIPT} ${CONTAINER_CMD})"
     fi
     PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
-    if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+    #if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi
 else

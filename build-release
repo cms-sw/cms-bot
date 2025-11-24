@@ -42,7 +42,7 @@ pushd $BUILD_DIR/CMSDIST
   # a patch release uses the same cmsdist tag as its base release
   case $CMSSW_X_Y_Z in
     *patch*)
-    BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9]*//g'`
+    BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_[a-zA-Z0-9]*patch[0-9]*//g'`
     CMSDIST_TAG=REL/$BASE_RELEASE/$ARCHITECTURE
     BUILD_OPTS=""
     MULTIARCH_OPTS=""

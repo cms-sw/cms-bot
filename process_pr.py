@@ -2,7 +2,6 @@ import copy
 
 from github.CommitStatus import CommitStatus
 
-import github_utils
 from categories import (
     CMSSW_L2,
     CMSSW_ORP,
@@ -1106,13 +1105,6 @@ def get_commit_files(repo_, commit):  # pragma: no cover
     return (x["filename"] for x in get_commit(repo_.full_name, commit.sha)["files"])
 
 
-# TODO: remove once we update pygithub
-def pr_get_files(repo_, pr_):
-    return github_utils.github_api(
-        f"/repos/{repo_}/pulls/{pr_}/files", method="GET", merge_dict=True
-    )
-
-
 def on_labels_changed(added_labels, removed_labels):  # pragma: no cover
     # Placeholder function replaced during testing
     pass
@@ -1142,8 +1134,12 @@ def ensure_ascii(string):
     return string.encode("ascii", "ignore").decode("ascii", "ignore")
 
 
+def currenttz():
+    tm = time.localtime()
+    return timezone(timedelta(seconds=tm.tm_gmtoff), tm.tm_zone)
+
+
 # Will be replaced with PyGithub version during tests
-# TODO: remove once PyGithub is fixed
 def get_combined_status_list(gh, last_commit, repository):
     return [
         CommitStatus(
@@ -1151,305 +1147,6 @@ def get_combined_status_list(gh, last_commit, repository):
         )
         for status in get_combined_statuses(last_commit.sha, repository)["statuses"]
     ]
-
-
-def convert_cache_v1_to_v2(
-    repo_config: ModuleType,
-    gh: Github,
-    repo: Repository,
-    issue: Issue,
-    bot_cache: dict,
-    comments: list[IssueComment],
-):
-    """
-    One-shot migration to a commit-free, incremental schema:
-
-      bot_cache = {
-          "fv": {
-              "path::blob": { "ts": "<UTC-ISO>", "cats": ["..."] },
-              ...
-          },
-          "comments": {
-              "<comment_id>": {
-                  "ts": "<UTC-ISO>",
-                  "first_line": "<parsed>",
-                  "ctype": "+1" | "-1",
-                  "cats": ["..."],
-                  "fv": ["path::blob", ...]
-              },
-              ...
-          }
-      }
-
-    Notes:
-    - No commit ids are persisted.
-    - 'ts' on fv = timestamp of the commit that introduced that blob (first time we saw it).
-    - 'cats' on fv are frozen at that blob.
-    - Per-file signature rollups are NOT stored; rebuild on demand from (fv + comments).
-    """
-    import datetime as _dt
-    import re
-
-    def _iso_utc(dt) -> str:
-        # Normalize naive/aware to ISO UTC Z
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=_dt.timezone.utc)
-        else:
-            dt = dt.astimezone(_dt.timezone.utc)
-        return dt.replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-    # Legacy input: comment_id -> commit_sha
-    legacy_signatures: dict = bot_cache.get("signatures", {})
-
-    # New sections
-    fv_section = bot_cache.setdefault("fv", {})
-    new_comments = bot_cache.setdefault("comments", {})
-
-    # Local caches (not persisted)
-    comments_by_id = {c.id: c for c in comments}
-    blob_cache: dict[tuple[str, str], Optional[str]] = {}  # (commit, path) -> blob sha
-    commit_ts_cache: dict[str, str] = {}  # commit -> ISO ts
-    commit_files_cache: dict[str, list[str]] = {}  # commit -> [paths]
-    path_cats_mem: dict[str, list[str]] = {}  # path -> cats
-
-    def _cats_for_path(path: str, repo_config: ModuleType) -> list[str]:
-        # file -> single package -> categories; memoized in-memory only
-        if path in path_cats_mem:
-            return path_cats_mem[path]
-        try:
-            pkg = process_pr.cmssw_file2Package(repo_config, path)
-            cats = list(process_pr.get_package_categories(pkg)) if pkg else []
-        except Exception:
-            cats = []
-        path_cats_mem[path] = cats
-        return cats
-
-    for comment_id, commit_sha in legacy_signatures.items():
-        cid_int = int(comment_id)
-        cid_str = str(comment_id)
-        cobj = comments_by_id.get(cid_int)
-        if cobj is None:
-            logger.error(
-                "Comment id %s (%s#issuecomment-%s) missing; skipping.",
-                cid_int,
-                issue.html_url,
-                cid_int,
-            )
-            continue
-
-        # --- commit timestamp + files (API once per commit) ---
-        if commit_sha not in commit_ts_cache:
-            try:
-                gh_commit = repo.get_commit(commit_sha)
-                commit_dt = gh_commit.commit.committer.date
-                commit_ts_iso = _iso_utc(commit_dt)
-                commit_paths = [f.filename for f in gh_commit.files]
-            except Exception as e:
-                logger.error("Failed to fetch commit %s", commit_sha, exc_info=e)
-                continue
-            commit_ts_cache[commit_sha] = commit_ts_iso
-            commit_files_cache[commit_sha] = commit_paths
-
-        commit_ts_iso = commit_ts_cache[commit_sha]
-        commit_paths = commit_files_cache[commit_sha]
-
-        # --- parse first non-empty line & commenter categories at comment time ---
-        first_line = next((ln.strip() for ln in (cobj.body or "").splitlines() if ln.strip()), "")
-        try:
-            comment_ts_iso = _iso_utc(cobj.created_at)
-            comment_ts_int = int(cobj.created_at.replace(tzinfo=_dt.timezone.utc).timestamp())
-        except Exception:
-            now = _dt.datetime.now(_dt.timezone.utc)
-            comment_ts_iso = _iso_utc(now)
-            comment_ts_int = int(now.timestamp())
-
-        commenter_login = ensure_ascii(cobj.user.login)
-        try:
-            commenter_categories = process_pr.get_commenter_categories(
-                commenter_login, comment_ts_int
-            )
-        except Exception as e:
-            logger.error(
-                "Category lookup failed for %s at %s", commenter_login, comment_ts_int, exc_info=e
-            )
-            continue
-
-        ctype = "0"
-        selected_cats: list[str] = []
-        if first_line:
-            if re.fullmatch(r"\+1|approved?|sign(?:ed)?", first_line, re.I):
-                ctype = "+1"
-                selected_cats = commenter_categories[:]
-            elif re.fullmatch(r"-1|reject(?:ed)?", first_line, re.I):
-                ctype = "-1"
-                selected_cats = commenter_categories[:]
-            elif re.fullmatch(r"[+-][a-z][a-z0-9-]+", first_line, re.I):
-                cat_name = first_line[1:].lower()
-                if cat_name in commenter_categories:
-                    ctype = first_line[0] + "1"
-                    selected_cats = [cat_name]
-        if ctype == "0" or not selected_cats:
-            # not an approval-ish command — skip in conversion
-            continue
-
-        # --- resolve file-versions for this commit & register them (with first-seen ts + cats) ---
-        fv_keys_for_comment: list[str] = []
-
-        for path in commit_paths:
-            key = (commit_sha, path)
-            if key in blob_cache:
-                blob_sha = blob_cache[key]
-            else:
-                try:
-                    contents = repo.get_contents(path, ref=commit_sha)
-                    blob_sha = contents.sha
-                except Exception:
-                    blob_sha = None
-                blob_cache[key] = blob_sha
-
-            fv_key = f"{path}::{blob_sha}" if blob_sha else path
-
-            # Ensure fv entry exists with frozen cats-at-blob
-            if fv_key not in fv_section:
-                fv_section[fv_key] = {
-                    "ts": commit_ts_iso,  # first seen = commit timestamp
-                    "cats": _cats_for_path(
-                        path, repo_config
-                    ),  # <- snapshot categories for this blob
-                }
-            else:
-                fv_section[fv_key].setdefault("cats", _cats_for_path(path, repo_config))
-
-            # ONLY include this fv if its cats intersect the comment's cats
-            fv_cats = set(fv_section[fv_key].get("cats", []))
-            if fv_cats & set(selected_cats):
-                fv_keys_for_comment.append(fv_key)
-
-        # Then store the comment with the filtered fv list:
-        new_comments[cid_str] = {
-            "ts": comment_ts_iso,
-            "first_line": first_line,
-            "ctype": ctype,
-            "cats": selected_cats,
-            "fv": fv_keys_for_comment,  # filtered by category overlap
-        }
-
-    # Drop legacy sections; keep only emoji + fv + comments
-    bot_cache.pop("signatures", None)
-    bot_cache.pop("commits", None)
-    bot_cache.pop("last_seen_sha", None)
-    bot_cache["version"] = 2
-
-
-def _fv_key(path, blob):
-    return f"{path}::{blob}" if blob else path
-
-
-def _cats_for_path(path):
-    try:
-        pkg = process_pr.cmssw_file2Package(repo_config, path)
-        return list(process_pr.get_package_categories(pkg)) if pkg else []
-    except Exception:
-        return []
-
-
-def _get_blob_sha(repo, path, ref):
-    try:
-        return repo.get_contents(path, ref=ref).sha
-    except Exception:
-        return None
-
-
-def _iter_pr_files(pr):
-    head_sha, base_sha = pr.head.sha, pr.base.sha
-    for f in pr.get_files():
-        st = getattr(f, "status", None)
-        path_new = f.filename
-        prev = getattr(f, "previous_filename", None)
-        if st == "removed":
-            yield {"path": path_new, "ref": base_sha}
-        elif st == "renamed":
-            if prev:
-                yield {"path": prev, "ref": base_sha}
-            yield {"path": path_new, "ref": head_sha}
-        else:
-            yield {"path": path_new, "ref": head_sha}
-
-
-def _per_fv_sign(cache, fv_key, cat):
-    comments = sorted(cache.get("comments", {}).values(), key=lambda c: c.get("ts", ""))
-    state = 0
-    for c in comments:
-        if cat not in c.get("cats", ()):
-            continue
-        if fv_key not in c.get("fv", ()):
-            continue
-        if c.get("ctype") == "+1":
-            state = +1
-        elif c.get("ctype") == "-1":
-            state = -1
-    return state
-
-
-def compute_signatures_for_issue(repo, pr, cache, repo_config):
-    """
-    Given a GitHub Issue (already known to be a PR), compute overall signature
-    states for all categories affected by that PR.
-
-    Returns a flat list like:
-        ["foo-approved", "bar-rejected", "baz-pending", "bat-approved"]
-
-    Meaning:
-        +1  →  "<cat>-approved"
-        -1  →  "<cat>-rejected"
-         0  →  "<cat>-pending"
-
-    Rules:
-      • Each category is evaluated independently.
-      • A category is "approved" if *all* relevant file-versions (fvs)
-        for that category are signed +1.
-      • It is "rejected" if *any* fv is signed −1.
-      • It is "pending" if none are rejected but at least one fv is unsigned.
-      • “Relevant fvs” = union of:
-          – HEAD-side fvs for added/modified/renamed files
-          – BASE-side fvs for removed/renamed files
-    """
-    # --- main logic ----------------------------------------------------------
-
-    # 1) collect fvs per category
-    cat_to_fvs = {}
-    seen = set()
-    for item in _iter_pr_files(pr):
-        path, ref = item["path"], item["ref"]
-        blob = _get_blob_sha(repo, path, ref)
-        fv_key = _fv_key(path, blob)
-        if fv_key in seen:
-            continue
-        seen.add(fv_key)
-        cats = cache.get("fv", {}).get(fv_key, {}).get("cats") or _cats_for_path(path)
-        for cat in cats:
-            cat_to_fvs.setdefault(cat, set()).add(fv_key)
-
-    # 2) Evaluate each category with priority pending > rejected > approved
-    out: list[str] = []
-    for cat, fvs in sorted(cat_to_fvs.items()):
-        # compute per-fv states
-        states = [_per_fv_sign(cache, fv, cat) for fv in fvs]
-        if any(s == 0 for s in states):
-            out.append(f"{cat}-pending")
-        elif any(s < 0 for s in states):
-            out.append(f"{cat}-rejected")
-        else:
-            out.append(f"{cat}-approved")
-
-    return out
-
-
-# TODO: remove once we update pygithub
-def ensure_tz_aware(dt):
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return ft
 
 
 def process_pr(
@@ -1606,9 +1303,112 @@ def process_pr(
         # A pull request is by default closed if the branch is a closed one.
         if is_closed_branch(pr.base.ref):
             mustClose = True
+        # Process the changes for the given pull request so that we can determine the
+        # signatures it requires.
+        if cmssw_repo or not external_repo:
+            if cmssw_repo:
+                if pr.base.ref == "master" or pr.base.ref in forward_ports_map.GIT_REPO_FWPORTS[
+                    "cmssw"
+                ].get(CMSSW_DEVEL_BRANCH, []):
+                    signing_categories.add("code-checks")
+                updateMilestone(repo, issue, pr, dryRun)
+            chg_files = get_changed_files(repo, pr)
+            packages = sorted(
+                [x for x in set([cmssw_file2Package(repo_config, f) for f in chg_files])]
+            )
+            add_nonblocking_labels(chg_files, extra_labels)
+            create_test_property = True
+        else:
+            add_external_category = True
+            packages = set(["externals/" + repository])
+            ex_pkg = external_to_package(repository)
+            if ex_pkg:
+                packages.add(ex_pkg)
+            if (repo_org != GH_CMSSW_ORGANIZATION) or (repo_name in VALID_CMS_SW_REPOS_FOR_TESTS):
+                create_test_property = True
+            if (repo_name == GH_CMSDIST_REPO) and (
+                not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref)
+            ):
+                logger.error("Skipping PR as it does not belong to valid CMSDIST branch")
+                return
+            try:
+                if repo_config.NONBLOCKING_LABELS:
+                    chg_files = get_changed_files(repo, pr)
+                    add_nonblocking_labels(chg_files, extra_labels)
+            except:
+                pass
 
         if pr.state == "closed":
             create_test_property = False
+
+        logger.info("Following packages affected: %s", ", ".join(packages))
+        for package in packages:
+            package_categories[package] = set([])
+            for category in get_package_categories(package):
+                package_categories[package].add(category)
+                pkg_categories.add(category)
+        signing_categories.update(pkg_categories)
+
+        # For PR, we always require tests.
+        signing_categories.add("tests")
+        if add_external_category:
+            signing_categories.add("externals")
+        if cms_repo:
+            logger.info("This pull request requires ORP approval")
+            signing_categories.add("orp")
+
+        logger.info("Following categories affected: %s", ", ".join(signing_categories))
+
+        if cmssw_repo:
+            # If there is a new package, add also a dummy "new" category.
+            all_packages = [
+                package
+                for category_packages in list(CMSSW_CATEGORIES.values())
+                for package in category_packages
+            ]
+            has_category = all([package in all_packages for package in packages])
+            if not has_category:
+                new_package_message = "\nThe following packages do not have a category, yet:\n\n"
+                new_package_message += (
+                    "\n".join([package for package in packages if not package in all_packages])
+                    + "\n"
+                )
+                new_package_message += "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py to assign category\n"
+                logger.debug(new_package_message)
+                signing_categories.add("new-package")
+
+        # Add watchers.yaml information to the WATCHERS dict.
+        WATCHERS = read_repo_file(repo_config, "watchers.yaml", {})
+        # Given the files modified by the PR, check if there are additional developers watching one or more.
+        author = pr.user.login
+        watchers = set(
+            [
+                user
+                for chg_file in chg_files
+                for user, watched_regexp in list(WATCHERS.items())
+                for regexp in watched_regexp
+                if re.match("^" + regexp + ".*", chg_file) and user != author
+            ]
+        )
+        # Handle category watchers
+
+        catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
+        non_block_cats = [] if not "mtype" in extra_labels else extra_labels["mtype"]
+        for user, cats in list(catWatchers.items()):
+            for cat in cats:
+                if (cat in signing_categories) or (cat in non_block_cats):
+                    logger.debug("Added %s to watch due to cat %s", user, cat)
+                    watchers.add(user)
+
+        # Handle watchers
+        watchingGroups = read_repo_file(repo_config, "groups.yaml", {})
+        for watcher in [x for x in watchers]:
+            if not watcher in watchingGroups:
+                continue
+            watchers.remove(watcher)
+            watchers.update(set(watchingGroups[watcher]))
+        watchers = set([gh_user_char + u for u in watchers])
+        logger.info("Watchers: %s", ", ".join(watchers))
 
         all_commits = get_pr_commits_reversed(pr)
         all_commit_shas = {commit.sha for commit in all_commits}
@@ -1630,7 +1430,7 @@ def process_pr(
             s for s in commit_statuses if s.context == "%s/code-checks" % cms_status_prefix
         ]
         logger.info("PR Statuses (%s total): %s", len(commit_statuses), commit_statuses)
-        last_commit_date: datetime = ensure_tz_aware(last_commit.committer.date)
+        last_commit_date = last_commit.committer.date
 
         logger.info(
             "Latest commit by %s at %s",
@@ -1640,21 +1440,20 @@ def process_pr(
         logger.info("Latest commit message: %s", ensure_ascii(last_commit.message))
         logger.info("Latest commit sha: %s", last_commit.sha)
         logger.info("PR update time: %s", pr.updated_at)
-        logger.info("Time UTC: %s", datetime.now(tz=timezone.utc))
-        # TODO: remove me
-        # if last_commit_date > datetime.now(tz=timezone.utc):
-        #     logger.warning("==== Future commit found ====")
-        #     add_labels = True
-        #     try:
-        #         add_labels = repo_config.ADD_LABELS
-        #     except:
-        #         pass
-        #     if (not dryRun) and add_labels:
-        #         labels = [ensure_ascii(x.name) for x in issue.labels]
-        #         if not "future-commit" in labels:
-        #             labels.append("future-commit")
-        #             issue.edit(labels=labels)
-        #     return
+        logger.info("Time UTC: %s", datetime.utcnow())
+        if last_commit_date > datetime.utcnow():
+            logger.warning("==== Future commit found ====")
+            add_labels = True
+            try:
+                add_labels = repo_config.ADD_LABELS
+            except:
+                pass
+            if (not dryRun) and add_labels:
+                labels = [ensure_ascii(x.name) for x in issue.labels]
+                if not "future-commit" in labels:
+                    labels.append("future-commit")
+                    issue.edit(labels=labels)
+            return
         extra_rm = get_release_managers(pr.base.ref)
         if repository == CMSDIST_REPO_NAME:
             br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3]) + "_X"
@@ -1680,6 +1479,16 @@ def process_pr(
             )
 
     # Process the issue comments
+    signatures = dict([(x, "pending") for x in signing_categories])
+    extra_pre_checks = []
+    pre_checks = []
+    if issue.pull_request:
+        pre_checks = [c for c in signing_categories if c in default_pre_checks]
+        for pre_check in pre_checks + ["code-checks"]:
+            pre_checks_state[pre_check] = get_status_state(
+                "%s/%s" % (cms_status_prefix, pre_check), commit_statuses
+            )
+        logger.debug("Pre check status: %s", pre_checks_state)
     already_seen = None
     technical_comments = []
     pull_request_updated = False
@@ -1735,10 +1544,6 @@ def process_pr(
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in bot_cache:
             bot_cache[k] = copy.deepcopy(v)
-
-    # Upgrade cache. We do this here so that we don't have to update every single test :)
-    if bot_cache.get("version", 1) < 2:
-        convert_cache_v1_to_v2(repo_config, gh, repo, issue, bot_cache, all_comments)
 
     for comment in all_comments:
         commenter = ensure_ascii(comment.user.login)

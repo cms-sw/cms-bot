@@ -451,6 +451,9 @@ def es_send_external_stats(
     es_index_name="externals_stats_summary",
     es_doc_name="externals-stats-summary",
 ):
+    sdata = get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize)
+    if not sdata:
+        return
     file_stamp = int(tstat(stats_dict_file_path).st_mtime)  # get the file stamp from the file
     week = epoch2week(file_stamp)
     with open(opts_dict_file_path, "r") as opts_dict_f:
@@ -459,7 +462,6 @@ def es_send_external_stats(
     index_sha = sha1(
         ("".join([str(x) for x in opts_dict.values()]) + stats_dict_file_path).encode()
     ).hexdigest()
-    sdata = get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize)
     sdata.update(opts_dict)
     sdata["@timestamp"] = file_stamp * 1000
     try:

@@ -527,6 +527,14 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
     all_data = {}
     job_max_cpu = "job_max_cpu"
     for item in items:
+        ok_item = True
+        for k in fields:
+            if not k in item["_source"]:
+                print("WARNING: Missing key", k, "in", item["_source"])
+                ok_item = False
+                break
+        if not ok_item:
+            continue
         name = item["_source"]["name"]
         jobs = item["_source"]["build_jobs"]
         arch = item["_source"]["architecture"]

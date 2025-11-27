@@ -21,8 +21,10 @@ Usage:
 import json
 import os
 import pytest
+import sys
+import types
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from unittest.mock import MagicMock
@@ -43,8 +45,104 @@ from cms_bot import (
     should_ignore_pr,
     should_notify_without_at,
     format_mention,
-    EXAMPLE_REPO_CONFIG,
+    init_l2_data,
+    get_l2_data,
+    file_to_package,
+    get_package_categories,
+    extract_command_line,
 )
+
+
+def create_mock_repo_config(**overrides) -> types.ModuleType:
+    """
+    Create a mock repo_config module for testing.
+
+    Args:
+        **overrides: Override any default configuration values
+
+    Returns:
+        A module-like object with configuration attributes
+    """
+    module = types.ModuleType("mock_repo_config")
+
+    # Default configuration
+    module.CONFIG_DIR = str(Path(__file__).parent)
+
+    # File ownership patterns -> L2 categories
+    module.FILE_OWNERS = {
+        r"^src/core/.*": ["core"],
+        r"^src/analysis/.*": ["analysis"],
+        r"^src/simulation/.*": ["simulation"],
+        r"^docs/.*": ["docs"],
+        r"^tests/.*": ["testing"],
+    }
+
+    # Package -> category mapping (for 'assign from' command)
+    module.PACKAGE_CATEGORIES = {
+        "numpy": "analysis",
+        "scipy": "analysis",
+        "matplotlib": "visualization",
+    }
+
+    # Which categories are blocking for merge (default True)
+    module.BLOCKING_CATEGORIES = {
+        "docs": False,  # Documentation is advisory
+        "tests": True,  # CI tests must pass
+        "code-checks": True,  # Code checks must pass
+    }
+
+    # Categories that must be approved before triggering test/build
+    module.REQUIRED_SIGNATURES_FOR_TEST = ["code-checks"]
+
+    # ORP approval required for merge
+    module.REQUIRE_ORP = True
+
+    # Automatically merge when fully signed
+    module.AUTOMERGE = False
+
+    # Apply overrides
+    for key, value in overrides.items():
+        setattr(module, key, value)
+
+    return module
+
+
+def setup_test_l2_data(user_categories: Dict[str, List[str]] = None) -> None:
+    """
+    Setup L2 data for testing by directly modifying the global _L2_DATA.
+
+    Args:
+        user_categories: Dict mapping username to list of categories
+    """
+    import cms_bot
+
+    if user_categories is None:
+        # Default test L2 data
+        user_categories = {
+            "alice": ["core", "analysis"],
+            "bob": ["simulation"],
+            "carol": ["docs", "testing"],
+            "dave": ["orp"],
+            "cmsbuild": ["tests", "code-checks"],
+        }
+
+    # Convert to L2 data format (list of periods)
+    l2_data = {}
+    for user, categories in user_categories.items():
+        l2_data[user] = [{"start_date": 0, "category": categories}]
+
+    cms_bot._L2_DATA = l2_data
+
+
+@pytest.fixture(autouse=True)
+def setup_l2_data():
+    """Fixture to setup L2 data before each test."""
+    setup_test_l2_data()
+    yield
+    # Cleanup after test
+    import cms_bot
+
+    cms_bot._L2_DATA = {}
 
 
 # =============================================================================
@@ -296,13 +394,17 @@ class MockCommit:
         committer_data = commit_data.get("committer", {})
 
         git_author = cls.GitCommit.GitAuthor(
-            date=datetime.fromisoformat(author_data.get("date", datetime.utcnow().isoformat())),
+            date=datetime.fromisoformat(
+                author_data.get("date", datetime.now(tz=timezone.utc).isoformat())
+            ),
             name=author_data.get("name", ""),
             email=author_data.get("email", ""),
         )
 
         git_committer = cls.GitCommit.GitAuthor(
-            date=datetime.fromisoformat(committer_data.get("date", datetime.utcnow().isoformat())),
+            date=datetime.fromisoformat(
+                committer_data.get("date", datetime.now(tz=timezone.utc).isoformat())
+            ),
             name=committer_data.get("name", ""),
             email=committer_data.get("email", ""),
         )
@@ -366,7 +468,7 @@ class MockIssueComment:
         if self._recorder:
             self._recorder.record("edit_comment", comment_id=self.id, body=body)
         self.body = body
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(tz=timezone.utc)
 
     def delete(self) -> None:
         """Delete the comment."""
@@ -405,10 +507,12 @@ class MockIssueComment:
             body=data.get("body", ""),
             user=MockNamedUser.from_json(user_data),
             created_at=datetime.fromisoformat(
-                data.get("created_at", datetime.utcnow().isoformat())
+                data.get("created_at", datetime.now(tz=timezone.utc).isoformat())
             ),
             updated_at=(
-                datetime.fromisoformat(data.get("updated_at", datetime.utcnow().isoformat()))
+                datetime.fromisoformat(
+                    data.get("updated_at", datetime.now(tz=timezone.utc).isoformat())
+                )
                 if data.get("updated_at")
                 else None
             ),
@@ -558,7 +662,7 @@ class MockPullRequest:
             id=999999,  # Fake ID for new comment
             body=body,
             user=MockNamedUser(login="cmsbuild"),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(tz=timezone.utc),
             _recorder=self._recorder,
         )
 
@@ -571,10 +675,12 @@ class MockIssue:
         test_name: str,
         number: int,
         recorder: ActionRecorder = None,
+        is_issue: bool = False,  # If True, this is an issue, not a PR
     ):
         self.test_name = test_name
         self.number = number
         self._recorder = recorder
+        self._is_issue = is_issue
 
         # Load data from JSON
         data = load_json_data(test_name, "Issue", number)
@@ -595,7 +701,7 @@ class MockIssue:
         self._comments = self._load_comments(data.get("comments", []))
 
         # Associated PR (if this is a PR issue)
-        self._pull_request = None
+        self._pull_request = None if is_issue else "pending"
 
     def _load_comments(self, comments_data: List[Dict]) -> List[MockIssueComment]:
         """Load issue comments from data."""
@@ -656,11 +762,16 @@ class MockIssue:
             id=len(self._comments) + 1000000,  # Fake ID for new comment
             body=body,
             user=MockNamedUser(login="cmsbuild"),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(tz=timezone.utc),
             _recorder=self._recorder,
         )
         self._comments.append(comment)
         return comment
+
+    @property
+    def pull_request(self):
+        """Return pull request marker (used to detect if issue is a PR)."""
+        return self._pull_request
 
     def as_pull_request(self) -> MockPullRequest:
         """Convert issue to pull request."""
@@ -767,8 +878,8 @@ def mock_issue(test_name, action_recorder):
 
 @pytest.fixture
 def repo_config():
-    """Get default repository configuration."""
-    return EXAMPLE_REPO_CONFIG.copy()
+    """Get default repository configuration as a mock module."""
+    return create_mock_repo_config()
 
 
 # =============================================================================
@@ -816,12 +927,12 @@ def create_basic_pr_data(
                 "commit": {
                     "message": "Test commit",
                     "author": {
-                        "date": datetime.utcnow().isoformat(),
+                        "date": datetime.now(tz=timezone.utc).isoformat(),
                         "name": "Test Author",
                         "email": "test@example.com",
                     },
                     "committer": {
-                        "date": datetime.utcnow().isoformat(),
+                        "date": datetime.now(tz=timezone.utc).isoformat(),
                         "name": "Test Committer",
                         "email": "test@example.com",
                     },
@@ -921,7 +1032,7 @@ class TestBasicFunctionality:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         # Verify result structure
@@ -953,7 +1064,7 @@ class TestBasicFunctionality:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "alice", "id": 2},  # alice is in 'core' team
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -972,7 +1083,7 @@ class TestBasicFunctionality:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         # Verify
@@ -1001,7 +1112,7 @@ class TestBasicFunctionality:
                     "id": 100,
                     "body": "+core",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1018,7 +1129,7 @@ class TestBasicFunctionality:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1045,7 +1156,7 @@ class TestBasicFunctionality:
                     "id": 100,
                     "body": "-1",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1062,7 +1173,7 @@ class TestBasicFunctionality:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1093,13 +1204,13 @@ class TestHoldMechanism:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "hold",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
             ],
         )
@@ -1116,7 +1227,7 @@ class TestHoldMechanism:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert len(result["holds"]) > 0
@@ -1144,13 +1255,13 @@ class TestHoldMechanism:
                     "id": 100,
                     "body": "hold",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "unhold",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
             ],
         )
@@ -1167,7 +1278,7 @@ class TestHoldMechanism:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert len(result["holds"]) == 0
@@ -1194,19 +1305,19 @@ class TestHoldMechanism:
                     "id": 100,
                     "body": "hold",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "hold",
                     "user": {"login": "bob", "id": 3},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 102,
                     "body": "unhold",
                     "user": {"login": "dave", "id": 4},  # dave is ORP
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
             ],
         )
@@ -1223,7 +1334,7 @@ class TestHoldMechanism:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert len(result["holds"]) == 0
@@ -1254,7 +1365,7 @@ class TestAssignCommand:
                     "id": 100,
                     "body": "assign visualization",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1271,7 +1382,7 @@ class TestAssignCommand:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert "visualization" in result["categories"]
@@ -1298,7 +1409,7 @@ class TestAssignCommand:
                     "id": 100,
                     "body": "assign from numpy",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1315,7 +1426,7 @@ class TestAssignCommand:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         # numpy maps to 'analysis' category
@@ -1347,7 +1458,7 @@ class TestCommandPreprocessing:
                     "id": 100,
                     "body": "@cmsbuild please +1",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1364,7 +1475,7 @@ class TestCommandPreprocessing:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1391,7 +1502,7 @@ class TestCommandPreprocessing:
                     "id": 100,
                     "body": "please test",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1408,7 +1519,7 @@ class TestCommandPreprocessing:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert "default" in result["tests_triggered"]
@@ -1449,7 +1560,7 @@ class TestMultipleFiles:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "alice", "id": 2},  # alice: core, analysis
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1466,7 +1577,7 @@ class TestMultipleFiles:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         # Should have multiple categories
@@ -1499,7 +1610,7 @@ class TestTestCommand:
                     "id": 100,
                     "body": "test",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1516,7 +1627,7 @@ class TestTestCommand:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert "default" in result["tests_triggered"]
@@ -1543,7 +1654,7 @@ class TestTestCommand:
                     "id": 100,
                     "body": "test workflow=ci matrix=full",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1560,7 +1671,7 @@ class TestTestCommand:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert "workflow=ci matrix=full" in result["tests_triggered"]
@@ -1602,7 +1713,7 @@ class TestCacheManagement:
             issue=issue,
             dryRun=True,  # Still dry run to not actually post
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1619,10 +1730,10 @@ class TestMergeCommand:
     def test_merge_when_ready(self, repo_config, record_mode):
         """Test merge command when PR is ready."""
         # Disable ORP requirement for this test
-        config = repo_config.copy()
-        config["require_orp"] = False
-        config["require_tests"] = False
-        config["require_code_checks"] = False
+        config = create_mock_repo_config(
+            REQUIRE_ORP=False,
+            BLOCKING_CATEGORIES={"tests": False, "code-checks": False, "docs": False},
+        )
 
         create_basic_pr_data(
             "test_merge_when_ready",
@@ -1639,13 +1750,13 @@ class TestMergeCommand:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "merge",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
             ],
         )
@@ -1662,7 +1773,7 @@ class TestMergeCommand:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1694,7 +1805,7 @@ class TestBranchRewrite:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1713,7 +1824,7 @@ class TestBranchRewrite:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1744,7 +1855,7 @@ class TestEdgeCases:
                     "id": 100,
                     "body": "",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1761,7 +1872,7 @@ class TestEdgeCases:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1788,7 +1899,7 @@ class TestEdgeCases:
                     "id": 100,
                     "body": "This is just a regular comment, not a command.",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1805,7 +1916,7 @@ class TestEdgeCases:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         # No tests should be triggered, no approvals processed
@@ -1834,7 +1945,7 @@ class TestEdgeCases:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1851,7 +1962,7 @@ class TestEdgeCases:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1878,7 +1989,7 @@ class TestEdgeCases:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "unknown_user", "id": 999},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1895,7 +2006,7 @@ class TestEdgeCases:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         # User not in L2, so no approval should be recorded
@@ -1927,7 +2038,7 @@ class TestBotMessageProcessing:
                     "id": 100,
                     "body": "+code-checks",
                     "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1944,7 +2055,7 @@ class TestBotMessageProcessing:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -1972,7 +2083,7 @@ class TestBotMessageProcessing:
                     "id": 100,
                     "body": "-code-checks",
                     "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -1989,7 +2100,7 @@ class TestBotMessageProcessing:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -2001,10 +2112,7 @@ class TestBotMessageProcessing:
 
     def test_bot_ci_approval(self, repo_config, record_mode):
         """Test that +1 from bot (CI results) is processed when bot has L2 categories."""
-        # Update config to give bot the 'tests' category
-        config = repo_config.copy()
-        config["user_teams"] = repo_config["user_teams"].copy()
-        config["user_teams"]["cmsbuild"] = ["tests", "code-checks"]
+        # L2 data is already set up by fixture with cmsbuild having tests/code-checks
 
         create_basic_pr_data(
             "test_bot_ci_approval",
@@ -2021,7 +2129,7 @@ class TestBotMessageProcessing:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -2032,13 +2140,13 @@ class TestBotMessageProcessing:
         issue = MockIssue("test_bot_ci_approval", number=1, recorder=recorder)
 
         result = process_pr(
-            repo_config=config,
+            repo_config=repo_config,
             gh=gh,
             repo=repo,
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -2051,9 +2159,7 @@ class TestBotMessageProcessing:
 
     def test_bot_category_specific_approval(self, repo_config, record_mode):
         """Test that +tests from bot is processed."""
-        config = repo_config.copy()
-        config["user_teams"] = repo_config["user_teams"].copy()
-        config["user_teams"]["cmsbuild"] = ["tests", "code-checks"]
+        # L2 data is already set up by fixture with cmsbuild having tests/code-checks
 
         create_basic_pr_data(
             "test_bot_category_specific_approval",
@@ -2070,7 +2176,7 @@ class TestBotMessageProcessing:
                     "id": 100,
                     "body": "+tests",
                     "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -2081,13 +2187,13 @@ class TestBotMessageProcessing:
         issue = MockIssue("test_bot_category_specific_approval", number=1, recorder=recorder)
 
         result = process_pr(
-            repo_config=config,
+            repo_config=repo_config,
             gh=gh,
             repo=repo,
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -2114,7 +2220,7 @@ class TestBotMessageProcessing:
                     "id": 100,
                     "body": "hold",  # hold is NOT in bot-allowed commands
                     "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -2131,7 +2237,7 @@ class TestBotMessageProcessing:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         # hold command from bot should NOT be processed
@@ -2250,8 +2356,7 @@ class TestBuildTestCommand:
     def test_build_command_basic(self, repo_config, record_mode):
         """Test basic build command."""
         # Remove required signatures for this test
-        config = repo_config.copy()
-        config["required_signatures_for_test"] = []
+        config = create_mock_repo_config(REQUIRED_SIGNATURES_FOR_TEST=[])
 
         create_basic_pr_data(
             "test_build_command_basic",
@@ -2268,7 +2373,7 @@ class TestBuildTestCommand:
                     "id": 100,
                     "body": "build",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -2285,7 +2390,7 @@ class TestBuildTestCommand:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -2298,8 +2403,7 @@ class TestBuildTestCommand:
 
     def test_test_command_with_workflows(self, repo_config, record_mode):
         """Test test command with workflows parameter."""
-        config = repo_config.copy()
-        config["required_signatures_for_test"] = []
+        config = create_mock_repo_config(REQUIRED_SIGNATURES_FOR_TEST=[])
 
         create_basic_pr_data(
             "test_test_command_with_workflows",
@@ -2316,7 +2420,7 @@ class TestBuildTestCommand:
                     "id": 100,
                     "body": "test workflows 1.0,2.0,3.0",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -2333,7 +2437,7 @@ class TestBuildTestCommand:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -2349,8 +2453,7 @@ class TestBuildTestCommand:
 
     def test_test_blocked_by_missing_signature(self, repo_config, record_mode):
         """Test that test is blocked when required signature is missing."""
-        config = repo_config.copy()
-        config["required_signatures_for_test"] = ["code-checks"]
+        config = create_mock_repo_config(REQUIRED_SIGNATURES_FOR_TEST=["code-checks"])
 
         create_basic_pr_data(
             "test_test_blocked_by_missing_signature",
@@ -2367,7 +2470,7 @@ class TestBuildTestCommand:
                     "id": 100,
                     "body": "test",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -2384,7 +2487,7 @@ class TestBuildTestCommand:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["pr_number"] == 1
@@ -2455,7 +2558,7 @@ class TestPRIgnoreProcessing:
                     "id": 100,
                     "body": "+1",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
@@ -2480,7 +2583,7 @@ class TestPRIgnoreProcessing:
             issue=issue,
             dryRun=True,
             cmsbuild_user="cmsbuild",
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         assert result["skipped"] is True
@@ -2533,7 +2636,7 @@ class TestPRIgnoreProcessing:
             dryRun=True,
             cmsbuild_user="cmsbuild",
             force=True,  # Force processing
-            enableTraceLog=False,
+            loglevel="WARNING",
         )
 
         # Should NOT be skipped because force=True
@@ -2544,6 +2647,444 @@ class TestPRIgnoreProcessing:
             recorder.save()
         else:
             recorder.verify()
+
+
+class TestSignatureLocking:
+    """Tests for signature locking after commits."""
+
+    def test_signature_locked_after_commit(self, repo_config, record_mode):
+        """Test that signatures are locked after a commit is pushed."""
+        # Create PR with approval, then a commit after
+        create_basic_pr_data(
+            "test_signature_locked_after_commit",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T10:00:00Z",  # Comment at 10:00
+                }
+            ],
+            commits=[
+                {
+                    "sha": "commit_sha_1",
+                    "author": {"login": "author1", "date": "2024-01-01T09:00:00Z"},
+                    "committer": {"date": "2024-01-01T09:00:00Z"},
+                    "message": "Initial commit",
+                },
+                {
+                    "sha": "commit_sha_2",
+                    "author": {
+                        "login": "author1",
+                        "date": "2024-01-01T11:00:00Z",
+                    },  # After comment
+                    "committer": {"date": "2024-01-01T11:00:00Z"},
+                    "message": "Second commit",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_signature_locked_after_commit", record_mode)
+        gh = MockGithub("test_signature_locked_after_commit", recorder)
+        repo = MockRepository("test_signature_locked_after_commit", recorder=recorder)
+        issue = MockIssue("test_signature_locked_after_commit", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+        # The signature should be locked because commit happened after
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_signature_not_locked_before_commit(self, repo_config, record_mode):
+        """Test that signatures are not locked if no commit after."""
+        create_basic_pr_data(
+            "test_signature_not_locked_before_commit",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:00:00Z",  # Comment at 12:00
+                }
+            ],
+            commits=[
+                {
+                    "sha": "commit_sha_1",
+                    "author": {
+                        "login": "author1",
+                        "date": "2024-01-01T10:00:00Z",
+                    },  # Before comment
+                    "committer": {"date": "2024-01-01T10:00:00Z"},
+                    "message": "Initial commit",
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_signature_not_locked_before_commit", record_mode)
+        gh = MockGithub("test_signature_not_locked_before_commit", recorder)
+        repo = MockRepository("test_signature_not_locked_before_commit", recorder=recorder)
+        issue = MockIssue("test_signature_not_locked_before_commit", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestUnassignCommand:
+    """Tests for unassign command."""
+
+    def test_unassign_category(self, repo_config, record_mode):
+        """Test unassign command removes category."""
+        create_basic_pr_data(
+            "test_unassign_category",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "unassign core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_unassign_category", record_mode)
+        gh = MockGithub("test_unassign_category", recorder)
+        repo = MockRepository("test_unassign_category", recorder=recorder)
+        issue = MockIssue("test_unassign_category", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_unassign_invalid_category(self, repo_config, record_mode):
+        """Test unassign with invalid category fails gracefully."""
+        create_basic_pr_data(
+            "test_unassign_invalid_category",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "unassign nonexistent_category",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_unassign_invalid_category", record_mode)
+        gh = MockGithub("test_unassign_invalid_category", recorder)
+        repo = MockRepository("test_unassign_invalid_category", recorder=recorder)
+        issue = MockIssue("test_unassign_invalid_category", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+        # Should have error message about unknown category
+        assert any("nonexistent_category" in msg for msg in result["messages"])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestCommaSeparatedAssign:
+    """Tests for comma-separated assign/unassign commands."""
+
+    def test_assign_multiple_categories(self, repo_config, record_mode):
+        """Test assigning multiple categories at once."""
+        create_basic_pr_data(
+            "test_assign_multiple_categories",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign core,analysis,simulation",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_assign_multiple_categories", record_mode)
+        gh = MockGithub("test_assign_multiple_categories", recorder)
+        repo = MockRepository("test_assign_multiple_categories", recorder=recorder)
+        issue = MockIssue("test_assign_multiple_categories", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_unassign_multiple_categories(self, repo_config, record_mode):
+        """Test unassigning multiple categories at once."""
+        create_basic_pr_data(
+            "test_unassign_multiple_categories",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign core,analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "unassign core,analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_unassign_multiple_categories", record_mode)
+        gh = MockGithub("test_unassign_multiple_categories", recorder)
+        repo = MockRepository("test_unassign_multiple_categories", recorder=recorder)
+        issue = MockIssue("test_unassign_multiple_categories", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_assign_mixed_valid_invalid(self, repo_config, record_mode):
+        """Test assign with mix of valid and invalid categories."""
+        create_basic_pr_data(
+            "test_assign_mixed_valid_invalid",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign core,invalid_cat,analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_assign_mixed_valid_invalid", record_mode)
+        gh = MockGithub("test_assign_mixed_valid_invalid", recorder)
+        repo = MockRepository("test_assign_mixed_valid_invalid", recorder=recorder)
+        issue = MockIssue("test_assign_mixed_valid_invalid", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+        # Should have error message about invalid category
+        assert any("invalid_cat" in msg for msg in result["messages"])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestIssueProcessing:
+    """Tests for Issue (non-PR) processing."""
+
+    def test_issue_skips_pr_only_commands(self, repo_config, record_mode):
+        """Test that PR-only commands are ignored for issues."""
+        create_basic_pr_data(
+            "test_issue_skips_pr_only_commands",
+            pr_number=1,
+            files=[],  # Issues don't have files
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",  # This is a PR-only command
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_issue_skips_pr_only_commands", record_mode)
+        gh = MockGithub("test_issue_skips_pr_only_commands", recorder)
+        repo = MockRepository("test_issue_skips_pr_only_commands", recorder=recorder)
+        issue = MockIssue(
+            "test_issue_skips_pr_only_commands", number=1, recorder=recorder, is_issue=True
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+        assert result["is_pr"] is False
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestExtractCommandLine:
+    """Tests for extract_command_line function."""
+
+    def test_extract_simple(self):
+        """Test extracting simple commands."""
+        assert extract_command_line("+1") == "+1"
+        assert extract_command_line("  +1  ") == "+1"
+        assert extract_command_line("+1\nsome text") == "+1"
+
+    def test_extract_with_prefix(self):
+        """Test extracting commands with @cmsbuild prefix."""
+        assert extract_command_line("@cmsbuild +1") == "+1"
+        assert extract_command_line("@cmsbuild please +1") == "+1"
+        assert extract_command_line("please +1") == "+1"
+
+    def test_extract_empty(self):
+        """Test extracting from empty/whitespace content."""
+        assert extract_command_line("") is None
+        assert extract_command_line("   ") is None
+        assert extract_command_line("\n\n\n") is None
+
+    def test_extract_preserves_command(self):
+        """Test that command content is preserved."""
+        assert extract_command_line("test workflows 1.0,2.0") == "test workflows 1.0,2.0"
+        assert extract_command_line("assign core,analysis") == "assign core,analysis"
 
 
 # =============================================================================

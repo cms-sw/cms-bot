@@ -113,7 +113,7 @@ if __name__ == "__main__":
     gh = Github(login_or_token=get_gh_token(repository), per_page=100)
     api_rate_limits(gh)
     repo = gh.get_repo(repository)
-    prId = 49483
+    prId = 49346
     issue = repo.get_issue(prId)
     ret = process_pr(repo_config, gh, repo, issue, True, "cmsbuild", force=False)
     pprint(ret)

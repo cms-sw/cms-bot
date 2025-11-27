@@ -23,6 +23,8 @@ from json import load as json_load
 from os.path import dirname, exists, join
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+import forward_ports_map
+
 from categories import (
     CMSSW_L2,
     CMSSW_ORP,
@@ -33,7 +35,44 @@ from categories import (
 )
 from categories import CMSSW_CATEGORIES
 
+# Import CMSSW_LABELS for auto-labeling based on file patterns
+try:
+    from categories import CMSSW_LABELS
+except ImportError:
+    CMSSW_LABELS: Dict[str, List[Any]] = {}
+
+# Import get_dpg_pog for DPG/POG label filtering
+try:
+    from categories import get_dpg_pog
+except ImportError:
+
+    def get_dpg_pog(*args) -> Dict[str, Any]:
+        return {}
+
+
+# Import external_to_package for mapping external repos to packages
+try:
+    from categories import external_to_package
+except ImportError:
+
+    def external_to_package(*args) -> str:
+        return ""
+
+
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
+
+# Import release management functions
+try:
+    from releases import get_release_managers, is_closed_branch
+except ImportError:
+
+    def get_release_managers(*args) -> List[str]:
+        return []
+
+    def is_closed_branch(*args) -> bool:
+        return False
+
+
 from cms_static import (
     VALID_CMSDIST_BRANCHES,
     NEW_ISSUE_PREFIX,
@@ -50,6 +89,9 @@ from cms_static import (
 from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
+
+# Derived constants
+CMSSW_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 
 # =============================================================================
 # LOGGING SETUP
@@ -291,6 +333,172 @@ def init_l2_data(
 def get_l2_data() -> Dict[str, List[Dict[str, Any]]]:
     """Get the cached L2 data."""
     return _L2_DATA
+
+
+# =============================================================================
+# LABEL MANAGEMENT
+# =============================================================================
+
+# Compiled label patterns (populated by initialize_labels)
+_LABEL_PATTERNS: Dict[str, List[re.Pattern]] = {}
+
+
+def initialize_labels(repo_config: types.ModuleType) -> Dict[str, List[re.Pattern]]:
+    """
+    Initialize and compile label patterns for auto-labeling.
+
+    Labels in CMSSW_LABELS map label names to file path patterns.
+    This function:
+    1. Optionally filters labels based on DPG/POG membership
+    2. Compiles string patterns to regex objects
+
+    Args:
+        repo_config: Repository configuration module
+
+    Returns:
+        Dict mapping label names to lists of compiled regex patterns
+    """
+    global _LABEL_PATTERNS
+
+    if _LABEL_PATTERNS:
+        return _LABEL_PATTERNS
+
+    # Check if DPG/POG filtering is enabled
+    check_dpg_pog = getattr(repo_config, "CHECK_DPG_POG", False)
+    dpg_pog = get_dpg_pog() if check_dpg_pog else {}
+
+    compiled_labels: Dict[str, List[re.Pattern]] = {}
+
+    for label, patterns in CMSSW_LABELS.items():
+        # Filter out labels not in DPG/POG or TYPE_COMMANDS if checking is enabled
+        if check_dpg_pog and label not in dpg_pog and label not in TYPE_COMMANDS:
+            continue
+
+        # Compile patterns
+        compiled_patterns = []
+        for pattern in patterns:
+            if isinstance(pattern, str):
+                compiled_patterns.append(re.compile(f"^({pattern}).*$"))
+            elif isinstance(pattern, re.Pattern):
+                compiled_patterns.append(pattern)
+            # Skip invalid pattern types
+
+        compiled_labels[label] = compiled_patterns
+
+    _LABEL_PATTERNS = compiled_labels
+    return compiled_labels
+
+
+def get_labels_for_file(filename: str) -> List[str]:
+    """
+    Get labels that should be applied based on a filename.
+
+    Args:
+        filename: Path to the file
+
+    Returns:
+        List of label names that match the file
+    """
+    matching_labels = []
+
+    for label, patterns in _LABEL_PATTERNS.items():
+        for pattern in patterns:
+            if pattern.match(filename):
+                matching_labels.append(label)
+                break  # Only add each label once per file
+
+    return matching_labels
+
+
+def get_labels_for_pr(context: "PRContext") -> Set[str]:
+    """
+    Get all labels that should be applied to a PR based on its files.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        Set of label names to apply
+    """
+    labels: Set[str] = set()
+    snapshot = context.cache.get_current_snapshot()
+
+    if not snapshot:
+        return labels
+
+    for fv_key in snapshot.changes:
+        if fv_key in context.cache.file_versions:
+            fv = context.cache.file_versions[fv_key]
+            labels.update(get_labels_for_file(fv.filename))
+
+    return labels
+
+
+def add_nonblocking_labels(changed_files: List[str], extra_labels: Dict[str, List[str]]) -> None:
+    """
+    Add non-blocking labels based on changed files.
+
+    Matches changed files against CMSSW_LABELS patterns and adds matching
+    labels to the extra_labels dict under the 'mtype' key.
+
+    Args:
+        changed_files: List of changed file paths
+        extra_labels: Dict to populate with labels (modified in place)
+    """
+    for pkg_file in changed_files:
+        for label, patterns in _LABEL_PATTERNS.items():
+            for regex in patterns:
+                if regex.match(pkg_file):
+                    if "mtype" not in extra_labels:
+                        extra_labels["mtype"] = []
+                    extra_labels["mtype"].append(label)
+                    logger.debug(f"Non-blocking label: {label} for {pkg_file}")
+                    break
+
+    # Clean up empty mtype list
+    if "mtype" in extra_labels and not extra_labels["mtype"]:
+        del extra_labels["mtype"]
+
+    logger.info(f"Extra non-blocking labels: {extra_labels}")
+
+
+# =============================================================================
+# MILESTONE MANAGEMENT
+# =============================================================================
+
+
+def update_milestone(repo, issue, pr, dry_run: bool = False) -> None:
+    """
+    Update PR milestone based on target branch.
+
+    Sets the milestone according to RELEASE_BRANCH_MILESTONE mapping.
+
+    Args:
+        repo: Repository object
+        issue: Issue object
+        pr: Pull request object
+        dry_run: If True, don't make changes
+    """
+    milestone_id = RELEASE_BRANCH_MILESTONE.get(pr.base.label.split(":")[1], None)
+
+    if not milestone_id:
+        logger.warning("Unable to find a milestone for the given branch")
+        return
+
+    if pr.state != "open":
+        logger.debug("PR not open, not setting/checking milestone")
+        return
+
+    if issue.milestone and issue.milestone.number == milestone_id:
+        return
+
+    milestone = repo.get_milestone(milestone_id)
+    logger.info(f"Setting milestone to {milestone.title}")
+
+    if dry_run:
+        return
+
+    issue.edit(milestone=milestone)
 
 
 # =============================================================================
@@ -546,6 +754,19 @@ class TestRequest:
     triggered_by: str = ""  # Username who triggered
     comment_id: int = 0  # Comment that triggered this
 
+    @property
+    def test_key(self) -> str:
+        """
+        Generate a unique key for this test configuration.
+
+        Used to deduplicate test requests - only one test per unique
+        combination of parameters is triggered.
+        """
+        # Sort PRs and workflows for consistent keys
+        sorted_prs = ",".join(sorted(self.prs)) if self.prs else ""
+        sorted_workflows = ",".join(sorted(self.workflows.split(","))) if self.workflows else ""
+        return f"{self.verb}|{sorted_workflows}|{sorted_prs}|{self.queue}|{self.build_full}|{self.extra_packages}"
+
 
 # =============================================================================
 # CACHE MANAGEMENT
@@ -773,7 +994,13 @@ def get_user_l2_categories(
 
     if not l2_data:
         # Fallback to static CMSSW_L2 if L2 data not initialized
-        return [CMSSW_L2.get(username)] if username in CMSSW_L2 else []
+        cat = CMSSW_L2.get(username)
+        if cat is None:
+            return []
+        # Handle case where cat might be a list or string
+        if isinstance(cat, list):
+            return cat
+        return [cat]
 
     if username not in l2_data:
         return []
@@ -790,7 +1017,20 @@ def get_user_l2_categories(
             return []
 
         if end_date is None or ts_epoch < end_date:
-            return period["category"]
+            cat = period.get("category", [])
+            # Ensure we always return List[str], not List[List[str]]
+            if isinstance(cat, str):
+                return [cat]
+            if isinstance(cat, list):
+                # Flatten if nested
+                result = []
+                for c in cat:
+                    if isinstance(c, list):
+                        result.extend(c)
+                    else:
+                        result.append(c)
+                return result
+            return []
 
     return []
 
@@ -1152,9 +1392,22 @@ class PRContext:
     # Processing state
     messages: List[str] = field(default_factory=list)
     should_merge: bool = False
+    must_close: bool = False  # PR should be closed (e.g., closed branch)
     tests_to_run: List[Any] = field(default_factory=list)  # List of TestRequest objects
     pending_reactions: Dict[int, str] = field(default_factory=dict)  # comment_id -> reaction
     holds: List[Hold] = field(default_factory=list)  # Active holds on the PR
+    pending_labels: Set[str] = field(default_factory=set)  # Labels to add (from type command)
+    extra_labels: Dict[str, List[str]] = field(default_factory=dict)  # Extra labels by type
+    signing_categories: Set[str] = field(default_factory=set)  # Categories requiring signatures
+    packages: Set[str] = field(default_factory=set)  # Packages touched by PR
+
+    # Repository info (set during processing)
+    repo_name: str = ""
+    repo_org: str = ""
+    cmssw_repo: bool = False  # Is this the main CMSSW repo?
+    cms_repo: bool = False  # Is this a CMS organization repo?
+    external_repo: bool = False  # Is this an external repo?
+    create_test_property: bool = False  # Should create test properties?
 
     # PR description flags
     notify_without_at: bool = False  # If True, don't use @ when mentioning users
@@ -1248,9 +1501,9 @@ def _handle_approval(
         logger.info(f"User {user} has no L2 categories to sign with")
         return False
 
-    # Get current snapshot
-    snapshot = context.cache.get_current_snapshot()
-    snapshot_id = snapshot.snapshot_id if snapshot else None
+    # Determine which snapshot this signature should be associated with
+    # This depends on which commits were present at the time of the comment
+    snapshot_id = get_snapshot_for_timestamp(context, timestamp)
 
     # Update comment info in cache
     comment_info = CommentInfo(
@@ -1266,7 +1519,7 @@ def _handle_approval(
 
     logger.info(
         f"Recorded {'approval' if approved else 'rejection'} from {user} "
-        f"for categories: {categories}"
+        f"for categories: {categories} (snapshot={snapshot_id})"
     )
     return True
 
@@ -1381,16 +1634,7 @@ def _handle_assign(
 
         categories = valid_categories
 
-    # Record in comment info
-    comment_info = CommentInfo(
-        timestamp=timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
-        first_line=f"assign {','.join(categories)}",
-        ctype="assign",
-        categories=categories,
-        user=user,
-    )
-    context.cache.comments[str(comment_id)] = comment_info
-
+    # Note: assign commands are not cached - only signatures (+1/-1) are cached
     logger.info(f"Assigned categories: {', '.join(categories)}")
     return True
 
@@ -1505,20 +1749,8 @@ def _handle_unassign(
 
         categories = valid_categories
 
-    # Record in comment info
-    comment_info = CommentInfo(
-        timestamp=timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
-        first_line=f"unassign {','.join(categories)}",
-        ctype="unassign",
-        categories=categories,
-        user=user,
-    )
-    context.cache.comments[str(comment_id)] = comment_info
-
+    # Note: unassign commands are not cached - only signatures (+1/-1) are cached
     logger.info(f"Unassigned categories: {', '.join(categories)}")
-    return True
-
-    logger.info(f"Assigned category: {category}")
     return True
 
 
@@ -1539,16 +1771,7 @@ def handle_hold(
         context.holds.append(hold)
         logger.info(f"Hold placed by {user} ({category})")
 
-    # Record in comment info
-    comment_info = CommentInfo(
-        timestamp=timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
-        first_line="hold",
-        ctype="hold",
-        categories=user_categories,
-        user=user,
-    )
-    context.cache.comments[str(comment_id)] = comment_info
-
+    # Note: hold commands are not cached - only signatures (+1/-1) are cached
     return True
 
 
@@ -1588,16 +1811,7 @@ def handle_unhold(
             logger.info(f"User {user} had no holds to remove")
             success = False
 
-    # Record in comment info
-    comment_info = CommentInfo(
-        timestamp=timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
-        first_line="unhold",
-        ctype="unhold",
-        categories=user_categories,
-        user=user,
-    )
-    context.cache.comments[str(comment_id)] = comment_info
-
+    # Note: unhold commands are not cached - only signatures (+1/-1) are cached
     return success
 
 
@@ -1614,15 +1828,69 @@ def handle_merge(
     context.should_merge = True
     logger.info(f"Merge requested by {user}")
 
-    # Record in comment info
-    comment_info = CommentInfo(
-        timestamp=timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
-        first_line="merge",
-        ctype="merge",
-        user=user,
-    )
-    context.cache.comments[str(comment_id)] = comment_info
+    # Note: merge commands are not cached - only signatures (+1/-1) are cached
+    return True
 
+
+@command(
+    "type",
+    r"^type\s+(?P<label>[\w-]+)$",
+    description="Add a type label to the PR/Issue",
+)
+def handle_type(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle type <label> command.
+
+    Adds a non-blocking label to the PR/Issue. The label must be defined
+    in TYPE_COMMANDS to be valid.
+
+    Labels have two modes:
+    - 'type': Only the last one applies (replaces previous type labels)
+    - 'mtype': Accumulates (multiple can coexist)
+
+    Syntax:
+        type <label>
+
+    Examples:
+        type bug-fix
+        type new-feature
+        type documentation
+    """
+    label = match.group("label")
+
+    # Validate label is in TYPE_COMMANDS
+    if label not in TYPE_COMMANDS:
+        valid_labels = ", ".join(sorted(TYPE_COMMANDS.keys()))
+        context.messages.append(f"Invalid type label '{label}'. Valid labels: {valid_labels}")
+        logger.warning(f"Invalid type label: {label}")
+        return False
+
+    # Get label type (type or mtype)
+    # TYPE_COMMANDS[label] = [color, regexp, label_type]
+    label_info = TYPE_COMMANDS[label]
+    label_type = label_info[2] if len(label_info) > 2 else "mtype"
+
+    if label_type == "type":
+        # 'type' labels replace previous - remove other 'type' labels
+        type_labels_to_remove = set()
+        for existing_label in context.pending_labels:
+            if existing_label in TYPE_COMMANDS:
+                existing_info = TYPE_COMMANDS[existing_label]
+                existing_type = existing_info[2] if len(existing_info) > 2 else "mtype"
+                if existing_type == "type":
+                    type_labels_to_remove.add(existing_label)
+
+        context.pending_labels -= type_labels_to_remove
+        if type_labels_to_remove:
+            logger.debug(f"Removed previous type labels: {type_labels_to_remove}")
+
+    # Add the new label
+    context.pending_labels.add(label)
+    logger.info(f"Type label '{label}' ({label_type}) added by {user}")
+
+    # Note: type commands are not cached - only signatures (+1/-1) are cached
     return True
 
 
@@ -1807,27 +2075,25 @@ def handle_build_test(
     # Create test request
     request = TestRequest(
         verb=result.verb,
-        workflows=",".join(set(result.workflows)) if result.workflows else "",
-        prs=result.prs,
+        workflows=",".join(sorted(set(result.workflows))) if result.workflows else "",
+        prs=sorted(result.prs) if result.prs else [],
         queue=result.queue,
         build_full=bool(result.full),
-        extra_packages=",".join(set(result.addpkg)) if result.addpkg else "",
+        extra_packages=",".join(sorted(set(result.addpkg))) if result.addpkg else "",
         triggered_by=user,
         comment_id=comment_id,
     )
 
+    # Check for duplicate test (same parameters)
+    existing_keys = {t.test_key for t in context.tests_to_run}
+    if request.test_key in existing_keys:
+        logger.info(f"Duplicate test request ignored: {request.test_key}")
+        return True  # Still return True as the command was valid
+
     context.tests_to_run.append(request)
     logger.info(f"{result.verb.capitalize()} triggered by {user}: {request}")
 
-    # Record in comment info
-    comment_info = CommentInfo(
-        timestamp=timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
-        first_line=first_line,
-        ctype=result.verb,
-        user=user,
-    )
-    context.cache.comments[str(comment_id)] = comment_info
-
+    # Note: build/test commands are not cached - only signatures (+1/-1) are cached
     return True
 
 
@@ -1851,6 +2117,29 @@ def get_pr_files(pr) -> Dict[str, str]:
     return files
 
 
+def get_changed_files(repo, pr) -> List[str]:
+    """
+    Get list of changed file names in a PR.
+
+    Unlike get_pr_files, this returns only filenames (not SHAs) and includes
+    the previous filename for renamed files.
+
+    Args:
+        repo: Repository object
+        pr: Pull request object
+
+    Returns:
+        List of changed file paths (including old names for renames)
+    """
+    changed_files = []
+    for f in pr.get_files():
+        changed_files.append(f.filename)
+        # Include previous filename for renamed files
+        if f.previous_filename:
+            changed_files.append(f.previous_filename)
+    return changed_files
+
+
 def update_file_states(context: PRContext) -> Set[str]:
     """
     Update file states based on current PR state.
@@ -1870,7 +2159,12 @@ def update_file_states(context: PRContext) -> Set[str]:
         try:
             commit_ts = last_commit.commit.author.date
             if isinstance(commit_ts, datetime):
-                now = commit_ts.isoformat() + "Z"
+                # Ensure tz-aware before formatting
+                commit_ts = ensure_tz_aware(commit_ts)
+                now = commit_ts.isoformat().replace("+00:00", "Z")
+            elif commit_ts:
+                # String timestamp
+                now = str(commit_ts)
         except Exception:
             pass
 
@@ -1989,9 +2283,54 @@ def set_comment_reaction(
 # =============================================================================
 
 
+def ensure_tz_aware(dt: datetime) -> datetime:
+    """
+    Ensure a datetime object is timezone-aware (UTC).
+
+    PyGithub 1.56 returns tz-naive datetimes that are actually UTC.
+    This function adds UTC timezone info to naive datetimes.
+
+    Args:
+        dt: A datetime object (may be naive or aware)
+
+    Returns:
+        Timezone-aware datetime in UTC
+    """
+    if dt.tzinfo is None:
+        # Naive datetime - assume it's UTC (as GitHub always returns Zulu time)
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def parse_timestamp(ts: str) -> Optional[datetime]:
+    """
+    Parse an ISO format timestamp string to timezone-aware datetime.
+
+    Always returns UTC timezone-aware datetime.
+    """
+    if not ts:
+        return None
+    try:
+        # Handle various ISO formats
+        ts = ts.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(ts)
+        return ensure_tz_aware(dt)
+    except ValueError:
+        return None
+
+
 def get_comment_timestamp(comment) -> datetime:
-    """Get the timestamp of a comment."""
-    return comment.created_at
+    """
+    Get the timestamp of a comment as timezone-aware datetime.
+
+    PyGithub 1.56 returns naive datetimes that are actually UTC.
+    """
+    ts = comment.created_at
+    if isinstance(ts, datetime):
+        return ensure_tz_aware(ts)
+    # If it's a string, parse it
+    parsed = parse_timestamp(str(ts))
+    return parsed if parsed else datetime.now(tz=timezone.utc)
 
 
 def is_bot_allowed_command(command_line: str) -> bool:
@@ -2125,9 +2464,10 @@ def get_commit_timestamps(context: PRContext) -> List[datetime]:
     Get timestamps of all commits in the PR, sorted chronologically.
 
     Uses context.commits which should be populated before calling this function.
+    All returned timestamps are timezone-aware (UTC).
 
     Returns:
-        List of commit timestamps (datetime objects)
+        List of commit timestamps (timezone-aware datetime objects)
     """
     if not context.commits:
         return []
@@ -2138,10 +2478,13 @@ def get_commit_timestamps(context: PRContext) -> List[datetime]:
             commit_date = commit.commit.author.date
             if commit_date:
                 if isinstance(commit_date, datetime):
-                    timestamps.append(commit_date)
+                    # PyGithub 1.56 returns naive datetimes - make them tz-aware
+                    timestamps.append(ensure_tz_aware(commit_date))
                 else:
                     # Parse string timestamp
-                    timestamps.append(datetime.fromisoformat(commit_date.replace("Z", "+00:00")))
+                    parsed = parse_timestamp(commit_date)
+                    if parsed:
+                        timestamps.append(parsed)
         except Exception as e:
             logger.warning(f"Failed to get timestamp from commit: {e}")
 
@@ -2166,16 +2509,78 @@ def has_commit_after(commit_timestamps: List[datetime], comment_timestamp: datet
     return False
 
 
-def parse_timestamp(ts: str) -> Optional[datetime]:
-    """Parse an ISO format timestamp string to datetime."""
-    if not ts:
+def get_last_commit_before(
+    commit_timestamps: List[datetime], timestamp: datetime
+) -> Optional[datetime]:
+    """
+    Get the timestamp of the last commit before the given timestamp.
+
+    Args:
+        commit_timestamps: Sorted list of commit timestamps
+        timestamp: Timestamp to check against
+
+    Returns:
+        Timestamp of the last commit before the given time, or None if no commits before
+    """
+    last_commit = None
+    for commit_ts in commit_timestamps:
+        if commit_ts <= timestamp:
+            last_commit = commit_ts
+        else:
+            break
+    return last_commit
+
+
+def get_snapshot_for_timestamp(context: PRContext, timestamp: datetime) -> Optional[str]:
+    """
+    Get or create the appropriate snapshot ID for a signature at a given timestamp.
+
+    Snapshots correspond to distinct states of the PR (sets of file versions).
+    A new snapshot is created when commits change the PR state.
+
+    For efficiency, we use the last commit timestamp before the comment as a key
+    to determine which snapshot the signature belongs to.
+
+    Args:
+        context: PR processing context
+        timestamp: Timestamp of the signature comment (should be tz-aware)
+
+    Returns:
+        Snapshot ID for this timestamp, or None if no snapshot exists
+    """
+    # Ensure timestamp is tz-aware
+    timestamp = ensure_tz_aware(timestamp)
+
+    # Get commit timestamps (already tz-aware from get_commit_timestamps)
+    commit_timestamps = get_commit_timestamps(context) if context.is_pr else []
+
+    if not commit_timestamps:
+        # No commits, use current snapshot
+        snapshot = context.cache.get_current_snapshot()
+        return snapshot.snapshot_id if snapshot else None
+
+    # Find the last commit before this timestamp
+    last_commit = get_last_commit_before(commit_timestamps, timestamp)
+
+    if last_commit is None:
+        # Comment is before all commits - this shouldn't happen normally
+        # but use the first snapshot if available
+        if context.cache.snapshots:
+            return list(context.cache.snapshots.keys())[0]
         return None
-    try:
-        # Handle various ISO formats
-        ts = ts.replace("Z", "+00:00")
-        return datetime.fromisoformat(ts)
-    except ValueError:
-        return None
+
+    # Check if we already have a snapshot for this commit
+    for snap_id, snapshot in context.cache.snapshots.items():
+        snap_ts = parse_timestamp(snapshot.timestamp)
+        if snap_ts and abs((snap_ts - last_commit).total_seconds()) < 1:
+            # Found matching snapshot (within 1 second tolerance)
+            return snap_id
+
+    # If no matching snapshot found, return current snapshot
+    # (the snapshot system creates one snapshot for the current state,
+    # and signatures are associated with it based on commit timing)
+    snapshot = context.cache.get_current_snapshot()
+    return snapshot.snapshot_id if snapshot else None
 
 
 def process_all_comments(context: PRContext) -> None:
@@ -2455,109 +2860,191 @@ def can_merge(context: PRContext) -> bool:
 
 
 def generate_status_message(context: PRContext) -> str:
-    """Generate a status message for the PR."""
+    """Generate a status message for the PR or Issue."""
     lines = []
+    entity_type = "PR" if context.is_pr else "Issue"
 
-    pr_state = determine_pr_state(context)
-    lines.append(f"**PR Status: {pr_state.value}**\n")
-
-    # Category status
-    category_states = compute_category_approval_states(context)
-    pr_number = context.issue.number if context.issue else 0
-    pre_checks = get_pre_checks(context.repo_config, pr_number)
-    extra_checks = get_extra_checks(context.repo_config, pr_number)
-
-    lines.append("**Categories:**")
-    for cat_name, state in sorted(category_states.items()):
-        # Determine category type
-        if cat_name in pre_checks:
-            type_str = "🔧"  # Pre-check (required for tests)
-        elif cat_name in extra_checks:
-            type_str = "🔒"  # Extra check (required for merge)
-        else:
-            type_str = "📌"  # Regular category
-        state_emoji = {"approved": "✅", "rejected": "❌", "pending": "⏳"}[state.value]
-        lines.append(f"- {type_str} {cat_name}: {state_emoji} {state.value}")
-
-    # Holds
-    if context.holds:
-        lines.append("\n**Active Holds:**")
-        for hold in context.holds:
-            lines.append(f"- {hold.category} by @{hold.user}")
-
-    # Merge status
-    lines.append("")
-    if can_merge(context):
-        lines.append("✅ **Ready to merge**")
+    if context.is_pr:
+        pr_state = determine_pr_state(context)
+        lines.append(f"**{entity_type} Status: {pr_state.value}**\n")
     else:
-        reasons = []
-        if pr_state == PRState.TESTS_PENDING:
-            pending_pre = [
-                cat
-                for cat in pre_checks
-                if category_states.get(cat, ApprovalState.PENDING) != ApprovalState.APPROVED
-            ]
-            if pending_pre:
-                reasons.append(f"Pre-checks pending: {', '.join(pending_pre)}")
-            else:
-                reasons.append("Tests not passed")
-        elif pr_state == PRState.SIGNATURES_PENDING:
-            pending_cats = [
-                cat
-                for cat, state in category_states.items()
-                if state != ApprovalState.APPROVED and cat.lower() != "orp"
-            ]
-            if pending_cats:
-                reasons.append(f"Pending signatures: {', '.join(pending_cats)}")
+        lines.append(f"**{entity_type} Status**\n")
+
+    # Category status (for PRs)
+    if context.is_pr:
+        category_states = compute_category_approval_states(context)
+        pr_number = context.issue.number if context.issue else 0
+        pre_checks = get_pre_checks(context.repo_config, pr_number)
+        extra_checks = get_extra_checks(context.repo_config, pr_number)
+
+        if category_states:
+            lines.append("**Categories:**")
+            for cat_name, state in sorted(category_states.items()):
+                # Determine category type
+                if cat_name in pre_checks:
+                    type_str = "🔧"  # Pre-check (required for tests)
+                elif cat_name in extra_checks:
+                    type_str = "🔒"  # Extra check (required for merge)
+                else:
+                    type_str = "📌"  # Regular category
+                state_emoji = {"approved": "✅", "rejected": "❌", "pending": "⏳"}[state.value]
+                lines.append(f"- {type_str} {cat_name}: {state_emoji} {state.value}")
+
+        # Holds
         if context.holds:
-            reasons.append("Has active holds")
+            lines.append("\n**Active Holds:**")
+            for hold in context.holds:
+                lines.append(f"- {hold.category} by @{hold.user}")
 
-        # Check ORP
-        if "orp" in [c.lower() for c in extra_checks]:
-            orp_state = category_states.get("orp", ApprovalState.PENDING)
-            if orp_state != ApprovalState.APPROVED:
-                reasons.append("ORP approval required")
+        # Merge status
+        lines.append("")
+        if can_merge(context):
+            lines.append("✅ **Ready to merge**")
+        else:
+            reasons = []
+            if pr_state == PRState.TESTS_PENDING:
+                pending_pre = [
+                    cat
+                    for cat in pre_checks
+                    if category_states.get(cat, ApprovalState.PENDING) != ApprovalState.APPROVED
+                ]
+                if pending_pre:
+                    reasons.append(f"Pre-checks pending: {', '.join(pending_pre)}")
+                else:
+                    reasons.append("Tests not passed")
+            elif pr_state == PRState.SIGNATURES_PENDING:
+                pending_cats = [
+                    cat
+                    for cat, state in category_states.items()
+                    if state != ApprovalState.APPROVED and cat.lower() != "orp"
+                ]
+                if pending_cats:
+                    reasons.append(f"Pending signatures: {', '.join(pending_cats)}")
+            if context.holds:
+                reasons.append("Has active holds")
 
-        lines.append("❌ **Not ready to merge:**")
-        for reason in reasons:
-            lines.append(f"  - {reason}")
+            # Check ORP
+            if "orp" in [c.lower() for c in extra_checks]:
+                orp_state = category_states.get("orp", ApprovalState.PENDING)
+                if orp_state != ApprovalState.APPROVED:
+                    reasons.append("ORP approval required")
+
+            lines.append("❌ **Not ready to merge:**")
+            for reason in reasons:
+                lines.append(f"  - {reason}")
+
+    # Labels section (for both PRs and Issues)
+    all_labels = set()
+    all_labels.update(context.pending_labels)
+    all_labels.update(context.extra_labels.get("mtype", []))
+
+    if all_labels:
+        lines.append("\n**Labels:**")
+        for label in sorted(all_labels):
+            lines.append(f"- {label}")
 
     return "\n".join(lines)
 
 
 def update_pr_status(context: PRContext) -> None:
-    """Update PR labels and status based on current state."""
+    """Update PR/Issue labels and status based on current state."""
     if context.dry_run:
-        logger.info("[DRY RUN] Would update PR status")
+        logger.info("[DRY RUN] Would update PR/Issue status")
         return
 
-    pr_state = determine_pr_state(context)
-
-    # Update labels
+    # Get current labels
     current_labels = {label.name for label in context.issue.get_labels()}
+    labels_to_add: Set[str] = set()
+    labels_to_remove: Set[str] = set()
 
-    state_labels = {
-        PRState.TESTS_PENDING: "tests-pending",
-        PRState.SIGNATURES_PENDING: "signatures-pending",
-        PRState.FULLY_SIGNED: "fully-signed",
-        PRState.MERGED: "merged",
-    }
+    # Handle PR-specific state labels
+    if context.is_pr:
+        pr_state = determine_pr_state(context)
 
-    # Remove old state labels
-    for state, label in state_labels.items():
-        if state != pr_state and label in current_labels:
-            try:
-                context.issue.remove_from_labels(label)
-            except Exception:
-                pass  # Label might not exist
+        state_labels = {
+            PRState.TESTS_PENDING: "tests-pending",
+            PRState.SIGNATURES_PENDING: "signatures-pending",
+            PRState.FULLY_SIGNED: "fully-signed",
+            PRState.MERGED: "merged",
+        }
 
-    # Add current state label
-    current_label = state_labels.get(pr_state)
-    if current_label and current_label not in current_labels:
+        # Remove old state labels, add current
+        for state, label in state_labels.items():
+            if state == pr_state:
+                if label not in current_labels:
+                    labels_to_add.add(label)
+            else:
+                if label in current_labels:
+                    labels_to_remove.add(label)
+
+        # Handle category state labels (<cat>-pending, <cat>-approved, <cat>-rejected)
+        category_states = compute_category_approval_states(context)
+        state_suffixes = {
+            ApprovalState.PENDING: "-pending",
+            ApprovalState.APPROVED: "-approved",
+            ApprovalState.REJECTED: "-rejected",
+        }
+
+        for cat, state in category_states.items():
+            # Add current state label
+            current_state_label = f"{cat}{state_suffixes[state]}"
+            if current_state_label not in current_labels:
+                labels_to_add.add(current_state_label)
+
+            # Remove other state labels for this category
+            for other_state, suffix in state_suffixes.items():
+                if other_state != state:
+                    old_label = f"{cat}{suffix}"
+                    if old_label in current_labels:
+                        labels_to_remove.add(old_label)
+
+        # Add auto-labels based on file patterns
+        auto_labels = get_labels_for_pr(context)
+        for label in auto_labels:
+            if label not in current_labels:
+                labels_to_add.add(label)
+
+    # Handle type labels from 'type' command (works for both PRs and Issues)
+    # First, handle 'type' labels (only one allowed) - remove old ones
+    for label in current_labels:
+        if label in TYPE_COMMANDS:
+            label_info = TYPE_COMMANDS[label]
+            label_type = label_info[2] if len(label_info) > 2 else "mtype"
+            if label_type == "type" and label not in context.pending_labels:
+                # Check if we're adding a new 'type' label
+                adding_type_label = any(
+                    l in context.pending_labels
+                    and len(TYPE_COMMANDS.get(l, [])) > 2
+                    and TYPE_COMMANDS[l][2] == "type"
+                    for l in context.pending_labels
+                )
+                if adding_type_label:
+                    labels_to_remove.add(label)
+
+    # Add pending labels
+    for label in context.pending_labels:
+        if label not in current_labels:
+            labels_to_add.add(label)
+
+    # Add mtype labels from extra_labels (auto-detected from files)
+    for mtype_label in context.extra_labels.get("mtype", []):
+        if mtype_label not in current_labels:
+            labels_to_add.add(mtype_label)
+
+    # Apply label changes
+    for label in labels_to_remove:
         try:
-            context.issue.add_to_labels(current_label)
+            context.issue.remove_from_labels(label)
+            logger.debug(f"Removed label: {label}")
         except Exception as e:
-            logger.warning(f"Could not add label {current_label}: {e}")
+            logger.warning(f"Could not remove label {label}: {e}")
+
+    for label in labels_to_add:
+        try:
+            context.issue.add_to_labels(label)
+            logger.debug(f"Added label: {label}")
+        except Exception as e:
+            logger.warning(f"Could not add label {label}: {e}")
 
 
 # =============================================================================
@@ -2592,6 +3079,9 @@ def process_pr(
         Dict with processing results
     """
     setup_logging(loglevel)
+
+    # Initialize label patterns for auto-labeling
+    initialize_labels(repo_config)
 
     # Determine if this is a PR or Issue
     is_pr = hasattr(issue, "pull_request") and issue.pull_request is not None
@@ -2675,8 +3165,98 @@ def process_pr(
         notify_without_at=notify_without_at,
     )
 
-    # PR-specific processing
+    # Set repository info
+    context.repo_name = repo.name
+    context.repo_org = repo.owner.login if hasattr(repo.owner, "login") else repo.owner
+    repository = context.repo_name  # Alias for compatibility
+    context.cmssw_repo = context.repo_name == GH_CMSSW_REPO
+    context.cms_repo = context.repo_org in EXTERNAL_REPOS
+    context.external_repo = repository != CMSSW_REPO_NAME and any(
+        context.repo_org == org for org in EXTERNAL_REPOS
+    )
+
+    # PR-specific startup processing
     if is_pr and pr:
+        requestor = pr.user.login
+        gh_user_char = "" if notify_without_at else "@"
+
+        # Check for PRs to development branch that should go to master
+        if context.cmssw_repo and context.cms_repo and pr.base.ref == CMSSW_DEVEL_BRANCH:
+            if pr.state != "closed":
+                logger.error("This pull request must go in to master branch")
+                if not dryRun:
+                    pr.edit(base="master")
+                    msg = (
+                        f"{gh_user_char}{requestor}, {CMSSW_DEVEL_BRANCH} branch is closed "
+                        "for direct updates. cms-bot is going to move this PR to master branch.\n"
+                        "In future, please use cmssw master branch to submit your changes.\n"
+                    )
+                    issue.create_comment(msg)
+                return {
+                    "pr_number": issue.number,
+                    "is_pr": is_pr,
+                    "redirected": True,
+                    "reason": f"Redirected from {CMSSW_DEVEL_BRANCH} to master",
+                    "pr_state": None,
+                    "categories": {},
+                    "holds": [],
+                    "messages": [],
+                    "tests_triggered": [],
+                }
+
+        # Check if PR is to a closed branch
+        if is_closed_branch(pr.base.ref):
+            context.must_close = True
+
+        # Process changes for the PR to determine required signatures
+        if context.cmssw_repo or not context.external_repo:
+            if context.cmssw_repo:
+                # Add code-checks for master or forward-port branches
+                fwports = forward_ports_map.GIT_REPO_FWPORTS.get("cmssw", {})
+                if pr.base.ref == "master" or pr.base.ref in fwports.get(CMSSW_DEVEL_BRANCH, []):
+                    context.signing_categories.add("code-checks")
+                update_milestone(repo, issue, pr, dryRun)
+
+            chg_files = get_changed_files(repo, pr)
+            context.packages = set(file_to_package(repo_config, f) for f in chg_files)
+            add_nonblocking_labels(chg_files, context.extra_labels)
+            context.create_test_property = True
+        else:
+            # External repo handling
+            context.packages = {f"externals/{repository}"}
+            ex_pkg = external_to_package(repository)
+            if ex_pkg:
+                context.packages.add(ex_pkg)
+
+            if (context.repo_org != GH_CMSSW_ORGANIZATION) or (
+                context.repo_name in VALID_CMS_SW_REPOS_FOR_TESTS
+            ):
+                context.create_test_property = True
+
+            # Skip invalid CMSDIST branches
+            if context.repo_name == GH_CMSDIST_REPO:
+                if not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref):
+                    logger.error("Skipping PR as it does not belong to valid CMSDIST branch")
+                    return {
+                        "pr_number": issue.number,
+                        "is_pr": is_pr,
+                        "skipped": True,
+                        "reason": "Invalid CMSDIST branch",
+                        "pr_state": None,
+                        "categories": {},
+                        "holds": [],
+                        "messages": [],
+                        "tests_triggered": [],
+                    }
+
+            # Check for non-blocking labels in external repos
+            try:
+                if getattr(repo_config, "NONBLOCKING_LABELS", False):
+                    chg_files = get_changed_files(repo, pr)
+                    add_nonblocking_labels(chg_files, context.extra_labels)
+            except Exception:
+                pass
+
         # Update file states (creates snapshot)
         changed_files = update_file_states(context)
         if changed_files:
@@ -2685,6 +3265,9 @@ def process_pr(
     # Process all comments
     process_all_comments(context)
 
+    # Update status (labels, etc.) for both PRs and Issues
+    update_pr_status(context)
+
     # PR-specific state determination and actions
     pr_state = None
     if is_pr:
@@ -2692,8 +3275,17 @@ def process_pr(
         pr_state = determine_pr_state(context)
         logger.info(f"PR state: {pr_state.value}")
 
-        # Update PR status (labels, etc.)
-        update_pr_status(context)
+        # Handle must_close (e.g., PR to closed branch)
+        if context.must_close:
+            if dryRun:
+                logger.info("[DRY RUN] Would close issue (closed branch)")
+            else:
+                try:
+                    issue.edit(state="closed")
+                    logger.info("Issue closed (target branch is closed)")
+                except Exception as e:
+                    logger.error(f"Failed to close issue: {e}")
+                    context.messages.append(f"Failed to close issue: {e}")
 
         # Handle automerge
         if getattr(repo_config, "AUTOMERGE", False) and can_merge(context):
@@ -2723,8 +3315,8 @@ def process_pr(
     # Save cache
     save_cache_to_comments(issue, context.comments, cache, dryRun)
 
-    # Generate status message (for PRs)
-    status_message = generate_status_message(context) if is_pr else ""
+    # Generate status message (for both PRs and Issues)
+    status_message = generate_status_message(context)
 
     # Compute category states for return value (for PRs)
     category_states = compute_category_approval_states(context) if is_pr else {}
@@ -2732,6 +3324,10 @@ def process_pr(
     # Get check types for result
     pre_checks = get_pre_checks(repo_config, issue.number)
     extra_checks = get_extra_checks(repo_config, issue.number)
+
+    # Collect all labels
+    all_labels = set(context.pending_labels)
+    all_labels.update(context.extra_labels.get("mtype", []))
 
     # Return results
     return {
@@ -2751,9 +3347,21 @@ def process_pr(
             for name, state in category_states.items()
         },
         "holds": [{"category": h.category, "user": h.user} for h in context.holds],
+        "labels": sorted(all_labels),
         "messages": context.messages,
         "status_message": status_message,
-        "tests_triggered": context.tests_to_run,
+        "tests_triggered": [
+            {
+                "verb": t.verb,
+                "workflows": t.workflows,
+                "prs": t.prs,
+                "queue": t.queue,
+                "build_full": t.build_full,
+                "extra_packages": t.extra_packages,
+                "triggered_by": t.triggered_by,
+            }
+            for t in context.tests_to_run
+        ],
         "merged": context.should_merge and not dryRun,
     }
 

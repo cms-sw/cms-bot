@@ -1,0 +1,32 @@
+{
+  "id": 1,
+  "number": 1,
+  "title": "Test PR #1",
+  "body": "Test PR body",
+  "state": "open",
+  "user": {
+    "login": "testuser",
+    "id": 1
+  },
+  "labels": [],
+  "comments": [
+    {
+      "id": 100,
+      "body": "test",
+      "user": {
+        "login": "alice",
+        "id": 2
+      },
+      "created_at": "2025-11-28T14:02:08.373492+00:00"
+    },
+    {
+      "id": 101,
+      "body": "test",
+      "user": {
+        "login": "bob",
+        "id": 3
+      },
+      "created_at": "2025-11-28T14:02:08.373507+00:00"
+    }
+  ]
+}

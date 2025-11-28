@@ -963,12 +963,15 @@ class BotCache:
 class TestCmdParseError(ValueError):
     """Error raised when parsing build/test command fails."""
 
+    __test__ = False
     pass
 
 
 @dataclass
 class TestCmdResult:
     """Result of parsing a build/test command."""
+
+    __test__ = False
 
     verb: str  # 'build' or 'test'
     workflows: List[str] = field(default_factory=list)
@@ -982,6 +985,8 @@ class TestCmdResult:
 @dataclass
 class TestCmdParam:
     """Definition of a parameter for build/test command parsing."""
+
+    __test__ = False
 
     keyword: Union[str, re.Pattern]
     field_name: str
@@ -1001,6 +1006,8 @@ class TestCmdParam:
 @dataclass
 class TestRequest:
     """A request to run tests/build."""
+
+    __test__ = False
 
     verb: str  # 'build' or 'test'
     workflows: str = ""  # Comma-separated workflow list
@@ -2091,14 +2098,13 @@ def _handle_assign(
             )
             post_bot_comment(context, msg, "assign", comment_id)
 
-    # Note: assign commands are not cached - only signatures (+1/-1) are cached
     logger.info(f"Assigned categories: {', '.join(categories)}")
     return True
 
 
 @command(
     "unassign_category",
-    rf"^unassign(?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
+    rf"^unassign\s+(?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
     description="Remove category assignment (comma-separated)",
     pr_only=True,
 )
@@ -2206,7 +2212,10 @@ def _handle_unassign(
 
         categories = valid_categories
 
-    # Note: unassign commands are not cached - only signatures (+1/-1) are cached
+    # Remove categories from signing_categories
+    for cat in categories:
+        context.signing_categories.discard(cat)
+
     logger.info(f"Unassigned categories: {', '.join(categories)}")
     return True
 
@@ -2324,6 +2333,51 @@ def handle_reopen(
     context.should_reopen = True
     logger.info(f"Reopen requested by {user}")
     return True
+
+
+def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
+    """
+    Check if a user is allowed to trigger tests.
+
+    A user is a valid tester if ANY of these conditions is true:
+    1. User is in TRIGGER_PR_TESTS list
+    2. User is a release manager for the target branch
+    3. User is the repository organization
+    4. User is an L2 signer (has any category assignment)
+    5. User has been granted test rights via 'allow @user test rights'
+
+    Args:
+        context: PR processing context
+        user: Username to check
+        timestamp: Timestamp for L2 membership check
+
+    Returns:
+        True if user can trigger tests
+    """
+    # Check if user is in TRIGGER_PR_TESTS
+    if user in TRIGGER_PR_TESTS:
+        return True
+
+    # Check if user is a release manager
+    if context.pr:
+        release_managers = get_release_managers(context.pr.base.ref)
+        if user in release_managers:
+            return True
+
+    # Check if user is the repo organization
+    if user == context.repo_org:
+        return True
+
+    # Check if user has L2 categories
+    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
+    if user_categories:
+        return True
+
+    # Check if user has been granted test rights
+    if user in context.granted_test_rights:
+        return True
+
+    return False
 
 
 @command(
@@ -3277,51 +3331,6 @@ def should_process_comment(
     return True
 
 
-def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
-    """
-    Check if a user is allowed to trigger tests.
-
-    A user is a valid tester if ANY of these conditions is true:
-    1. User is in TRIGGER_PR_TESTS list
-    2. User is a release manager for the target branch
-    3. User is the repository organization
-    4. User is an L2 signer (has any category assignment)
-    5. User has been granted test rights via 'allow @user test rights'
-
-    Args:
-        context: PR processing context
-        user: Username to check
-        timestamp: Timestamp for L2 membership check
-
-    Returns:
-        True if user can trigger tests
-    """
-    # Check if user is in TRIGGER_PR_TESTS
-    if user in TRIGGER_PR_TESTS:
-        return True
-
-    # Check if user is a release manager
-    if context.pr:
-        release_managers = get_release_managers(context.pr.base.ref)
-        if user in release_managers:
-            return True
-
-    # Check if user is the repo organization
-    if user == context.repo_org:
-        return True
-
-    # Check if user has L2 categories
-    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
-    if user_categories:
-        return True
-
-    # Check if user has been granted test rights
-    if user in context.granted_test_rights:
-        return True
-
-    return False
-
-
 def check_command_acl(
     context: PRContext, command: Command, user: str, timestamp: datetime
 ) -> bool:
@@ -3604,12 +3613,9 @@ def get_categories_from_snapshot(context: PRContext) -> Dict[str, Set[str]]:
 
     Categories come from multiple sources:
     1. Automatic assignment: file → package → categories (stored in FileVersion.categories)
-    2. Manual assignment: 'assign'/'unassign' commands (stored in CommentInfo)
+    2. Manual assignment: 'assign'/'unassign' commands (stored in context.signing_categories)
     3. PRE_CHECKS: Categories required before tests (from repo_config)
     4. EXTRA_CHECKS: Categories required for merge (from repo_config)
-
-    The assign/unassign commands are processed in order to compute the final
-    set of manually assigned categories.
 
     Returns:
         Dict mapping category name to set of file version keys
@@ -3629,21 +3635,9 @@ def get_categories_from_snapshot(context: PRContext) -> Dict[str, Set[str]]:
                     categories[cat] = set()
                 categories[cat].add(fv_key)
 
-    # Process assign/unassign commands in order to compute manual assignments
-    # Sort by comment_id to ensure chronological order
-    manual_categories: Set[str] = set()
-    sorted_comments = sorted(context.cache.comments.items(), key=lambda x: int(x[0]))
-
-    for comment_id, comment_info in sorted_comments:
-        if comment_info.ctype == "assign":
-            for cat in comment_info.categories:
-                manual_categories.add(cat)
-        elif comment_info.ctype == "unassign":
-            for cat in comment_info.categories:
-                manual_categories.discard(cat)
-
-    # Add manually assigned categories (apply to all files in snapshot)
-    for cat in manual_categories:
+    # Add manually assigned categories from context.signing_categories
+    # (populated by assign/unassign command handlers during comment processing)
+    for cat in context.signing_categories:
         if cat not in categories:
             categories[cat] = set()
         categories[cat].update(snapshot.changes)
@@ -4225,9 +4219,9 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
 
     # Check commit count
     if commit_count >= TOO_MANY_COMMITS_WARN_THRESHOLD:
-        if not context.warned_too_many_commits and not context.ignore_commit_count:
-            if commit_count >= TOO_MANY_COMMITS_FAIL_THRESHOLD:
-                # Hard block - no override possible
+        if commit_count >= TOO_MANY_COMMITS_FAIL_THRESHOLD:
+            # Hard block - no override possible
+            if not context.warned_too_many_commits:
                 msg = (
                     f"This PR contains too many commits ({commit_count} >= "
                     f"{TOO_MANY_COMMITS_FAIL_THRESHOLD}) and will not be processed.\n"
@@ -4239,22 +4233,8 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                 if not dryRun:
                     context.issue.create_comment(msg)
                 logger.warning(f"PR blocked: too many commits ({commit_count})")
-            else:
-                # Warning - can be overridden
-                msg = (
-                    f"This PR contains many commits ({commit_count} >= "
-                    f"{TOO_MANY_COMMITS_WARN_THRESHOLD}) and will not be processed. "
-                    "Please ensure you have selected the correct target branch and "
-                    "consider squashing unnecessary commits.\n"
-                    f"{trackers_mention}, to re-enable processing of this PR, "
-                    "you can write `+commit-count` in a comment. Thanks."
-                )
-                if not dryRun:
-                    context.issue.create_comment(msg)
-                logger.warning(f"PR warned: many commits ({commit_count})")
 
-        # Block if not overridden
-        if not context.ignore_commit_count:
+            # Always block at FAIL threshold - cannot be overridden
             context.blocked_by_commit_count = True
             return {
                 "pr_number": context.issue.number,
@@ -4268,12 +4248,42 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                 "messages": [],
                 "tests_triggered": [],
             }
+        else:
+            # Warning level - can be overridden
+            if not context.warned_too_many_commits and not context.ignore_commit_count:
+                msg = (
+                    f"This PR contains many commits ({commit_count} >= "
+                    f"{TOO_MANY_COMMITS_WARN_THRESHOLD}) and will not be processed. "
+                    "Please ensure you have selected the correct target branch and "
+                    "consider squashing unnecessary commits.\n"
+                    f"{trackers_mention}, to re-enable processing of this PR, "
+                    "you can write `+commit-count` in a comment. Thanks."
+                )
+                if not dryRun:
+                    context.issue.create_comment(msg)
+                logger.warning(f"PR warned: many commits ({commit_count})")
+
+            # Block if not overridden
+            if not context.ignore_commit_count:
+                context.blocked_by_commit_count = True
+                return {
+                    "pr_number": context.issue.number,
+                    "is_pr": True,
+                    "blocked": True,
+                    "reason": f"Too many commits ({commit_count})",
+                    "pr_state": None,
+                    "categories": {},
+                    "holds": [],
+                    "labels": [],
+                    "messages": [],
+                    "tests_triggered": [],
+                }
 
     # Check file count (CMSSW repo only)
     if context.cmssw_repo and file_count >= TOO_MANY_FILES_WARN_THRESHOLD:
-        if not context.warned_too_many_files and not context.ignore_file_count:
-            if file_count >= TOO_MANY_FILES_FAIL_THRESHOLD:
-                # Hard block - no override possible
+        if file_count >= TOO_MANY_FILES_FAIL_THRESHOLD:
+            # Hard block - no override possible
+            if not context.warned_too_many_files:
                 msg = (
                     f"This PR touches too many files ({file_count} >= "
                     f"{TOO_MANY_FILES_FAIL_THRESHOLD}) and will not be processed.\n"
@@ -4285,22 +4295,8 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                 if not dryRun:
                     context.issue.create_comment(msg)
                 logger.warning(f"PR blocked: too many files ({file_count})")
-            else:
-                # Warning - can be overridden
-                msg = (
-                    f"This PR touches many files ({file_count} >= "
-                    f"{TOO_MANY_FILES_WARN_THRESHOLD}) and will not be processed. "
-                    "Please ensure you have selected the correct target branch and "
-                    "consider splitting this PR into several.\n"
-                    f"{trackers_mention}, to re-enable processing of this PR, "
-                    "you can write `+file-count` in a comment. Thanks."
-                )
-                if not dryRun:
-                    context.issue.create_comment(msg)
-                logger.warning(f"PR warned: many files ({file_count})")
 
-        # Block if not overridden
-        if not context.ignore_file_count:
+            # Always block at FAIL threshold - cannot be overridden
             context.blocked_by_file_count = True
             return {
                 "pr_number": context.issue.number,
@@ -4314,6 +4310,36 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                 "messages": [],
                 "tests_triggered": [],
             }
+        else:
+            # Warning level - can be overridden
+            if not context.warned_too_many_files and not context.ignore_file_count:
+                msg = (
+                    f"This PR touches many files ({file_count} >= "
+                    f"{TOO_MANY_FILES_WARN_THRESHOLD}) and will not be processed. "
+                    "Please ensure you have selected the correct target branch and "
+                    "consider splitting this PR into several.\n"
+                    f"{trackers_mention}, to re-enable processing of this PR, "
+                    "you can write `+file-count` in a comment. Thanks."
+                )
+                if not dryRun:
+                    context.issue.create_comment(msg)
+                logger.warning(f"PR warned: many files ({file_count})")
+
+            # Block if not overridden
+            if not context.ignore_file_count:
+                context.blocked_by_file_count = True
+                return {
+                    "pr_number": context.issue.number,
+                    "is_pr": True,
+                    "blocked": True,
+                    "reason": f"Too many files ({file_count})",
+                    "pr_state": None,
+                    "categories": {},
+                    "holds": [],
+                    "labels": [],
+                    "messages": [],
+                    "tests_triggered": [],
+                }
 
     return None
 

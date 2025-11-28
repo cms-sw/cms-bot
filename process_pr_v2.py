@@ -8,6 +8,7 @@ It handles code ownership, approval workflows, and merge automation.
 
 import base64
 import gzip
+import itertools
 import json
 import logging
 import re
@@ -20,6 +21,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
 from json import load as json_load
+from os import getenv as os_getenv
 from os.path import dirname, exists, join
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -206,6 +208,12 @@ MAX_COMMENT_SIZE = 60000
 REACTION_PLUS_ONE = "+1"
 REACTION_MINUS_ONE = "-1"
 
+# Commit and file count thresholds
+TOO_MANY_COMMITS_WARN_THRESHOLD = 150  # Warning level
+TOO_MANY_COMMITS_FAIL_THRESHOLD = 240  # Hard block level (no override possible)
+TOO_MANY_FILES_WARN_THRESHOLD = 1500  # Warning level
+TOO_MANY_FILES_FAIL_THRESHOLD = 3001  # Hard block level (no override possible)
+
 # Commands that can be processed from bot's own comments
 # (for CI results, code-checks, etc.)
 BOT_ALLOWED_COMMAND_PATTERNS = [
@@ -216,14 +224,15 @@ BOT_ALLOWED_COMMAND_PATTERNS = [
 
 # Regex patterns for build/test command parameters
 WF_PATTERN = r"(?:[a-z][a-z0-9_]+|[1-9][0-9]*(?:\.[0-9]+)?)"
-CMSSW_QUEUE_PATTERN = (
-    "CMSSW_[0-9]+_[0-9]+_(((X|[A-Z][A-Z0-9]+_X)(_[0-9-]+|))|[0-9]+(_[a-zA-Z0-9_]+)?)"
-)
+CMSSW_QUEUE_PATTERN = "CMSSW_[0-9]+_[0-9]+_(X|[A-Z][A-Z0-9]+_X|[0-9]+(_[a-zA-Z0-9_]+)?)"
 CMSSW_PACKAGE_PATTERN = "[A-Z][a-zA-Z0-9]+(?:/[a-zA-Z0-9]+|)"
 ARCH_PATTERN = "[a-z0-9]+_[a-z0-9]+_[a-z0-9]+"
 CMSSW_RELEASE_QUEUE_PATTERN = (
     f"(?:{CMSSW_QUEUE_PATTERN}|{ARCH_PATTERN}|{CMSSW_QUEUE_PATTERN}/{ARCH_PATTERN})"
 )
+RELVAL_OPTS = r"[-][a-zA-Z0-9_.,\s/'-]+"
+JENKINS_NODES = r"[a-zA-Z0-9_|&\s()-]+"
+
 CMS_PR_PATTERN = (
     "(?:#[1-9][0-9]*|(?:{cmsorgs})/+[a-zA-Z0-9_-]+#[1-9][0-9]*"
     "|https://+github.com/+(?:{cmsorgs})/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)".format(
@@ -237,12 +246,194 @@ RE_PKG_LIST = re.compile(f"{CMSSW_PACKAGE_PATTERN}(,{CMSSW_PACKAGE_PATTERN})*")
 RE_QUEUE = re.compile(CMSSW_RELEASE_QUEUE_PATTERN)
 TEST_VERBS = ("build", "test")
 
+
+# GPU flavors (loaded from files)
+def _load_gpu_flavors() -> List[str]:
+    """Load GPU flavors from configuration files."""
+    gpus = []
+    base_dir = dirname(__file__)
+    for filename in ("gpu_flavors.txt", "gpu_flavors_ondemand.txt"):
+        filepath = join(base_dir, filename)
+        try:
+            with open(filepath, "r") as f:
+                gpus.extend(line.strip() for line in f if line.strip())
+        except FileNotFoundError:
+            pass
+    return gpus
+
+
+ALL_GPUS = _load_gpu_flavors()
+ALL_GPU_BRANDS = sorted(set(gpu.split("_", 1)[0] for gpu in ALL_GPUS))
+
+# Test-related patterns
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"]
+EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
+EXTRA_TESTS = (
+    "|".join(EXTRA_RELVALS_TESTS)
+    + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi_microarchs"
+)
+SKIP_TESTS = "|".join(["static", "header"])
+ENABLE_TEST_PTRN = "enable(_tests?)?"
+
+# Multiline comment parameter mapping for 'test parameters:' command
+# Format: {key_pattern: [value_pattern, param_name, preserve_spaces?]}
+MULTILINE_COMMENTS_MAP: Dict[str, List[Any]] = {
+    f"(workflow|relval)s?({EXTRA_RELVALS_TESTS_OPTS})?": [
+        rf"({WF_PATTERN})(,({WF_PATTERN}))*",
+        "MATRIX_EXTRAS",
+    ],
+    "(workflow|relval)s?_profiling": [
+        rf"({WF_PATTERN})(,({WF_PATTERN}))*",
+        "PROFILING_WORKFLOWS",
+    ],
+    "pull_requests?": [
+        f"{CMS_PR_PATTERN}(,{CMS_PR_PATTERN})*",
+        "PULL_REQUESTS",
+    ],
+    "full_cmssw|full": ["true|false", "BUILD_FULL_CMSSW"],
+    "disable_poison": ["true|false", "DISABLE_POISON"],
+    "use_ib_tag": ["true|false", "USE_IB_TAG"],
+    "baseline": ["self|default", "USE_BASELINE"],
+    "set_env": [r"[A-Z][A-Z0-9_]+(,[A-Z][A-Z0-9_]+)*", "CMSBOT_SET_ENV"],
+    f"skip_tests?": [rf"({SKIP_TESTS})(,({SKIP_TESTS}))*", "SKIP_TESTS"],
+    "dry_run": ["true|false", "DRY_RUN"],
+    "jenkins_(slave|node)": [JENKINS_NODES, "RUN_ON_SLAVE"],
+    "(arch(itectures?)?|release|release/arch)": [CMSSW_RELEASE_QUEUE_PATTERN, "RELEASE_FORMAT"],
+    ENABLE_TEST_PTRN: [
+        rf"({EXTRA_TESTS})(,({EXTRA_TESTS}))*",
+        "ENABLE_BOT_TESTS",
+    ],
+    "ignore_tests?": ["build-warnings|clang-warnings", "IGNORE_BOT_TESTS"],
+    "container": [
+        r"[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+)?",
+        "DOCKER_IMGAGE",
+    ],
+    "cms-addpkg|addpkg": [
+        f"{CMSSW_PACKAGE_PATTERN}(,({CMSSW_PACKAGE_PATTERN}))*",
+        "EXTRA_CMSSW_PACKAGES",
+    ],
+    "build_verbose": ["true|false", "BUILD_VERBOSE"],
+    f"(workflow|relval)s?_opt(ion)?s?({EXTRA_RELVALS_TESTS_OPTS}|_input)?": [
+        RELVAL_OPTS,
+        "EXTRA_MATRIX_ARGS",
+        True,
+    ],
+    f"(workflow|relval)s?_command_opt(ion)?s?({EXTRA_RELVALS_TESTS_OPTS}|_input)?": [
+        RELVAL_OPTS,
+        "EXTRA_MATRIX_COMMAND_ARGS",
+        True,
+    ],
+    "gpu(_flavor|_type)?s?": [
+        f"({'|'.join(itertools.chain(ALL_GPUS, ALL_GPU_BRANDS))})(,({'|'.join(itertools.chain(ALL_GPUS, ALL_GPU_BRANDS))}))*",
+        "SELECTED_GPU_TYPES",
+    ],
+}
+
 # Regex patterns for PR description flags
 RE_CMS_BOT_IGNORE = re.compile(r"<cms-bot>\s*</cms-bot>", re.IGNORECASE)
 RE_NOTIFY_NO_AT = re.compile(r"<notify>\s*</notify>", re.IGNORECASE)
 
 # Global L2 data cache
 _L2_DATA: Dict[str, List[Dict[str, Any]]] = {}
+
+
+# =============================================================================
+# HELPER FUNCTIONS FOR TEST PARAMETERS
+# =============================================================================
+
+
+def get_prs_list_from_string(pr_string: str, repo_string: str = "") -> List[str]:
+    """
+    Parse a comma-separated PR string into a list of normalized PR references.
+
+    Args:
+        pr_string: Comma-separated PR references
+        repo_string: Default repository for bare PR numbers
+
+    Returns:
+        List of normalized PR references (org/repo#number format)
+    """
+    prs = []
+    for pr in pr_string.split(","):
+        pr = pr.strip()
+        if not pr:
+            continue
+        # Handle full GitHub URLs
+        if "/github.com/" in pr:
+            pr = pr.split("/github.com/", 1)[-1]
+            pr = pr.replace("/pull/", "#").strip("/")
+        # Normalize double slashes
+        while "//" in pr:
+            pr = pr.replace("//", "/")
+        # Add repo prefix for bare PR numbers
+        if pr.startswith("#"):
+            pr = repo_string + pr
+        prs.append(pr)
+    return prs
+
+
+def check_ignore_bot_tests(value: str, *args) -> Tuple[str, Optional[str]]:
+    """Normalize IGNORE_BOT_TESTS value."""
+    return value.upper().replace(" ", ""), None
+
+
+def check_enable_bot_tests(value: str, *args) -> Tuple[str, Optional[str]]:
+    """Normalize ENABLE_BOT_TESTS value, handling 'none' specially."""
+    tests = value.upper().replace(" ", "")
+    if "NONE" in tests:
+        tests = "NONE"
+    return tests, None
+
+
+def check_extra_matrix_args(
+    value: str, repo, params: Dict[str, str], key: str, param: str, *args
+) -> Tuple[str, Optional[str]]:
+    """Handle EXTRA_MATRIX_ARGS with suffix based on key."""
+    key_parts = key.split("_")
+    if key_parts[-1] in ["input"] + EXTRA_RELVALS_TESTS:
+        param = f"{param}_{key_parts[-1].upper().replace('-', '_')}"
+    return value, param
+
+
+def check_extra_matrix_command_args(
+    value: str, repo, params: Dict[str, str], key: str, param: str, *args
+) -> Tuple[str, Optional[str]]:
+    """Handle EXTRA_MATRIX_COMMAND_ARGS with suffix based on key."""
+    # Same logic as check_extra_matrix_args
+    return check_extra_matrix_args(value, repo, params, key, param, *args)
+
+
+def check_matrix_extras(
+    value: str, repo, params: Dict[str, str], key: str, param: str, *args
+) -> Tuple[str, Optional[str]]:
+    """Handle MATRIX_EXTRAS with suffix and sort workflows."""
+    key_parts = key.split("_")
+    if key_parts[-1] in EXTRA_RELVALS_TESTS:
+        param = f"{param}_{key_parts[-1].upper().replace('-', '_')}"
+    # Sort workflows
+    value = ",".join(sorted(value.split(",")))
+    return value, param
+
+
+def check_pull_requests(value: str, repo, *args) -> Tuple[str, Optional[str]]:
+    """Normalize PULL_REQUESTS value."""
+    repo_string = repo.full_name if hasattr(repo, "full_name") else str(repo)
+    return " ".join(get_prs_list_from_string(value, repo_string)), None
+
+
+def check_release_format(
+    value: str, repo, params: Dict[str, str], *args
+) -> Tuple[str, Optional[str]]:
+    """Handle RELEASE_FORMAT, extracting architecture if present."""
+    release_queue = value
+    arch = ""
+    if "/" in release_queue:
+        release_queue, arch = release_queue.split("/", 1)
+    elif re.fullmatch(ARCH_PATTERN, release_queue):
+        arch = release_queue
+        release_queue = ""
+    params["ARCHITECTURE_FILTER"] = arch
+    return release_queue, None
 
 
 # =============================================================================
@@ -333,6 +524,72 @@ def init_l2_data(
 def get_l2_data() -> Dict[str, List[Dict[str, Any]]]:
     """Get the cached L2 data."""
     return _L2_DATA
+
+
+def get_watchers(
+    context: "PRContext",
+    changed_files: List[str],
+    timestamp: datetime,
+) -> Set[str]:
+    """
+    Get watchers for the PR based on changed files and categories.
+
+    Watchers are users who want to be notified when certain files or
+    categories are modified, but don't have signing permission.
+
+    Args:
+        context: PR processing context
+        changed_files: List of files changed in the PR
+        timestamp: Timestamp for lookups
+
+    Returns:
+        Set of usernames who should be notified
+    """
+    watchers: Set[str] = set()
+    author = context.issue.user.login if context.issue else ""
+
+    # Load file watchers from watchers.yaml
+    file_watchers = read_repo_file(context.repo_config, "watchers.yaml", {})
+
+    # Find watchers based on changed files
+    for chg_file in changed_files:
+        for user, watched_regexps in file_watchers.items():
+            if user == author:
+                continue
+            for regexp in watched_regexps:
+                if re.match(f"^{regexp}.*", chg_file):
+                    watchers.add(user)
+                    break
+
+    # Load category watchers from category-watchers.yaml
+    cat_watchers = read_repo_file(context.repo_config, "category-watchers.yaml", {})
+    non_block_cats = context.extra_labels.get("mtype", [])
+
+    for user, cats in cat_watchers.items():
+        if user == author:
+            continue
+        for cat in cats:
+            if cat in context.signing_categories or cat in non_block_cats:
+                logger.debug(f"Added {user} to watch due to category {cat}")
+                watchers.add(user)
+                break
+
+    # Expand watching groups
+    watching_groups = read_repo_file(context.repo_config, "groups.yaml", {})
+    expanded_watchers: Set[str] = set()
+
+    for watcher in watchers:
+        if watcher in watching_groups:
+            # This is a group, expand it
+            expanded_watchers.update(watching_groups[watcher])
+        else:
+            expanded_watchers.add(watcher)
+
+    # Remove PR author from watchers
+    expanded_watchers.discard(author)
+
+    logger.info(f"Watchers: {', '.join(sorted(expanded_watchers))}")
+    return expanded_watchers
 
 
 # =============================================================================
@@ -1035,6 +1292,48 @@ def get_user_l2_categories(
     return []
 
 
+def get_category_l2s(
+    repo_config: types.ModuleType, category: str, timestamp: datetime
+) -> List[str]:
+    """
+    Get the L2 signers for a specific category.
+
+    Args:
+        repo_config: Repository configuration module
+        category: Category name
+        timestamp: Timestamp for time-based L2 lookup
+
+    Returns:
+        List of usernames who are L2 for this category
+    """
+    l2s = []
+    timestamp_epoch = int(timestamp.timestamp())
+
+    # Check CMSSW_L2 mapping
+    for username, cat_or_periods in CMSSW_L2.items():
+        if isinstance(cat_or_periods, str):
+            if cat_or_periods == category:
+                l2s.append(username)
+        elif isinstance(cat_or_periods, list):
+            # Check for time-based periods
+            for item in cat_or_periods:
+                if isinstance(item, dict):
+                    start = item.get("start", 0)
+                    end = item.get("end", float("inf"))
+                    if start <= timestamp_epoch <= end:
+                        cat = item.get("category", [])
+                        if isinstance(cat, str) and cat == category:
+                            l2s.append(username)
+                        elif isinstance(cat, list) and category in cat:
+                            l2s.append(username)
+                        break
+                elif item == category:
+                    l2s.append(username)
+                    break
+
+    return l2s
+
+
 def get_package_category(repo_config: types.ModuleType, package: str) -> Optional[str]:
     """
     Map a package name to its primary category.
@@ -1392,7 +1691,9 @@ class PRContext:
     # Processing state
     messages: List[str] = field(default_factory=list)
     should_merge: bool = False
+    should_reopen: bool = False  # Reopen the issue/PR
     must_close: bool = False  # PR should be closed (e.g., closed branch)
+    abort_tests: bool = False  # Abort pending tests
     tests_to_run: List[Any] = field(default_factory=list)  # List of TestRequest objects
     pending_reactions: Dict[int, str] = field(default_factory=dict)  # comment_id -> reaction
     holds: List[Hold] = field(default_factory=list)  # Active holds on the PR
@@ -1400,24 +1701,100 @@ class PRContext:
     extra_labels: Dict[str, List[str]] = field(default_factory=dict)  # Extra labels by type
     signing_categories: Set[str] = field(default_factory=set)  # Categories requiring signatures
     packages: Set[str] = field(default_factory=set)  # Packages touched by PR
+    test_params: Dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
+    granted_test_rights: Set[str] = field(default_factory=set)  # Users granted test rights
 
-    # Repository info (set during processing)
-    repo_name: str = ""
-    repo_org: str = ""
-    cmssw_repo: bool = False  # Is this the main CMSSW repo?
-    cms_repo: bool = False  # Is this a CMS organization repo?
-    external_repo: bool = False  # Is this an external repo?
+    # Code checks
+    code_checks_requested: bool = False
+    code_checks_tool_conf: Optional[str] = None
+    code_checks_apply_patch: bool = False
+
+    # Test overrides
+    ignore_tests_rejected: Optional[str] = None  # Reason for ignoring test rejection
+    ignore_commit_count: bool = False  # Override commit count warning (+commit-count accepted)
+    ignore_file_count: bool = False  # Override file count warning (+file-count accepted)
+    warned_too_many_commits: bool = False  # Bot has already warned about commits
+    warned_too_many_files: bool = False  # Bot has already warned about files
+    blocked_by_commit_count: bool = False  # PR processing blocked by commit count
+    blocked_by_file_count: bool = False  # PR processing blocked by file count
+
+    # Backport info
+    backport_of: Optional[str] = None  # PR number this is a backport of
+
+    # Repository info - only _repo_name and _repo_org are stored
+    _repo_name: str = ""
+    _repo_org: str = ""
     create_test_property: bool = False  # Should create test properties?
 
     # PR description flags
     notify_without_at: bool = False  # If True, don't use @ when mentioning users
+
+    # Message tracking (to avoid duplicate bot messages)
+    posted_messages: Set[str] = field(default_factory=set)  # Message keys already posted
+
+    # Welcome message tracking
+    welcome_message_posted: bool = False  # True if welcome message was posted
+
+    # Watchers for this PR
+    watchers: Set[str] = field(default_factory=set)  # Users watching files/categories
+
+    # Changed files (cached)
+    _changed_files: Optional[List[str]] = field(default=None, repr=False)
+
+    @property
+    def repo_name(self) -> str:
+        """Get repository name."""
+        if self._repo_name:
+            return self._repo_name
+        return self.repo.name if self.repo else ""
+
+    @repo_name.setter
+    def repo_name(self, value: str) -> None:
+        self._repo_name = value
+
+    @property
+    def repo_org(self) -> str:
+        """Get repository organization."""
+        if self._repo_org:
+            return self._repo_org
+        if self.repo and hasattr(self.repo.owner, "login"):
+            return self.repo.owner.login
+        return ""
+
+    @repo_org.setter
+    def repo_org(self, value: str) -> None:
+        self._repo_org = value
+
+    @property
+    def cmssw_repo(self) -> bool:
+        """Check if this is the main CMSSW repo."""
+        return self.repo_name == GH_CMSSW_REPO
+
+    @property
+    def cms_repo(self) -> bool:
+        """Check if this is a CMS organization repo."""
+        return self.repo_org in EXTERNAL_REPOS
+
+    @property
+    def external_repo(self) -> bool:
+        """Check if this is an external repo."""
+        return self.repo_name != CMSSW_REPO_NAME and self.repo_org in EXTERNAL_REPOS
+
+    @property
+    def is_draft(self) -> bool:
+        """Check if PR is in draft state."""
+        if self.pr and hasattr(self.pr, "draft"):
+            return self.pr.draft
+        return False
 
 
 def format_mention(context: PRContext, username: str) -> str:
     """
     Format a username for mentioning in a comment.
 
-    If the PR has <notify></notify> in its description, omit the @ symbol.
+    Omits @ symbol if:
+    - PR has <notify></notify> in its description
+    - PR is in draft state
 
     Args:
         context: PR processing context
@@ -1426,9 +1803,66 @@ def format_mention(context: PRContext, username: str) -> str:
     Returns:
         Formatted mention string (with or without @)
     """
-    if context.notify_without_at:
+    if context.notify_without_at or context.is_draft:
         return username
     return f"@{username}"
+
+
+def post_bot_comment(
+    context: PRContext,
+    message: str,
+    message_key: str,
+    comment_id: Optional[int] = None,
+) -> bool:
+    """
+    Post a bot comment, avoiding duplicates.
+
+    Checks if a message with the same key (tied to a comment_id if provided)
+    has already been posted. If so, skips posting.
+
+    Args:
+        context: PR processing context
+        message: The message to post
+        message_key: Unique key identifying the message type
+        comment_id: Optional comment ID this message is in response to
+
+    Returns:
+        True if message was posted, False if skipped (duplicate or dry run)
+    """
+    # Build full key including comment_id if provided
+    full_key = f"{message_key}:{comment_id}" if comment_id else message_key
+
+    # Check if already posted (scan existing comments for this message pattern)
+    for comment in context.comments:
+        if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
+            body = comment.body or ""
+            # Check if this comment contains our message key marker
+            if f"<!--{full_key}-->" in body:
+                logger.debug(f"Skipping duplicate message: {full_key}")
+                return False
+
+    # Check if we've already queued this message in current run
+    if full_key in context.posted_messages:
+        logger.debug(f"Message already queued: {full_key}")
+        return False
+
+    # Mark as posted
+    context.posted_messages.add(full_key)
+
+    # Add invisible marker to message for future detection
+    marked_message = f"{message}\n<!--{full_key}-->"
+
+    if context.dry_run:
+        logger.info(f"[DRY RUN] Would post comment: {message[:100]}...")
+        return False
+
+    try:
+        context.issue.create_comment(marked_message)
+        logger.info(f"Posted comment: {message_key}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to post comment: {e}")
+        return False
 
 
 # =============================================================================
@@ -1634,6 +2068,29 @@ def _handle_assign(
 
         categories = valid_categories
 
+    # Determine which categories are truly new
+    new_categories = [cat for cat in categories if cat not in context.signing_categories]
+
+    if new_categories:
+        # Add new categories to signing_categories
+        context.signing_categories.update(new_categories)
+
+        # Get L2s for the new categories
+        new_l2s = set()
+        for cat in new_categories:
+            cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+            new_l2s.update(cat_l2s)
+
+        # Post message about new categories
+        if new_l2s:
+            l2_mentions = ",".join(format_mention(context, l2) for l2 in sorted(new_l2s))
+            msg = (
+                f"New categories assigned: {','.join(new_categories)}\n\n"
+                f"{l2_mentions} you have been requested to review this Pull request/Issue "
+                "and eventually sign? Thanks"
+            )
+            post_bot_comment(context, msg, "assign", comment_id)
+
     # Note: assign commands are not cached - only signatures (+1/-1) are cached
     logger.info(f"Assigned categories: {', '.join(categories)}")
     return True
@@ -1641,7 +2098,7 @@ def _handle_assign(
 
 @command(
     "unassign_category",
-    rf"^unassign\s+(?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
+    rf"^unassign(?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
     description="Remove category assignment (comma-separated)",
     pr_only=True,
 )
@@ -1771,6 +2228,14 @@ def handle_hold(
         context.holds.append(hold)
         logger.info(f"Hold placed by {user} ({category})")
 
+    # Post hold notification
+    msg = (
+        f"Pull request has been put on hold by {format_mention(context, user)}\n"
+        "They need to issue an `unhold` command to remove the `hold` state "
+        "or L1 can `unhold` it for all"
+    )
+    post_bot_comment(context, msg, "hold", comment_id)
+
     # Note: hold commands are not cached - only signatures (+1/-1) are cached
     return True
 
@@ -1829,6 +2294,231 @@ def handle_merge(
     logger.info(f"Merge requested by {user}")
 
     # Note: merge commands are not cached - only signatures (+1/-1) are cached
+    return True
+
+
+@command("close", r"^close$", description="Close the PR/Issue")
+def handle_close(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle close command.
+
+    Can be used by L2s, release managers, and issue trackers.
+    """
+    # ACL check would be done at command dispatch level
+    context.must_close = True
+    logger.info(f"Close requested by {user}")
+    return True
+
+
+@command("reopen", r"^(?:re)?open$", description="Reopen the PR/Issue")
+def handle_reopen(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle open/reopen command.
+
+    Can be used by L2s, release managers, and issue trackers.
+    """
+    context.should_reopen = True
+    logger.info(f"Reopen requested by {user}")
+    return True
+
+
+@command(
+    "abort",
+    r"^abort(?:\s+test)?$",
+    acl=is_valid_tester,
+    description="Abort pending tests",
+    pr_only=True,
+)
+def handle_abort(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle abort/abort test command.
+
+    Aborts any pending tests for the PR.
+    """
+    context.abort_tests = True
+    logger.info(f"Test abort requested by {user}")
+    return True
+
+
+@command("urgent", r"^urgent$", description="Mark PR as urgent")
+def handle_urgent(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle urgent command.
+
+    Can be used by L2s, release managers, or the PR author.
+    """
+    context.pending_labels.add("urgent")
+    logger.info(f"PR marked as urgent by {user}")
+    return True
+
+
+@command(
+    "backport",
+    r"^backport\s+(?:of\s+)?(?:#|https?://github\.com/[^/]+/[^/]+/pull/)(?P<pr_num>\d+)$",
+    description="Mark PR as backport of another PR",
+)
+def handle_backport(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle backport of #<num> command.
+
+    Can be used by L2s, release managers, or the PR author.
+    """
+    pr_num = match.group("pr_num")
+    context.pending_labels.add("backport")
+    context.backport_of = pr_num
+    logger.info(f"PR marked as backport of #{pr_num} by {user}")
+    return True
+
+
+@command(
+    "allow_test_rights",
+    r"^allow\s+@(?P<username>[^\s]+)\s+test\s+rights$",
+    description="Grant test rights to a user",
+    pr_only=True,
+)
+def handle_allow_test_rights(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle 'allow @<user> test rights' command.
+
+    Can only be used by L2s and release managers.
+    Grants the specified user permission to trigger tests.
+    """
+    target_user = match.group("username")
+    context.granted_test_rights.add(target_user)
+    logger.info(f"Test rights granted to {target_user} by {user}")
+    return True
+
+
+@command(
+    "code_checks",
+    r"^code-checks(?:\s+with\s+(?P<tool_conf>\S+))?(?:\s+and\s+apply\s+patch)?$",
+    description="Request code checks",
+    pr_only=True,
+)
+def handle_code_checks(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle code-checks command.
+
+    Triggers code style/format checks on the PR.
+    Optionally can specify tool configuration and apply patch.
+    """
+    tool_conf = match.group("tool_conf") if match.lastindex else None
+    apply_patch = "apply patch" in (match.group(0) or "").lower()
+
+    context.code_checks_requested = True
+    context.code_checks_tool_conf = tool_conf
+    context.code_checks_apply_patch = apply_patch
+
+    logger.info(
+        f"Code checks requested by {user}"
+        + (f" with {tool_conf}" if tool_conf else "")
+        + (" (apply patch)" if apply_patch else "")
+    )
+    return True
+
+
+@command(
+    "ignore_tests_rejected",
+    r"^ignore\s+tests-rejected\s+(?:with\s+)?(?P<reason>manual-override|ib-failure|external-failure)$",
+    description="Override test failure with reason",
+    pr_only=True,
+)
+def handle_ignore_tests_rejected(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle 'ignore tests-rejected with <reason>' command.
+
+    Allows overriding a test failure with a valid reason.
+    Valid reasons: manual-override, ib-failure, external-failure
+    """
+    reason = match.group("reason")
+    context.ignore_tests_rejected = reason
+    logger.info(f"Test rejection ignored by {user} with reason: {reason}")
+    return True
+
+
+@command(
+    "commit_count_override",
+    r"^\+commit-count$",
+    acl=CMSSW_ISSUES_TRACKERS,
+    description="Ignore 'too many commits' warning",
+    pr_only=True,
+)
+def handle_commit_count_override(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle +commit-count command.
+
+    Overrides the 'too many commits' warning. Only CMSSW_ISSUES_TRACKERS can use this.
+    Only works if commit count is below the FAIL threshold.
+    """
+    if not context.pr:
+        return False
+
+    commit_count = context.pr.commits
+    if commit_count >= TOO_MANY_COMMITS_FAIL_THRESHOLD:
+        context.messages.append(
+            f"Cannot override: commit count ({commit_count}) is at or above "
+            f"the hard limit ({TOO_MANY_COMMITS_FAIL_THRESHOLD})"
+        )
+        logger.warning(
+            f"Cannot override commit count: {commit_count} >= {TOO_MANY_COMMITS_FAIL_THRESHOLD}"
+        )
+        return False
+
+    context.ignore_commit_count = True
+    logger.info(f"Commit count warning overridden by {user}")
+    return True
+
+
+@command(
+    "file_count_override",
+    r"^\+file-count$",
+    acl=CMSSW_ISSUES_TRACKERS,
+    description="Ignore 'too many files' warning",
+    pr_only=True,
+)
+def handle_file_count_override(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle +file-count command.
+
+    Overrides the 'too many files' warning. Only CMSSW_ISSUES_TRACKERS can use this.
+    Only works if file count is below the FAIL threshold.
+    """
+    if not context.pr:
+        return False
+
+    file_count = context.pr.changed_files
+    if file_count >= TOO_MANY_FILES_FAIL_THRESHOLD:
+        context.messages.append(
+            f"Cannot override: file count ({file_count}) is at or above "
+            f"the hard limit ({TOO_MANY_FILES_FAIL_THRESHOLD})"
+        )
+        logger.warning(
+            f"Cannot override file count: {file_count} >= {TOO_MANY_FILES_FAIL_THRESHOLD}"
+        )
+        return False
+
+    context.ignore_file_count = True
+    logger.info(f"File count warning overridden by {user}")
     return True
 
 
@@ -2016,7 +2706,177 @@ def parse_test_cmd(first_line: str) -> TestCmdResult:
     return res
 
 
-@command("build_test", r"^(build|test)\b", description="Trigger CI build/test", pr_only=True)
+# Cache for check functions (populated on first use)
+_CHECK_FUNCTIONS: Optional[Dict[str, Callable]] = None
+
+
+def get_check_functions() -> Dict[str, Callable]:
+    """
+    Get all check_* functions for parameter validation.
+
+    Returns:
+        Dict mapping function names to callables
+    """
+    global _CHECK_FUNCTIONS
+    if _CHECK_FUNCTIONS is None:
+        all_globals = globals()
+        _CHECK_FUNCTIONS = {
+            name: func
+            for name, func in all_globals.items()
+            if name.startswith("check_") and callable(func)
+        }
+    return _CHECK_FUNCTIONS
+
+
+def parse_test_parameters(comment_lines: List[str], repo) -> Dict[str, str]:
+    """
+    Parse test parameters from a multi-line comment.
+
+    Each line (after the first) should be in format: key = value
+    Lines can optionally start with - or * (list markers).
+
+    Args:
+        comment_lines: Lines of the comment (first line is 'test parameters')
+        repo: Repository object for validation functions
+
+    Returns:
+        Dict of parsed parameters, or {"errors": "..."} if parsing failed
+    """
+    errors: Dict[str, List[str]] = {"format": [], "key": [], "value": []}
+    matched_params: Dict[str, str] = {}
+    check_functions = get_check_functions()
+
+    for line in comment_lines[1:]:  # Skip first line ('test parameters')
+        line = line.strip()
+
+        # Remove list markers
+        if line.startswith(("-", "*")):
+            line = line[1:].strip()
+
+        if not line:
+            continue
+
+        # Parse key=value format
+        if "=" not in line:
+            errors["format"].append(f"'{line}'")
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.replace(" ", "")  # Remove spaces from key
+        value = value.strip()
+
+        # Match against MULTILINE_COMMENTS_MAP
+        matched = False
+        for pattern, config in MULTILINE_COMMENTS_MAP.items():
+            if not re.fullmatch(pattern, key, re.IGNORECASE):
+                continue
+
+            # config is (value_pattern, param_name, [preserve_spaces])
+            value_pattern = config[0]
+            param_name = config[1]
+            preserve_spaces = len(config) >= 3 and config[2]
+
+            if not preserve_spaces:
+                value = value.replace(" ", "")
+
+            # Validate value against pattern
+            if not re.fullmatch(value_pattern, value, re.IGNORECASE):
+                errors["value"].append(key)
+                matched = True
+                break
+
+            # Run check function if available
+            check_func_name = f"check_{param_name.lower()}"
+            if check_func_name in check_functions:
+                try:
+                    value, new_param = check_functions[check_func_name](
+                        value, repo, matched_params, key, param_name
+                    )
+                    if new_param:
+                        param_name = new_param
+                except Exception:
+                    pass
+
+            matched_params[param_name] = value
+            matched = True
+            break
+
+        if not matched:
+            errors["key"].append(key)
+
+    # Format error message if any errors occurred
+    error_parts = []
+    for error_type in sorted(errors.keys()):
+        if errors[error_type]:
+            error_parts.append(f"{error_type}:{','.join(errors[error_type])}")
+
+    if error_parts:
+        return {"errors": "ERRORS: " + "; ".join(error_parts)}
+
+    return matched_params
+
+
+@command(
+    "test_parameters",
+    r"^test parameters:$",
+    acl=is_valid_tester,
+    description="Set test parameters (multi-line)",
+    pr_only=True,
+)
+def handle_test_parameters(
+    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+) -> bool:
+    """
+    Handle 'test parameters:' command.
+
+    This command processes a multi-line comment to set test parameters.
+    Each line after 'test parameters:' should be in format: key = value
+
+    Example:
+        test parameters:
+        - WORKFLOWS = 1.0,2.0
+        - PULL_REQUESTS = cms-sw/cmssw#12345
+        - ARCHITECTURE = el8_amd64_gcc12
+
+    The parameters are stored in context for later use when triggering tests.
+    Note: The 'test' command values override these for overlapping parameters.
+    """
+    # Get the full comment body to parse all lines
+    comment_body = None
+    for comment in context.comments:
+        if comment.id == comment_id:
+            comment_body = comment.body
+            break
+
+    if not comment_body:
+        logger.warning(f"Could not find comment body for comment {comment_id}")
+        return False
+
+    # Split into lines
+    lines = comment_body.split("\n")
+
+    # Parse parameters
+    params = parse_test_parameters(lines, context.repo)
+
+    if "errors" in params:
+        context.messages.append(params["errors"])
+        logger.warning(f"Test parameters parsing errors: {params['errors']}")
+        return False
+
+    # Store parameters in context for later use
+    context.test_params.update(params)
+
+    logger.info(f"Test parameters set by {user}: {params}")
+    return True
+
+
+@command(
+    "build_test",
+    r"^(build|test)\b",
+    acl=is_valid_tester,
+    description="Trigger CI build/test",
+    pr_only=True,
+)
 def handle_build_test(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
@@ -2037,6 +2897,9 @@ def handle_build_test(
 
     The test will only be triggered if all required signatures (categories)
     specified in PRE_CHECKS are approved.
+
+    Values from 'test parameters:' command are used as defaults, but values
+    specified directly in this command override them.
     """
     # Get the full command line from the comment
     first_line = match.group(0)
@@ -2072,14 +2935,34 @@ def handle_build_test(
             context.messages.append(msg)
             return False
 
+    # Start with defaults from 'test parameters:' command
+    # Command values override test_params values
+    workflows = result.workflows if result.workflows else []
+    prs = result.prs if result.prs else []
+    queue = result.queue or ""
+    build_full = bool(result.full)
+    extra_packages = result.addpkg if result.addpkg else []
+
+    # Apply test_params as defaults (only if not specified in command)
+    if context.test_params:
+        if not workflows and "WORKFLOWS" in context.test_params:
+            workflows = context.test_params["WORKFLOWS"].split(",")
+        if not prs and "PULL_REQUESTS" in context.test_params:
+            prs = context.test_params["PULL_REQUESTS"].split(",")
+        if not queue and "RELEASE_FORMAT" in context.test_params:
+            queue = context.test_params["RELEASE_FORMAT"]
+        if not extra_packages and "EXTRA_PACKAGES" in context.test_params:
+            extra_packages = context.test_params["EXTRA_PACKAGES"].split(",")
+        # Note: build_full from command always takes precedence
+
     # Create test request
     request = TestRequest(
         verb=result.verb,
-        workflows=",".join(sorted(set(result.workflows))) if result.workflows else "",
-        prs=sorted(result.prs) if result.prs else [],
-        queue=result.queue,
-        build_full=bool(result.full),
-        extra_packages=",".join(sorted(set(result.addpkg))) if result.addpkg else "",
+        workflows=",".join(sorted(set(workflows))) if workflows else "",
+        prs=sorted(prs) if prs else [],
+        queue=queue,
+        build_full=build_full,
+        extra_packages=",".join(sorted(set(extra_packages))) if extra_packages else "",
         triggered_by=user,
         comment_id=comment_id,
     )
@@ -2392,6 +3275,51 @@ def should_process_comment(
         return False
 
     return True
+
+
+def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
+    """
+    Check if a user is allowed to trigger tests.
+
+    A user is a valid tester if ANY of these conditions is true:
+    1. User is in TRIGGER_PR_TESTS list
+    2. User is a release manager for the target branch
+    3. User is the repository organization
+    4. User is an L2 signer (has any category assignment)
+    5. User has been granted test rights via 'allow @user test rights'
+
+    Args:
+        context: PR processing context
+        user: Username to check
+        timestamp: Timestamp for L2 membership check
+
+    Returns:
+        True if user can trigger tests
+    """
+    # Check if user is in TRIGGER_PR_TESTS
+    if user in TRIGGER_PR_TESTS:
+        return True
+
+    # Check if user is a release manager
+    if context.pr:
+        release_managers = get_release_managers(context.pr.base.ref)
+        if user in release_managers:
+            return True
+
+    # Check if user is the repo organization
+    if user == context.repo_org:
+        return True
+
+    # Check if user has L2 categories
+    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
+    if user_categories:
+        return True
+
+    # Check if user has been granted test rights
+    if user in context.granted_test_rights:
+        return True
+
+    return False
 
 
 def check_command_acl(
@@ -3048,6 +3976,517 @@ def update_pr_status(context: PRContext) -> None:
 
 
 # =============================================================================
+# PROPERTIES FILE CREATION
+# =============================================================================
+
+
+def create_property_file(filename: str, parameters: Dict[str, Any], dry_run: bool) -> None:
+    """
+    Create a properties file with the given parameters.
+
+    Args:
+        filename: Output filename
+        parameters: Dict of key=value pairs to write
+        dry_run: If True, don't actually create the file
+    """
+    if dry_run:
+        logger.info(f"[DRY RUN] Would create properties file: {filename}")
+        logger.debug(f"Properties: {parameters}")
+        return
+
+    logger.info(f"Creating properties file: {filename}")
+    with open(filename, "w") as f:
+        for key, value in parameters.items():
+            f.write(f"{key}={value}\n")
+
+
+def create_test_properties_file(
+    context: PRContext,
+    parameters: Dict[str, str],
+    abort: bool = False,
+    req_type: str = "tests",
+) -> None:
+    """
+    Create a properties file to trigger tests.
+
+    Args:
+        context: PR processing context
+        parameters: Test parameters
+        abort: If True, create abort trigger
+        req_type: Request type (tests, code-checks, etc.)
+    """
+    if abort:
+        req_type = "abort"
+
+    repository = f"{context.repo_org}/{context.repo_name}"
+
+    # Determine if this should be a user-tests type
+    if req_type == "tests":
+        if context.repo_org not in EXTERNAL_REPOS:
+            req_type = "user-tests"
+        else:
+            try:
+                if not getattr(context.repo_config, "CMS_STANDARD_TESTS", True):
+                    req_type = "user-tests"
+            except Exception:
+                pass
+
+    # Build filename
+    repo_slug = repository.replace("/", "-")
+    pr_number = context.issue.number
+    filename = f"trigger-{req_type}-{repo_slug}-{pr_number}.properties"
+
+    # Add Jenkins slave label if configured
+    try:
+        slave_label = getattr(context.repo_config, "JENKINS_SLAVE_LABEL", None)
+        if slave_label:
+            parameters["RUN_LABEL"] = slave_label
+    except Exception:
+        pass
+
+    create_property_file(filename, parameters, context.dry_run)
+
+
+def build_test_parameters(context: PRContext, test_request: "TestRequest") -> Dict[str, str]:
+    """
+    Build parameters dict for a test request.
+
+    Combines test_request values with context.test_params.
+
+    Args:
+        context: PR processing context
+        test_request: The test request to build parameters for
+
+    Returns:
+        Dict of test parameters
+    """
+    params: Dict[str, str] = {}
+
+    # Start with test_params from 'test parameters:' command
+    params.update(context.test_params)
+
+    # Add PR reference
+    pr_ref = f"{context.repo_org}/{context.repo_name}#{context.issue.number}"
+    prs = [pr_ref]
+    if test_request.prs:
+        prs.extend(test_request.prs)
+    params["PULL_REQUESTS"] = " ".join(prs)
+
+    # Context prefix
+    params["CONTEXT_PREFIX"] = "cms"
+
+    # Workflows
+    if test_request.workflows:
+        params["MATRIX_EXTRAS"] = test_request.workflows
+
+    # Release/architecture
+    if test_request.queue:
+        if "/" in test_request.queue:
+            release, arch = test_request.queue.split("/", 1)
+            params["RELEASE_FORMAT"] = release
+            params["ARCHITECTURE_FILTER"] = arch
+        elif re.fullmatch(ARCH_PATTERN, test_request.queue):
+            params["ARCHITECTURE_FILTER"] = test_request.queue
+        else:
+            params["RELEASE_FORMAT"] = test_request.queue
+
+    # Build options
+    if test_request.build_full:
+        params["BUILD_FULL_CMSSW"] = "true"
+
+    if test_request.extra_packages:
+        params["EXTRA_CMSSW_PACKAGES"] = test_request.extra_packages
+
+    # Build-only flag (build command vs test command)
+    if test_request.verb == "build":
+        params["BUILD_ONLY"] = "true"
+
+    return params
+
+
+def create_code_checks_properties(
+    context: PRContext,
+    tool_conf: Optional[str] = None,
+    apply_patch: bool = False,
+) -> None:
+    """
+    Create properties file for code-checks trigger.
+
+    Args:
+        context: PR processing context
+        tool_conf: Optional tool configuration path
+        apply_patch: Whether to apply the patch after checks
+    """
+    params = {
+        "PULL_REQUEST": str(context.issue.number),
+        "CONTEXT_PREFIX": "cms",
+    }
+
+    if tool_conf:
+        params["CMSSW_TOOL_CONF"] = tool_conf
+
+    params["APPLY_PATCH"] = str(apply_patch).lower()
+
+    create_test_properties_file(context, params, req_type="code-checks")
+
+
+def create_abort_properties(context: PRContext) -> None:
+    """
+    Create properties file to abort running tests.
+
+    Args:
+        context: PR processing context
+    """
+    params = {
+        "PULL_REQUEST": str(context.issue.number),
+    }
+    create_test_properties_file(context, params, abort=True)
+
+
+def create_cms_bot_test_properties(pr) -> None:
+    """
+    Create properties file for cms-bot self-test.
+
+    Called when a PR is made to cms-sw/cms-bot by core/externals L2.
+
+    Args:
+        pr: The pull request object
+    """
+    params = {
+        "CMS_BOT_TEST_BRANCH": pr.head.ref,
+        "FORCE_PULL_REQUEST": str(pr.number),
+        "CMS_BOT_TEST_PRS": f"cms-sw/cms-bot#{pr.number}",
+    }
+
+    with open("cms-bot.properties", "w") as f:
+        for key, value in params.items():
+            f.write(f"{key}={value}\n")
+
+    logger.info(f"Created cms-bot.properties for PR #{pr.number}")
+
+
+def create_new_data_repo_properties(issue_number: int, dry_run: bool) -> None:
+    """
+    Create properties file for new data repo issue.
+
+    Args:
+        issue_number: The issue number
+        dry_run: If True, don't actually create the file
+    """
+    filename = f"query-new-data-repo-issues-{issue_number}.properties"
+    params = {"ISSUE_NUMBER": str(issue_number)}
+    create_property_file(filename, params, dry_run)
+
+
+def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[Dict[str, Any]]:
+    """
+    Check if PR has too many commits or files.
+
+    This function:
+    1. Scans comments to detect if bot has already warned
+    2. Checks if +commit-count or +file-count override was given
+    3. Posts warnings if needed
+    4. Returns early result dict if PR should be blocked
+
+    Args:
+        context: PR processing context
+        dryRun: If True, don't post comments
+
+    Returns:
+        Dict with block result if PR should be blocked, None otherwise
+    """
+    if not context.pr:
+        return None
+
+    commit_count = context.pr.commits
+    file_count = context.pr.changed_files
+
+    # Scan existing comments for bot warnings
+    for comment in context.comments:
+        body = comment.body or ""
+        first_line = body.split("\n")[0] if body else ""
+
+        # Check for commit count warnings
+        if "This PR contains many commits" in first_line:
+            if commit_count < TOO_MANY_COMMITS_FAIL_THRESHOLD:
+                context.warned_too_many_commits = True
+        elif "This PR contains too many commits" in first_line:
+            context.warned_too_many_commits = True
+
+        # Check for file count warnings
+        if "This PR touches many files" in first_line:
+            if file_count < TOO_MANY_FILES_FAIL_THRESHOLD:
+                context.warned_too_many_files = True
+        elif "This PR touches too many files" in first_line:
+            context.warned_too_many_files = True
+
+    # Format trackers for mention
+    trackers_mention = ", ".join(format_mention(context, t) for t in CMSSW_ISSUES_TRACKERS)
+
+    # Check commit count
+    if commit_count >= TOO_MANY_COMMITS_WARN_THRESHOLD:
+        if not context.warned_too_many_commits and not context.ignore_commit_count:
+            if commit_count >= TOO_MANY_COMMITS_FAIL_THRESHOLD:
+                # Hard block - no override possible
+                msg = (
+                    f"This PR contains too many commits ({commit_count} >= "
+                    f"{TOO_MANY_COMMITS_FAIL_THRESHOLD}) and will not be processed.\n"
+                    "Please ensure you have selected the correct target branch and "
+                    "consider squashing unnecessary commits.\n"
+                    "The processing of this PR will resume once the commit count "
+                    "drops below the limit."
+                )
+                if not dryRun:
+                    context.issue.create_comment(msg)
+                logger.warning(f"PR blocked: too many commits ({commit_count})")
+            else:
+                # Warning - can be overridden
+                msg = (
+                    f"This PR contains many commits ({commit_count} >= "
+                    f"{TOO_MANY_COMMITS_WARN_THRESHOLD}) and will not be processed. "
+                    "Please ensure you have selected the correct target branch and "
+                    "consider squashing unnecessary commits.\n"
+                    f"{trackers_mention}, to re-enable processing of this PR, "
+                    "you can write `+commit-count` in a comment. Thanks."
+                )
+                if not dryRun:
+                    context.issue.create_comment(msg)
+                logger.warning(f"PR warned: many commits ({commit_count})")
+
+        # Block if not overridden
+        if not context.ignore_commit_count:
+            context.blocked_by_commit_count = True
+            return {
+                "pr_number": context.issue.number,
+                "is_pr": True,
+                "blocked": True,
+                "reason": f"Too many commits ({commit_count})",
+                "pr_state": None,
+                "categories": {},
+                "holds": [],
+                "labels": [],
+                "messages": [],
+                "tests_triggered": [],
+            }
+
+    # Check file count (CMSSW repo only)
+    if context.cmssw_repo and file_count >= TOO_MANY_FILES_WARN_THRESHOLD:
+        if not context.warned_too_many_files and not context.ignore_file_count:
+            if file_count >= TOO_MANY_FILES_FAIL_THRESHOLD:
+                # Hard block - no override possible
+                msg = (
+                    f"This PR touches too many files ({file_count} >= "
+                    f"{TOO_MANY_FILES_FAIL_THRESHOLD}) and will not be processed.\n"
+                    "Please ensure you have selected the correct target branch and "
+                    "consider splitting this PR into several.\n"
+                    "The processing of this PR will resume once the number of "
+                    "changed files drops below the limit."
+                )
+                if not dryRun:
+                    context.issue.create_comment(msg)
+                logger.warning(f"PR blocked: too many files ({file_count})")
+            else:
+                # Warning - can be overridden
+                msg = (
+                    f"This PR touches many files ({file_count} >= "
+                    f"{TOO_MANY_FILES_WARN_THRESHOLD}) and will not be processed. "
+                    "Please ensure you have selected the correct target branch and "
+                    "consider splitting this PR into several.\n"
+                    f"{trackers_mention}, to re-enable processing of this PR, "
+                    "you can write `+file-count` in a comment. Thanks."
+                )
+                if not dryRun:
+                    context.issue.create_comment(msg)
+                logger.warning(f"PR warned: many files ({file_count})")
+
+        # Block if not overridden
+        if not context.ignore_file_count:
+            context.blocked_by_file_count = True
+            return {
+                "pr_number": context.issue.number,
+                "is_pr": True,
+                "blocked": True,
+                "reason": f"Too many files ({file_count})",
+                "pr_state": None,
+                "categories": {},
+                "holds": [],
+                "labels": [],
+                "messages": [],
+                "tests_triggered": [],
+            }
+
+    return None
+
+
+def post_welcome_message(context: PRContext) -> None:
+    """
+    Post welcome message for new PRs/Issues.
+
+    Checks if a welcome message has already been posted by scanning existing
+    comments. If not, posts a welcome message with reviewer mentions.
+
+    Args:
+        context: PR processing context
+    """
+    entity_type = "Pull Request" if context.is_pr else "Issue"
+
+    # Check if welcome message was already posted
+    for comment in context.comments:
+        if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
+            body = comment.body or ""
+            if f"A new {entity_type} was created by" in body:
+                context.welcome_message_posted = True
+                # Check if backport info needs to be updated
+                if context.backport_of and "Backported from #" not in body:
+                    # Need to update the welcome message with backport info
+                    # For now, we'll post a separate backport comment
+                    pass
+                return
+
+    # Get author
+    author = context.issue.user.login if context.issue else "unknown"
+
+    # Get L2s for all signing categories
+    all_l2s = set()
+    timestamp = datetime.now(tz=timezone.utc)
+    for cat in context.signing_categories:
+        cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+        all_l2s.update(cat_l2s)
+
+    # Build L2 mention list
+    l2_mentions = ", ".join(format_mention(context, l2) for l2 in sorted(all_l2s))
+
+    # Build backport message
+    backport_msg = ""
+    if context.backport_of:
+        backport_msg = f"\n\nBackported from #{context.backport_of}"
+
+    # Build watchers message
+    watchers_msg = ""
+    if context.watchers:
+        watcher_mentions = ", ".join(format_mention(context, w) for w in sorted(context.watchers))
+        watchers_msg = f"\n\n{watcher_mentions} this is something you requested to watch as well."
+
+    # Build message
+    msg = (
+        f"A new {entity_type} was created by {format_mention(context, author)}.\n\n"
+        f"{l2_mentions} can you please review it and eventually sign/assign? Thanks.\n\n"
+        f'cms-bot commands are listed <a href="http://cms-sw.github.io/cms-bot-cmssw-issues.html">here</a>'
+        f"{backport_msg}{watchers_msg}"
+    )
+
+    post_bot_comment(context, msg, "welcome")
+    context.welcome_message_posted = True
+
+
+def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
+    """
+    Post message when PR is updated with a new commit.
+
+    Args:
+        context: PR processing context
+        new_commit_sha: SHA of the new commit
+    """
+    if not context.is_pr or not context.pr:
+        return
+
+    pr_number = context.issue.number
+
+    # For draft PRs, just notify without resign request
+    if context.is_draft:
+        msg = f"Pull request #{pr_number} was updated."
+        post_bot_comment(context, msg, "pr_updated", hash(new_commit_sha))
+        return
+
+    # Get L2s for categories that need signatures (not yet approved)
+    timestamp = datetime.now(tz=timezone.utc)
+    category_states = compute_category_approval_states(context)
+
+    pending_l2s = set()
+    for cat, state in category_states.items():
+        if state != ApprovalState.APPROVED:
+            cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+            pending_l2s.update(cat_l2s)
+
+    # Build resign message
+    resign_msg = ""
+    if pending_l2s:
+        signers = ", ".join(format_mention(context, l2) for l2 in sorted(pending_l2s))
+        resign_msg = f"\n{signers} can you please check and sign again."
+
+    # Build watchers message
+    watchers_msg = ""
+    if context.watchers:
+        watcher_mentions = ", ".join(format_mention(context, w) for w in sorted(context.watchers))
+        watchers_msg = f"\n\n{watcher_mentions} this is something you requested to watch as well."
+
+    msg = f"Pull request #{pr_number} was updated.{resign_msg}{watchers_msg}"
+    post_bot_comment(context, msg, "pr_updated", hash(new_commit_sha))
+
+
+def check_for_new_commits(context: PRContext) -> None:
+    """
+    Check if there are new commits since the last bot message.
+
+    Posts a "PR updated" message if new commits are detected.
+
+    Args:
+        context: PR processing context
+    """
+    if not context.is_pr or not context.commits:
+        return
+
+    # Get the SHA of the latest commit
+    latest_commit = context.commits[-1]
+    latest_sha = latest_commit.sha if hasattr(latest_commit, "sha") else str(latest_commit)
+
+    # Check if we've already posted an update for this commit
+    # Look for existing "PR was updated" messages in comments
+    for comment in context.comments:
+        if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
+            body = comment.body or ""
+            # Check if this comment is for this specific commit
+            if f"<!--pr_updated:{hash(latest_sha)}-->" in body:
+                logger.debug(f"Already posted update for commit {latest_sha[:8]}")
+                return
+
+    # Check if we've already posted the welcome message
+    # If not, this is the first time seeing the PR - don't post update
+    if not context.welcome_message_posted:
+        # Check if welcome message exists
+        entity_type = "Pull Request" if context.is_pr else "Issue"
+        for comment in context.comments:
+            if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
+                body = comment.body or ""
+                if f"A new {entity_type} was created by" in body:
+                    context.welcome_message_posted = True
+                    break
+
+        if not context.welcome_message_posted:
+            # This is a new PR, don't post "updated" message
+            logger.debug("New PR/Issue, skipping update message")
+            return
+
+    # Check if there are commits newer than the last bot comment
+    last_bot_comment_time: Optional[datetime] = None
+    for comment in context.comments:
+        if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
+            comment_time = get_comment_timestamp(comment)
+            if last_bot_comment_time is None or comment_time > last_bot_comment_time:
+                last_bot_comment_time = comment_time
+
+    if last_bot_comment_time:
+        # Check if the latest commit is after the last bot comment
+        try:
+            commit_time = ensure_tz_aware(latest_commit.commit.author.date)
+            if commit_time > last_bot_comment_time:
+                logger.info(f"New commit detected: {latest_sha[:8]}")
+                post_pr_updated_message(context, latest_sha)
+        except Exception as e:
+            logger.warning(f"Could not compare commit times: {e}")
+
+
+# =============================================================================
 # MAIN PROCESSING FUNCTION
 # =============================================================================
 
@@ -3165,21 +4604,44 @@ def process_pr(
         notify_without_at=notify_without_at,
     )
 
-    # Set repository info
+    # Set repository info (these are stored, computed properties derive from them)
     context.repo_name = repo.name
     context.repo_org = repo.owner.login if hasattr(repo.owner, "login") else repo.owner
     repository = context.repo_name  # Alias for compatibility
-    context.cmssw_repo = context.repo_name == GH_CMSSW_REPO
-    context.cms_repo = context.repo_org in EXTERNAL_REPOS
-    context.external_repo = repository != CMSSW_REPO_NAME and any(
-        context.repo_org == org for org in EXTERNAL_REPOS
-    )
+
+    # Log draft state (property computes it automatically)
+    if context.is_draft:
+        logger.debug("PR is in draft state, disabling @-mentions")
+
+    # Handle cms-bot self-test (PRs to cms-sw/cms-bot by core/externals L2s)
+    if (
+        is_pr
+        and pr
+        and repo.full_name == "cms-sw/cms-bot"
+        and os_getenv("CMS_BOT_TEST_BRANCH", "master") == "master"
+        and pr.state != "closed"
+    ):
+        author = issue.user.login
+        author_categories = get_user_l2_categories(
+            repo_config, author, datetime.now(tz=timezone.utc)
+        )
+        if "externals" in author_categories or "core" in author_categories:
+            create_cms_bot_test_properties(pr)
+            return {
+                "pr_number": issue.number,
+                "is_pr": is_pr,
+                "cms_bot_test": True,
+                "reason": "cms-bot self-test triggered",
+                "pr_state": None,
+                "categories": {},
+                "holds": [],
+                "labels": [],
+                "messages": [],
+                "tests_triggered": [],
+            }
 
     # PR-specific startup processing
     if is_pr and pr:
-        requestor = pr.user.login
-        gh_user_char = "" if notify_without_at else "@"
-
         # Check for PRs to development branch that should go to master
         if context.cmssw_repo and context.cms_repo and pr.base.ref == CMSSW_DEVEL_BRANCH:
             if pr.state != "closed":
@@ -3187,7 +4649,7 @@ def process_pr(
                 if not dryRun:
                     pr.edit(base="master")
                     msg = (
-                        f"{gh_user_char}{requestor}, {CMSSW_DEVEL_BRANCH} branch is closed "
+                        f"{format_mention(context, pr.user.login)}, {CMSSW_DEVEL_BRANCH} branch is closed "
                         "for direct updates. cms-bot is going to move this PR to master branch.\n"
                         "In future, please use cmssw master branch to submit your changes.\n"
                     )
@@ -3209,6 +4671,7 @@ def process_pr(
             context.must_close = True
 
         # Process changes for the PR to determine required signatures
+        chg_files: List[str] = []
         if context.cmssw_repo or not context.external_repo:
             if context.cmssw_repo:
                 # Add code-checks for master or forward-port branches
@@ -3218,6 +4681,7 @@ def process_pr(
                 update_milestone(repo, issue, pr, dryRun)
 
             chg_files = get_changed_files(repo, pr)
+            context._changed_files = chg_files
             context.packages = set(file_to_package(repo_config, f) for f in chg_files)
             add_nonblocking_labels(chg_files, context.extra_labels)
             context.create_test_property = True
@@ -3253,20 +4717,39 @@ def process_pr(
             try:
                 if getattr(repo_config, "NONBLOCKING_LABELS", False):
                     chg_files = get_changed_files(repo, pr)
+                    context._changed_files = chg_files
                     add_nonblocking_labels(chg_files, context.extra_labels)
             except Exception:
                 pass
+
+        # Load watchers based on changed files and categories
+        if chg_files:
+            context.watchers = get_watchers(context, chg_files, datetime.now(tz=timezone.utc))
 
         # Update file states (creates snapshot)
         changed_files = update_file_states(context)
         if changed_files:
             logger.info(f"Changed files: {changed_files}")
 
+        # Check for new commits and post update message if needed
+        check_for_new_commits(context)
+
     # Process all comments
     process_all_comments(context)
 
+    # Check commit and file counts (for PRs only)
+    if is_pr and pr:
+        block_result = check_commit_and_file_counts(context, dryRun)
+        if block_result:
+            # Save cache before returning
+            save_cache_to_comments(issue, context.comments, cache, dryRun)
+            return block_result
+
     # Update status (labels, etc.) for both PRs and Issues
     update_pr_status(context)
+
+    # Post welcome message if this is the first time seeing this PR/Issue
+    post_welcome_message(context)
 
     # PR-specific state determination and actions
     pr_state = None
@@ -3304,13 +4787,47 @@ def process_pr(
                     logger.error(f"Failed to merge PR: {e}")
                     context.messages.append(f"Merge failed: {e}")
 
+        # Handle abort tests
+        if context.abort_tests:
+            logger.info("Creating abort test properties file")
+            create_abort_properties(context)
+
         # Trigger tests if requested
-        for test in context.tests_to_run:
-            if dryRun:
-                logger.info(f"[DRY RUN] Would trigger test: {test}")
-            else:
-                # TODO: Implement actual test triggering based on repo_config
-                logger.info(f"Would trigger test: {test}")
+        for test_request in context.tests_to_run:
+            params = build_test_parameters(context, test_request)
+            logger.info(
+                f"Creating test properties: {test_request.verb} triggered by {test_request.triggered_by}"
+            )
+            create_test_properties_file(context, params)
+
+        # Handle code checks request
+        if context.code_checks_requested:
+            logger.info("Creating code-checks properties file")
+            create_code_checks_properties(
+                context,
+                tool_conf=context.code_checks_tool_conf,
+                apply_patch=context.code_checks_apply_patch,
+            )
+    else:
+        # Issue-specific processing
+        # Check if issue is fully signed
+        category_states = compute_category_approval_states(context)
+        all_approved = (
+            all(state == ApprovalState.APPROVED for state in category_states.values())
+            if category_states
+            else False
+        )
+
+        if all_approved and category_states:
+            post_bot_comment(
+                context,
+                "This issue is fully signed and ready to be closed.",
+                "issue_fully_signed",
+            )
+        # Check for new data repo request issues
+        if context.cmssw_repo and re.match(CREATE_REPO, issue.title or ""):
+            logger.info(f"Creating new data repo properties for issue #{issue.number}")
+            create_new_data_repo_properties(issue.number, dryRun)
 
     # Save cache
     save_cache_to_comments(issue, context.comments, cache, dryRun)

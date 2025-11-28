@@ -521,11 +521,6 @@ def init_l2_data(
     return l2_data
 
 
-def get_l2_data() -> Dict[str, List[Dict[str, Any]]]:
-    """Get the cached L2 data."""
-    return _L2_DATA
-
-
 def get_watchers(
     context: "PRContext",
     changed_files: List[str],
@@ -563,13 +558,12 @@ def get_watchers(
 
     # Load category watchers from category-watchers.yaml
     cat_watchers = read_repo_file(context.repo_config, "category-watchers.yaml", {})
-    non_block_cats = context.extra_labels.get("mtype", [])
 
     for user, cats in cat_watchers.items():
         if user == author:
             continue
         for cat in cats:
-            if cat in context.signing_categories or cat in non_block_cats:
+            if cat in context.signing_categories or cat in context.pending_labels:
                 logger.debug(f"Added {user} to watch due to category {cat}")
                 watchers.add(user)
                 break
@@ -691,32 +685,24 @@ def get_labels_for_pr(context: "PRContext") -> Set[str]:
     return labels
 
 
-def add_nonblocking_labels(changed_files: List[str], extra_labels: Dict[str, List[str]]) -> None:
+def add_nonblocking_labels(changed_files: List[str], pending_labels: Set[str]) -> None:
     """
     Add non-blocking labels based on changed files.
 
     Matches changed files against CMSSW_LABELS patterns and adds matching
-    labels to the extra_labels dict under the 'mtype' key.
+    labels to the pending_labels set.
 
     Args:
         changed_files: List of changed file paths
-        extra_labels: Dict to populate with labels (modified in place)
+        pending_labels: Set to populate with labels (modified in place)
     """
     for pkg_file in changed_files:
         for label, patterns in _LABEL_PATTERNS.items():
             for regex in patterns:
                 if regex.match(pkg_file):
-                    if "mtype" not in extra_labels:
-                        extra_labels["mtype"] = []
-                    extra_labels["mtype"].append(label)
+                    pending_labels.add(label)
                     logger.debug(f"Non-blocking label: {label} for {pkg_file}")
                     break
-
-    # Clean up empty mtype list
-    if "mtype" in extra_labels and not extra_labels["mtype"]:
-        del extra_labels["mtype"]
-
-    logger.info(f"Extra non-blocking labels: {extra_labels}")
 
 
 # =============================================================================
@@ -963,15 +949,12 @@ class BotCache:
 class TestCmdParseError(ValueError):
     """Error raised when parsing build/test command fails."""
 
-    __test__ = False
     pass
 
 
 @dataclass
 class TestCmdResult:
     """Result of parsing a build/test command."""
-
-    __test__ = False
 
     verb: str  # 'build' or 'test'
     workflows: List[str] = field(default_factory=list)
@@ -985,8 +968,6 @@ class TestCmdResult:
 @dataclass
 class TestCmdParam:
     """Definition of a parameter for build/test command parsing."""
-
-    __test__ = False
 
     keyword: Union[str, re.Pattern]
     field_name: str
@@ -1006,8 +987,6 @@ class TestCmdParam:
 @dataclass
 class TestRequest:
     """A request to run tests/build."""
-
-    __test__ = False
 
     verb: str  # 'build' or 'test'
     workflows: str = ""  # Comma-separated workflow list
@@ -1254,9 +1233,7 @@ def get_user_l2_categories(
     Returns:
         List of L2 category names the user belongs to
     """
-    l2_data = get_l2_data()
-
-    if not l2_data:
+    if not _L2_DATA:
         # Fallback to static CMSSW_L2 if L2 data not initialized
         cat = CMSSW_L2.get(username)
         if cat is None:
@@ -1266,13 +1243,13 @@ def get_user_l2_categories(
             return cat
         return [cat]
 
-    if username not in l2_data:
+    if username not in _L2_DATA:
         return []
 
     # Find categories active at the given timestamp
     ts_epoch = timestamp.timestamp() if isinstance(timestamp, datetime) else timestamp
 
-    for period in l2_data[username]:
+    for period in _L2_DATA[username]:
         start_date = period.get("start_date", 0)
         end_date = period.get("end_date")
 
@@ -1704,8 +1681,7 @@ class PRContext:
     tests_to_run: List[Any] = field(default_factory=list)  # List of TestRequest objects
     pending_reactions: Dict[int, str] = field(default_factory=dict)  # comment_id -> reaction
     holds: List[Hold] = field(default_factory=list)  # Active holds on the PR
-    pending_labels: Set[str] = field(default_factory=set)  # Labels to add (from type command)
-    extra_labels: Dict[str, List[str]] = field(default_factory=dict)  # Extra labels by type
+    pending_labels: Set[str] = field(default_factory=set)  # Labels to add
     signing_categories: Set[str] = field(default_factory=set)  # Categories requiring signatures
     packages: Set[str] = field(default_factory=set)  # Packages touched by PR
     test_params: Dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
@@ -3856,9 +3832,7 @@ def generate_status_message(context: PRContext) -> str:
                 lines.append(f"  - {reason}")
 
     # Labels section (for both PRs and Issues)
-    all_labels = set()
-    all_labels.update(context.pending_labels)
-    all_labels.update(context.extra_labels.get("mtype", []))
+    all_labels = set(context.pending_labels)
 
     if all_labels:
         lines.append("\n**Labels:**")
@@ -3947,11 +3921,6 @@ def update_pr_status(context: PRContext) -> None:
     for label in context.pending_labels:
         if label not in current_labels:
             labels_to_add.add(label)
-
-    # Add mtype labels from extra_labels (auto-detected from files)
-    for mtype_label in context.extra_labels.get("mtype", []):
-        if mtype_label not in current_labels:
-            labels_to_add.add(mtype_label)
 
     # Apply label changes
     for label in labels_to_remove:
@@ -4809,7 +4778,7 @@ def process_pr(
             chg_files = get_changed_files(repo, pr)
             context._changed_files = chg_files
             context.packages = set(file_to_package(repo_config, f) for f in chg_files)
-            add_nonblocking_labels(chg_files, context.extra_labels)
+            add_nonblocking_labels(chg_files, context.pending_labels)
             context.create_test_property = True
         else:
             # External repo handling
@@ -4844,7 +4813,7 @@ def process_pr(
                 if getattr(repo_config, "NONBLOCKING_LABELS", False):
                     chg_files = get_changed_files(repo, pr)
                     context._changed_files = chg_files
-                    add_nonblocking_labels(chg_files, context.extra_labels)
+                    add_nonblocking_labels(chg_files, context.pending_labels)
             except Exception:
                 pass
 
@@ -4970,7 +4939,6 @@ def process_pr(
 
     # Collect all labels
     all_labels = set(context.pending_labels)
-    all_labels.update(context.extra_labels.get("mtype", []))
 
     # Return results
     return {

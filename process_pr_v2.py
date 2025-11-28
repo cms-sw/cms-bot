@@ -4322,33 +4322,33 @@ def post_welcome_message(context: PRContext) -> None:
     """
     Post welcome message for new PRs/Issues.
 
-    Checks if a welcome message has already been posted by scanning existing
-    comments. If not, posts a welcome message with reviewer mentions.
+    For CMSSW repo PRs, includes:
+    - Package list with categories
+    - New package warning if applicable
+    - Patch branch warning if applicable
+    - Release managers notification
 
     Args:
         context: PR processing context
     """
     entity_type = "Pull Request" if context.is_pr else "Issue"
+    msg_prefix = NEW_PR_PREFIX if context.is_pr else NEW_ISSUE_PREFIX
 
     # Check if welcome message was already posted
     for comment in context.comments:
         if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
             body = comment.body or ""
-            if f"A new {entity_type} was created by" in body:
+            # Check for either prefix style
+            if msg_prefix in body or f"A new {entity_type} was created by" in body:
                 context.welcome_message_posted = True
-                # Check if backport info needs to be updated
-                if context.backport_of and "Backported from #" not in body:
-                    # Need to update the welcome message with backport info
-                    # For now, we'll post a separate backport comment
-                    pass
                 return
 
     # Get author
     author = context.issue.user.login if context.issue else "unknown"
+    timestamp = datetime.now(tz=timezone.utc)
 
     # Get L2s for all signing categories
     all_l2s = set()
-    timestamp = datetime.now(tz=timezone.utc)
     for cat in context.signing_categories:
         cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
         all_l2s.update(cat_l2s)
@@ -4356,27 +4356,127 @@ def post_welcome_message(context: PRContext) -> None:
     # Build L2 mention list
     l2_mentions = ", ".join(format_mention(context, l2) for l2 in sorted(all_l2s))
 
-    # Build backport message
-    backport_msg = ""
-    if context.backport_of:
-        backport_msg = f"\n\nBackported from #{context.backport_of}"
-
     # Build watchers message
     watchers_msg = ""
     if context.watchers:
         watcher_mentions = ", ".join(format_mention(context, w) for w in sorted(context.watchers))
-        watchers_msg = f"\n\n{watcher_mentions} this is something you requested to watch as well."
+        watchers_msg = f"{watcher_mentions} this is something you requested to watch as well.\n"
 
-    # Build message
-    msg = (
-        f"A new {entity_type} was created by {format_mention(context, author)}.\n\n"
-        f"{l2_mentions} can you please review it and eventually sign/assign? Thanks.\n\n"
-        f'cms-bot commands are listed <a href="http://cms-sw.github.io/cms-bot-cmssw-issues.html">here</a>'
-        f"{backport_msg}{watchers_msg}"
-    )
+    # Build backport message
+    backport_msg = ""
+    if context.backport_of:
+        backport_msg = f"Backported from #{context.backport_of}\n"
+
+    # CMSSW repo has more detailed welcome message for PRs
+    if context.cmssw_repo and context.is_pr and context.pr:
+        msg = _build_cmssw_welcome_message(
+            context, author, l2_mentions, watchers_msg, backport_msg, timestamp
+        )
+    else:
+        # Simple message for non-CMSSW repos or issues
+        commands_url = "http://cms-sw.github.io/cms-bot-cmssw-issues.html"
+        msg = (
+            f"{msg_prefix} {format_mention(context, author)}.\n\n"
+            f"{l2_mentions} can you please review it and eventually sign/assign? Thanks.\n"
+            f"{watchers_msg}"
+            f"{backport_msg}"
+            f'cms-bot commands are listed <a href="{commands_url}">here</a>\n'
+        )
 
     post_bot_comment(context, msg, "welcome")
     context.welcome_message_posted = True
+
+
+def _build_cmssw_welcome_message(
+    context: PRContext,
+    author: str,
+    l2_mentions: str,
+    watchers_msg: str,
+    backport_msg: str,
+    timestamp: datetime,
+) -> str:
+    """
+    Build the detailed welcome message for CMSSW repo PRs.
+
+    Includes package list, new package warnings, patch branch warnings,
+    and release manager notifications.
+    """
+    pr = context.pr
+    branch = pr.base.ref
+
+    # Build package list with categories
+    pkg_lines = []
+    new_packages = []
+    all_known_packages = set(CMSSW_CATEGORIES.keys()) if CMSSW_CATEGORIES else set()
+
+    for pkg in sorted(context.packages):
+        pkg_cats = get_package_categories(pkg)
+        if pkg_cats:
+            pkg_lines.append(f"- {pkg} (**{', '.join(sorted(pkg_cats))}**)")
+        else:
+            pkg_lines.append(f"- {pkg} (**new**)")
+            if pkg not in all_known_packages:
+                new_packages.append(pkg)
+
+    packages_str = "\n".join(pkg_lines) if pkg_lines else "- (none)"
+
+    # Build new package message
+    new_package_msg = ""
+    if new_packages:
+        new_package_msg = (
+            "\nThe following packages do not have a category, yet:\n\n"
+            + "\n".join(new_packages)
+            + "\n"
+            + "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py "
+            "to assign category\n"
+        )
+        context.signing_categories.add("new-package")
+
+    # Build patch branch warning
+    patch_warning = ""
+    if "patchX" in branch:
+        base_release = branch.replace("_patchX", "")
+        base_branch = re.sub(r"[0-9]+$", "X", base_release)
+        patch_warning = (
+            f"Note that this branch is designed for requested bug fixes "
+            f"specific to the {base_release} release.\n"
+            f"If you wish to make a pull request for the {base_branch} "
+            f"release cycle, please use the {base_branch} branch instead\n"
+        )
+
+    # Build release managers message
+    release_managers_msg = ""
+    extra_rm = get_release_managers(branch)
+
+    # For CMSDIST, also get managers for the base branch
+    if context.repo_name == GH_CMSDIST_REPO:
+        parts = branch.split("/")
+        if len(parts) >= 2:
+            br = "_".join(parts[-1].split("_")[:3]) + "_X"
+            if br:
+                extra_rm = extra_rm + get_release_managers(br)
+
+    release_managers = list(set(extra_rm + list(CMSSW_ORP)))
+    if release_managers:
+        rm_mentions = ", ".join(format_mention(context, rm) for rm in sorted(release_managers))
+        release_managers_msg = f"{rm_mentions} you are the release manager for this.\n"
+
+    # Build the full message
+    commands_url = "http://cms-sw.github.io/cms-bot-cmssw-cmds.html"
+    msg = (
+        f"{NEW_PR_PREFIX} {format_mention(context, author)} for {branch}.\n\n"
+        f"It involves the following packages:\n\n"
+        f"{packages_str}\n\n"
+        f"{new_package_msg}"
+        f"{l2_mentions} can you please review it and eventually sign? Thanks.\n"
+        f"{watchers_msg}"
+        f"{release_managers_msg}"
+        f"{patch_warning}"
+        f"{backport_msg}"
+        f'cms-bot commands are listed <a href="{commands_url}">here</a>\n'
+    )
+
+    return msg
 
 
 def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:

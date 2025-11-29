@@ -26,6 +26,7 @@ from os.path import dirname, exists, join
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import forward_ports_map
+from _py2with3compatibility import run_cmd
 
 from categories import (
     CMSSW_L2,
@@ -79,14 +80,12 @@ from cms_static import (
     VALID_CMSDIST_BRANCHES,
     NEW_ISSUE_PREFIX,
     NEW_PR_PREFIX,
-    ISSUE_SEEN_MSG,
     BUILD_REL,
     GH_CMSSW_REPO,
     GH_CMSDIST_REPO,
     CMSBOT_IGNORE_MSG,
     VALID_CMS_SW_REPOS_FOR_TESTS,
     CREATE_REPO,
-    CMSBOT_TECHNICAL_MSG,
 )
 from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
@@ -330,8 +329,7 @@ MULTILINE_COMMENTS_MAP: Dict[str, List[Any]] = {
 }
 
 # Regex patterns for PR description flags
-RE_CMS_BOT_IGNORE = re.compile(r"<cms-bot>\s*</cms-bot>", re.IGNORECASE)
-RE_NOTIFY_NO_AT = re.compile(r"<notify>\s*</notify>", re.IGNORECASE)
+RE_NOTIFY_NO_AT = re.compile(CMSBOT_NO_NOTIFY_MSG, re.IGNORECASE)
 
 # Global L2 data cache
 _L2_DATA: Dict[str, List[Dict[str, Any]]] = {}
@@ -1616,16 +1614,51 @@ def extract_command_line(comment_body: str) -> Optional[str]:
 # =============================================================================
 
 
-def should_ignore_pr(pr_body: str) -> bool:
+def should_ignore_issue(repo_config: types.ModuleType, repo: Any, issue: Any) -> bool:
     """
-    Check if PR should be ignored based on description.
+    Check if issue/PR should be ignored based on various criteria.
 
-    Returns True if first non-blank line matches <cms-bot></cms-bot>.
+    Returns True if:
+    1. Issue number is in IGNORE_ISSUES config
+    2. Issue number is in repo-specific IGNORE_ISSUES[repo.full_name]
+    3. Issue title matches BUILD_REL pattern (release build issues)
+    4. First line of body matches CMSBOT_IGNORE_MSG
+
+    Args:
+        repo_config: Repository configuration module
+        repo: Repository object
+        issue: Issue/PR object
+
+    Returns:
+        True if issue should be ignored, False otherwise
     """
-    first_line = extract_command_line(pr_body or "")
-    if not first_line:
-        return False
-    return bool(RE_CMS_BOT_IGNORE.match(first_line))
+    # Check IGNORE_ISSUES config
+    ig_issues = getattr(repo_config, "IGNORE_ISSUES", {})
+
+    # Check if issue number is directly in IGNORE_ISSUES
+    if issue.number in ig_issues:
+        return True
+
+    # Check if issue number is in repo-specific ignore list
+    repo_full_name = repo.full_name if hasattr(repo, "full_name") else ""
+    if repo_full_name in ig_issues and issue.number in ig_issues[repo_full_name]:
+        return True
+
+    # Check if title matches BUILD_REL pattern (release build issues)
+    if issue.title and re.match(BUILD_REL, issue.title):
+        return True
+
+    # Check if body has ignore marker on first line
+    if issue.body:
+        # Get first non-blank line, ASCII-only for matching
+        try:
+            first_line = issue.body.encode("ascii", "ignore").decode().split("\n", 1)[0].strip()
+            if first_line and re.search(CMSBOT_IGNORE_MSG, first_line, re.IGNORECASE):
+                return True
+        except Exception:
+            pass
+
+    return False
 
 
 def should_notify_without_at(pr_body: str) -> bool:
@@ -1943,7 +1976,7 @@ def _handle_approval(
 
 @command(
     "assign_category",
-    rf"^assign\s+(?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
+    rf"^assign (?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
     description="Assign categories for review (comma-separated)",
     pr_only=True,
 )
@@ -1956,7 +1989,7 @@ def handle_assign_category(
 
 @command(
     "assign_from_package",
-    r"^assign\s+from\s+(?P<packages>[\w/,-]+(?:,[\w/,-]+)*)$",
+    r"^assign from (?P<packages>[\w/,-]+(?:,[\w/,-]+)*)$",
     description="Assign categories based on package mapping (comma-separated)",
     pr_only=True,
 )
@@ -2080,7 +2113,7 @@ def _handle_assign(
 
 @command(
     "unassign_category",
-    rf"^unassign\s+(?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
+    rf"^unassign (?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
     description="Remove category assignment (comma-separated)",
     pr_only=True,
 )
@@ -2093,7 +2126,7 @@ def handle_unassign_category(
 
 @command(
     "unassign_from_package",
-    r"^unassign\s+from\s+(?P<packages>[\w/,-]+(?:,[\w/,-]+)*)$",
+    r"^unassign from (?P<packages>[\w/,-]+(?:,[\w/,-]+)*)$",
     description="Remove category assignment based on package (comma-separated)",
     pr_only=True,
 )
@@ -2200,15 +2233,48 @@ def _handle_unassign(
 def handle_hold(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
-    """Handle hold command - prevents automerge."""
+    """
+    Handle hold command - prevents automerge.
+
+    Can be used by:
+    - Users with L2 signing categories
+    - Release managers
+    - PR hold managers (PR_HOLD_MANAGERS)
+    """
     user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
 
-    if not user_categories:
-        logger.info(f"User {user} has no L2 categories, cannot place hold")
+    # Check if user is a release manager
+    is_release_manager = False
+    if context.pr:
+        try:
+            release_managers = get_release_managers(context.pr.base.ref)
+            is_release_manager = user in release_managers
+        except Exception:
+            pass
+
+    # Check if user is a PR hold manager
+    is_hold_manager = user in PR_HOLD_MANAGERS
+
+    # User must have L2 categories, be a release manager, or be a hold manager
+    if not user_categories and not is_release_manager and not is_hold_manager:
+        logger.info(
+            f"User {user} cannot place hold (no L2 categories, not release manager, not hold manager)"
+        )
         return False
 
-    # Place hold for each of the user's categories
-    for category in user_categories:
+    # Determine which category to use for the hold
+    if user_categories:
+        # Use L2 categories
+        hold_categories = user_categories
+    elif is_release_manager:
+        # Release managers use a special category
+        hold_categories = ["release-manager"]
+    else:
+        # Hold managers use a special category
+        hold_categories = ["hold-manager"]
+
+    # Place hold for each category
+    for category in hold_categories:
         hold = Hold(category=category, user=user, comment_id=comment_id)
         context.holds.append(hold)
         logger.info(f"Hold placed by {user} ({category})")
@@ -2221,7 +2287,6 @@ def handle_hold(
     )
     post_bot_comment(context, msg, "hold", comment_id)
 
-    # Note: hold commands are not cached - only signatures (+1/-1) are cached
     return True
 
 
@@ -2237,8 +2302,10 @@ def handle_unhold(
     """
     Handle unhold command.
 
-    - L2 member can remove holds from their own category
-    - ORP can remove ALL holds
+    - ORP members can remove ALL holds
+    - L2 members can remove their own holds only
+    - Release managers can remove their own holds only
+    - PR hold managers can remove their own holds only
     """
     user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
     is_orp = "orp" in [c.lower() for c in user_categories]
@@ -2248,21 +2315,42 @@ def handle_unhold(
         removed_count = len(context.holds)
         context.holds = []
         logger.info(f"ORP user {user} removed all {removed_count} holds")
-        success = removed_count > 0 or True  # ORP unhold always succeeds
-    else:
-        # Remove only holds from user's categories
-        original_count = len(context.holds)
-        context.holds = [h for h in context.holds if h.category not in user_categories]
-        removed = original_count - len(context.holds)
-        if removed > 0:
-            logger.info(f"User {user} removed {removed} hold(s) from their categories")
-            success = True
-        else:
-            logger.info(f"User {user} had no holds to remove")
-            success = False
+        return True  # ORP unhold always succeeds
 
-    # Note: unhold commands are not cached - only signatures (+1/-1) are cached
-    return success
+    # Build list of categories this user can unhold
+    # Users can only remove their own holds
+    removable_categories = set(user_categories)
+
+    # Check if user is a release manager
+    if context.pr:
+        try:
+            release_managers = get_release_managers(context.pr.base.ref)
+            if user in release_managers:
+                removable_categories.add("release-manager")
+        except Exception:
+            pass
+
+    # Check if user is a PR hold manager
+    if user in PR_HOLD_MANAGERS:
+        removable_categories.add("hold-manager")
+
+    if not removable_categories:
+        logger.info(f"User {user} cannot unhold (no permissions)")
+        return False
+
+    # Remove holds that match user's categories AND were placed by this user
+    original_count = len(context.holds)
+    context.holds = [
+        h for h in context.holds if not (h.category in removable_categories and h.user == user)
+    ]
+    removed = original_count - len(context.holds)
+
+    if removed > 0:
+        logger.info(f"User {user} removed {removed} hold(s)")
+        return True
+    else:
+        logger.info(f"User {user} had no holds to remove")
+        return False
 
 
 @command("merge", r"^merge$", description="Request merge of the PR", pr_only=True)
@@ -2358,7 +2446,7 @@ def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
 
 @command(
     "abort",
-    r"^abort(?:\s+test)?$",
+    r"^abort(?: test)?$",
     acl=is_valid_tester,
     description="Abort pending tests",
     pr_only=True,
@@ -2392,7 +2480,7 @@ def handle_urgent(
 
 @command(
     "backport",
-    r"^backport\s+(?:of\s+)?(?:#|https?://github\.com/[^/]+/[^/]+/pull/)(?P<pr_num>\d+)$",
+    r"^backport (?:of )?(?:#|https?://github\.com/[^/]+/[^/]+/pull/)(?P<pr_num>\d+)$",
     description="Mark PR as backport of another PR",
 )
 def handle_backport(
@@ -2412,7 +2500,7 @@ def handle_backport(
 
 @command(
     "allow_test_rights",
-    r"^allow\s+@(?P<username>[^\s]+)\s+test\s+rights$",
+    r"^allow @(?P<username>[^\s]+) test rights$",
     description="Grant test rights to a user",
     pr_only=True,
 )
@@ -2433,7 +2521,7 @@ def handle_allow_test_rights(
 
 @command(
     "code_checks",
-    r"^code-checks(?:\s+with\s+(?P<tool_conf>\S+))?(?:\s+and\s+apply\s+patch)?$",
+    r"^code-checks(?: with (?P<tool_conf>\S+))?(?: and apply patch)?$",
     description="Request code checks",
     pr_only=True,
 )
@@ -2463,7 +2551,7 @@ def handle_code_checks(
 
 @command(
     "ignore_tests_rejected",
-    r"^ignore\s+tests-rejected\s+(?:with\s+)?(?P<reason>manual-override|ib-failure|external-failure)$",
+    r"^ignore tests-rejected (?:with )?(?P<reason>[a-z -]+)$",
     description="Override test failure with reason",
     pr_only=True,
 )
@@ -2477,6 +2565,9 @@ def handle_ignore_tests_rejected(
     Valid reasons: manual-override, ib-failure, external-failure
     """
     reason = match.group("reason")
+    if reason not in TEST_IGNORE_REASON:
+        logger.error(f"Invalid ignore reason: {reason}")
+        return False
     context.ignore_tests_rejected = reason
     logger.info(f"Test rejection ignored by {user} with reason: {reason}")
     return True
@@ -2554,7 +2645,7 @@ def handle_file_count_override(
 
 @command(
     "type",
-    r"^type\s+(?P<label>[\w-]+)$",
+    r"^type (?P<label>[\w-]+)$",
     description="Add a type label to the PR/Issue",
 )
 def handle_type(
@@ -3757,10 +3848,287 @@ def can_merge(context: PRContext) -> bool:
 # =============================================================================
 
 
+# CI Status prefix for commit statuses
+CMS_STATUS_PREFIX = "cms"
+
+
+@dataclass
+class CITestResult:
+    """Result of CI test status check."""
+
+    status: str  # "pending", "success", "error"
+    is_optional: bool
+    context: str  # Full status context
+    description: str
+    target_url: Optional[str] = None
+
+
+def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
+    """
+    Get CI test statuses from GitHub commit statuses.
+
+    Looks for statuses matching patterns:
+    - cms/<arch>/<test_type>/required
+    - cms/<arch>/<test_type>/optional
+
+    And their sub-statuses:
+    - cms/<arch>/build
+    - cms/<arch>/relvals
+    - etc.
+
+    Returns:
+        Dict mapping suffix ("required" or "optional") to list of CITestResult
+    """
+    if not context.pr or not context.commits:
+        return {}
+
+    # Get the head commit SHA
+    try:
+        head_sha = context.pr.head.sha
+    except Exception:
+        if context.commits:
+            head_sha = context.commits[-1].sha
+        else:
+            return {}
+
+    # Get commit statuses
+    try:
+        commit = context.repo.get_commit(head_sha)
+        statuses = list(commit.get_statuses())
+    except Exception as e:
+        logger.warning(f"Failed to get commit statuses: {e}")
+        return {}
+
+    if not statuses:
+        return {}
+
+    # Group statuses by their context prefix
+    # Build a map of context -> status for quick lookup
+    status_map: Dict[str, Any] = {}
+    for status in statuses:
+        ctx = status.context
+        # Keep the most recent status for each context
+        if ctx not in status_map:
+            status_map[ctx] = status
+
+    results: Dict[str, List[CITestResult]] = {"required": [], "optional": []}
+
+    # Find all top-level test statuses (cms/<arch>/<test>/required or optional)
+    prefix = f"{CMS_STATUS_PREFIX}/"
+
+    for ctx, status in status_map.items():
+        if not ctx.startswith(prefix):
+            continue
+
+        # Check if this is a top-level status (ends with /required or /optional)
+        parts = ctx.rsplit("/", 1)
+        if len(parts) != 2:
+            continue
+
+        base_context, suffix = parts
+        if suffix not in ("required", "optional"):
+            continue
+
+        # This is a top-level test status
+        # Determine overall status by checking sub-statuses
+        overall_status = _compute_test_status(base_context, status_map)
+
+        result = CITestResult(
+            status=overall_status,
+            is_optional=(suffix == "optional"),
+            context=ctx,
+            description=status.description or "",
+            target_url=status.target_url,
+        )
+        results[suffix].append(result)
+
+    return results
+
+
+def _compute_test_status(base_context: str, status_map: Dict[str, Any]) -> str:
+    """
+    Compute the overall status for a test by checking its sub-statuses.
+
+    Args:
+        base_context: The base context (e.g., "cms/el8_amd64_gcc12/build")
+        status_map: Map of context -> status object
+
+    Returns:
+        "pending", "success", or "error"
+    """
+    # Find all sub-statuses for this base context
+    sub_statuses = []
+    prefix = f"{base_context}/"
+
+    for ctx, status in status_map.items():
+        if ctx.startswith(prefix) or ctx == base_context:
+            sub_statuses.append(status)
+
+    if not sub_statuses:
+        # No sub-statuses, check the main status
+        if base_context in status_map:
+            main_status = status_map[base_context]
+            return _github_state_to_status(main_status.state)
+        return "pending"
+
+    # Check all sub-statuses
+    has_pending = False
+    has_error = False
+
+    for status in sub_statuses:
+        state = (
+            status.state.lower() if hasattr(status.state, "lower") else str(status.state).lower()
+        )
+        if state == "pending":
+            has_pending = True
+        elif state in ("error", "failure"):
+            has_error = True
+
+    if has_pending:
+        return "pending"
+    if has_error:
+        return "error"
+    return "success"
+
+
+def _github_state_to_status(state: str) -> str:
+    """Convert GitHub status state to our status string."""
+    state = state.lower() if hasattr(state, "lower") else str(state).lower()
+    if state == "pending":
+        return "pending"
+    elif state in ("error", "failure"):
+        return "error"
+    elif state == "success":
+        return "success"
+    return "pending"
+
+
+def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
+    """
+    Check if CI tests have completed and return their results.
+
+    Returns:
+        Dict with keys "required" and/or "optional" mapping to "success" or "error",
+        or None if tests are still pending or not found.
+    """
+    statuses = get_ci_test_statuses(context)
+
+    if not statuses["required"] and not statuses["optional"]:
+        return None
+
+    lab_stats: Dict[str, str] = {}
+
+    # Check required tests
+    if statuses["required"]:
+        all_success = True
+        any_error = False
+        any_pending = False
+
+        for result in statuses["required"]:
+            if result.status == "pending":
+                any_pending = True
+            elif result.status == "error":
+                any_error = True
+                all_success = False
+            elif result.status != "success":
+                all_success = False
+
+        if not any_pending:
+            lab_stats["required"] = "success" if all_success and not any_error else "error"
+
+    # Check optional tests
+    if statuses["optional"]:
+        all_success = True
+        any_pending = False
+
+        for result in statuses["optional"]:
+            if result.status == "pending":
+                any_pending = True
+            elif result.status != "success":
+                all_success = False
+
+        if not any_pending:
+            # Optional tests don't cause error state, just track success
+            lab_stats["optional"] = "success" if all_success else "error"
+
+    return lab_stats if lab_stats else None
+
+
+def fetch_pr_result(url: str) -> Tuple[int, str]:
+    """
+    Fetch PR test result from Jenkins artifacts URL.
+
+    Args:
+        url: URL to fetch results from
+
+    Returns:
+        Tuple of (error_code, output_string)
+        error_code is 0 on success, non-zero on failure
+    """
+    e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
+    return e, o
+
+
+def process_ci_test_results(context: PRContext) -> None:
+    """
+    Process CI test results and post completion comments.
+
+    Checks if tests have completed, fetches results from Jenkins,
+    and posts +1/-1 comments based on test outcomes.
+    """
+    if not context.is_pr or not context.pr:
+        return
+
+    lab_stats = check_ci_test_completion(context)
+    if not lab_stats:
+        return
+
+    statuses = get_ci_test_statuses(context)
+
+    for suffix, status_value in lab_stats.items():
+        # Find a result with a target URL to fetch detailed results
+        result_url = None
+        for result in statuses.get(suffix, []):
+            if result.target_url and result.status != "pending":
+                # Check if description indicates completion
+                if result.description and not result.description.startswith("Finished"):
+                    result_url = result.target_url
+                    break
+
+        if not result_url:
+            continue
+
+        # Transform URL to get pr-result endpoint
+        pr_result_url = (
+            result_url.replace(
+                "/SDT/jenkins-artifacts/",
+                "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/",
+            )
+            + "/pr-result"
+        )
+
+        error_code, output = fetch_pr_result(pr_result_url)
+
+        if output and not context.dry_run:
+            # Post result as comment
+            res = "+1" if status_value == "success" else "-1"
+            comment_body = f"{res}\n\n{output}"
+
+            try:
+                context.issue.create_comment(comment_body)
+                logger.info(f"Posted CI test result comment ({suffix}: {status_value})")
+            except Exception as e:
+                logger.error(f"Failed to post CI test result comment: {e}")
+        elif output and context.dry_run:
+            res = "+1" if status_value == "success" else "-1"
+            logger.info(f"[DRY RUN] Would post CI test result: {res} ({suffix})")
+
+
 def generate_status_message(context: PRContext) -> str:
     """Generate a status message for the PR or Issue."""
     lines = []
     entity_type = "PR" if context.is_pr else "Issue"
+    pr_state = None
 
     if context.is_pr:
         pr_state = determine_pr_state(context)
@@ -4643,13 +5011,13 @@ def process_pr(
     body = (pr.body if pr else issue.body) or ""
 
     # Check if should be ignored (unless force flag is set)
-    if not force and should_ignore_pr(body):
+    if not force and should_ignore_issue(repo_config, repo, issue):
         entity_type = "PR" if is_pr else "Issue"
-        logger.info(f"{entity_type} has <cms-bot></cms-bot> tag, skipping processing")
+        logger.info(f"{entity_type} #{issue.number} should be ignored, skipping processing")
         return {
             "pr_number": issue.number,
             "skipped": True,
-            "reason": "cms-bot ignore tag",
+            "reason": "ignored",
             "is_pr": is_pr,
             "pr_state": None,
             "categories": {},
@@ -4903,6 +5271,9 @@ def process_pr(
                 tool_conf=context.code_checks_tool_conf,
                 apply_patch=context.code_checks_apply_patch,
             )
+
+        # Check and process CI test results
+        process_ci_test_results(context)
     else:
         # Issue-specific processing
         # Check if issue is fully signed

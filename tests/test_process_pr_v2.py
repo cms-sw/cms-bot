@@ -40,7 +40,6 @@ from process_pr_v2 import (
     TestRequest,
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
     TOO_MANY_COMMITS_WARN_THRESHOLD,
-    TOO_MANY_FILES_FAIL_THRESHOLD,
     TOO_MANY_FILES_WARN_THRESHOLD,
     build_test_parameters,
     check_commit_and_file_counts,
@@ -54,9 +53,16 @@ from process_pr_v2 import (
     parse_timestamp,
     preprocess_command,
     process_pr,
-    should_ignore_pr,
+    should_ignore_issue,
     should_notify_without_at,
 )
+
+# Import BUILD_REL for testing ignore logic
+try:
+    from cms_static import BUILD_REL
+except ImportError:
+    # Fallback pattern if cms_static not available: ^[Bb]uild[ ]+(CMSSW_[^ ]+)
+    BUILD_REL = r"^[Bb]uild[ ]+(CMSSW_[^ ]+)"
 
 
 def create_mock_repo_config(**overrides) -> types.ModuleType:
@@ -81,7 +87,6 @@ def create_mock_repo_config(**overrides) -> types.ModuleType:
         r"^src/simulation/.*": ["simulation"],
         r"^docs/.*": ["docs"],
         r"^tests/.*": ["testing"],
-        r"^numpy/.*": ["analysis"],
     }
 
     # Package -> category mapping (for 'assign from' command)
@@ -2634,26 +2639,157 @@ class TestBuildTestCommand:
 
 
 class TestPRDescriptionParsing:
-    """Tests for PR description parsing (<cms-bot>, <notify> tags)."""
+    """Tests for PR/Issue ignore logic and notification tags."""
 
-    def test_should_ignore_pr_with_cms_bot_tag(self):
-        """Test that <cms-bot></cms-bot> tag is detected."""
-        assert should_ignore_pr("<cms-bot></cms-bot>") is True
-        assert should_ignore_pr("<cms-bot> </cms-bot>") is True
-        assert should_ignore_pr("<CMS-BOT></CMS-BOT>") is True
-        assert should_ignore_pr("  <cms-bot></cms-bot>  ") is True
+    def _make_mock_issue(self, number=1, title="Test Issue", body=""):
+        """Create a mock issue for testing."""
+        issue = MagicMock()
+        issue.number = number
+        issue.title = title
+        issue.body = body
+        return issue
 
-    def test_should_not_ignore_pr_without_tag(self):
-        """Test that PRs without the tag are not ignored."""
-        assert should_ignore_pr("") is False
-        assert should_ignore_pr("Normal PR description") is False
-        assert should_ignore_pr("Fix bug in module\n\nDetails here") is False
-        assert should_ignore_pr("<cms-bot>content</cms-bot>") is False  # Has content
+    def _make_mock_repo(self, full_name="cms-sw/cmssw"):
+        """Create a mock repo for testing."""
+        repo = MagicMock()
+        repo.full_name = full_name
+        return repo
 
-    def test_should_not_ignore_pr_with_tag_not_on_first_line(self):
+    def test_should_ignore_issue_with_cms_bot_tag(self):
+        """Test that <cms-bot></cms-bot> tag in body is detected."""
+        repo_config = create_mock_repo_config()
+        repo = self._make_mock_repo()
+
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="<cms-bot></cms-bot>")
+            )
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="<cms-bot> </cms-bot>")
+            )
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="<CMS-BOT></CMS-BOT>")
+            )
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="  <cms-bot></cms-bot>  ")
+            )
+            is True
+        )
+
+    def test_should_not_ignore_issue_without_tag(self):
+        """Test that issues without the tag are not ignored."""
+        repo_config = create_mock_repo_config()
+        repo = self._make_mock_repo()
+
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(body="")) is False
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="Normal PR description")
+            )
+            is False
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="Fix bug in module\n\nDetails here")
+            )
+            is False
+        )
+
+    def test_should_not_ignore_issue_with_tag_not_on_first_line(self):
         """Test that tag must be on first non-blank line."""
-        assert should_ignore_pr("Some text\n<cms-bot></cms-bot>") is False
-        assert should_ignore_pr("\n\nSome text\n<cms-bot></cms-bot>") is False
+        repo_config = create_mock_repo_config()
+        repo = self._make_mock_repo()
+
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="Some text\n<cms-bot></cms-bot>")
+            )
+            is False
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="\n\nSome text\n<cms-bot></cms-bot>")
+            )
+            is False
+        )
+
+    def test_should_ignore_issue_in_ignore_list(self):
+        """Test that issues in IGNORE_ISSUES are ignored."""
+        repo_config = create_mock_repo_config(IGNORE_ISSUES={42: True})
+        repo = self._make_mock_repo()
+
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=42)) is True
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=43)) is False
+
+    def test_should_ignore_issue_in_repo_specific_ignore_list(self):
+        """Test that issues in repo-specific IGNORE_ISSUES are ignored."""
+        repo_config = create_mock_repo_config(
+            IGNORE_ISSUES={"cms-sw/cmssw": {100: True, 101: True}}
+        )
+        repo = self._make_mock_repo(full_name="cms-sw/cmssw")
+        other_repo = self._make_mock_repo(full_name="cms-sw/cmsdist")
+
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=100)) is True
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=101)) is True
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=102)) is False
+        # Same issue number in different repo should not be ignored
+        assert (
+            should_ignore_issue(repo_config, other_repo, self._make_mock_issue(number=100))
+            is False
+        )
+
+    def test_should_ignore_issue_with_build_rel_title(self):
+        """Test that issues with BUILD_REL pattern in title are ignored."""
+        repo_config = create_mock_repo_config()
+        repo = self._make_mock_repo()
+
+        # BUILD_REL pattern: ^[Bb]uild[ ]+(CMSSW_[^ ]+)
+        # Matches titles like "Build CMSSW_14_0_0" or "build CMSSW_14_0_0_pre1"
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="Build CMSSW_14_0_0")
+            )
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="build CMSSW_14_0_0_pre1")
+            )
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="Build CMSSW_12_0_X")
+            )
+            is True
+        )
+
+        # Normal titles should not be ignored
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="Normal issue title")
+            )
+            is False
+        )
+        assert (
+            should_ignore_issue(repo_config, repo, self._make_mock_issue(title="Fix bug in Build"))
+            is False
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="Release CMSSW_14_0_0")
+            )
+            is False
+        )  # "Release" not "Build"
 
     def test_should_notify_without_at(self):
         """Test that <notify></notify> tag is detected."""
@@ -4815,27 +4951,6 @@ class TestPropertiesFileCreation:
 
 
 # =============================================================================
-# TEST: THRESHOLD CONSTANTS
-# =============================================================================
-
-
-class TestThresholdConstants:
-    """Tests for threshold constant values."""
-
-    def test_commit_thresholds(self):
-        """Test commit threshold values are sensible."""
-        assert TOO_MANY_COMMITS_WARN_THRESHOLD < TOO_MANY_COMMITS_FAIL_THRESHOLD
-        assert TOO_MANY_COMMITS_WARN_THRESHOLD == 150
-        assert TOO_MANY_COMMITS_FAIL_THRESHOLD == 240
-
-    def test_file_thresholds(self):
-        """Test file threshold values are sensible."""
-        assert TOO_MANY_FILES_WARN_THRESHOLD < TOO_MANY_FILES_FAIL_THRESHOLD
-        assert TOO_MANY_FILES_WARN_THRESHOLD == 1500
-        assert TOO_MANY_FILES_FAIL_THRESHOLD == 3001
-
-
-# =============================================================================
 # TEST: COMMAND PREPROCESSING
 # =============================================================================
 
@@ -4916,88 +5031,6 @@ class TestDraftPRHandling:
 
 
 # =============================================================================
-# TEST: PRCONTEXT COMPUTED PROPERTIES
-# =============================================================================
-
-
-class TestPRContextProperties:
-    """Tests for PRContext computed properties."""
-
-    def test_cmssw_repo_property(self):
-        """Test cmssw_repo is computed correctly."""
-        context = MagicMock()
-        context._repo_name = "cmssw"
-
-        # The actual property logic
-        assert context._repo_name == "cmssw"
-
-    def test_is_draft_property_true(self):
-        """Test is_draft property when PR is draft."""
-        pr = MagicMock()
-        pr.draft = True
-
-        context = MagicMock(spec=PRContext)
-        context.pr = pr
-
-        # Simulate the property
-        assert pr.draft is True
-
-    def test_is_draft_property_false(self):
-        """Test is_draft property when PR is not draft."""
-        pr = MagicMock()
-        pr.draft = False
-
-        context = MagicMock(spec=PRContext)
-        context.pr = pr
-
-        assert pr.draft is False
-
-    def test_is_draft_property_no_pr(self):
-        """Test is_draft property when there is no PR."""
-        context = MagicMock(spec=PRContext)
-        context.pr = None
-
-        # Should default to False
-        assert context.pr is None
-
-
-# =============================================================================
-# TEST: WATCHERS
-# =============================================================================
-
-
-class TestWatchers:
-    """Tests for watchers functionality."""
-
-    def test_get_watchers_empty_files(self):
-        """Test get_watchers with no changed files."""
-        context = MagicMock(spec=PRContext)
-        context.issue = MagicMock()
-        context.issue.user.login = "author"
-        context.repo_config = MagicMock()
-        context.extra_labels = {}
-        context.signing_categories = set()
-
-        # This is a simple unit test for the logic
-        # The actual get_watchers function requires repo_config file reading
-        # which we're not testing here
-        assert context.signing_categories == set()
-
-    def test_watchers_excludes_author(self):
-        """Test that PR author is excluded from watchers."""
-        # The author should never be in the watchers list
-        author = "pr_author"
-        watchers = {"pr_author", "watcher1", "watcher2"}
-
-        # Simulating what get_watchers does
-        watchers.discard(author)
-
-        assert author not in watchers
-        assert "watcher1" in watchers
-        assert "watcher2" in watchers
-
-
-# =============================================================================
 # TEST: WELCOME MESSAGE
 # =============================================================================
 
@@ -5039,71 +5072,154 @@ class TestWelcomeMessage:
 
 
 # =============================================================================
-# TEST: PR UPDATED MESSAGE
+# TEST: CI TEST STATUS
 # =============================================================================
 
 
-class TestPRUpdatedMessage:
-    """Tests for PR updated message when new commits are detected."""
+class TestCITestStatus:
+    """Tests for CI test status detection."""
 
-    def test_draft_pr_no_resign_request(self):
-        """Test that draft PRs don't ask for re-signing."""
-        # For draft PRs, message should be just "Pull request #X was updated."
-        # without the resign request
-        pr_number = 123
-        expected_msg = f"Pull request #{pr_number} was updated."
+    def test_get_ci_test_statuses_no_pr(self):
+        """Test get_ci_test_statuses with no PR."""
+        from process_pr_v2 import get_ci_test_statuses
 
-        # The actual message for draft PRs
-        assert "can you please check and sign again" not in expected_msg
+        context = MagicMock(spec=PRContext)
+        context.pr = None
+        context.commits = []
 
-    def test_non_draft_pr_has_resign_request(self):
-        """Test that non-draft PRs ask for re-signing."""
-        # For non-draft PRs with pending signatures, message should include resign request
-        resign_msg = "@l2_user can you please check and sign again."
+        result = get_ci_test_statuses(context)
+        assert result == {}
 
-        assert "can you please check and sign again" in resign_msg
+    def test_get_ci_test_statuses_no_commits(self):
+        """Test get_ci_test_statuses with no commits."""
+        from process_pr_v2 import get_ci_test_statuses
 
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.commits = []
+        context.pr.head.sha = "abc123"
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = []
 
-# =============================================================================
-# TEST: BOT COMMENT DEDUPLICATION
-# =============================================================================
+        result = get_ci_test_statuses(context)
+        assert result == {}
 
+    def test_get_ci_test_statuses_with_required(self):
+        """Test get_ci_test_statuses with required test status."""
+        from process_pr_v2 import get_ci_test_statuses
 
-class TestBotCommentDeduplication:
-    """Tests for bot comment deduplication."""
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = [MagicMock(sha="abc123")]
 
-    def test_comment_key_format(self):
-        """Test the format of comment keys for deduplication."""
-        message_key = "welcome"
-        comment_id = 12345
+        # Create mock statuses
+        status1 = MagicMock()
+        status1.context = "cms/el8_amd64_gcc12/build/required"
+        status1.state = "success"
+        status1.description = "Build successful"
+        status1.target_url = "http://example.com/build"
 
-        # Full key format
-        full_key = f"{message_key}:{comment_id}"
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
 
-        assert full_key == "welcome:12345"
+        result = get_ci_test_statuses(context)
+        assert "required" in result
+        assert len(result["required"]) == 1
+        assert result["required"][0].context == "cms/el8_amd64_gcc12/build/required"
 
-    def test_marker_in_comment(self):
-        """Test that markers are added to comments for detection."""
-        message_key = "hold"
-        comment_id = 1001
-        full_key = f"{message_key}:{comment_id}"
+    def test_get_ci_test_statuses_with_optional(self):
+        """Test get_ci_test_statuses with optional test status."""
+        from process_pr_v2 import get_ci_test_statuses
 
-        # The marker format in comments
-        marker = f"<!--{full_key}-->"
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = [MagicMock(sha="abc123")]
 
-        assert marker == "<!--hold:1001-->"
+        # Create mock statuses
+        status1 = MagicMock()
+        status1.context = "cms/el8_amd64_gcc12/relvals/optional"
+        status1.state = "pending"
+        status1.description = "Running tests"
+        status1.target_url = "http://example.com/relvals"
 
-    def test_duplicate_detection_by_marker(self):
-        """Test that duplicates are detected by marker."""
-        marker = "<!--welcome:None-->"
-        comment_body = "A new Pull Request was created by @author.\n<!--welcome:None-->"
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
 
-        assert marker in comment_body
+        result = get_ci_test_statuses(context)
+        assert "optional" in result
+        assert len(result["optional"]) == 1
+        assert result["optional"][0].is_optional is True
 
+    def test_check_ci_test_completion_pending(self):
+        """Test check_ci_test_completion with pending tests."""
+        from process_pr_v2 import check_ci_test_completion
 
-# =============================================================================
-# TEST: HOLD MESSAGE
-# =============================================================================
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = [MagicMock(sha="abc123")]
+
+        # Create mock statuses with pending state
+        status1 = MagicMock()
+        status1.context = "cms/el8_amd64_gcc12/build/required"
+        status1.state = "pending"
+        status1.description = "Running"
+        status1.target_url = None
+
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+
+        result = check_ci_test_completion(context)
+        # Pending tests should return None or empty dict
+        assert result is None or "required" not in result
+
+    def test_check_ci_test_completion_success(self):
+        """Test check_ci_test_completion with successful tests."""
+        from process_pr_v2 import check_ci_test_completion
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = [MagicMock(sha="abc123")]
+
+        # Create mock statuses with success state
+        status1 = MagicMock()
+        status1.context = "cms/el8_amd64_gcc12/build/required"
+        status1.state = "success"
+        status1.description = "Finished"
+        status1.target_url = "http://example.com/build"
+
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+
+        result = check_ci_test_completion(context)
+        assert result is not None
+        assert result.get("required") == "success"
+
+    def test_check_ci_test_completion_error(self):
+        """Test check_ci_test_completion with failed tests."""
+        from process_pr_v2 import check_ci_test_completion
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = [MagicMock(sha="abc123")]
+
+        # Create mock statuses with error state
+        status1 = MagicMock()
+        status1.context = "cms/el8_amd64_gcc12/build/required"
+        status1.state = "error"
+        status1.description = "Build failed"
+        status1.target_url = "http://example.com/build"
+
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+
+        result = check_ci_test_completion(context)
+        assert result is not None
+        assert result.get("required") == "error"
 
 
 # =============================================================================

@@ -31813,6 +31813,15 @@
                   "default_micro_arch": "x86-64-v3"
                 }
               ]
+            },
+            {
+              "label": "CMSSW_15_1_0_patch4",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                }
+              ]
             }
           ]
         },

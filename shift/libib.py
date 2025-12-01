@@ -9,6 +9,8 @@ import urllib.error
 import urllib.request
 from collections import namedtuple
 from enum import Enum
+import browser_cookie3
+import requests
 
 
 # Borrowed from https://github.com/cms-sw/cmssdt-web
@@ -110,30 +112,26 @@ def make_url(url):
 
 def fetch(url, content_type=ContentType.JSON, payload=None):
     url = make_url(url)
+    cookies = requests.cookies.RequestsCookieJar()
+    for name in ["firefox", "chrome"]:
+        try:
+            func = getattr(browser_cookie3, name)
+            for cookie in func(domain_name="cern.ch"):
+                cookies.set_cookie(cookie)
+        except Exception:
+            pass
     try:
-        response = urllib.request.urlopen(url, timeout=10)
-    except urllib.error.HTTPError as e:
-        logger.fatal(
-            f"Request to {url if isinstance(url, str) else url.full_url} failed with code {e.code}"
-        )
-        if e.code != 404:
-            logger.fatal(f"{e.read()}")
+        response = requests.get(url, cookies=cookies, timeout=10)
+    except requests.exceptions.RequestException as e:
+        logger.fatal(f"Request to {url} failed with error {e}")
         raise
-    except urllib.error.URLError as e:
-        logger.fatal(
-            f"Request to {url if isinstance(url, str) else url.full_url} failed with error {e.reason}"
-        )
-        raise
-    if response.getcode() != 200:
-        logger.fatal(
-            f"Request to {url if isinstance(url, str) else url.full_url} failed with code {response.getcode()}"
-        )
+    if response.status_code != 200:
+        logger.fatal(f"Request to {url} failed with code {response.status_code}")
         raise RuntimeError()
-
-    content = response.read()
+    content = response.content
     if payload is None:
         if content_type == ContentType.JSON:
-            return json.loads(content)
+            return response.json()
         elif content_type == ContentType.TEXT:
             return content.decode("utf-8")
         else:
@@ -260,7 +258,7 @@ def check_ib(data, compilation_only=False):
                     rvData = fetch(
                         f"SDT/public/cms-sw.github.io/data/relvals/{arch}/{ib_date}/"
                         f"{queue}.json",
-                        ContentType.JSON,
+                        ContentType.JSON,   
                     )
                 except urllib.error.HTTPError:
                     rvData = []

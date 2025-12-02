@@ -28,19 +28,19 @@ mem_prof_pdiffs_dicts = dict(dict())
 
 for k in mem_prof_pr_dicts.keys():
     mem_prof_pdiffs_dict = dict()
-    mem_prof_diffs_dicts = dict()
+    mem_prof_diffs_dict = dict()
     mem_prof_pr_subdict = mem_prof_pr_dicts[k]
     for j, v in mem_prof_pr_subdict.items():
         if j == "step":
             mem_prof_pdiffs_dict[j] = v
-            mem_prof_diffs_dicts[j] = v
+            mem_prof_diffs_dict[j] = v
         else:
             mem_prof_pdiffs_dict[j] = (
                 100
                 * (mem_prof_pr_dicts[k][j] - mem_prof_base_dicts[k][j])
                 / mem_prof_base_dicts[k][j]
             )
-            mem_prof_diffs_dicts[j] = mem_prof_pr_dicts[k][j] - mem_prof_base_dicts[k][j]
+            mem_prof_diffs_dict[j] = mem_prof_pr_dicts[k][j] - mem_prof_base_dicts[k][j]
     mem_prof_pdiffs_dicts[k] = mem_prof_pdiffs_dict
     mem_prof_diffs_dicts[k] = mem_prof_diffs_dict
 

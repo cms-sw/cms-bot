@@ -451,6 +451,9 @@ def es_send_external_stats(
     es_index_name="externals_stats_summary",
     es_doc_name="externals-stats-summary",
 ):
+    sdata = get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize)
+    if not sdata:
+        return
     file_stamp = int(tstat(stats_dict_file_path).st_mtime)  # get the file stamp from the file
     week = epoch2week(file_stamp)
     with open(opts_dict_file_path, "r") as opts_dict_f:
@@ -459,7 +462,6 @@ def es_send_external_stats(
     index_sha = sha1(
         ("".join([str(x) for x in opts_dict.values()]) + stats_dict_file_path).encode()
     ).hexdigest()
-    sdata = get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize)
     sdata.update(opts_dict)
     sdata["@timestamp"] = file_stamp * 1000
     try:
@@ -527,6 +529,14 @@ def set_avg_externals_build_stats(arch="*", lastNdays=60, extra_query=""):
     all_data = {}
     job_max_cpu = "job_max_cpu"
     for item in items:
+        ok_item = True
+        for k in fields:
+            if not k in item["_source"]:
+                print("WARNING: Missing key", k, "in", item["_source"])
+                ok_item = False
+                break
+        if not ok_item:
+            continue
         name = item["_source"]["name"]
         jobs = item["_source"]["build_jobs"]
         arch = item["_source"]["architecture"]

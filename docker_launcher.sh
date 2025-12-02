@@ -24,6 +24,11 @@ else
     ulimit -a
   fi
 fi
+USE_GHRC_IMAGE=false
+case ${NODE_NAME} in
+  ngt-* ) USE_GHRC_IMAGE=false ;;
+  * ) ;;
+esac
 SCRIPTPATH="$(cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
@@ -156,6 +161,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     elif [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     fi
+    if [ "$USE_GHRC_IMAGE" = "true" ] ; then DOCKER_IMGX="docker://ghcr.io/cms-sw/$DOCKER_IMG" ; fi
     if [ "$DOCKER_IMGX" = "" ] ; then
       if [ "$USE_GITHUB_REGISTRY" = "true" ] ; then
         DOCKER_IMGX="docker://ghcr.io/cms-sw/$DOCKER_IMG"
@@ -164,7 +170,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       fi
     fi
     CLEAN_UP_CACHE=true
-    export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
+    export SINGULARITY_CACHEDIR="$(dirname ${WORKSPACE})/.singularity"
     mkdir -p $SINGULARITY_CACHEDIR
     export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
     EX_OPTIONS="${SINGULARITY_OPTIONS} ${APPTAINER_OPTIONS} ${CMSCI_CONTAINER_OPTS}"
@@ -211,7 +217,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       EX_OPTIONS="${EX_OPTIONS} $(${SCRIPTPATH}/${CMSCI_CONTAINER_OPTS_SCRIPT} ${CONTAINER_CMD})"
     fi
     PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
-    if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+    #if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi
 else

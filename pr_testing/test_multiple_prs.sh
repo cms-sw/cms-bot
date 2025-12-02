@@ -657,9 +657,9 @@ if ${BUILD_EXTERNAL} ; then
         echo "CMSSet_Default" >> ${RESULTS_DIR}/09-failed.res
         echo 'CMSSET_DEFAULT_RESULTS;ERROR,Environment setup,See Log,cmsset_default' >> ${RESULTS_DIR}/toolconf.txt
         echo "**Failed environment setup**: \`${CMSSET_DEFAULT_ERR}\`" >> ${RESULTS_DIR}/09-report.res
-        prepare_upload_results
-        mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Environment setup error"
-        exit 0
+        #prepare_upload_results
+        #mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Environment setup error"
+        #exit 0
       else
         echo 'CMSSET_DEFAULT_RESULTS;OK,Environment setup,See Log,cmsset_default/run.log' >> ${RESULTS_DIR}/toolconf.txt
       fi

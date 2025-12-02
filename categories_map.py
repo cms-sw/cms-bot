@@ -928,6 +928,8 @@ CMSSW_CATEGORIES = {
         "HeterogeneousTest/ROCmOpaque",
         "HeterogeneousTest/ROCmWrapper",
         "MagneticField/Portable",
+        "PhysicsTools/PyTorchAlpaka",
+        "PhysicsTools/PyTorchAlpakaTest",
     ],
     "hlt": [
         "CommonTools/TriggerUtils",
@@ -1797,6 +1799,8 @@ CMSSW_CATEGORIES = {
     ],
     "ml": [
         "PhysicsTools/PyTorch",
+        "PhysicsTools/PyTorchAlpaka",
+        "PhysicsTools/PyTorchAlpakaTest",
         "PhysicsTools/TensorFlow",
         "PhysicsTools/TensorFlowAOT",
         "PhysicsTools/ONNXRuntime",

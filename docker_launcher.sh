@@ -24,7 +24,7 @@ else
     ulimit -a
   fi
 fi
-USE_GHRC_IMAGE=true
+USE_GHRC_IMAGE=false
 case ${NODE_NAME} in
   ngt-* ) USE_GHRC_IMAGE=false ;;
   * ) ;;

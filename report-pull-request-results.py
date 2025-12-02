@@ -299,6 +299,7 @@ def read_material_budget_log_file(unit_tests_file):
 #
 def read_maxmem_comparison_file(maxmem_dir):
     import glob
+
     error_files = glob.glob(join(maxmem_dir, "*.err"))
     errors_found = ""
     err_cnt = 0
@@ -307,7 +308,7 @@ def read_maxmem_comparison_file(maxmem_dir):
             if "exceeds" in line.lower():
                 err_cnt += 1
                 errors_found += line
-    
+
     if err_cnt > 0:
         message = (
             "\n## Failed Max Memory Comparison\n\n"

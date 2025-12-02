@@ -25,6 +25,7 @@ mem_prof_pr_dicts = create_memory_report_dict(sys.argv[1])
 mem_prof_base_dicts = create_memory_report_dict(sys.argv[2])
 
 mem_prof_pdiffs_dicts = dict(dict())
+mem_prof_diffs_dicts = dict(dict())
 
 for k in mem_prof_pr_dicts.keys():
     mem_prof_pdiffs_dict = dict()

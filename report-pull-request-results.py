@@ -294,6 +294,29 @@ def read_material_budget_log_file(unit_tests_file):
     send_message_pr(message)
 
 
+#
+# reads maxmem comparison error files
+#
+def read_maxmem_comparison_file(maxmem_dir):
+    import glob
+    error_files = glob.glob(join(maxmem_dir, "*.err"))
+    errors_found = ""
+    err_cnt = 0
+    for err_file in error_files:
+        for line in openlog(err_file):
+            if "exceeds" in line.lower():
+                err_cnt += 1
+                errors_found += line
+    
+    if err_cnt > 0:
+        message = (
+            "\n## Failed Max Memory Comparison\n\n"
+            "I found %s workflow(s) with memory usage exceeding the error threshold:\n\n<pre>%s</pre>"
+            % (err_cnt, errors_found)
+        )
+        send_message_pr(message)
+
+
 def get_recent_merges_message():
     message = ""
     if options.recent_merges_file:
@@ -643,6 +666,8 @@ elif ACTION == "PYTHON3_FAIL":
     read_python3_file(options.unit_tests_file)
 elif ACTION == "MATERIAL_BUDGET":
     read_material_budget_log_file(options.unit_tests_file)
+elif ACTION == "PARSE_MAXMEM_FAIL":
+    read_maxmem_comparison_file(options.unit_tests_file)
 elif ACTION == "MERGE_COMMITS":
     add_to_report(get_recent_merges_message())
 elif ACTION == "PARSE_CUDA_UNIT_TESTS_FAIL":

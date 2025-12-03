@@ -312,7 +312,7 @@ def read_maxmem_comparison_file(maxmem_dir):
     if err_cnt > 0:
         message = (
             "\n## Failed Max Memory Comparison\n\n"
-            "I found %s workflow(s) with memory usage exceeding the error threshold:\n\n<pre>%s</pre>"
+            "@cms-sw/core-l2 , I found %s workflow(s) with memory usage exceeding the error threshold:\n\n<pre>%s</pre>"
             % (err_cnt, errors_found)
         )
         send_message_pr(message)

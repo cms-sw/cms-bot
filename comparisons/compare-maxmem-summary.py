@@ -217,6 +217,15 @@ def compare_maxmem_summary(**kwargs):
             summaryLine += [
                 cellString,
                 "{:,.3f}".format(workflows[workflow][step]["max memory adiff"]),
+                "</td>",
+            ]
+        summaryLine += [
+            "</tr>",
+        ]
+        for step in sorted(workflows[workflow].keys(), key=stepfn):
+            summaryLine += [
+                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
+                "{:,.2f}".format(workflows[workflow][step]["max memory pdiff"]),
                 "%</td>",
             ]
         summaryLine += [
@@ -224,16 +233,6 @@ def compare_maxmem_summary(**kwargs):
         ]
         summaryLine += [
             '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
-        ]
-
-        for step in sorted(workflows[workflow].keys(), key=stepfn):
-            summaryLine += [
-                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["max memory pdiff"]),
-                "</td>",
-            ]
-        summaryLine += [
-            "</tr>",
         ]
 
         summaryLine += [

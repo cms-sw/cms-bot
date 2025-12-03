@@ -206,13 +206,17 @@ def compare_maxmem_summary(**kwargs):
             error_threshold = workflows[workflow][step].get("error_threshold")
             if not error_threshold:
                 error_threshold = 100.0
-            cellString = '<td style="border-top-style:hidden" '
+            cellString = '<td style="border-bottom-style:hidden;border-top-style:hidden;" '
             color = ""
             if workflows[workflow][step]["max memory adiff"] > MAXMEM_WARN_THRESHOLD:
                 color = 'bgcolor="orange"'
             if workflows[workflow][step]["max memory adiff"] > MAXMEM_ERROR_THRESHOLD:
                 color = 'bgcolor="red"'
-            cellString += color
+            if workflows[workflow][step]["max memory adiff"] < -1 * MAXMEM_WARN_THRESHOLD:
+                color = 'bgcolor="orange"'
+            if workflows[workflow][step]["max memory adiff"] < -1 * MAXMEM_ERROR_THRESHOLD:
+                color = 'bgcolor="red"'
+           cellString += color
             cellString += ">"
             summaryLine += [
                 cellString,
@@ -222,17 +226,17 @@ def compare_maxmem_summary(**kwargs):
         summaryLine += [
             "</tr>",
         ]
+        summaryLine += [
+            '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
+        ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             summaryLine += [
-                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
+                '<td style="border-top-style:hidden;">',
                 "{:,.2f}".format(workflows[workflow][step]["max memory pdiff"]),
                 "%</td>",
             ]
         summaryLine += [
             "</tr>",
-        ]
-        summaryLine += [
-            '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
         ]
 
         summaryLine += [
@@ -391,9 +395,6 @@ def compare_maxmem_summary(**kwargs):
                 "{:,}".format(workflows[workflow][step]["nallocated base"]),
                 "</td>",
             ]
-        summaryLine += [
-            "</tr>",
-        ]
         summaryLine += [
             '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;pull request &gt;</td>'
         ]

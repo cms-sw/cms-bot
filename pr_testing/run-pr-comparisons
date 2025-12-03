@@ -314,7 +314,7 @@ if grep "exceeds threshold" $OUTPUT_DIR/*.err 2>/dev/null; then
   ${CMS_BOT_DIR}/report-pull-request-results PARSE_MAXMEM_FAIL --repo $REPOSITORY --pr $PULL_REQUEST --pr-job-id $BUILD_NUMBER \
     -f $OUTPUT_DIR --report-file ${REPORT_FILE} --report-url ${PR_RESULT_URL} --commit ${COMMIT_SHA} || true
 else
-  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison" >> ${RESULTS_FILE}
+  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison/maxmem_summary.html" >> ${RESULTS_FILE}
 fi
 
 # --------------------------------------------------------------------------

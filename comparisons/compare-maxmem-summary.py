@@ -216,7 +216,7 @@ def compare_maxmem_summary(**kwargs):
                 color = 'bgcolor="orange"'
             if workflows[workflow][step]["max memory adiff"] < -1 * MAXMEM_ERROR_THRESHOLD:
                 color = 'bgcolor="red"'
-           cellString += color
+            cellString += color
             cellString += ">"
             summaryLine += [
                 cellString,

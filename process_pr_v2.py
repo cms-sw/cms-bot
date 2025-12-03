@@ -80,12 +80,14 @@ from cms_static import (
     VALID_CMSDIST_BRANCHES,
     NEW_ISSUE_PREFIX,
     NEW_PR_PREFIX,
+    ISSUE_SEEN_MSG,
     BUILD_REL,
     GH_CMSSW_REPO,
     GH_CMSDIST_REPO,
     CMSBOT_IGNORE_MSG,
     VALID_CMS_SW_REPOS_FOR_TESTS,
     CREATE_REPO,
+    CMSBOT_TECHNICAL_MSG,
 )
 from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
@@ -197,7 +199,7 @@ class PRState(Enum):
 
 
 # Cache comment marker - identifies bot cache comments
-CACHE_COMMENT_MARKER = "cms-bot internal usage<!--"
+CACHE_COMMENT_MARKER = CMSBOT_TECHNICAL_MSG + "<!--"
 CACHE_COMMENT_END = "-->"
 
 # Maximum size for a single comment (GitHub limit is ~65536, we use less for safety)
@@ -328,7 +330,8 @@ MULTILINE_COMMENTS_MAP: Dict[str, List[Any]] = {
     ],
 }
 
-# Regex patterns for PR description flags
+# Regex patterns for PR description flags (compiled from cms_static constants)
+RE_CMS_BOT_IGNORE = re.compile(CMSBOT_IGNORE_MSG, re.IGNORECASE)
 RE_NOTIFY_NO_AT = re.compile(CMSBOT_NO_NOTIFY_MSG, re.IGNORECASE)
 
 # Global L2 data cache
@@ -670,12 +673,12 @@ def get_labels_for_pr(context: "PRContext") -> Set[str]:
         Set of label names to apply
     """
     labels: Set[str] = set()
-    snapshot = context.cache.get_current_snapshot()
+    current_files = context.cache.current_file_versions
 
-    if not snapshot:
+    if not current_files:
         return labels
 
-    for fv_key in snapshot.changes:
+    for fv_key in current_files:
         if fv_key in context.cache.file_versions:
             fv = context.cache.file_versions[fv_key]
             labels.update(get_labels_for_file(fv.filename))
@@ -771,22 +774,6 @@ class FileVersion:
 
 
 @dataclass
-class Snapshot:
-    """
-    Represents the state of all files at a point in time.
-
-    Attributes:
-        snapshot_id: Unique identifier for this snapshot
-        timestamp: When the snapshot was taken
-        changes: List of file version keys (filename::blob_sha)
-    """
-
-    snapshot_id: str
-    timestamp: str
-    changes: List[str] = field(default_factory=list)
-
-
-@dataclass
 class CommentInfo:
     """
     Cached information about a processed comment.
@@ -796,18 +783,16 @@ class CommentInfo:
         first_line: First non-blank line of comment (for command detection)
         ctype: Command type detected (e.g., '+1', '-1', 'hold', 'test')
         categories: Categories affected by this command
-        snapshot: Snapshot ID at time of comment (for signatures)
+        signed_files: File version keys (filename::sha) at time of signing
         user: Username who made the comment
-        locked: If True, signature cannot be changed (commit happened after)
     """
 
     timestamp: str
     first_line: str
     ctype: Optional[str] = None
     categories: List[str] = field(default_factory=list)
-    snapshot: Optional[str] = None
+    signed_files: List[str] = field(default_factory=list)
     user: Optional[str] = None
-    locked: bool = False
 
 
 @dataclass
@@ -835,7 +820,6 @@ class BotCache:
     {
         "emoji": { "<comment_id>": "<reaction>" },  # Bot's reactions (source of truth)
         "fv": { "<filename>::<sha>": { "ts": ..., "cats": [...] } },  # File versions
-        "snapshots": { "<id>": { "ts": ..., "changes": [...] } },  # PR state snapshots
         "comments": { "<comment_id>": { "ts": ..., "first_line": ..., ... } }  # Processed comments
     }
     """
@@ -846,14 +830,11 @@ class BotCache:
     # File versions (filename::sha -> FileVersion info)
     file_versions: Dict[str, FileVersion] = field(default_factory=dict)
 
-    # Snapshots of PR state (snapshot_id -> Snapshot)
-    snapshots: Dict[str, Snapshot] = field(default_factory=dict)
-
     # Processed comments (comment_id -> CommentInfo)
     comments: Dict[str, CommentInfo] = field(default_factory=dict)
 
-    # Runtime state (not persisted)
-    current_snapshot_id: str = ""
+    # Runtime state: current file version keys (filename::sha) for this PR
+    current_file_versions: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize cache to dictionary matching the JSON format."""
@@ -866,22 +847,14 @@ class BotCache:
                 }
                 for key, fv in self.file_versions.items()
             },
-            "snapshots": {
-                sid: {
-                    "ts": snap.timestamp,
-                    "changes": snap.changes,
-                }
-                for sid, snap in self.snapshots.items()
-            },
             "comments": {
                 cid: {
                     "ts": ci.timestamp,
                     "first_line": ci.first_line,
                     **({"ctype": ci.ctype} if ci.ctype else {}),
                     **({"cats": ci.categories} if ci.categories else {}),
-                    **({"snapshot": ci.snapshot} if ci.snapshot else {}),
+                    **({"signed_files": ci.signed_files} if ci.signed_files else {}),
                     **({"user": ci.user} if ci.user else {}),
-                    **({"locked": ci.locked} if ci.locked else {}),
                 }
                 for cid, ci in self.comments.items()
             },
@@ -907,14 +880,6 @@ class BotCache:
                     categories=fv_data.get("cats", []),
                 )
 
-        # Load snapshots
-        for sid, snap_data in data.get("snapshots", {}).items():
-            cache.snapshots[sid] = Snapshot(
-                snapshot_id=sid,
-                timestamp=snap_data.get("ts", ""),
-                changes=snap_data.get("changes", []),
-            )
-
         # Load comments
         for cid, ci_data in data.get("comments", {}).items():
             cache.comments[str(cid)] = CommentInfo(
@@ -922,18 +887,11 @@ class BotCache:
                 first_line=ci_data.get("first_line", ""),
                 ctype=ci_data.get("ctype"),
                 categories=ci_data.get("cats", []),
-                snapshot=ci_data.get("snapshot"),
+                signed_files=ci_data.get("signed_files", []),
                 user=ci_data.get("user"),
-                locked=ci_data.get("locked", False),
             )
 
         return cache
-
-    def get_current_snapshot(self) -> Optional[Snapshot]:
-        """Get the current (latest) snapshot."""
-        if self.current_snapshot_id and self.current_snapshot_id in self.snapshots:
-            return self.snapshots[self.current_snapshot_id]
-        return None
 
     def get_cached_reaction(self, comment_id: int) -> Optional[str]:
         """Get the cached reaction for a comment."""
@@ -1031,7 +989,7 @@ def load_cache_from_comments(comments: List[Any]) -> BotCache:
     Load bot cache from PR issue comments.
 
     The cache is stored in comments with format:
-    'cms-bot internal usage<!-- {JSON or compressed data} -->'
+    '{CMSBOT_TECHNICAL_MSG}<!-- {JSON or compressed data} -->'
 
     Multiple comments may be used if data is large.
 
@@ -1622,7 +1580,7 @@ def should_ignore_issue(repo_config: types.ModuleType, repo: Any, issue: Any) ->
     1. Issue number is in IGNORE_ISSUES config
     2. Issue number is in repo-specific IGNORE_ISSUES[repo.full_name]
     3. Issue title matches BUILD_REL pattern (release build issues)
-    4. First line of body matches CMSBOT_IGNORE_MSG
+    4. First line of body matches <cms-bot></cms-bot> or CMSBOT_IGNORE_MSG
 
     Args:
         repo_config: Repository configuration module
@@ -1659,6 +1617,21 @@ def should_ignore_issue(repo_config: types.ModuleType, repo: Any, issue: Any) ->
             pass
 
     return False
+
+
+def should_ignore_pr_body(pr_body: str) -> bool:
+    """
+    Check if PR should be ignored based on description only.
+
+    Returns True if first non-blank line matches <cms-bot></cms-bot>.
+
+    Note: For full ignore checking including IGNORE_ISSUES and BUILD_REL,
+    use should_ignore_issue() instead.
+    """
+    first_line = extract_command_line(pr_body or "")
+    if not first_line:
+        return False
+    return bool(RE_CMS_BOT_IGNORE.match(first_line))
 
 
 def should_notify_without_at(pr_body: str) -> bool:
@@ -1951,9 +1924,9 @@ def _handle_approval(
         logger.info(f"User {user} has no L2 categories to sign with")
         return False
 
-    # Determine which snapshot this signature should be associated with
-    # This depends on which commits were present at the time of the comment
-    snapshot_id = get_snapshot_for_timestamp(context, timestamp)
+    # Get current file versions for the categories being signed
+    # A signature is valid only if these exact file versions are still current
+    signed_files = get_files_for_categories(context, categories)
 
     # Update comment info in cache
     comment_info = CommentInfo(
@@ -1961,15 +1934,14 @@ def _handle_approval(
         first_line="+1" if approved else "-1",
         ctype="+1" if approved else "-1",
         categories=categories,
-        snapshot=snapshot_id,
+        signed_files=signed_files,
         user=user,
-        locked=False,  # Not locked until a commit happens after
     )
     context.cache.comments[str(comment_id)] = comment_info
 
     logger.info(
         f"Recorded {'approval' if approved else 'rejection'} from {user} "
-        f"for categories: {categories} (snapshot={snapshot_id})"
+        f"for categories: {categories} (signed {len(signed_files)} files)"
     )
     return True
 
@@ -2099,11 +2071,11 @@ def _handle_assign(
 
         # Post message about new categories
         if new_l2s:
-            l2_mentions = ",".join(format_mention(context, l2) for l2 in sorted(new_l2s))
+            l2_mentions = ", ".join(format_mention(context, l2) for l2 in sorted(new_l2s))
             msg = (
-                f"New categories assigned: {','.join(new_categories)}\n\n"
+                f"New categories assigned: {', '.join(new_categories)}\n\n"
                 f"{l2_mentions} you have been requested to review this Pull request/Issue "
-                "and eventually sign? Thanks"
+                "and eventually sign. Thanks"
             )
             post_bot_comment(context, msg, "assign", comment_id)
 
@@ -2280,8 +2252,9 @@ def handle_hold(
         logger.info(f"Hold placed by {user} ({category})")
 
     # Post hold notification
+    blockers = format_mention(context, user)
     msg = (
-        f"Pull request has been put on hold by {format_mention(context, user)}\n"
+        f"Pull request has been put on hold by {blockers}\n"
         "They need to issue an `unhold` command to remove the `hold` state "
         "or L1 can `unhold` it for all"
     )
@@ -2446,7 +2419,7 @@ def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
 
 @command(
     "abort",
-    r"^abort(?: test)?$",
+    r"^abort( test)?$",
     acl=is_valid_tester,
     description="Abort pending tests",
     pr_only=True,
@@ -2480,27 +2453,51 @@ def handle_urgent(
 
 @command(
     "backport",
-    r"^backport (?:of )?(?:#|https?://github\.com/[^/]+/[^/]+/pull/)(?P<pr_num>\d+)$",
+    r"^backport (of )?#?(?P<pr_num>[1-9][0-9]*)$",
     description="Mark PR as backport of another PR",
 )
 def handle_backport(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
-    Handle backport of #<num> command.
+    Handle backport [of] #<num> command.
 
-    Can be used by L2s, release managers, or the PR author.
+    Marks this PR as a backport of the specified PR.
+    Updates the welcome message to include backport info.
+    Adds 'backport' label, or 'backport-ok' if original PR is merged.
     """
-    pr_num = match.group("pr_num")
-    context.pending_labels.add("backport")
-    context.backport_of = pr_num
-    logger.info(f"PR marked as backport of #{pr_num} by {user}")
-    return True
+    pr_num_str = match.group("pr_num")
+
+    # Validate PR number format (already validated by regex, but double-check)
+    if not pr_num_str or not pr_num_str.isdigit():
+        logger.warning(f"Invalid backport PR number: {pr_num_str}")
+        return False
+
+    pr_num = int(pr_num_str)
+
+    # Try to find the original PR
+    try:
+        original_pr = context.repo.get_pull(pr_num)
+        if original_pr:
+            context.backport_of = pr_num_str
+            if original_pr.merged:
+                context.pending_labels.add("backport-ok")
+                logger.info(f"PR marked as backport of merged #{pr_num} by {user}")
+            else:
+                context.pending_labels.add("backport")
+                logger.info(f"PR marked as backport of #{pr_num} by {user}")
+            return True
+    except Exception as e:
+        logger.warning(f"Could not find original PR #{pr_num}: {e}")
+
+    # Original PR not found - don't add backport label
+    logger.info(f"Backport command for #{pr_num} - original PR not found, skipping label")
+    return False
 
 
 @command(
     "allow_test_rights",
-    r"^allow @(?P<username>[^\s]+) test rights$",
+    r"^allow @(?P<username>[^ ]+) test rights$",
     description="Grant test rights to a user",
     pr_only=True,
 )
@@ -2521,7 +2518,7 @@ def handle_allow_test_rights(
 
 @command(
     "code_checks",
-    r"^code-checks(?: with (?P<tool_conf>\S+))?(?: and apply patch)?$",
+    r"^code-checks( with (?P<tool_conf>\S+))?( and apply patch)?$",
     description="Request code checks",
     pr_only=True,
 )
@@ -2551,7 +2548,7 @@ def handle_code_checks(
 
 @command(
     "ignore_tests_rejected",
-    r"^ignore tests-rejected (?:with )?(?P<reason>[a-z -]+)$",
+    r"^ignore tests-rejected (with )?(?P<reason>[\w-]+)$",
     description="Override test failure with reason",
     pr_only=True,
 )
@@ -2562,12 +2559,15 @@ def handle_ignore_tests_rejected(
     Handle 'ignore tests-rejected with <reason>' command.
 
     Allows overriding a test failure with a valid reason.
-    Valid reasons: manual-override, ib-failure, external-failure
+    Valid reasons are defined in githublabels.TEST_IGNORE_REASON.
     """
     reason = match.group("reason")
+
+    # Validate reason against TEST_IGNORE_REASON
     if reason not in TEST_IGNORE_REASON:
-        logger.error(f"Invalid ignore reason: {reason}")
+        logger.warning(f"Invalid test ignore reason: {reason}")
         return False
+
     context.ignore_tests_rejected = reason
     logger.info(f"Test rejection ignored by {user} with reason: {reason}")
     return True
@@ -3144,17 +3144,20 @@ def get_changed_files(repo, pr) -> List[str]:
     return changed_files
 
 
-def update_file_states(context: PRContext) -> Set[str]:
+def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
     """
     Update file states based on current PR state.
 
-    Creates a new snapshot if files changed.
+    Updates current_file_versions in cache with the current file version keys.
 
     Returns:
-        Set of filenames that changed since last check
+        Tuple of (changed_files, new_categories):
+        - changed_files: Set of filenames that changed since last check
+        - new_categories: Set of categories that are new (not seen before in this PR)
     """
     current_files = get_pr_files(context.pr)
     changed_files = set()
+    new_categories = set()
     now = datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
 
     # Get commit timestamp from cached commits
@@ -3172,6 +3175,15 @@ def update_file_states(context: PRContext) -> Set[str]:
         except Exception:
             pass
 
+    # Get old file version keys for comparison
+    old_fv_keys = set(context.cache.current_file_versions)
+
+    # Get categories that were already known before this update
+    old_categories = set()
+    for fv_key in old_fv_keys:
+        if fv_key in context.cache.file_versions:
+            old_categories.update(context.cache.file_versions[fv_key].categories)
+
     # Build list of current file version keys
     current_fv_keys = []
 
@@ -3180,7 +3192,7 @@ def update_file_states(context: PRContext) -> Set[str]:
         current_fv_keys.append(fv_key)
 
         if fv_key not in context.cache.file_versions:
-            # New file version
+            # New file version - recalculate categories
             categories = get_file_l2_categories(
                 context.repo_config, filename, datetime.now(tz=timezone.utc)
             )
@@ -3192,33 +3204,29 @@ def update_file_states(context: PRContext) -> Set[str]:
             )
             changed_files.add(filename)
 
-    # Check for files that were removed (in old snapshot but not current)
-    current_snapshot = context.cache.get_current_snapshot()
-    if current_snapshot:
-        old_files = set()
-        for fv_key in current_snapshot.changes:
-            if "::" in fv_key:
-                filename = fv_key.split("::")[0]
-                old_files.add(filename)
+            # Track categories that are new to this PR
+            for cat in categories:
+                if cat not in old_categories:
+                    new_categories.add(cat)
 
-        for filename in old_files:
-            if filename not in current_files:
-                changed_files.add(filename)
+    # Check for files that were removed
+    old_filenames = set()
+    for fv_key in old_fv_keys:
+        if "::" in fv_key:
+            filename = fv_key.split("::")[0]
+            old_filenames.add(filename)
 
-    # Create new snapshot if there are changes or no current snapshot
-    if changed_files or not current_snapshot:
-        # Generate new snapshot ID
-        snapshot_id = str(len(context.cache.snapshots) + 1)
+    for filename in old_filenames:
+        if filename not in current_files:
+            changed_files.add(filename)
 
-        context.cache.snapshots[snapshot_id] = Snapshot(
-            snapshot_id=snapshot_id,
-            timestamp=now,
-            changes=current_fv_keys,
-        )
-        context.cache.current_snapshot_id = snapshot_id
-        logger.debug(f"Created snapshot {snapshot_id} with {len(current_fv_keys)} files")
+    # Update current file versions
+    context.cache.current_file_versions = current_fv_keys
+    logger.debug(
+        f"Updated file states: {len(current_fv_keys)} files, {len(changed_files)} changed, {len(new_categories)} new categories"
+    )
 
-    return changed_files
+    return changed_files, new_categories
 
 
 # =============================================================================
@@ -3535,58 +3543,6 @@ def get_last_commit_before(
     return last_commit
 
 
-def get_snapshot_for_timestamp(context: PRContext, timestamp: datetime) -> Optional[str]:
-    """
-    Get or create the appropriate snapshot ID for a signature at a given timestamp.
-
-    Snapshots correspond to distinct states of the PR (sets of file versions).
-    A new snapshot is created when commits change the PR state.
-
-    For efficiency, we use the last commit timestamp before the comment as a key
-    to determine which snapshot the signature belongs to.
-
-    Args:
-        context: PR processing context
-        timestamp: Timestamp of the signature comment (should be tz-aware)
-
-    Returns:
-        Snapshot ID for this timestamp, or None if no snapshot exists
-    """
-    # Ensure timestamp is tz-aware
-    timestamp = ensure_tz_aware(timestamp)
-
-    # Get commit timestamps (already tz-aware from get_commit_timestamps)
-    commit_timestamps = get_commit_timestamps(context) if context.is_pr else []
-
-    if not commit_timestamps:
-        # No commits, use current snapshot
-        snapshot = context.cache.get_current_snapshot()
-        return snapshot.snapshot_id if snapshot else None
-
-    # Find the last commit before this timestamp
-    last_commit = get_last_commit_before(commit_timestamps, timestamp)
-
-    if last_commit is None:
-        # Comment is before all commits - this shouldn't happen normally
-        # but use the first snapshot if available
-        if context.cache.snapshots:
-            return list(context.cache.snapshots.keys())[0]
-        return None
-
-    # Check if we already have a snapshot for this commit
-    for snap_id, snapshot in context.cache.snapshots.items():
-        snap_ts = parse_timestamp(snapshot.timestamp)
-        if snap_ts and abs((snap_ts - last_commit).total_seconds()) < 1:
-            # Found matching snapshot (within 1 second tolerance)
-            return snap_id
-
-    # If no matching snapshot found, return current snapshot
-    # (the snapshot system creates one snapshot for the current state,
-    # and signatures are associated with it based on commit timing)
-    snapshot = context.cache.get_current_snapshot()
-    return snapshot.snapshot_id if snapshot else None
-
-
 def process_all_comments(context: PRContext) -> None:
     """
     Process all comments on the PR/Issue.
@@ -3674,9 +3630,9 @@ def process_all_comments(context: PRContext) -> None:
 # =============================================================================
 
 
-def get_categories_from_snapshot(context: PRContext) -> Dict[str, Set[str]]:
+def get_current_categories(context: PRContext) -> Dict[str, Set[str]]:
     """
-    Get all categories and their associated file version keys from current snapshot.
+    Get all categories and their associated file version keys from current PR state.
 
     Categories come from multiple sources:
     1. Automatic assignment: file → package → categories (stored in FileVersion.categories)
@@ -3685,16 +3641,16 @@ def get_categories_from_snapshot(context: PRContext) -> Dict[str, Set[str]]:
     4. EXTRA_CHECKS: Categories required for merge (from repo_config)
 
     Returns:
-        Dict mapping category name to set of file version keys
+        Dict mapping category name to set of file version keys (filename::sha)
     """
     categories: Dict[str, Set[str]] = {}
-    snapshot = context.cache.get_current_snapshot()
+    current_files = context.cache.current_file_versions
 
-    if not snapshot:
+    if not current_files:
         return categories
 
     # Get categories from file versions (automatic assignment)
-    for fv_key in snapshot.changes:
+    for fv_key in current_files:
         if fv_key in context.cache.file_versions:
             fv = context.cache.file_versions[fv_key]
             for cat in fv.categories:
@@ -3707,7 +3663,7 @@ def get_categories_from_snapshot(context: PRContext) -> Dict[str, Set[str]]:
     for cat in context.signing_categories:
         if cat not in categories:
             categories[cat] = set()
-        categories[cat].update(snapshot.changes)
+        categories[cat].update(current_files)
 
     # Add PRE_CHECKS and EXTRA_CHECKS categories
     # These are required signatures that apply to all files
@@ -3718,27 +3674,95 @@ def get_categories_from_snapshot(context: PRContext) -> Dict[str, Set[str]]:
     for cat in pre_checks + extra_checks:
         if cat not in categories:
             categories[cat] = set()
-        # These categories apply to all files in the snapshot
-        categories[cat].update(snapshot.changes)
+        # These categories apply to all files
+        categories[cat].update(current_files)
 
     return categories
+
+
+def get_files_for_categories(context: PRContext, categories: List[str]) -> List[str]:
+    """
+    Get current file version keys for the specified categories.
+
+    When signing categories, this returns the files that the signature covers.
+    The signature is valid only while these exact file versions are current.
+
+    Args:
+        context: PR processing context
+        categories: List of category names being signed
+
+    Returns:
+        List of file version keys (filename::sha) for files in those categories
+    """
+    all_categories = get_current_categories(context)
+    signed_files: Set[str] = set()
+
+    for cat in categories:
+        if cat in all_categories:
+            signed_files.update(all_categories[cat])
+
+    return sorted(signed_files)
+
+
+def is_signature_valid_for_category(
+    context: PRContext, comment_info: CommentInfo, category: str, current_category_files: Set[str]
+) -> bool:
+    """
+    Check if a signature is still valid for a specific category.
+
+    A signature for a category is valid if:
+    1. All files that were signed are still current (haven't changed)
+    2. All current files in the category were covered by the signature (no new files added)
+
+    Args:
+        context: PR processing context
+        comment_info: The signature comment info
+        category: The category to check
+        current_category_files: Current file version keys for this category
+
+    Returns:
+        True if signature is still valid for this category, False otherwise
+    """
+    if not comment_info.signed_files:
+        # No files recorded - signature is invalid (legacy or error)
+        return False
+
+    signed_files_set = set(comment_info.signed_files)
+    current_files_set = set(context.cache.current_file_versions)
+
+    # Check 1: All signed files for this category must still be current
+    # (Filter to only files that belong to this category)
+    for signed_file in signed_files_set:
+        if signed_file not in current_files_set:
+            # This file has changed since signing
+            return False
+
+    # Check 2: All current files in this category must have been signed
+    # (No new files added to the category since signing)
+    for current_file in current_category_files:
+        if current_file not in signed_files_set:
+            # New file added to category since signing
+            return False
+
+    return True
 
 
 def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalState]:
     """
     Compute approval state for each category based on signatures.
 
+    A signature for a category is valid only if:
+    1. All files signed are still current (haven't changed)
+    2. No new files have been added to the category since signing
+
     Returns:
         Dict mapping category name to approval state
     """
-    categories = get_categories_from_snapshot(context)
-    snapshot = context.cache.get_current_snapshot()
-    snapshot_id = snapshot.snapshot_id if snapshot else None
-
+    categories = get_current_categories(context)
     category_states: Dict[str, ApprovalState] = {}
 
-    for cat_name in categories:
-        # Find signatures for this category that match current snapshot
+    for cat_name, cat_files in categories.items():
+        # Find valid signatures for this category
         approved = False
         rejected = False
 
@@ -3747,7 +3771,7 @@ def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalSt
                 continue
             if cat_name not in comment_info.categories:
                 continue
-            if comment_info.snapshot != snapshot_id:
+            if not is_signature_valid_for_category(context, comment_info, cat_name, cat_files):
                 continue
 
             if comment_info.ctype == "+1":
@@ -4725,10 +4749,10 @@ def post_welcome_message(context: PRContext) -> None:
         watcher_mentions = ", ".join(format_mention(context, w) for w in sorted(context.watchers))
         watchers_msg = f"{watcher_mentions} this is something you requested to watch as well.\n"
 
-    # Build backport message
+    # Build backport message (uses BACKPORT_STR from cms_static)
     backport_msg = ""
     if context.backport_of:
-        backport_msg = f"Backported from #{context.backport_of}\n"
+        backport_msg = f"{BACKPORT_STR}{context.backport_of}\n"
 
     # CMSSW repo has more detailed welcome message for PRs
     if context.cmssw_repo and context.is_pr and context.pr:
@@ -4875,7 +4899,7 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
     resign_msg = ""
     if pending_l2s:
         signers = ", ".join(format_mention(context, l2) for l2 in sorted(pending_l2s))
-        resign_msg = f"\n{signers} can you please check and sign again."
+        resign_msg = f" {signers} can you please check and sign again."
 
     # Build watchers message
     watchers_msg = ""
@@ -4883,7 +4907,42 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
         watcher_mentions = ", ".join(format_mention(context, w) for w in sorted(context.watchers))
         watchers_msg = f"\n\n{watcher_mentions} this is something you requested to watch as well."
 
-    msg = f"Pull request #{pr_number} was updated.{resign_msg}{watchers_msg}"
+    # Build new categories message (similar to welcome message format)
+    new_categories_msg = ""
+    new_categories = getattr(context, "_new_categories", set())
+    if new_categories:
+        # Get packages for new categories
+        new_pkg_lines = []
+        for fv_key in context.cache.current_file_versions:
+            if fv_key in context.cache.file_versions:
+                fv = context.cache.file_versions[fv_key]
+                pkg = file_to_package(context.repo_config, fv.filename)
+                if pkg:
+                    # Check if this package has any of the new categories
+                    pkg_new_cats = [c for c in fv.categories if c in new_categories]
+                    if pkg_new_cats:
+                        new_pkg_lines.append(f"- {pkg} (**{', '.join(sorted(pkg_new_cats))}**)")
+
+        if new_pkg_lines:
+            # Remove duplicates and sort
+            unique_pkg_lines = sorted(set(new_pkg_lines))
+            new_categories_msg = "\n\nThe following packages are now also affected:\n" + "\n".join(
+                unique_pkg_lines
+            )
+
+            # Add L2 mentions for new categories
+            new_cat_l2s = set()
+            for cat in new_categories:
+                cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+                new_cat_l2s.update(cat_l2s)
+
+            if new_cat_l2s:
+                new_l2_mentions = ", ".join(
+                    format_mention(context, l2) for l2 in sorted(new_cat_l2s)
+                )
+                new_categories_msg += f"\n\n{new_l2_mentions} can you please review and sign?"
+
+    msg = f"Pull request #{pr_number} was updated.{resign_msg}{new_categories_msg}{watchers_msg}"
     post_bot_comment(context, msg, "pr_updated", hash(new_commit_sha))
 
 
@@ -5189,10 +5248,15 @@ def process_pr(
         if chg_files:
             context.watchers = get_watchers(context, chg_files, datetime.now(tz=timezone.utc))
 
-        # Update file states (creates snapshot)
-        changed_files = update_file_states(context)
+        # Update file states (sets current_file_versions)
+        changed_files, new_categories = update_file_states(context)
         if changed_files:
             logger.info(f"Changed files: {changed_files}")
+        if new_categories:
+            logger.info(f"New categories: {new_categories}")
+
+        # Store new categories for use in PR updated message
+        context._new_categories = new_categories
 
         # Check for new commits and post update message if needed
         check_for_new_commits(context)

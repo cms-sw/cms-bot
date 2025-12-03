@@ -35,25 +35,39 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import the module under test
 from process_pr_v2 import (
+    ApprovalState,
+    BotCache,
+    CommentInfo,
+    FileVersion,
+    MULTILINE_COMMENTS_MAP,
     PRContext,
+    PRState,
     TestCmdParseError,
+    TestCmdResult,
     TestRequest,
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
     TOO_MANY_COMMITS_WARN_THRESHOLD,
+    TOO_MANY_FILES_FAIL_THRESHOLD,
     TOO_MANY_FILES_WARN_THRESHOLD,
     build_test_parameters,
     check_commit_and_file_counts,
     create_property_file,
     extract_command_line,
+    file_to_package,
     format_mention,
+    get_category_l2s,
+    get_package_categories,
+    get_watchers,
     init_l2_data,
     is_valid_tester,
     parse_test_cmd,
     parse_test_parameters,
     parse_timestamp,
+    post_bot_comment,
     preprocess_command,
     process_pr,
     should_ignore_issue,
+    should_ignore_pr_body,
     should_notify_without_at,
 )
 
@@ -2854,7 +2868,7 @@ class TestPRIgnoreProcessing:
         )
 
         assert result["skipped"] is True
-        assert result["reason"] == "cms-bot ignore tag"
+        assert result["reason"] == "ignored"
 
         if record_mode:
             recorder.save()

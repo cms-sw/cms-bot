@@ -1608,10 +1608,10 @@ def should_ignore_issue(repo_config: types.ModuleType, repo: Any, issue: Any) ->
 
     # Check if body has ignore marker on first line
     if issue.body:
-        # Get first non-blank line, ASCII-only for matching
+        # Get first non-blank line
         try:
-            first_line = issue.body.encode("ascii", "ignore").decode().split("\n", 1)[0].strip()
-            if first_line and re.search(CMSBOT_IGNORE_MSG, first_line, re.IGNORECASE):
+            first_line = issue.body.split("\n", 1)[0].strip()
+            if first_line and RE_CMS_BOT_IGNORE.search(first_line):
                 return True
         except Exception:
             pass
@@ -4037,18 +4037,21 @@ def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
     """
     statuses = get_ci_test_statuses(context)
 
-    if not statuses["required"] and not statuses["optional"]:
+    required_results = statuses.get("required", [])
+    optional_results = statuses.get("optional", [])
+
+    if not required_results and not optional_results:
         return None
 
     lab_stats: Dict[str, str] = {}
 
     # Check required tests
-    if statuses["required"]:
+    if required_results:
         all_success = True
         any_error = False
         any_pending = False
 
-        for result in statuses["required"]:
+        for result in required_results:
             if result.status == "pending":
                 any_pending = True
             elif result.status == "error":
@@ -4061,11 +4064,11 @@ def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
             lab_stats["required"] = "success" if all_success and not any_error else "error"
 
     # Check optional tests
-    if statuses["optional"]:
+    if optional_results:
         all_success = True
         any_pending = False
 
-        for result in statuses["optional"]:
+        for result in optional_results:
             if result.status == "pending":
                 any_pending = True
             elif result.status != "success":

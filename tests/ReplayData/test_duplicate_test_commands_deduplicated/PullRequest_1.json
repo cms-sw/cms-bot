@@ -31,12 +31,12 @@
       "commit": {
         "message": "Test commit",
         "author": {
-          "date": "2025-11-28T14:02:08.373590+00:00",
+          "date": "2025-12-03T11:29:04.623270+00:00",
           "name": "Test Author",
           "email": "test@example.com"
         },
         "committer": {
-          "date": "2025-11-28T14:02:08.373606+00:00",
+          "date": "2025-12-03T11:29:04.623278+00:00",
           "name": "Test Committer",
           "email": "test@example.com"
         }

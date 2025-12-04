@@ -451,6 +451,82 @@ class MockLabel:
 
 
 @dataclass
+class MockMilestone:
+    """Mock for github.Milestone.Milestone"""
+
+    number: int
+    title: str
+    description: str = ""
+    state: str = "open"
+    due_on: Optional[datetime] = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockMilestone":
+        return cls(
+            number=data.get("number", 1),
+            title=data.get("title", ""),
+            description=data.get("description", ""),
+            state=data.get("state", "open"),
+            due_on=parse_timestamp(data.get("due_on")) if data.get("due_on") else None,
+            created_at=parse_timestamp(
+                data.get("created_at", datetime.now(tz=timezone.utc).isoformat())
+            ),
+            updated_at=parse_timestamp(
+                data.get("updated_at", datetime.now(tz=timezone.utc).isoformat())
+            ),
+        )
+
+
+@dataclass
+class MockCommitStatus:
+    """Mock for github.CommitStatus.CommitStatus"""
+
+    state: str
+    context: str
+    description: str = ""
+    target_url: Optional[str] = None
+    created_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(tz=timezone.utc))
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockCommitStatus":
+        return cls(
+            state=data.get("state", "pending"),
+            context=data.get("context", ""),
+            description=data.get("description", ""),
+            target_url=data.get("target_url"),
+            created_at=parse_timestamp(
+                data.get("created_at", datetime.now(tz=timezone.utc).isoformat())
+            ),
+            updated_at=parse_timestamp(
+                data.get("updated_at", datetime.now(tz=timezone.utc).isoformat())
+            ),
+        )
+
+
+@dataclass
+class MockCommitCombinedStatus:
+    """Mock for github.CommitCombinedStatus.CommitCombinedStatus"""
+
+    state: str
+    statuses: List[MockCommitStatus] = field(default_factory=list)
+    total_count: int = 0
+    sha: str = ""
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockCommitCombinedStatus":
+        statuses = [MockCommitStatus.from_json(s) for s in data.get("statuses", [])]
+        return cls(
+            state=data.get("state", "pending"),
+            statuses=statuses,
+            total_count=data.get("total_count", len(statuses)),
+            sha=data.get("sha", ""),
+        )
+
+
+@dataclass
 class MockCommit:
     """Mock for github.Commit.Commit"""
 
@@ -458,6 +534,8 @@ class MockCommit:
     message: str = ""
     author: Optional[MockNamedUser] = None
     committer: Optional[MockNamedUser] = None
+    _test_name: str = field(default="", repr=False)
+    _recorder: ActionRecorder = field(default=None, repr=False)
 
     # Nested commit data (git commit vs GitHub commit)
     @dataclass
@@ -519,8 +597,32 @@ class MockCommit:
             commit=git_commit,
         )
 
+    @classmethod
+    def from_json_with_context(
+        cls, data: Dict[str, Any], test_name: str = "", recorder: ActionRecorder = None
+    ) -> "MockCommit":
+        """Create MockCommit with test context for get_statuses support."""
+        commit = cls.from_json(data)
+        commit._test_name = test_name
+        commit._recorder = recorder
+        return commit
 
-@dataclass
+    def get_statuses(self) -> "MockPaginatedList":
+        """Get commit statuses."""
+        # Try to load from CommitCombinedStatus file
+        try:
+            # Look for status file with this SHA
+            data_dir = REPLAY_DATA_DIR / self._test_name
+            for status_file in data_dir.glob(f"CommitCombinedStatus_*_{self.sha}.json"):
+                with open(status_file) as f:
+                    data = json.load(f)
+                statuses = [MockCommitStatus.from_json(s) for s in data.get("statuses", [])]
+                return MockPaginatedList(statuses)
+        except Exception:
+            pass
+        return MockPaginatedList([])
+
+
 @dataclass
 class MockFile:
     """Mock for github.File.File (PR file)"""
@@ -927,6 +1029,37 @@ class MockRepository:
     def get_issue(self, number: int) -> MockIssue:
         """Get an issue by number."""
         return MockIssue(self.test_name, number, self._recorder)
+
+    def get_milestone(self, number: int) -> MockMilestone:
+        """Get a milestone by number."""
+        # Try to load from Milestone file
+        data = load_json_data(
+            self.test_name, "Milestone", f"{self.full_name.replace('/', '_')}_{number}"
+        )
+        if data:
+            return MockMilestone.from_json(data)
+        # Return a default milestone
+        return MockMilestone(number=number, title=f"Milestone {number}")
+
+    def get_commit(self, sha: str) -> MockCommit:
+        """Get a commit by SHA."""
+        # Try to load from Commit file
+        data = load_json_data(
+            self.test_name, "Commit", f"{self.full_name.replace('/', '_')}_{sha}"
+        )
+        if data:
+            return MockCommit.from_json_with_context(data, self.test_name, self._recorder)
+        # Try GitCommit file
+        data = load_json_data(
+            self.test_name, "GitCommit", f"{self.full_name.replace('/', '_')}_{sha}"
+        )
+        if data:
+            return MockCommit.from_json_with_context(data, self.test_name, self._recorder)
+        # Return a default commit
+        commit = MockCommit(sha=sha)
+        commit._test_name = self.test_name
+        commit._recorder = self._recorder
+        return commit
 
     def create_status(
         self,

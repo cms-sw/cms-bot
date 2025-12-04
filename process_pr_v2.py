@@ -1721,6 +1721,10 @@ class PRContext:
     # Message tracking (to avoid duplicate bot messages)
     posted_messages: Set[str] = field(default_factory=set)  # Message keys already posted
 
+    # Pending bot comments to post at end of processing
+    # List of (message, message_key, comment_id) tuples
+    pending_bot_comments: List[Tuple[str, str, Optional[int]]] = field(default_factory=list)
+
     # Welcome message tracking
     welcome_message_posted: bool = False  # True if welcome message was posted
 
@@ -1804,10 +1808,13 @@ def post_bot_comment(
     comment_id: Optional[int] = None,
 ) -> bool:
     """
-    Post a bot comment, avoiding duplicates.
+    Queue a bot comment to be posted at the end of processing.
 
     Checks if a message with the same key (tied to a comment_id if provided)
-    has already been posted. If so, skips posting.
+    has already been posted or queued. If so, skips queuing.
+
+    Messages are queued and posted later by flush_pending_comments() to allow
+    later commands to potentially cancel or modify earlier messages.
 
     Args:
         context: PR processing context
@@ -1816,7 +1823,7 @@ def post_bot_comment(
         comment_id: Optional comment ID this message is in response to
 
     Returns:
-        True if message was posted, False if skipped (duplicate or dry run)
+        True if message was queued, False if skipped (duplicate)
     """
     # Build full key including comment_id if provided
     full_key = f"{message_key}:{comment_id}" if comment_id else message_key
@@ -1835,23 +1842,80 @@ def post_bot_comment(
         logger.debug(f"Message already queued: {full_key}")
         return False
 
-    # Mark as posted
+    # Mark as queued
     context.posted_messages.add(full_key)
 
-    # Add invisible marker to message for future detection
-    marked_message = f"{message}\n<!--{full_key}-->"
+    # Queue the message for later posting
+    context.pending_bot_comments.append((message, message_key, comment_id))
+    logger.debug(f"Queued message: {full_key}")
 
-    if context.dry_run:
-        logger.info(f"[DRY RUN] Would post comment: {message[:100]}...")
-        return False
+    return True
 
-    try:
-        context.issue.create_comment(marked_message)
-        logger.info(f"Posted comment: {message_key}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to post comment: {e}")
-        return False
+
+def cancel_pending_comment(
+    context: PRContext, message_key: str, comment_id: Optional[int] = None
+) -> bool:
+    """
+    Cancel a pending bot comment that hasn't been posted yet.
+
+    Args:
+        context: PR processing context
+        message_key: Key identifying the message type to cancel
+        comment_id: Optional comment ID the message was in response to
+
+    Returns:
+        True if a message was cancelled, False if not found
+    """
+    full_key = f"{message_key}:{comment_id}" if comment_id else message_key
+
+    # Find and remove the pending comment
+    for i, (msg, key, cid) in enumerate(context.pending_bot_comments):
+        pending_key = f"{key}:{cid}" if cid else key
+        if pending_key == full_key:
+            context.pending_bot_comments.pop(i)
+            context.posted_messages.discard(full_key)
+            logger.debug(f"Cancelled pending message: {full_key}")
+            return True
+
+    return False
+
+
+def flush_pending_comments(context: PRContext) -> int:
+    """
+    Post all pending bot comments.
+
+    Should be called at the end of PR processing after all commands
+    have been processed.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        Number of comments actually posted
+    """
+    posted_count = 0
+
+    for message, message_key, comment_id in context.pending_bot_comments:
+        full_key = f"{message_key}:{comment_id}" if comment_id else message_key
+
+        # Add invisible marker to message for future detection
+        marked_message = f"{message}\n<!--{full_key}-->"
+
+        if context.dry_run:
+            logger.info(f"[DRY RUN] Would post comment: {message[:100]}...")
+            continue
+
+        try:
+            context.issue.create_comment(marked_message)
+            logger.info(f"Posted comment: {message_key}")
+            posted_count += 1
+        except Exception as e:
+            logger.error(f"Failed to post comment: {e}")
+
+    # Clear the queue
+    context.pending_bot_comments.clear()
+
+    return posted_count
 
 
 # =============================================================================
@@ -2286,6 +2350,9 @@ def handle_unhold(
     if is_orp:
         # ORP unhold removes ALL holds
         removed_count = len(context.holds)
+        # Cancel any pending hold messages
+        for hold in context.holds:
+            cancel_pending_comment(context, "hold", hold.comment_id)
         context.holds = []
         logger.info(f"ORP user {user} removed all {removed_count} holds")
         return True  # ORP unhold always succeeds
@@ -2312,10 +2379,16 @@ def handle_unhold(
         return False
 
     # Remove holds that match user's categories AND were placed by this user
+    # Also cancel pending hold messages for removed holds
     original_count = len(context.holds)
-    context.holds = [
-        h for h in context.holds if not (h.category in removable_categories and h.user == user)
-    ]
+    new_holds = []
+    for h in context.holds:
+        if h.category in removable_categories and h.user == user:
+            # This hold is being removed, cancel its pending message
+            cancel_pending_comment(context, "hold", h.comment_id)
+        else:
+            new_holds.append(h)
+    context.holds = new_holds
     removed = original_count - len(context.holds)
 
     if removed > 0:
@@ -4112,6 +4185,9 @@ def process_ci_test_results(context: PRContext) -> None:
 
     statuses = get_ci_test_statuses(context)
 
+    # Get current commit SHA for unique message key
+    head_sha = context.pr.head.sha[:8] if context.pr else "unknown"
+
     for suffix, status_value in lab_stats.items():
         # Find a result with a target URL to fetch detailed results
         result_url = None
@@ -4136,19 +4212,14 @@ def process_ci_test_results(context: PRContext) -> None:
 
         error_code, output = fetch_pr_result(pr_result_url)
 
-        if output and not context.dry_run:
-            # Post result as comment
+        if output:
+            # Post result as comment using post_bot_comment for deduplication
             res = "+1" if status_value == "success" else "-1"
             comment_body = f"{res}\n\n{output}"
 
-            try:
-                context.issue.create_comment(comment_body)
-                logger.info(f"Posted CI test result comment ({suffix}: {status_value})")
-            except Exception as e:
-                logger.error(f"Failed to post CI test result comment: {e}")
-        elif output and context.dry_run:
-            res = "+1" if status_value == "success" else "-1"
-            logger.info(f"[DRY RUN] Would post CI test result: {res} ({suffix})")
+            # Use suffix and head_sha as message key to avoid duplicates
+            message_key = f"ci_result_{suffix}_{head_sha}"
+            post_bot_comment(context, comment_body, message_key)
 
 
 def generate_status_message(context: PRContext) -> str:
@@ -4594,12 +4665,12 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                     "The processing of this PR will resume once the commit count "
                     "drops below the limit."
                 )
-                if not dryRun:
-                    context.issue.create_comment(msg)
+                post_bot_comment(context, msg, "too_many_commits_fail")
                 logger.warning(f"PR blocked: too many commits ({commit_count})")
 
             # Always block at FAIL threshold - cannot be overridden
             context.blocked_by_commit_count = True
+            flush_pending_comments(context)  # Flush before early return
             return {
                 "pr_number": context.issue.number,
                 "is_pr": True,
@@ -4623,13 +4694,13 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                     f"{trackers_mention}, to re-enable processing of this PR, "
                     "you can write `+commit-count` in a comment. Thanks."
                 )
-                if not dryRun:
-                    context.issue.create_comment(msg)
+                post_bot_comment(context, msg, "too_many_commits_warn")
                 logger.warning(f"PR warned: many commits ({commit_count})")
 
             # Block if not overridden
             if not context.ignore_commit_count:
                 context.blocked_by_commit_count = True
+                flush_pending_comments(context)  # Flush before early return
                 return {
                     "pr_number": context.issue.number,
                     "is_pr": True,
@@ -4656,12 +4727,12 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                     "The processing of this PR will resume once the number of "
                     "changed files drops below the limit."
                 )
-                if not dryRun:
-                    context.issue.create_comment(msg)
+                post_bot_comment(context, msg, "too_many_files_fail")
                 logger.warning(f"PR blocked: too many files ({file_count})")
 
             # Always block at FAIL threshold - cannot be overridden
             context.blocked_by_file_count = True
+            flush_pending_comments(context)  # Flush before early return
             return {
                 "pr_number": context.issue.number,
                 "is_pr": True,
@@ -4685,13 +4756,13 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                     f"{trackers_mention}, to re-enable processing of this PR, "
                     "you can write `+file-count` in a comment. Thanks."
                 )
-                if not dryRun:
-                    context.issue.create_comment(msg)
+                post_bot_comment(context, msg, "too_many_files_warn")
                 logger.warning(f"PR warned: many files ({file_count})")
 
             # Block if not overridden
             if not context.ignore_file_count:
                 context.blocked_by_file_count = True
+                flush_pending_comments(context)  # Flush before early return
                 return {
                     "pr_number": context.issue.number,
                     "is_pr": True,
@@ -5361,6 +5432,9 @@ def process_pr(
         if context.cmssw_repo and re.match(CREATE_REPO, issue.title or ""):
             logger.info(f"Creating new data repo properties for issue #{issue.number}")
             create_new_data_repo_properties(issue.number, dryRun)
+
+    # Flush all pending bot comments
+    flush_pending_comments(context)
 
     # Save cache
     save_cache_to_comments(issue, context.comments, cache, dryRun)

@@ -438,7 +438,8 @@ def compare_maxmem_summary(**kwargs):
             '</table><table><tr><td bgcolor="orange">'
             + "default maximum memory used warn threshold %0.0f" % maxmem_threshold.WARN_THRESHOLD
             + ' MB</td></tr><tr><td bgcolor="red">'
-            + "default maximum memory used error threshold %0.0f" % maxmem_threshold.ERROR_THRESHOLD
+            + "default maximum memory used error threshold %0.0f" 
+            % maxmem_threshold.ERROR_THRESHOLD
             + " MB</td></tr>",
         ]
         summaryLines += ["</table></body></html>"]

@@ -9,6 +9,7 @@ import json
 import glob
 import re
 import sys
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 import maxmem_threshold

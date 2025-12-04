@@ -4,8 +4,6 @@ import sys
 import json
 from collections import defaultdict
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
 import maxmem_threshold
 
 

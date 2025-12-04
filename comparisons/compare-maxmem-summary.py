@@ -10,8 +10,6 @@ import glob
 import re
 import sys
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, SCRIPT_DIR)
 import maxmem_threshold
 
 
@@ -438,9 +436,9 @@ def compare_maxmem_summary(**kwargs):
     if summaryFormat == "html":
         summaryLines += [
             '</table><table><tr><td bgcolor="orange">'
-            + "maximum memory used warn threshold %0.0f" % threshold
+            + "default maximum memory used warn threshold %0.0f" % maxmem_threshold.WARN_THRESHOLD
             + ' MB</td></tr><tr><td bgcolor="red">'
-            + "maximum memory used error threshold %0.0f" % error_threshold
+            + "default maximum memory used error threshold %0.0f" % maxmem_threshold.ERROR_THRESHOLD
             + " MB</td></tr>",
         ]
         summaryLines += ["</table></body></html>"]

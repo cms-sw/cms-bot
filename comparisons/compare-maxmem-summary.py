@@ -9,8 +9,7 @@ import json
 import glob
 import re
 
-MAXMEM_WARN_THRESHOLD = 10.0
-MAXMEM_ERROR_THRESHOLD = 100.0
+import maxmem_threshold
 
 
 def KILL(message):
@@ -202,19 +201,19 @@ def compare_maxmem_summary(**kwargs):
         for step in sorted(workflows[workflow].keys(), key=stepfn):
             threshold = workflows[workflow][step]["threshold"]
             if not threshold:
-                threshold = 10.0
+                threshold = maxmem_threshold.WARN_THRESHOLD
             error_threshold = workflows[workflow][step].get("error_threshold")
             if not error_threshold:
-                error_threshold = 100.0
+                error_threshold = maxmem_threshold.ERROR_THRESHOLD
             cellString = '<td style="border-bottom-style:hidden;border-top-style:hidden;" '
             color = ""
-            if workflows[workflow][step]["max memory adiff"] > MAXMEM_WARN_THRESHOLD:
+            if workflows[workflow][step]["max memory adiff"] >threshold:
                 color = 'bgcolor="orange"'
-            if workflows[workflow][step]["max memory adiff"] > MAXMEM_ERROR_THRESHOLD:
+            if workflows[workflow][step]["max memory adiff"] > error_threshold:
                 color = 'bgcolor="red"'
-            if workflows[workflow][step]["max memory adiff"] < -1 * MAXMEM_WARN_THRESHOLD:
+            if workflows[workflow][step]["max memory adiff"] < -1 * threshold:
                 color = 'bgcolor="orange"'
-            if workflows[workflow][step]["max memory adiff"] < -1 * MAXMEM_ERROR_THRESHOLD:
+            if workflows[workflow][step]["max memory adiff"] < -1 * error_threshold:
                 color = 'bgcolor="red"'
             cellString += color
             cellString += ">"
@@ -436,9 +435,9 @@ def compare_maxmem_summary(**kwargs):
     if summaryFormat == "html":
         summaryLines += [
             '</table><table><tr><td bgcolor="orange">'
-            + "maximum memory used warn threshold %0.3f" % MAXMEM_WARN_THRESHOLD
+            + "maximum memory used warn threshold %0.3f" % threshold
             + '%</td></tr><tr><td bgcolor="red">'
-            + "maximum memory used error threshold %0.3f" % MAXMEM_ERROR_THRESHOLD
+            + "maximum memory used error threshold %0.3f" % error_threshold
             + "%</td></tr>",
         ]
         summaryLines += ["</table></body></html>"]

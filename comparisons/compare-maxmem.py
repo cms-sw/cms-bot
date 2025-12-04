@@ -51,10 +51,9 @@ mem_prof["max memory pr"] = mem_prof_pr_dicts
 mem_prof["max memory base"] = mem_prof_base_dicts
 mem_prof["max memory pdiffs"] = mem_prof_pdiffs_dicts
 mem_prof["max memory diffs"] = mem_prof_diffs_dicts
-WARN_THRESHOLD = 10.0
-ERROR_THRESHOLD = 100.0
-mem_prof["threshold"] = WARN_THRESHOLD
-mem_prof["error_threshold"] = ERROR_THRESHOLD
+import maxmem_threshold
+mem_prof["threshold"] = maxmem_threshold.WARN_THRESHOLD
+mem_prof["error_threshold"] = maxmem_threshold.ERROR_THRESHOLD
 mem_prof["workflow"] = sys.argv[1].split("/")[-2]
 sys.stdout.write(json.dumps(mem_prof))
 sys.stdout.write("\n")
@@ -64,17 +63,17 @@ for k in sorted(mem_prof_diffs_dicts.keys()):
     mmu = mem_prof_diffs_dicts[k].get("max memory used")
     if mmu:
         mmus = mmu / (1024.0 * 1024.0)
-        if mmus > WARN_THRESHOLD or mmus < -1 * WARN_THRESHOLD:
+        if mmus > maxmem_threshold.WARN_THRESHOLD or mmus < -1 * maxmem_threshold.WARN_THRESHOLD:
             sys.stderr.write(
                 "Workflow %s %s max memory used diff %2f exceeds warn threshold +/- %2f MB"
-                % (mem_prof["workflow"], k, mmus, WARN_THRESHOLD)
+                % (mem_prof["workflow"], k, mmus, maxmem_threshold.WARN_THRESHOLD)
             )
             sys.stderr.write("\n")
-        if mmus > ERROR_THRESHOLD or mmus < -1 * ERROR_THRESHOLD:
+        if mmus > maxmem_threshold.ERROR_THRESHOLD or mmus < -1 * maxmem_threshold.ERROR_THRESHOLD:
             errs = errs + 1
             sys.stderr.write(
                 "Workflow %s %s max memory used diff %2f exceeds error threshold +/- %2f MB"
-                % (mem_prof["workflow"], k, mmus, ERROR_THRESHOLD)
+                % (mem_prof["workflow"], k, mmus, maxmem_threshold.ERROR_THRESHOLD)
             )
             sys.stderr.write("\n")
 

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+import os
 import sys
 import json
 from collections import defaultdict
-
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
+import maxmem_threshold
 
 def create_memory_report_dict(filename):
     memory_reports = dict(dict())
@@ -51,7 +54,6 @@ mem_prof["max memory pr"] = mem_prof_pr_dicts
 mem_prof["max memory base"] = mem_prof_base_dicts
 mem_prof["max memory pdiffs"] = mem_prof_pdiffs_dicts
 mem_prof["max memory diffs"] = mem_prof_diffs_dicts
-import maxmem_threshold
 mem_prof["threshold"] = maxmem_threshold.WARN_THRESHOLD
 mem_prof["error_threshold"] = maxmem_threshold.ERROR_THRESHOLD
 mem_prof["workflow"] = sys.argv[1].split("/")[-2]

@@ -8,7 +8,9 @@ import os
 import json
 import glob
 import re
-
+import sys
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
 import maxmem_threshold
 
 
@@ -49,9 +51,9 @@ def compare_maxmem_summary(**kwargs):
                 nalloc_pr = max_memory_pr_dict[step].get("# allocations calls")
                 ndalloc_pr = max_memory_pr_dict[step].get("# deallocations calls")
                 nlalloc_pr = nalloc_pr - ndalloc_pr if (nalloc_pr and ndalloc_pr) else 0
-                max_memory_pr = max_mem_pr / 1000000 if max_mem_pr else 0.0
-                req_memory_pr = req_mem_pr / 1000000 if req_mem_pr else 0.0
-                leak_memory_pr = leak_mem_pr / 1000000 if leak_mem_pr else 0.0
+                max_memory_pr = max_mem_pr / (1024*1024) if max_mem_pr else 0.0
+                req_memory_pr = req_mem_pr / (1024*1024) if req_mem_pr else 0.0
+                leak_memory_pr = leak_mem_pr / (1024*1024) if leak_mem_pr else 0.0
                 nallocated_pr = nalloc_pr if nalloc_pr else 0
 
                 max_mem_base = max_memory_base_dict[step].get("max memory used")
@@ -435,10 +437,10 @@ def compare_maxmem_summary(**kwargs):
     if summaryFormat == "html":
         summaryLines += [
             '</table><table><tr><td bgcolor="orange">'
-            + "maximum memory used warn threshold %0.3f" % threshold
-            + '%</td></tr><tr><td bgcolor="red">'
-            + "maximum memory used error threshold %0.3f" % error_threshold
-            + "%</td></tr>",
+            + "maximum memory used warn threshold %0.0f" % threshold
+            + ' MB</td></tr><tr><td bgcolor="red">'
+            + "maximum memory used error threshold %0.0f" % error_threshold
+            + " MB</td></tr>",
         ]
         summaryLines += ["</table></body></html>"]
 

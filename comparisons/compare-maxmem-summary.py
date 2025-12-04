@@ -51,9 +51,9 @@ def compare_maxmem_summary(**kwargs):
                 nalloc_pr = max_memory_pr_dict[step].get("# allocations calls")
                 ndalloc_pr = max_memory_pr_dict[step].get("# deallocations calls")
                 nlalloc_pr = nalloc_pr - ndalloc_pr if (nalloc_pr and ndalloc_pr) else 0
-                max_memory_pr = max_mem_pr / (1024*1024) if max_mem_pr else 0.0
-                req_memory_pr = req_mem_pr / (1024*1024) if req_mem_pr else 0.0
-                leak_memory_pr = leak_mem_pr / (1024*1024) if leak_mem_pr else 0.0
+                max_memory_pr = max_mem_pr / (1024 * 1024) if max_mem_pr else 0.0
+                req_memory_pr = req_mem_pr / (1024 * 1024) if req_mem_pr else 0.0
+                leak_memory_pr = leak_mem_pr / (1024 * 1024) if leak_mem_pr else 0.0
                 nallocated_pr = nalloc_pr if nalloc_pr else 0
 
                 max_mem_base = max_memory_base_dict[step].get("max memory used")
@@ -209,7 +209,7 @@ def compare_maxmem_summary(**kwargs):
                 error_threshold = maxmem_threshold.ERROR_THRESHOLD
             cellString = '<td style="border-bottom-style:hidden;border-top-style:hidden;" '
             color = ""
-            if workflows[workflow][step]["max memory adiff"] >threshold:
+            if workflows[workflow][step]["max memory adiff"] > threshold:
                 color = 'bgcolor="orange"'
             if workflows[workflow][step]["max memory adiff"] > error_threshold:
                 color = 'bgcolor="red"'

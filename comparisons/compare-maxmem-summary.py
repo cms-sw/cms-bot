@@ -63,7 +63,7 @@ def compare_maxmem_summary(**kwargs):
                 nlalloc_base = nalloc_base - ndalloc_base if (nalloc_base and ndalloc_base) else 0
                 max_memory_base = max_mem_base / (1024 * 1024) if max_mem_base else 0.0
                 req_memory_base = req_mem_base / (1024 * 1024) if req_mem_base else 0.0
-                leak_memory_base = leak_mem_base / (1024 * 1024)  if leak_mem_base else 0.0
+                leak_memory_base = leak_mem_base / (1024 * 1024) if leak_mem_base else 0.0
                 nallocated_base = nalloc_base if nalloc_base else 0
 
                 max_mem_pdiff = max_memory_pdiff_dict[step].get("max memory used")

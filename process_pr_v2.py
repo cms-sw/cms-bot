@@ -8,6 +8,7 @@ It handles code ownership, approval workflows, and merge automation.
 
 import base64
 import gzip
+import zlib
 import itertools
 import json
 import logging
@@ -202,8 +203,10 @@ class PRState(Enum):
 CACHE_COMMENT_MARKER = CMSBOT_TECHNICAL_MSG + "<!--"
 CACHE_COMMENT_END = "-->"
 
-# Maximum size for a single comment (GitHub limit is ~65536, we use less for safety)
-MAX_COMMENT_SIZE = 60000
+# Maximum size for cache data per comment chunk
+# GitHub limit is 65535 chars, but cache is embedded in comment with markers,
+# so we limit data portion to 55000 chars (matching old cms-bot behavior)
+BOT_CACHE_CHUNK_SIZE = 55000
 
 # Reaction types
 REACTION_PLUS_ONE = "+1"
@@ -973,15 +976,15 @@ class TestRequest:
 
 
 def compress_cache(data: str) -> str:
-    """Compress cache data using gzip + base64."""
-    compressed = gzip.compress(data.encode("utf-8"))
-    return base64.b64encode(compressed).decode("utf-8")
+    """Compress cache data using zlib + base64."""
+    compressed = zlib.compress(data.encode("utf-8"))
+    return base64.b64encode(compressed).decode("ascii")
 
 
 def decompress_cache(data: str) -> str:
-    """Decompress cache data from gzip + base64."""
-    compressed = base64.b64decode(data.encode("utf-8"))
-    return gzip.decompress(compressed).decode("utf-8")
+    """Decompress cache data from zlib + base64."""
+    compressed = base64.b64decode(data.encode("ascii"))
+    return zlib.decompress(compressed).decode("utf-8")
 
 
 def load_cache_from_comments(comments: List[Any]) -> BotCache:
@@ -1040,7 +1043,8 @@ def save_cache_to_comments(
     """
     Save bot cache to PR issue comments.
 
-    Creates or updates cache comments. Will compress and split if needed.
+    Creates or updates cache comments. Will compress if > chunk size, then split if needed.
+    Follows same logic as old cms-bot: compress entire cache first, then chunk.
 
     Args:
         issue: The issue/PR object (used for creating new comments)
@@ -1048,14 +1052,18 @@ def save_cache_to_comments(
         cache: The cache to save
         dry_run: If True, don't actually save
     """
-    data = json.dumps(cache.to_dict(), separators=(",", ":"))
+    # Serialize with compact separators and sorted keys (like old code)
+    data = json.dumps(cache.to_dict(), separators=(",", ":"), sort_keys=True)
 
-    # Check if compression is needed
-    if len(data) > MAX_COMMENT_SIZE:
+    # Compress if larger than chunk size (like old dumps_maybe_compress)
+    if len(data) > BOT_CACHE_CHUNK_SIZE:
         data = compress_cache(data)
 
     # Split into chunks if still too large
-    chunks = [data[i : i + MAX_COMMENT_SIZE] for i in range(0, len(data), MAX_COMMENT_SIZE)]
+    chunks = []
+    while data:
+        chunk, data = data[:BOT_CACHE_CHUNK_SIZE], data[BOT_CACHE_CHUNK_SIZE:]
+        chunks.append(chunk)
 
     # Find existing cache comments
     existing_cache_comments = []
@@ -1073,6 +1081,11 @@ def save_cache_to_comments(
         comment_body = f"{CACHE_COMMENT_MARKER} {chunk} {CACHE_COMMENT_END}"
 
         if i < len(existing_cache_comments):
+            # Check if content actually changed
+            old_body = existing_cache_comments[i].body or ""
+            if old_body == comment_body:
+                logger.debug(f"Cache comment {i + 1}/{len(chunks)} unchanged, skipping")
+                continue
             # Update existing comment
             existing_cache_comments[i].edit(comment_body)
             logger.debug(f"Updated cache comment {i + 1}/{len(chunks)}")
@@ -1081,10 +1094,12 @@ def save_cache_to_comments(
             issue.create_comment(comment_body)
             logger.debug(f"Created cache comment {i + 1}/{len(chunks)}")
 
-    # Delete extra old comments
-    for comment in existing_cache_comments[len(chunks) :]:
+    # Delete extra old comments if new cache is smaller
+    for i, comment in enumerate(existing_cache_comments[len(chunks) :], start=len(chunks)):
+        logger.debug(
+            f"Deleting extra cache comment {i + 1 - len(chunks)}/{len(existing_cache_comments) - len(chunks)}"
+        )
         comment.delete()
-        logger.debug("Deleted extra cache comment")
 
 
 # =============================================================================

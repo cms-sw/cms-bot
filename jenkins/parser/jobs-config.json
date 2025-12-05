@@ -295,7 +295,6 @@
                 ],
                 "action": "nodeOff",
                 "allJobs": "true"
-
             }
         }
     }

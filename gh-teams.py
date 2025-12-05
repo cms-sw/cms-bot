@@ -33,7 +33,11 @@ REPO_OWNERS["cms-sw"] += ["sextonkennedy"]
 # Set Teams for organizations    #
 #################################
 # Teams for cms-data
-REPO_TEAMS["cms-data"]["Developers"] = {"members": CMS_SDT[:], "repositories": {"*": "push"}}
+EXTRA_CMS_SDT = ["raoatifshad"]
+REPO_TEAMS["cms-data"]["Developers"] = {
+    "members": CMS_SDT[:] + EXTRA_CMS_SDT,
+    "repositories": {"*": "push"},
+}
 
 # Teams for cms-externals
 REPO_TEAMS["cms-externals"]["Developers"] = deepcopy(REPO_TEAMS["cms-data"]["Developers"])

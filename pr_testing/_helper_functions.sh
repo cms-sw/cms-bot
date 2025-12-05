@@ -189,6 +189,14 @@ function get_result_file_name () {
       echo "21-${TEST_FLAVOR}-comparison-report.res"
       return 0
       ;;
+    maxmem)
+      if [ "$TEST_FLAVOR" != "" ]; then
+        echo "23-${TEST_FLAVOR}-maxmem-report.res"
+      else
+        echo "23-maxmem-report.res"
+      fi
+      return 0
+      ;;
   esac
   return 1
 }

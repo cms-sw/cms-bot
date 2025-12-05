@@ -9,33 +9,5 @@
     "id": 1
   },
   "labels": [],
-  "comments": [
-    {
-      "id": 100,
-      "body": "hold",
-      "user": {
-        "login": "alice",
-        "id": 2
-      },
-      "created_at": "2025-12-03T11:29:03.887242+00:00"
-    },
-    {
-      "id": 101,
-      "body": "hold",
-      "user": {
-        "login": "bob",
-        "id": 3
-      },
-      "created_at": "2025-12-03T11:29:03.887264+00:00"
-    },
-    {
-      "id": 102,
-      "body": "unhold",
-      "user": {
-        "login": "dave",
-        "id": 4
-      },
-      "created_at": "2025-12-03T11:29:03.887269+00:00"
-    }
-  ]
+  "comments": 3
 }

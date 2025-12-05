@@ -18,15 +18,17 @@ Usage:
     pytest test_process_pr_v2.py::test_basic_approval --record-actions
 """
 
+import functools
 import json
 import os
 import sys
 import types
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -35,39 +37,25 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import the module under test
 from process_pr_v2 import (
-    ApprovalState,
-    BotCache,
-    CommentInfo,
-    FileVersion,
-    MULTILINE_COMMENTS_MAP,
     PRContext,
-    PRState,
-    TestCmdParseError,
-    TestCmdResult,
-    TestRequest,
+    TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
+    TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
     TOO_MANY_COMMITS_WARN_THRESHOLD,
-    TOO_MANY_FILES_FAIL_THRESHOLD,
     TOO_MANY_FILES_WARN_THRESHOLD,
     build_test_parameters,
     check_commit_and_file_counts,
     create_property_file,
     extract_command_line,
-    file_to_package,
     format_mention,
-    get_category_l2s,
-    get_package_categories,
-    get_watchers,
     init_l2_data,
     is_valid_tester,
     parse_test_cmd,
     parse_test_parameters,
     parse_timestamp,
-    post_bot_comment,
     preprocess_command,
     process_pr,
     should_ignore_issue,
-    should_ignore_pr_body,
     should_notify_without_at,
 )
 
@@ -246,6 +234,32 @@ class ActionRecorder:
             }
         )
 
+    def property_file_hook(self) -> List[Dict[str, Any]]:
+        """
+        Create a hook configuration for recording property file creation.
+
+        Returns a list suitable for use with FunctionHook.
+
+        Usage:
+            recorder = ActionRecorder("test_name", record_mode)
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(...)
+        """
+
+        def on_create_property_file(filename, parameters, dry_run, res=None):
+            self.record("create_property_file", filename=filename, parameters=parameters)
+            return res
+
+        return [
+            {
+                "module_path": "process_pr_v2",
+                "class_name": None,
+                "function_name": "create_property_file",
+                "hook_function": on_create_property_file,
+                "call_original": False,
+            },
+        ]
+
     def save(self) -> None:
         """Save recorded actions to file."""
         ACTION_DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -357,6 +371,127 @@ class ActionRecorder:
                     msg_parts.append(f"  - {exp['action']}: {exp.get('details', {})}")
 
             raise AssertionError("\n".join(msg_parts))
+
+
+def _hook_and_call_original(hook, original_function, call_original, *args, **kwargs):
+    """
+    Utility function for hooking into a function call.
+
+    Optionally calls the original function, then calls the hook with all
+    arguments plus the result.
+
+    Args:
+        hook: Hook function to call with (*args, **kwargs, res=result)
+        original_function: The original function being hooked
+        call_original: If True, call original function and pass result to hook
+        *args, **kwargs: Arguments passed to the function
+
+    Returns:
+        Result from hook function
+    """
+    if call_original:
+        res = original_function(*args, **kwargs)
+    else:
+        res = None
+
+    return hook(*args, **kwargs, res=res)
+
+
+class FunctionHook:
+    """
+    Context manager for hooking into functions using unittest.mock.patch.
+
+    Allows recording function calls without modifying production code.
+    Can optionally call the original function.
+
+    Usage:
+        recorder = ActionRecorder("test_name", record_mode)
+
+        def on_create_property_file(filename, parameters, dry_run, res=None):
+            recorder.record("create_property_file", filename=filename, parameters=parameters)
+            return res
+
+        hooks = [
+            {
+                "module_path": "process_pr_v2",
+                "class_name": None,
+                "function_name": "create_property_file",
+                "hook_function": on_create_property_file,
+                "call_original": False,
+            },
+        ]
+
+        with FunctionHook(hooks):
+            result = process_pr(...)
+    """
+
+    def __init__(self, hooks: List[Dict[str, Any]]):
+        """
+        Initialize function hooks.
+
+        Args:
+            hooks: List of hook configurations, each containing:
+                - module_path: Module path (e.g., "process_pr_v2")
+                - class_name: Class name if method, None for functions
+                - function_name: Name of function/method to hook
+                - hook_function: Callable with signature (*args, **kwargs, res=result)
+                - call_original: Whether to call original function
+        """
+        self.hooks = hooks
+        self.patchers = []
+        self.original_functions = {}
+
+    def __enter__(self):
+        import importlib
+
+        for config in self.hooks:
+            module_path = config["module_path"]
+            class_name = config.get("class_name")
+            function_name = config["function_name"]
+            hook_function = config["hook_function"]
+            call_original = config.get("call_original", False)
+
+            # Build the full path to patch
+            if class_name:
+                fn_to_patch = f"{module_path}.{class_name}.{function_name}"
+            else:
+                fn_to_patch = f"{module_path}.{function_name}"
+
+            # Get the original function
+            module = sys.modules.get(module_path)
+            if module is None:
+                module = importlib.import_module(module_path)
+
+            if class_name:
+                cls = getattr(module, class_name)
+                original_function = getattr(cls, function_name)
+            else:
+                original_function = getattr(module, function_name)
+
+            self.original_functions[fn_to_patch] = original_function
+
+            # Create side_effect that hooks into the call
+            side_effect = functools.partial(
+                _hook_and_call_original,
+                hook_function,
+                original_function,
+                call_original,
+            )
+
+            # Create and start the patcher
+            patcher = patch(fn_to_patch, side_effect=side_effect)
+            self.patchers.append(patcher)
+            patcher.start()
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Stop all patchers in reverse order
+        for patcher in reversed(self.patchers):
+            patcher.stop()
+        self.patchers.clear()
+        self.original_functions.clear()
+        return False
 
 
 # =============================================================================
@@ -884,7 +1019,7 @@ class MockIssue:
         number: int,
         recorder: ActionRecorder = None,
         is_issue: bool = False,  # If True, this is an issue, not a PR
-        comments_data: List[Dict] = None,  # Optional inline comments data
+        comments_data: Optional[List[Dict]] = None,  # Optional inline comments data
     ):
         self.test_name = test_name
         self.number = number
@@ -910,16 +1045,25 @@ class MockIssue:
         # Labels
         self._labels = [MockLabel.from_json(l) for l in data.get("labels", [])]
 
-        # Comments - prefer inline data, then JSON file data
+        # Milestone
+        milestone_data = data.get("milestone")
+        if milestone_data and isinstance(milestone_data, dict):
+            self.milestone = MockMilestone.from_json(milestone_data)
+        else:
+            self.milestone = None
+
+        # Comments - prefer inline data, then try loading from IssueComments file
+        # Note: data.get("comments") is an integer count in GitHub API, not a list
         if comments_data is not None:
             self._comments = self._load_comments(comments_data)
         else:
-            self._comments = self._load_comments(data.get("comments", []))
+            # Load from separate IssueComments file
+            self._comments = self._load_comments(None)
 
         # Associated PR (if this is a PR issue)
         self._pull_request = None if is_issue else "pending"
 
-    def _load_comments(self, comments_data: List[Dict]) -> List[MockIssueComment]:
+    def _load_comments(self, comments_data: Optional[List[Dict]]) -> List[MockIssueComment]:
         """Load issue comments from data."""
         if comments_data:
             return [MockIssueComment.from_json(c, self._recorder) for c in comments_data]
@@ -1161,6 +1305,12 @@ def create_basic_pr_data(
     """
     dirpath = create_test_data_directory(test_name)
 
+    # Use fixed timestamps to ensure comments are after commits
+    # This is important for reset_on_push logic
+    base_time = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    commit_time = base_time
+    comment_time = base_time + timedelta(hours=1)  # Comments are 1 hour after commits
+
     # Default file
     if files is None:
         files = [
@@ -1179,12 +1329,12 @@ def create_basic_pr_data(
                 "commit": {
                     "message": "Test commit",
                     "author": {
-                        "date": datetime.now(tz=timezone.utc).isoformat(),
+                        "date": commit_time.isoformat(),
                         "name": "Test Author",
                         "email": "test@example.com",
                     },
                     "committer": {
-                        "date": datetime.now(tz=timezone.utc).isoformat(),
+                        "date": commit_time.isoformat(),
                         "name": "Test Committer",
                         "email": "test@example.com",
                     },
@@ -1195,6 +1345,26 @@ def create_basic_pr_data(
     # Default comments (empty)
     if comments is None:
         comments = []
+    else:
+        # Ensure all comments have timestamps after commits
+        # This normalizes timestamps to avoid race conditions with datetime.now()
+        for comment in comments:
+            if "created_at" not in comment:
+                comment["created_at"] = comment_time.isoformat()
+            else:
+                # If timestamp looks like a recent datetime.now() (within last minute),
+                # replace it with our fixed comment_time to ensure proper ordering
+                try:
+                    ts = comment["created_at"]
+                    if isinstance(ts, str):
+                        parsed = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                        # If timestamp is within last few minutes, it's likely datetime.now()
+                        # Replace with our fixed comment_time
+                        now = datetime.now(tz=timezone.utc)
+                        if abs((parsed - now).total_seconds()) < 300:  # Within 5 minutes
+                            comment["created_at"] = comment_time.isoformat()
+                except Exception:
+                    pass
 
     # Default labels (empty)
     if labels is None:
@@ -1219,6 +1389,7 @@ def create_basic_pr_data(
     save_json_data(test_name, "PullRequest", pr_number, pr_data)
 
     # Create Issue data (for the PR)
+    # Note: In GitHub API, issue["comments"] is a count, not the actual comments
     issue_data = {
         "id": pr_number,
         "number": pr_number,
@@ -1227,10 +1398,14 @@ def create_basic_pr_data(
         "state": "open",
         "user": {"login": "testuser", "id": 1},
         "labels": [{"name": l} for l in labels],
-        "comments": comments,
+        "comments": len(comments),  # Count, not the actual comments
     }
 
     save_json_data(test_name, "Issue", pr_number, issue_data)
+
+    # Save comments to separate IssueComments file
+    if comments:
+        save_json_data(test_name, "IssueComments", pr_number, {"comments": comments})
 
     # Create Repository data
     repo_data = {
@@ -1739,6 +1914,8 @@ class TestCommandPreprocessing:
 
     def test_please_prefix_removal(self, repo_config, record_mode):
         """Test that 'please' prefix is properly removed."""
+        # Use timestamps after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         # Create PR with code-checks approval (required for tests)
         create_basic_pr_data(
             "test_please_prefix_removal",
@@ -1755,13 +1932,13 @@ class TestCommandPreprocessing:
                     "id": 100,
                     "body": "+code-checks",
                     "user": {"login": "cmsbuild", "id": 10},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "please test",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 },
             ],
         )
@@ -1856,6 +2033,8 @@ class TestTestCommand:
 
     def test_basic_test_trigger(self, repo_config, record_mode):
         """Test basic test trigger command."""
+        # Use timestamps after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         # Create PR with code-checks approval (required for tests)
         create_basic_pr_data(
             "test_basic_test_trigger",
@@ -1872,13 +2051,13 @@ class TestTestCommand:
                     "id": 100,
                     "body": "+code-checks",
                     "user": {"login": "cmsbuild", "id": 10},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "test",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 },
             ],
         )
@@ -1888,15 +2067,16 @@ class TestTestCommand:
         repo = MockRepository("test_basic_test_trigger", recorder=recorder)
         issue = MockIssue("test_basic_test_trigger", number=1, recorder=recorder)
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=True,
-            cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=True,
+                cmsbuild_user="cmsbuild",
+                loglevel="WARNING",
+            )
 
         # Check that a test was triggered
         assert len(result["tests_triggered"]) > 0
@@ -1909,6 +2089,8 @@ class TestTestCommand:
 
     def test_test_with_params(self, repo_config, record_mode):
         """Test trigger with parameters."""
+        # Use timestamps after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         # Create PR with code-checks approval (required for tests)
         create_basic_pr_data(
             "test_test_with_params",
@@ -1925,13 +2107,13 @@ class TestTestCommand:
                     "id": 100,
                     "body": "+code-checks",
                     "user": {"login": "cmsbuild", "id": 10},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "test workflows 1.0,2.0",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 },
             ],
         )
@@ -2484,10 +2666,10 @@ class TestBotMessageProcessing:
         else:
             recorder.verify()
 
-    def test_bot_regular_comment_still_ignored(self, repo_config, record_mode):
-        """Test that non-allowed bot comments are still ignored."""
+    def test_bot_comments_processed_like_normal_users(self, repo_config, record_mode):
+        """Test that bot comments are processed like normal users (via ACL)."""
         create_basic_pr_data(
-            "test_bot_regular_comment_still_ignored",
+            "test_bot_comments_processed_like_normal_users",
             pr_number=1,
             files=[
                 {
@@ -2499,17 +2681,19 @@ class TestBotMessageProcessing:
             comments=[
                 {
                     "id": 100,
-                    "body": "hold",  # hold is NOT in bot-allowed commands
+                    "body": "hold",  # cmsbuild has L2 categories so this should work
                     "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
                     "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
 
-        recorder = ActionRecorder("test_bot_regular_comment_still_ignored", record_mode)
-        gh = MockGithub("test_bot_regular_comment_still_ignored", recorder)
-        repo = MockRepository("test_bot_regular_comment_still_ignored", recorder=recorder)
-        issue = MockIssue("test_bot_regular_comment_still_ignored", number=1, recorder=recorder)
+        recorder = ActionRecorder("test_bot_comments_processed_like_normal_users", record_mode)
+        gh = MockGithub("test_bot_comments_processed_like_normal_users", recorder)
+        repo = MockRepository("test_bot_comments_processed_like_normal_users", recorder=recorder)
+        issue = MockIssue(
+            "test_bot_comments_processed_like_normal_users", number=1, recorder=recorder
+        )
 
         result = process_pr(
             repo_config=repo_config,
@@ -2521,9 +2705,11 @@ class TestBotMessageProcessing:
             loglevel="WARNING",
         )
 
-        # hold command from bot should NOT be processed
+        # Bot comments are now processed like normal users
+        # cmsbuild has L2 categories (tests, code-checks), so hold should work
         assert result["pr_number"] == 1
-        assert len(result["holds"]) == 0
+        # cmsbuild has tests and code-checks categories, so it can place holds
+        assert len(result["holds"]) > 0
 
         if record_mode:
             recorder.save()
@@ -2604,32 +2790,32 @@ class TestBuildTestCommandParsing:
 
     def test_parse_error_empty(self):
         """Test that empty input raises error."""
-        with pytest.raises(TestCmdParseError):
+        with pytest.raises(CmdParseError):
             parse_test_cmd("")
 
     def test_parse_error_unknown_verb(self):
         """Test that unknown verb raises error."""
-        with pytest.raises(TestCmdParseError):
+        with pytest.raises(CmdParseError):
             parse_test_cmd("deploy")
 
     def test_parse_error_duplicate_keyword(self):
         """Test that duplicate keyword raises error."""
-        with pytest.raises(TestCmdParseError):
+        with pytest.raises(CmdParseError):
             parse_test_cmd("test workflows 1.0 workflows 2.0")
 
     def test_parse_error_missing_parameter(self):
         """Test that missing parameter raises error."""
-        with pytest.raises(TestCmdParseError):
+        with pytest.raises(CmdParseError):
             parse_test_cmd("test workflows")
 
     def test_parse_error_empty_using(self):
         """Test that empty using statement raises error."""
-        with pytest.raises(TestCmdParseError):
+        with pytest.raises(CmdParseError):
             parse_test_cmd("test using")
 
     def test_parse_error_full_without_using(self):
         """Test that 'full' without 'using' raises error."""
-        with pytest.raises(TestCmdParseError):
+        with pytest.raises(CmdParseError):
             parse_test_cmd("test full cmssw")
 
 
@@ -2638,6 +2824,8 @@ class TestBuildTestCommand:
 
     def test_build_command_basic(self, repo_config, record_mode):
         """Test basic build command."""
+        # Use timestamps after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         # Remove pre-checks for this test
         config = create_mock_repo_config(PRE_CHECKS=[])
 
@@ -2656,7 +2844,7 @@ class TestBuildTestCommand:
                     "id": 100,
                     "body": "build",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 }
             ],
         )
@@ -2686,6 +2874,8 @@ class TestBuildTestCommand:
 
     def test_test_command_with_workflows(self, repo_config, record_mode):
         """Test test command with workflows parameter."""
+        # Use timestamps after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         config = create_mock_repo_config(PRE_CHECKS=[])
 
         create_basic_pr_data(
@@ -2703,7 +2893,7 @@ class TestBuildTestCommand:
                     "id": 100,
                     "body": "test workflows 1.0,2.0,3.0",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 }
             ],
         )
@@ -2736,6 +2926,8 @@ class TestBuildTestCommand:
 
     def test_test_blocked_by_missing_signature(self, repo_config, record_mode):
         """Test that test is blocked when required signature is missing."""
+        # Use timestamps after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         config = create_mock_repo_config(PRE_CHECKS=[(0, ["code-checks"])])
 
         create_basic_pr_data(
@@ -2753,7 +2945,7 @@ class TestBuildTestCommand:
                     "id": 100,
                     "body": "test",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 }
             ],
         )
@@ -2803,31 +2995,28 @@ class TestPRDescriptionParsing:
         return repo
 
     def test_should_ignore_issue_with_cms_bot_tag(self):
-        """Test that <cms-bot></cms-bot> tag in body is detected."""
+        """Test that <cmsbot></cmsbot> tag in body is detected."""
         repo_config = create_mock_repo_config()
         repo = self._make_mock_repo()
 
+        # Note: The actual tag is <cmsbot> not <cms-bot>
         assert (
-            should_ignore_issue(
-                repo_config, repo, self._make_mock_issue(body="<cms-bot></cms-bot>")
-            )
+            should_ignore_issue(repo_config, repo, self._make_mock_issue(body="<cmsbot></cmsbot>"))
             is True
         )
         assert (
             should_ignore_issue(
-                repo_config, repo, self._make_mock_issue(body="<cms-bot> </cms-bot>")
+                repo_config, repo, self._make_mock_issue(body="<cmsbot> </cmsbot>")
             )
             is True
         )
         assert (
-            should_ignore_issue(
-                repo_config, repo, self._make_mock_issue(body="<CMS-BOT></CMS-BOT>")
-            )
+            should_ignore_issue(repo_config, repo, self._make_mock_issue(body="<CMSBOT></CMSBOT>"))
             is True
         )
         assert (
             should_ignore_issue(
-                repo_config, repo, self._make_mock_issue(body="  <cms-bot></cms-bot>  ")
+                repo_config, repo, self._make_mock_issue(body="  <cmsbot></cmsbot>  ")
             )
             is True
         )
@@ -2956,7 +3145,7 @@ class TestPRIgnoreProcessing:
     """Tests for PR ignore functionality via <cms-bot> tag."""
 
     def test_pr_with_cms_bot_tag_skipped(self, repo_config, record_mode):
-        """Test that PR with <cms-bot></cms-bot> is skipped."""
+        """Test that PR with <cmsbot></cmsbot> is skipped."""
         create_basic_pr_data(
             "test_pr_with_cms_bot_tag_skipped",
             pr_number=1,
@@ -2977,13 +3166,13 @@ class TestPRIgnoreProcessing:
             ],
         )
 
-        # Modify PR data to have cms-bot tag in body
-        pr_data_path = REPLAY_DATA_DIR / "test_pr_with_cms_bot_tag_skipped" / "PullRequest_1.json"
-        with open(pr_data_path, "r") as f:
-            pr_data = json.load(f)
-        pr_data["body"] = "<cms-bot></cms-bot>\nThis PR should be ignored"
-        with open(pr_data_path, "w") as f:
-            json.dump(pr_data, f, indent=2)
+        # Modify Issue data to have cmsbot tag in body (should_ignore_issue reads issue.body)
+        issue_data_path = REPLAY_DATA_DIR / "test_pr_with_cms_bot_tag_skipped" / "Issue_1.json"
+        with open(issue_data_path, "r") as f:
+            issue_data = json.load(f)
+        issue_data["body"] = "<cmsbot></cmsbot>\nThis PR should be ignored"
+        with open(issue_data_path, "w") as f:
+            json.dump(issue_data, f, indent=2)
 
         recorder = ActionRecorder("test_pr_with_cms_bot_tag_skipped", record_mode)
         gh = MockGithub("test_pr_with_cms_bot_tag_skipped", recorder)
@@ -3009,7 +3198,7 @@ class TestPRIgnoreProcessing:
             recorder.verify()
 
     def test_pr_with_cms_bot_tag_processed_with_force(self, repo_config, record_mode):
-        """Test that PR with <cms-bot></cms-bot> is processed when force=True."""
+        """Test that PR with <cmsbot></cmsbot> is processed when force=True."""
         create_basic_pr_data(
             "test_pr_with_cms_bot_tag_processed_with_force",
             pr_number=1,
@@ -3023,17 +3212,15 @@ class TestPRIgnoreProcessing:
             comments=[],
         )
 
-        # Modify PR data to have cms-bot tag in body
-        pr_data_path = (
-            REPLAY_DATA_DIR
-            / "test_pr_with_cms_bot_tag_processed_with_force"
-            / "PullRequest_1.json"
+        # Modify Issue data to have cmsbot tag in body
+        issue_data_path = (
+            REPLAY_DATA_DIR / "test_pr_with_cms_bot_tag_processed_with_force" / "Issue_1.json"
         )
-        with open(pr_data_path, "r") as f:
-            pr_data = json.load(f)
-        pr_data["body"] = "<cms-bot></cms-bot>\nThis PR should be ignored"
-        with open(pr_data_path, "w") as f:
-            json.dump(pr_data, f, indent=2)
+        with open(issue_data_path, "r") as f:
+            issue_data = json.load(f)
+        issue_data["body"] = "<cmsbot></cmsbot>\nThis PR should be ignored"
+        with open(issue_data_path, "w") as f:
+            json.dump(issue_data, f, indent=2)
 
         recorder = ActionRecorder("test_pr_with_cms_bot_tag_processed_with_force", record_mode)
         gh = MockGithub("test_pr_with_cms_bot_tag_processed_with_force", recorder)
@@ -3511,6 +3698,8 @@ class TestHyphenatedCategories:
 
     def test_plus_category_with_hyphen(self, repo_config, record_mode):
         """Test +code-checks approval command."""
+        # Use timestamp after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         create_basic_pr_data(
             "test_plus_category_with_hyphen",
             pr_number=1,
@@ -3526,7 +3715,7 @@ class TestHyphenatedCategories:
                     "id": 100,
                     "body": "+code-checks",
                     "user": {"login": "cmsbuild", "id": 999},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 }
             ],
         )
@@ -3602,6 +3791,8 @@ class TestHyphenatedCategories:
 
     def test_minus_category_with_hyphen(self, repo_config, record_mode):
         """Test -code-checks rejection command."""
+        # Use timestamp after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         create_basic_pr_data(
             "test_minus_category_with_hyphen",
             pr_number=1,
@@ -3617,7 +3808,7 @@ class TestHyphenatedCategories:
                     "id": 100,
                     "body": "-code-checks",
                     "user": {"login": "cmsbuild", "id": 999},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
+                    "created_at": comment_time.isoformat(),
                 }
             ],
         )
@@ -4424,6 +4615,10 @@ class TestCommitAndFileCountChecks:
         context.ignore_commit_count = False
         context.ignore_file_count = False
         context.notify_without_at = False
+        context.posted_messages = set()
+        context.pending_bot_comments = []
+        context.cmsbuild_user = "cmsbuild"
+        context.dry_run = False
 
         result = check_commit_and_file_counts(context, dryRun=True)
 
@@ -4466,6 +4661,10 @@ class TestCommitAndFileCountChecks:
         context.ignore_commit_count = False
         context.ignore_file_count = False
         context.notify_without_at = False
+        context.posted_messages = set()
+        context.pending_bot_comments = []
+        context.cmsbuild_user = "cmsbuild"
+        context.dry_run = False
 
         result = check_commit_and_file_counts(context, dryRun=True)
 
@@ -4508,6 +4707,10 @@ class TestCommitAndFileCountChecks:
         context.ignore_commit_count = True  # Override attempted
         context.ignore_file_count = False
         context.notify_without_at = False
+        context.posted_messages = set()
+        context.pending_bot_comments = []
+        context.cmsbuild_user = "cmsbuild"
+        context.dry_run = False
 
         result = check_commit_and_file_counts(context, dryRun=True)
 
@@ -5051,7 +5254,7 @@ class TestPropertiesFileCreation:
         context.issue.number = 1234
         context.test_params = {"EXISTING_PARAM": "existing_value"}
 
-        test_request = TestRequest(
+        test_request = BuildTestRequest(
             verb="test",
             workflows="1.0,2.0",
             prs=["cms-sw/cmsdist#100"],
@@ -5081,7 +5284,7 @@ class TestPropertiesFileCreation:
         context.issue.number = 1234
         context.test_params = {}
 
-        test_request = TestRequest(
+        test_request = BuildTestRequest(
             verb="build",  # build, not test
             workflows="",
             prs=[],
@@ -5380,6 +5583,191 @@ class TestCITestStatus:
 def pytest_configure(config):
     """Register custom markers."""
     config.addinivalue_line("markers", "record_actions: mark test to record actions")
+
+
+# =============================================================================
+# INTEGRATION TEST SUPPORT
+# =============================================================================
+
+
+class IntegrationTestHelper:
+    """
+    Helper for integration tests that need custom repo_config and related modules.
+
+    This class manages the sys.path and sys.modules to allow tests to use
+    custom versions of repo_config, releases, categories, milestones, etc.
+    from a specific directory.
+
+    Usage:
+        helper = IntegrationTestHelper("/path/to/repo/config/dir")
+        helper.setup()
+
+        # Now import process_pr_v2 - it will use the custom modules
+        from process_pr_v2 import process_pr
+        repo_config = helper.get_repo_config()
+
+        # Run your test...
+        result = process_pr(repo_config=repo_config, ...)
+
+        helper.teardown()
+
+    Or as a context manager:
+        with IntegrationTestHelper("/path/to/repo/config/dir") as helper:
+            from process_pr_v2 import process_pr
+            repo_config = helper.get_repo_config()
+            ...
+    """
+
+    # Modules that should be loaded from the custom directory
+    MANAGED_MODULES = [
+        "repo_config",
+        "releases",
+        "milestones",
+        "categories",
+        "categories_map",
+        "forward_ports_map",
+    ]
+
+    def __init__(self, config_dir: str):
+        """
+        Initialize the helper.
+
+        Args:
+            config_dir: Path to directory containing repo_config.py and related modules
+        """
+        self.config_dir = os.path.abspath(config_dir)
+        self._saved_path = None
+        self._saved_modules = {}
+        self._active = False
+
+    def setup(self) -> None:
+        """Set up the custom module path and clear cached modules."""
+        if self._active:
+            return
+
+        # Verify directory exists
+        if not os.path.isdir(self.config_dir):
+            raise ValueError(f"Config directory does not exist: {self.config_dir}")
+
+        # Save current state
+        self._saved_path = sys.path.copy()
+
+        # Save and remove managed modules from sys.modules
+        for mod_name in self.MANAGED_MODULES:
+            if mod_name in sys.modules:
+                self._saved_modules[mod_name] = sys.modules.pop(mod_name)
+
+        # Also remove process_pr_v2 so it reimports the modules
+        if "process_pr_v2" in sys.modules:
+            self._saved_modules["process_pr_v2"] = sys.modules.pop("process_pr_v2")
+
+        # Insert custom path at front
+        sys.path.insert(0, self.config_dir)
+
+        self._active = True
+
+    def teardown(self) -> None:
+        """Restore original module path and modules."""
+        if not self._active:
+            return
+
+        # Remove managed modules loaded from custom path
+        for mod_name in self.MANAGED_MODULES + ["process_pr_v2"]:
+            if mod_name in sys.modules:
+                del sys.modules[mod_name]
+
+        # Restore saved modules
+        sys.modules.update(self._saved_modules)
+        self._saved_modules.clear()
+
+        # Restore original path
+        if self._saved_path is not None:
+            sys.path = self._saved_path
+            self._saved_path = None
+
+        self._active = False
+
+    def get_repo_config(self) -> types.ModuleType:
+        """
+        Get the repo_config module from the custom directory.
+
+        Returns:
+            The repo_config module
+        """
+        if not self._active:
+            raise RuntimeError("IntegrationTestHelper not set up. Call setup() first.")
+
+        import repo_config
+
+        return repo_config
+
+    def __enter__(self) -> "IntegrationTestHelper":
+        self.setup()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.teardown()
+
+
+@pytest.fixture
+def integration_test_helper():
+    """
+    Pytest fixture for integration tests with custom repo_config.
+
+    Usage:
+        def test_something(integration_test_helper):
+            config_dir = "/path/to/custom/repo/config"
+            with IntegrationTestHelper(config_dir) as helper:
+                repo_config = helper.get_repo_config()
+                # ... run test with custom repo_config
+    """
+    # This fixture just provides the class - tests instantiate with their own path
+    return IntegrationTestHelper
+
+
+# =============================================================================
+# OLD INTEGRATION TESTS
+# =============================================================================
+
+
+class TestOldTestForProcessPR:
+    """Integration tests using custom repo_config from test fixtures."""
+
+    REPO_CONFIG_DIR = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "repos", "iarspider_cmssw", "cmssw")
+    )
+
+    def test_abort(self, test_name, mock_gh, record_mode, integration_test_helper):
+        with integration_test_helper(self.REPO_CONFIG_DIR) as helper:
+            # Import process_pr AFTER setting up the helper
+            # so it uses the custom modules
+            from process_pr_v2 import process_pr
+
+            repo_config = helper.get_repo_config()
+
+            recorder = ActionRecorder(test_name, record_mode)
+            gh = MockGithub(test_name, recorder)
+            repo = gh.get_repo("iarspider-cmssw/cmssw")
+            issue = repo.get_issue(17)
+
+            # Execute
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="iarspider",
+                    loglevel="DEBUG",
+                )
+
+            print(result)
+
+            if record_mode:
+                recorder.save()
+            else:
+                recorder.verify()
 
 
 # =============================================================================

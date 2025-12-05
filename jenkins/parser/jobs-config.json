@@ -293,7 +293,9 @@
                 "errorStr": [
                     "No space left on device"
                 ],
-                "action": "nodeOff"
+                "action": "nodeOff",
+                "allJobs": "true"
+
             }
         }
     }

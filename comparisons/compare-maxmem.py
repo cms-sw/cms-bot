@@ -64,7 +64,7 @@ errs = 0
 for k in sorted(mem_prof_diffs_dicts.keys()):
     mmu = mem_prof_diffs_dicts[k].get("max memory used")
     if mmu:
-        mmus = mmu / 1000000
+        mmus = mmu / (1024 * 1024)
         if mmus > maxmem_threshold.WARN_THRESHOLD or mmus < -1 * maxmem_threshold.WARN_THRESHOLD:
             sys.stderr.write(
                 "Workflow %s %s max memory used diff %2f exceeds warn threshold +/- %2f MiB\n"

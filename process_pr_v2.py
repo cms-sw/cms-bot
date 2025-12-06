@@ -7,7 +7,6 @@ It handles code ownership, approval workflows, and merge automation.
 """
 
 import base64
-import gzip
 import zlib
 import itertools
 import json
@@ -81,7 +80,6 @@ from cms_static import (
     VALID_CMSDIST_BRANCHES,
     NEW_ISSUE_PREFIX,
     NEW_PR_PREFIX,
-    ISSUE_SEEN_MSG,
     BUILD_REL,
     GH_CMSSW_REPO,
     GH_CMSDIST_REPO,
@@ -218,12 +216,12 @@ TOO_MANY_COMMITS_FAIL_THRESHOLD = 240  # Hard block level (no override possible)
 TOO_MANY_FILES_WARN_THRESHOLD = 1500  # Warning level
 TOO_MANY_FILES_FAIL_THRESHOLD = 3001  # Hard block level (no override possible)
 
-# Commands that can be processed from bot's own comments
-# (for CI results, code-checks, etc.)
-BOT_ALLOWED_COMMAND_PATTERNS = [
+# Bot command patterns that are reset on new commits
+# (code-checks results, CI test results like +1/-1)
+# These are only skipped when from bot comments before the latest commit
+BOT_COMMANDS_RESET_ON_PUSH = [
     r"^[+-]code-checks$",
     r"^[+-]1$",
-    r"^[+-]\w+$",  # Category-specific approvals/rejections
 ]
 
 # Regex patterns for build/test command parameters
@@ -788,6 +786,7 @@ class CommentInfo:
         categories: Categories affected by this command
         signed_files: File version keys (filename::sha) at time of signing
         user: Username who made the comment
+        locked: If True, comment won't be re-processed even if edited
     """
 
     timestamp: str
@@ -796,6 +795,7 @@ class CommentInfo:
     categories: List[str] = field(default_factory=list)
     signed_files: List[str] = field(default_factory=list)
     user: Optional[str] = None
+    locked: bool = False
 
 
 @dataclass
@@ -858,6 +858,7 @@ class BotCache:
                     **({"cats": ci.categories} if ci.categories else {}),
                     **({"signed_files": ci.signed_files} if ci.signed_files else {}),
                     **({"user": ci.user} if ci.user else {}),
+                    **({"locked": ci.locked} if ci.locked else {}),
                 }
                 for cid, ci in self.comments.items()
             },
@@ -892,6 +893,7 @@ class BotCache:
                 categories=ci_data.get("cats", []),
                 signed_files=ci_data.get("signed_files", []),
                 user=ci_data.get("user"),
+                locked=ci_data.get("locked", False),
             )
 
         return cache
@@ -1418,6 +1420,7 @@ class Command:
         acl: Access control (list of allowed users, L2 categories, or callback)
         description: Human-readable description
         pr_only: If True, command is only valid for PRs (not issues)
+        reset_on_push: If True, command is skipped if comment is before latest commit
     """
 
     name: str
@@ -1426,6 +1429,7 @@ class Command:
     acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None
     description: str = ""
     pr_only: bool = False
+    reset_on_push: bool = False
 
 
 class CommandRegistry:
@@ -1442,6 +1446,7 @@ class CommandRegistry:
         acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
         description: str = "",
         pr_only: bool = False,
+        reset_on_push: bool = False,
     ) -> None:
         """Register a new command."""
         self.commands.append(
@@ -1452,6 +1457,7 @@ class CommandRegistry:
                 acl=acl,
                 description=description,
                 pr_only=pr_only,
+                reset_on_push=reset_on_push,
             )
         )
 
@@ -1462,6 +1468,7 @@ class CommandRegistry:
         acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
         description: str = "",
         pr_only: bool = False,
+        reset_on_push: bool = False,
     ) -> Callable[[Callable[..., bool]], Callable[..., bool]]:
         r"""
         Decorator to register a command handler.
@@ -1478,6 +1485,7 @@ class CommandRegistry:
             acl: Access control specification
             description: Human-readable description
             pr_only: If True, command only applies to PRs
+            reset_on_push: If True, command is skipped if comment is before latest commit
 
         Returns:
             Decorator function
@@ -1488,7 +1496,7 @@ class CommandRegistry:
             def wrapper(*args, **kwargs) -> bool:
                 return func(*args, **kwargs)
 
-            self.register(name, pattern, wrapper, acl, description, pr_only)
+            self.register(name, pattern, wrapper, acl, description, pr_only, reset_on_push)
             return wrapper
 
         return decorator
@@ -1524,6 +1532,7 @@ def command(
     acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
     description: str = "",
     pr_only: bool = False,
+    reset_on_push: bool = False,
 ) -> Callable[[Callable[..., bool]], Callable[..., bool]]:
     r"""
     Module-level decorator to register commands.
@@ -1533,7 +1542,7 @@ def command(
         def handle_approve(context, match, user, comment_id, timestamp) -> bool:
             return True
     """
-    return _global_registry.command(name, pattern, acl, description, pr_only)
+    return _global_registry.command(name, pattern, acl, description, pr_only, reset_on_push)
 
 
 def get_global_registry() -> CommandRegistry:
@@ -1707,6 +1716,12 @@ class PRContext:
     packages: Set[str] = field(default_factory=set)  # Packages touched by PR
     test_params: Dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
     granted_test_rights: Set[str] = field(default_factory=set)  # Users granted test rights
+
+    # Pending build/test commands - processed after all comments are seen
+    # List of (verb, comment_id, user, timestamp, parsed_result) tuples
+    pending_build_test_commands: List[Tuple[str, int, str, datetime, Any]] = field(
+        default_factory=list
+    )
 
     # Code checks
     code_checks_requested: bool = False
@@ -2511,6 +2526,7 @@ def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
     acl=is_valid_tester,
     description="Abort pending tests",
     pr_only=True,
+    reset_on_push=True,
 )
 def handle_abort(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
@@ -2519,7 +2535,24 @@ def handle_abort(
     Handle abort/abort test command.
 
     Aborts any pending tests for the PR.
+    Only takes effect if tests are actually running (not just pending/not started).
     """
+    # Check if there are tests to abort (tests must be in pending state)
+    statuses = get_ci_test_statuses(context)
+    has_pending_tests = False
+
+    for suffix, results in statuses.items():
+        for result in results:
+            if result.status == "pending":
+                has_pending_tests = True
+                break
+        if has_pending_tests:
+            break
+
+    if not has_pending_tests:
+        logger.info(f"Ignoring abort from {user} - no pending tests")
+        return False
+
     context.abort_tests = True
     logger.info(f"Test abort requested by {user}")
     return True
@@ -2639,6 +2672,7 @@ def handle_code_checks(
     r"^ignore tests-rejected (with )?(?P<reason>[\w-]+)$",
     description="Override test failure with reason",
     pr_only=True,
+    reset_on_push=True,
 )
 def handle_ignore_tests_rejected(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
@@ -3085,35 +3119,28 @@ def handle_test_parameters(
     acl=is_valid_tester,
     description="Trigger CI build/test",
     pr_only=True,
+    reset_on_push=True,
 )
 def handle_build_test(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
-    Handle build/test command.
+    Handle build/test command - collects for deferred processing.
+
+    Commands are collected during comment processing and processed later by
+    process_pending_build_test_commands() after all comments are seen.
+
+    For 'test': Last one wins (only the last test command is processed)
+    For 'build': Skipped if comment already has +1 reaction from bot
 
     Syntax:
         build|test [workflows <wf_list>] [with <pr_list>] [for <queue>]
                    [using [full cmssw] [addpkg <pkg_list>]]
-
-    Examples:
-        test
-        build workflows 1.0,2.0
-        test with cms-sw/cmssw#12345
-        build for rhel8-amd64
-        test using full cmssw
-        build using addpkg RecoTracker/PixelSeeding
-
-    The test will only be triggered if all required signatures (categories)
-    specified in PRE_CHECKS are approved.
-
-    Values from 'test parameters:' command are used as defaults, but values
-    specified directly in this command override them.
     """
     # Get the full command line from the comment
     first_line = match.group(0)
 
-    # Try to get full first line from the actual comment (use cached comments)
+    # Try to get full first line from the actual comment
     for comment in context.comments:
         if comment.id == comment_id:
             first_line = extract_command_line(comment.body or "") or first_line
@@ -3126,6 +3153,206 @@ def handle_build_test(
         context.messages.append(f"Invalid build/test command: {e}")
         return False
 
+    # Collect for deferred processing
+    context.pending_build_test_commands.append((result.verb, comment_id, user, timestamp, result))
+    logger.debug(
+        f"Collected {result.verb} command from {user} (comment {comment_id}) for deferred processing"
+    )
+
+    return True
+
+
+def get_comment_reactions(context: PRContext, comment_id: int) -> List[str]:
+    """
+    Get list of reactions on a comment from the bot user.
+
+    Args:
+        context: PR processing context
+        comment_id: Comment ID to check
+
+    Returns:
+        List of reaction types (e.g., ['+1', '-1']) from bot
+    """
+    if not context.cmsbuild_user:
+        return []
+
+    reactions = []
+    for comment in context.comments:
+        if comment.id == comment_id:
+            # Check if comment object has reactions
+            try:
+                comment_reactions = comment.get_reactions()
+                for reaction in comment_reactions:
+                    if reaction.user.login == context.cmsbuild_user:
+                        reactions.append(reaction.content)
+            except Exception:
+                pass
+            break
+
+    return reactions
+
+
+def get_jenkins_status_url(context: PRContext) -> Optional[str]:
+    """
+    Get the URL from the bot/{prId}/jenkins commit status.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        URL from the status, or None if status doesn't exist
+    """
+    if not context.pr:
+        return None
+
+    pr_id = context.issue.number
+    status_context = f"bot/{pr_id}/jenkins"
+
+    try:
+        head_sha = context.pr.head.sha
+        repo = context.repo
+        commit = repo.get_commit(head_sha)
+
+        for status in commit.get_statuses():
+            if status.context == status_context:
+                return status.target_url
+    except Exception as e:
+        logger.debug(f"Error getting jenkins status: {e}")
+
+    return None
+
+
+def get_comment_url(context: PRContext, comment_id: int) -> str:
+    """
+    Get the URL for a comment.
+
+    Args:
+        context: PR processing context
+        comment_id: Comment ID
+
+    Returns:
+        Comment URL
+    """
+    # GitHub comment URL format: https://github.com/{owner}/{repo}/pull/{pr_number}#issuecomment-{comment_id}
+    repo_name = context.repo_name
+    repo_org = context.repo_org
+    pr_number = context.issue.number
+
+    return f"https://github.com/{repo_org}/{repo_name}/pull/{pr_number}#issuecomment-{comment_id}"
+
+
+def process_pending_build_test_commands(context: PRContext) -> None:
+    """
+    Process collected build/test commands after all comments have been seen.
+
+    Rules:
+    - For 'test': Last one wins (only process the last test command)
+    - For 'build': Skip if comment already has +1 reaction from bot
+    - For 'test': Skip if bot/{prId}/jenkins status exists and URL matches comment URL
+    """
+    if not context.pending_build_test_commands:
+        return
+
+    # Separate build and test commands
+    build_commands = []
+    test_commands = []
+
+    for verb, comment_id, user, timestamp, result in context.pending_build_test_commands:
+        if verb == "build":
+            build_commands.append((comment_id, user, timestamp, result))
+        else:  # test
+            test_commands.append((comment_id, user, timestamp, result))
+
+    # Process build commands - each one individually, skip if has +1 from bot
+    for comment_id, user, timestamp, result in build_commands:
+        # Check if comment has +1 reaction from bot
+        reactions = get_comment_reactions(context, comment_id)
+        if "+1" in reactions:
+            logger.info(f"Skipping build command (comment {comment_id}) - already has +1 from bot")
+            continue
+
+        _execute_build_test_command(context, comment_id, user, result)
+
+    # Process test commands - only the last one
+    if test_commands:
+        # Get jenkins status URL
+        jenkins_url = get_jenkins_status_url(context)
+
+        # Process only the last test command
+        comment_id, user, timestamp, result = test_commands[-1]
+        comment_url = get_comment_url(context, comment_id)
+
+        # Check if jenkins status URL matches this comment's URL
+        if jenkins_url:
+            if jenkins_url == comment_url:
+                logger.info(
+                    f"Skipping test command (comment {comment_id}) - jenkins status already set for this comment"
+                )
+                return
+
+        # Execute the test command
+        if _execute_build_test_command(context, comment_id, user, result):
+            # Update jenkins status URL to this comment's URL
+            set_jenkins_status_url(context, comment_url)
+
+
+def set_jenkins_status_url(context: PRContext, url: str) -> bool:
+    """
+    Set the bot/{prId}/jenkins commit status with the given URL.
+
+    This is used to track which test command comment triggered the current test,
+    so we don't re-trigger the same test on subsequent runs.
+
+    Args:
+        context: PR processing context
+        url: URL to set as the status target_url (typically the comment URL)
+
+    Returns:
+        True if status was set successfully
+    """
+    if not context.pr:
+        return False
+
+    if context.dry_run:
+        logger.info(f"[DRY RUN] Would set jenkins status URL to: {url}")
+        return True
+
+    pr_id = context.issue.number
+    status_context = f"bot/{pr_id}/jenkins"
+
+    try:
+        head_sha = context.pr.head.sha
+        repo = context.repo
+        commit = repo.get_commit(head_sha)
+
+        commit.create_status(
+            state="pending",
+            target_url=url,
+            description="Test triggered",
+            context=status_context,
+        )
+        logger.info(f"Set jenkins status URL to: {url}")
+        return True
+    except Exception as e:
+        logger.error(f"Error setting jenkins status: {e}")
+        return False
+
+
+def _execute_build_test_command(
+    context: PRContext, comment_id: int, user: str, result: "TestCmdResult"
+) -> bool:
+    """
+    Execute a build/test command (internal helper).
+
+    Args:
+        context: PR processing context
+        comment_id: Comment ID that triggered this
+        user: User who triggered the command
+        result: Parsed test command result
+
+    Returns:
+        True if command was executed successfully
+    """
     # Check if required signatures (PRE_CHECKS) are present
     pr_number = context.issue.number if context.issue else 0
     required_categories = get_pre_checks(context.repo_config, pr_number)
@@ -3185,7 +3412,6 @@ def handle_build_test(
     context.tests_to_run.append(request)
     logger.info(f"{result.verb.capitalize()} triggered by {user}: {request}")
 
-    # Note: build/test commands are not cached - only signatures (+1/-1) are cached
     return True
 
 
@@ -3433,67 +3659,6 @@ def get_comment_timestamp(comment) -> datetime:
     return parsed if parsed else datetime.now(tz=timezone.utc)
 
 
-def is_bot_allowed_command(command_line: str) -> bool:
-    """
-    Check if a command is allowed to be processed from bot's own comments.
-
-    Some commands (like code-checks results, CI results) are posted by the bot
-    itself or by external processes using the bot account, and should still be
-    processed.
-
-    Args:
-        command_line: The preprocessed command line
-
-    Returns:
-        True if this command can be processed from bot comments
-    """
-    for pattern in BOT_ALLOWED_COMMAND_PATTERNS:
-        if re.match(pattern, command_line, re.IGNORECASE):
-            return True
-    return False
-
-
-def should_process_comment(
-    context: PRContext, comment, command_line: Optional[str] = None
-) -> bool:
-    """
-    Determine if a comment should be processed.
-
-    Skip comments:
-    - Already processed (based on comment ID in cache)
-    - From the bot itself, UNLESS it's a bot-allowed command
-
-    Args:
-        context: PR processing context
-        comment: The comment object
-        command_line: Optional pre-extracted command line (for bot-allowed check)
-
-    Returns:
-        True if comment should be processed
-    """
-    # Skip already processed comments
-    if str(comment.id) in context.cache.comments:
-        return False
-
-    # Check if this is from the bot
-    is_bot_comment = context.cmsbuild_user and comment.user.login == context.cmsbuild_user
-
-    if is_bot_comment:
-        # Bot comments are only processed for specific allowed commands
-        if command_line is None:
-            command_line = extract_command_line(comment.body or "")
-
-        if command_line and is_bot_allowed_command(command_line):
-            logger.debug(
-                f"Processing bot's own comment {comment.id} for allowed command: {command_line}"
-            )
-            return True
-
-        return False
-
-    return True
-
-
 def check_command_acl(
     context: PRContext, command: Command, user: str, timestamp: datetime
 ) -> bool:
@@ -3518,14 +3683,103 @@ def check_command_acl(
     return False
 
 
+def get_latest_commit_timestamp(context: PRContext) -> Optional[datetime]:
+    """
+    Get the timestamp of the latest (most recent) commit in the PR.
+
+    Returns:
+        Timestamp of latest commit, or None if no commits
+    """
+    if not context.commits:
+        return None
+
+    latest_ts = None
+    for commit in context.commits:
+        try:
+            commit_date = commit.commit.author.date
+            if commit_date:
+                ts = (
+                    ensure_tz_aware(commit_date)
+                    if isinstance(commit_date, datetime)
+                    else parse_timestamp(commit_date)
+                )
+                if ts and (latest_ts is None or ts > latest_ts):
+                    latest_ts = ts
+        except Exception:
+            pass
+
+    return latest_ts
+
+
+def is_bot_command_reset_on_push(command_line: str) -> bool:
+    """
+    Check if a command is a bot command that resets on push.
+
+    These are signatures posted by the bot itself (+1, -1, +code-checks, -code-checks).
+    """
+    if not command_line:
+        return False
+
+    for pattern in BOT_COMMANDS_RESET_ON_PUSH:
+        if re.match(pattern, command_line, re.IGNORECASE):
+            return True
+    return False
+
+
+def should_skip_command_before_latest_commit(
+    context: PRContext,
+    command: Command,
+    command_line: str,
+    comment_timestamp: datetime,
+    is_bot_comment: bool,
+) -> bool:
+    """
+    Check if a command should be skipped because it's before the latest commit.
+
+    Commands with reset_on_push=True, and bot signatures (code-checks, +1/-1)
+    should only apply to the current code state.
+
+    Args:
+        context: PR processing context
+        command: The command being executed
+        command_line: The command line text
+        comment_timestamp: When the comment was created
+        is_bot_comment: Whether the comment is from the bot
+
+    Returns:
+        True if command should be skipped
+    """
+    if not context.is_pr:
+        return False
+
+    latest_commit_ts = get_latest_commit_timestamp(context)
+    if latest_commit_ts is None:
+        return False
+
+    # Check if comment is before latest commit
+    if comment_timestamp >= latest_commit_ts:
+        return False  # Comment is after latest commit, don't skip
+
+    # Check if this command has reset_on_push property set
+    if command.reset_on_push:
+        logger.debug(f"Skipping command '{command.name}' - comment is before latest commit")
+        return True
+
+    # Check if this is a bot command that resets on push
+    if is_bot_comment and is_bot_command_reset_on_push(command_line):
+        logger.debug(f"Skipping bot command '{command_line}' - comment is before latest commit")
+        return True
+
+    return False
+
+
 def process_comment(context: PRContext, comment) -> None:
     """Process a single comment for commands."""
-    # Extract command line first (needed for bot-allowed check)
-    command_line = extract_command_line(comment.body or "")
-
-    if not should_process_comment(context, comment, command_line):
+    # Skip already processed comments
+    if str(comment.id) in context.cache.comments:
         return
 
+    command_line = extract_command_line(comment.body or "")
     if not command_line:
         return
 
@@ -3537,6 +3791,21 @@ def process_comment(context: PRContext, comment) -> None:
     user = comment.user.login
     timestamp = get_comment_timestamp(comment)
     comment_id = comment.id
+
+    # Check if command should be skipped because it's before the latest commit
+    is_bot = context.cmsbuild_user and user == context.cmsbuild_user
+    if should_skip_command_before_latest_commit(context, cmd, command_line, timestamp, is_bot):
+        # Cache the comment as processed (locked) but don't execute
+        # This prevents re-processing on subsequent runs
+        context.cache.comments[str(comment_id)] = CommentInfo(
+            timestamp=timestamp.isoformat() if timestamp else "",
+            first_line=command_line,
+            ctype=cmd.name,
+            user=user,
+            locked=True,  # Mark as locked so it won't be re-processed
+        )
+        logger.debug(f"Cached skipped command '{cmd.name}' from comment {comment_id}")
+        return
 
     # Check ACL
     if not check_command_acl(context, cmd, user, timestamp):
@@ -4323,14 +4592,16 @@ def generate_status_message(context: PRContext) -> str:
     return "\n".join(lines)
 
 
-def update_pr_status(context: PRContext) -> None:
-    """Update PR/Issue labels and status based on current state."""
-    if context.dry_run:
-        logger.info("[DRY RUN] Would update PR/Issue status")
-        return
+def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
+    """
+    Update PR/Issue labels and status based on current state.
 
-    # Get current labels
-    current_labels = {label.name for label in context.issue.get_labels()}
+    Returns:
+        Tuple of (old_labels, new_labels) for tracking state transitions
+    """
+    # Get current labels (old labels)
+    old_labels = {label.name for label in context.issue.get_labels()}
+    new_labels: Set[str] = set()
     labels_to_add: Set[str] = set()
     labels_to_remove: Set[str] = set()
 
@@ -4345,14 +4616,24 @@ def update_pr_status(context: PRContext) -> None:
             PRState.MERGED: "merged",
         }
 
-        # Remove old state labels, add current
+        # Compute new state labels
         for state, label in state_labels.items():
             if state == pr_state:
-                if label not in current_labels:
+                new_labels.add(label)
+                if label not in old_labels:
                     labels_to_add.add(label)
             else:
-                if label in current_labels:
+                if label in old_labels:
                     labels_to_remove.add(label)
+
+        # Handle draft PR - use fully-signed-draft instead of fully-signed
+        if context.is_draft and pr_state == PRState.FULLY_SIGNED:
+            new_labels.discard("fully-signed")
+            new_labels.add("fully-signed-draft")
+            labels_to_add.discard("fully-signed")
+            labels_to_add.add("fully-signed-draft")
+            if "fully-signed-draft" in old_labels:
+                labels_to_add.discard("fully-signed-draft")
 
         # Handle category state labels (<cat>-pending, <cat>-approved, <cat>-rejected)
         category_states = compute_category_approval_states(context)
@@ -4365,25 +4646,27 @@ def update_pr_status(context: PRContext) -> None:
         for cat, state in category_states.items():
             # Add current state label
             current_state_label = f"{cat}{state_suffixes[state]}"
-            if current_state_label not in current_labels:
+            new_labels.add(current_state_label)
+            if current_state_label not in old_labels:
                 labels_to_add.add(current_state_label)
 
             # Remove other state labels for this category
             for other_state, suffix in state_suffixes.items():
                 if other_state != state:
                     old_label = f"{cat}{suffix}"
-                    if old_label in current_labels:
+                    if old_label in old_labels:
                         labels_to_remove.add(old_label)
 
         # Add auto-labels based on file patterns
         auto_labels = get_labels_for_pr(context)
         for label in auto_labels:
-            if label not in current_labels:
+            new_labels.add(label)
+            if label not in old_labels:
                 labels_to_add.add(label)
 
     # Handle type labels from 'type' command (works for both PRs and Issues)
     # First, handle 'type' labels (only one allowed) - remove old ones
-    for label in current_labels:
+    for label in old_labels:
         if label in TYPE_COMMANDS:
             label_info = TYPE_COMMANDS[label]
             label_type = label_info[2] if len(label_info) > 2 else "mtype"
@@ -4400,8 +4683,27 @@ def update_pr_status(context: PRContext) -> None:
 
     # Add pending labels
     for label in context.pending_labels:
-        if label not in current_labels:
+        new_labels.add(label)
+        if label not in old_labels:
             labels_to_add.add(label)
+
+    # Keep labels that aren't being removed
+    for label in old_labels:
+        if label not in labels_to_remove:
+            new_labels.add(label)
+
+    if context.dry_run:
+        if labels_to_add:
+            logger.info(f"[DRY RUN] Would add labels: {sorted(labels_to_add)}")
+        if labels_to_remove:
+            logger.info(f"[DRY RUN] Would remove labels: {sorted(labels_to_remove)}")
+        return old_labels, new_labels
+
+    # Log label changes
+    if labels_to_add:
+        logger.info(f"Adding labels: {sorted(labels_to_add)}")
+    if labels_to_remove:
+        logger.info(f"Removing labels: {sorted(labels_to_remove)}")
 
     # Apply label changes
     for label in labels_to_remove:
@@ -4417,6 +4719,184 @@ def update_pr_status(context: PRContext) -> None:
             logger.debug(f"Added label: {label}")
         except Exception as e:
             logger.warning(f"Could not add label {label}: {e}")
+
+    return old_labels, new_labels
+
+
+def get_fully_signed_message(context: PRContext) -> str:
+    """
+    Generate the fully signed message for a PR.
+
+    Returns the message to post when a PR becomes fully signed.
+    """
+    pr = context.pr
+    branch = pr.base.ref if pr else "unknown"
+
+    # Determine test status message
+    requires_test = ""
+    lab_stats = check_ci_test_completion(context)
+
+    if lab_stats:
+        required_status = lab_stats.get("required")
+        if required_status == "success":
+            requires_test = " (tests are also fine)"
+        elif required_status == "error":
+            if context.ignore_tests_rejected:
+                requires_test = " (test failures were overridden)"
+            else:
+                requires_test = " (but tests are reportedly failing)"
+    else:
+        # Tests not completed yet
+        requires_test = " after it passes the integration tests"
+
+    # Check if this is a production branch that requires devel release validation
+    dev_release_relval = ""
+    if branch in RELEASE_BRANCH_PRODUCTION:
+        dev_release_relval = f" and once validation in the development release cycle {CMSSW_DEVEL_BRANCH} is complete"
+
+    # Determine auto-merge message
+    auto_merge_msg = ""
+    managers = get_release_managers(branch)
+    managers_str = (
+        ", ".join(format_mention(context, m) for m in managers)
+        if managers
+        else "@cms-sw/release-managers"
+    )
+
+    if context.holds:
+        # PR is on hold
+        blockers = ", ".join(format_mention(context, h.user) for h in context.holds)
+        auto_merge_msg = (
+            f"This PR is put on hold by {blockers}. They have to unhold to remove the hold state "
+            f"or {managers_str} will have to merge it by hand."
+        )
+    elif has_new_package(context):
+        # PR introduces new package
+        auto_merge_msg = (
+            f"This pull request requires a new package and will not be merged. {managers_str}"
+        )
+    elif needs_orp_review(context, branch):
+        # PR needs ORP review
+        auto_merge_msg = (
+            f"This pull request will now be reviewed by the release team before it's merged. "
+            f"{managers_str} (and backports should be raised in the release meeting by the corresponding L2)"
+        )
+    else:
+        # Can be auto-merged
+        auto_merge_msg = "This pull request will be automatically merged."
+
+    # Build the message
+    message = (
+        f"This pull request is fully signed and it will be integrated in one of the next "
+        f"{branch} IBs{requires_test}{dev_release_relval}. {auto_merge_msg}"
+    )
+
+    # Add notice about linked PRs if any
+    linked_prs = get_linked_prs(context)
+    if linked_prs:
+        linked_prs_str = ", ".join(linked_prs)
+        message += (
+            f"\n\n**Notice** This PR was tested with additional Pull Request(s), "
+            f"please also merge them if necessary: {linked_prs_str}"
+        )
+
+    return message
+
+
+def has_new_package(context: PRContext) -> bool:
+    """Check if PR introduces a new package."""
+    # Check if any file is in a package that doesn't exist yet
+    if not context.pr:
+        return False
+
+    for fv_key in context.cache.current_file_versions:
+        if fv_key in context.cache.file_versions:
+            fv = context.cache.file_versions[fv_key]
+            # Check if this is a new file in a new package
+            if fv.filename and "/" in fv.filename:
+                pkg = file_to_package(context.repo_config, fv.filename)
+                if pkg and pkg not in context.packages:
+                    # This could indicate a new package
+                    # More sophisticated check would look at actual package existence
+                    pass
+
+    # For now, check pending labels for new-package indication
+    return "new-package" in context.pending_labels
+
+
+def needs_orp_review(context: PRContext, branch: str) -> bool:
+    """Check if PR needs ORP (Operations Review Panel) review before merge."""
+    # Check if ORP is in EXTRA_CHECKS
+    pr_number = context.issue.number if context.issue else 0
+    extra_checks = get_extra_checks(context.repo_config, pr_number)
+
+    if "orp" not in [c.lower() for c in extra_checks]:
+        return False
+
+    # Check if ORP has approved
+    category_states = compute_category_approval_states(context)
+    orp_state = category_states.get("orp", ApprovalState.PENDING)
+
+    return orp_state != ApprovalState.APPROVED
+
+
+def get_linked_prs(context: PRContext) -> List[str]:
+    """Get list of linked PRs that were tested together with this PR."""
+    linked = []
+
+    # Check test parameters for 'with' PRs
+    if context.test_params:
+        with_prs = context.test_params.get("PULL_REQUESTS", "")
+        if with_prs:
+            for pr_ref in with_prs.split(","):
+                pr_ref = pr_ref.strip()
+                if pr_ref and pr_ref != str(context.issue.number):
+                    linked.append(pr_ref)
+
+    return linked
+
+
+def post_fully_signed_messages(
+    context: PRContext, old_labels: Set[str], new_labels: Set[str]
+) -> None:
+    """
+    Post fully signed messages if PR/Issue transitions to fully signed state.
+
+    Args:
+        context: PR processing context
+        old_labels: Labels before processing
+        new_labels: Labels after processing
+    """
+    if context.is_pr:
+        # Check for PR becoming fully signed
+        if "fully-signed" in new_labels and "fully-signed" not in old_labels:
+            message = get_fully_signed_message(context)
+            post_bot_comment(context, message, "fully_signed")
+
+        # Check for draft PR becoming fully signed
+        if "fully-signed-draft" in new_labels and "fully-signed-draft" not in old_labels:
+            user = context.pr.user.login if context.pr else "author"
+            message = (
+                f"{format_mention(context, user)} if this PR is ready to be reviewed by the "
+                f'release team, please remove the "Draft" status.'
+            )
+            post_bot_comment(context, message, "fully_signed_draft")
+    else:
+        # Check for issue becoming fully signed
+        category_states = compute_category_approval_states(context)
+        all_approved = (
+            all(state == ApprovalState.APPROVED for state in category_states.values())
+            if category_states
+            else False
+        )
+
+        if all_approved and category_states:
+            # Check if we haven't already posted this
+            post_bot_comment(
+                context,
+                "This issue is fully signed and ready to be closed.",
+                "issue_fully_signed",
+            )
 
 
 # =============================================================================
@@ -5353,6 +5833,10 @@ def process_pr(
     # Process all comments
     process_all_comments(context)
 
+    # Process deferred build/test commands (after all comments seen)
+    if is_pr:
+        process_pending_build_test_commands(context)
+
     # Check commit and file counts (for PRs only)
     if is_pr and pr:
         block_result = check_commit_and_file_counts(context, dryRun)
@@ -5362,7 +5846,10 @@ def process_pr(
             return block_result
 
     # Update status (labels, etc.) for both PRs and Issues
-    update_pr_status(context)
+    old_labels, new_labels = update_pr_status(context)
+
+    # Post fully signed messages if state changed
+    post_fully_signed_messages(context, old_labels, new_labels)
 
     # Post welcome message if this is the first time seeing this PR/Issue
     post_welcome_message(context)
@@ -5429,20 +5916,6 @@ def process_pr(
         process_ci_test_results(context)
     else:
         # Issue-specific processing
-        # Check if issue is fully signed
-        category_states = compute_category_approval_states(context)
-        all_approved = (
-            all(state == ApprovalState.APPROVED for state in category_states.values())
-            if category_states
-            else False
-        )
-
-        if all_approved and category_states:
-            post_bot_comment(
-                context,
-                "This issue is fully signed and ready to be closed.",
-                "issue_fully_signed",
-            )
         # Check for new data repo request issues
         if context.cmssw_repo and re.match(CREATE_REPO, issue.title or ""):
             logger.info(f"Creating new data repo properties for issue #{issue.number}")

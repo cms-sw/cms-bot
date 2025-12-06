@@ -1,0 +1,46 @@
+{
+  "id": 1,
+  "number": 1,
+  "title": "Test PR #1",
+  "body": "<cms-bot></cms-bot>\nThis PR should be ignored",
+  "state": "open",
+  "merged": false,
+  "mergeable": true,
+  "head": {
+    "sha": "commit123",
+    "ref": "feature"
+  },
+  "base": {
+    "sha": "base123",
+    "ref": "main"
+  },
+  "user": {
+    "login": "testuser",
+    "id": 1
+  },
+  "files": [
+    {
+      "filename": "src/core/main.py",
+      "sha": "file_sha_123",
+      "status": "modified"
+    }
+  ],
+  "commits": [
+    {
+      "sha": "commit123",
+      "commit": {
+        "message": "Test commit",
+        "author": {
+          "date": "2025-12-03T11:29:04.501509+00:00",
+          "name": "Test Author",
+          "email": "test@example.com"
+        },
+        "committer": {
+          "date": "2025-12-03T11:29:04.501522+00:00",
+          "name": "Test Committer",
+          "email": "test@example.com"
+        }
+      }
+    }
+  ]
+}

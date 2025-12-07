@@ -843,10 +843,12 @@ class MockIssueComment:
     ) -> "MockIssueComment":
         user_data = data.get("user", {})
 
-        # Parse reactions if present
+        # Parse reactions from _reaction_data if present (for testing)
+        # Note: GitHub API's "reactions" field is just statistics, not individual reactions
+        # We use "_reaction_data" in test data to specify individual reactions
         reactions = []
-        if "reactions" in data:
-            for r in data["reactions"]:
+        if "_reaction_data" in data:
+            for r in data["_reaction_data"]:
                 reactions.append(
                     MockReaction(
                         id=r.get("id", len(reactions) + 1),
@@ -4394,8 +4396,6 @@ class TestTestDeduplication:
 
     def test_build_skipped_if_has_bot_reaction(self, repo_config, record_mode):
         """Test that build command is skipped if comment has +1 from bot."""
-        from process_pr_v2 import get_comment_reactions
-
         create_basic_pr_data(
             "test_build_skipped_if_has_bot_reaction",
             pr_number=1,
@@ -4411,7 +4411,7 @@ class TestTestDeduplication:
                     "id": 100,
                     "body": "build",
                     "user": {"login": "alice", "id": 2},
-                    "reactions": [{"user": {"login": "cmsbuild"}, "content": "+1"}],
+                    "_reaction_data": [{"user": {"login": "cmsbuild"}, "content": "+1"}],
                 }
             ],
         )
@@ -6004,6 +6004,51 @@ def integration_test_helper():
     """
     # This fixture just provides the class - tests instantiate with their own path
     return IntegrationTestHelper
+
+
+# =============================================================================
+# OLD INTEGRATION TESTS
+# =============================================================================
+
+
+class TestOldTestForProcessPR:
+    """Integration tests using custom repo_config from test fixtures."""
+
+    REPO_CONFIG_DIR = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "repos", "iarspider_cmssw", "cmssw")
+    )
+
+    def test_abort(self, test_name, mock_gh, record_mode, integration_test_helper):
+        with integration_test_helper(self.REPO_CONFIG_DIR) as helper:
+            # Import process_pr AFTER setting up the helper
+            # so it uses the custom modules
+            from process_pr_v2 import process_pr
+
+            repo_config = helper.get_repo_config()
+
+            recorder = ActionRecorder(test_name, record_mode)
+            gh = MockGithub(test_name, recorder)
+            repo = gh.get_repo("iarspider-cmssw/cmssw")
+            issue = repo.get_issue(17)
+
+            # Execute
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="iarspider",
+                    loglevel="DEBUG",
+                )
+
+            print(result)
+
+            if record_mode:
+                recorder.save()
+            else:
+                recorder.verify()
 
 
 # =============================================================================

@@ -2,12 +2,12 @@
   "id": 1,
   "number": 1,
   "title": "Test PR #1",
-  "body": "Test PR body",
+  "body": "<cmsbot></cmsbot>\nThis PR should be ignored",
   "state": "open",
   "user": {
     "login": "testuser",
     "id": 1
   },
   "labels": [],
-  "comments": []
+  "comments": 0
 }

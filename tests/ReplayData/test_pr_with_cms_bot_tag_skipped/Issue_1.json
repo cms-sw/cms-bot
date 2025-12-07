@@ -2,22 +2,12 @@
   "id": 1,
   "number": 1,
   "title": "Test PR #1",
-  "body": "Test PR body",
+  "body": "<cmsbot></cmsbot>\nThis PR should be ignored",
   "state": "open",
   "user": {
     "login": "testuser",
     "id": 1
   },
   "labels": [],
-  "comments": [
-    {
-      "id": 100,
-      "body": "+1",
-      "user": {
-        "login": "alice",
-        "id": 2
-      },
-      "created_at": "2025-12-03T11:29:04.393744+00:00"
-    }
-  ]
+  "comments": 1
 }

@@ -72,6 +72,7 @@ pushd "$WORKSPACE/matrix-results"
     nano )       MATRIX_ARGS="-w nano -i all ${MATRIX_ARGS}" ;;
     input )      MATRIX_ARGS="-i all --maxSteps=2 ${MATRIX_ARGS}" ; CMD_OPTS="-n 1 --prefix ${CMS_BOT_DIR}/pr_testing/retry-command.sh" ; export CMS_BOT_RETRY_COUNT=3 ;;
     * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
+          NJOBS=1
           MATRIX_ARGS="$(get_gpu_matrix_args) ${MATRIX_ARGS}"
         fi
         ;;

@@ -1,6 +1,6 @@
 {
   "test_name": "test_abort",
-  "action_count": 7,
+  "action_count": 6,
   "actions": [
     {
       "sequence": 1,
@@ -15,7 +15,7 @@
       "action": "create_reaction",
       "details": {
         "comment_id": 2056930228,
-        "reaction": "-1"
+        "reaction": "+1"
       }
     },
     {
@@ -32,29 +32,14 @@
       "sequence": 4,
       "action": "create_property_file",
       "details": {
-        "filename": "trigger-tests-iarspider-cmssw-cmssw-17.properties",
+        "filename": "trigger-abort-iarspider-cmssw-cmssw-17.properties",
         "parameters": {
-          "SKIP_TESTS": "header,static",
-          "PULL_REQUESTS": "iarspider-cmssw/cmssw#17",
-          "CONTEXT_PREFIX": "cms"
+          "PULL_REQUEST": "17"
         }
       }
     },
     {
       "sequence": 5,
-      "action": "create_property_file",
-      "details": {
-        "filename": "trigger-tests-iarspider-cmssw-cmssw-17.properties",
-        "parameters": {
-          "SKIP_TESTS": "header,static",
-          "PULL_REQUESTS": "iarspider-cmssw/cmssw#17 cms-sw/cms-bot#2134",
-          "CONTEXT_PREFIX": "cms",
-          "RELEASE_FORMAT": "CMSSW_14_1_CPP20_X"
-        }
-      }
-    },
-    {
-      "sequence": 6,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -62,11 +47,11 @@
       }
     },
     {
-      "sequence": 7,
+      "sequence": 6,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"},\"2049242908\":{\"first_line\":\"+core\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"ts\":1711538467},\"2049536405\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\"],\"ts\":\"2024-04-11T11:58:16+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2049242908\":\"+1\",\"2049536405\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\",\"2056796593\":\"+1\",\"2056801055\":\"+1\",\"2056820593\":\"+1\",\"2056903278\":\"+1\",\"2056930228\":\"-1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\":{\"cats\":[\"core\"],\"ts\":\"2024-04-11T11:54:10Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"},\"2049242908\":{\"first_line\":\"+core\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"ts\":1711538467},\"2049536405\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\"],\"ts\":\"2024-04-11T11:58:16+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2049242908\":\"+1\",\"2049536405\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\",\"2056796593\":\"+1\",\"2056801055\":\"+1\",\"2056820593\":\"+1\",\"2056903278\":\"+1\",\"2056930228\":\"+1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\":{\"cats\":[\"core\"],\"ts\":\"2024-04-11T11:54:10Z\"}}} -->"
       }
     }
   ]

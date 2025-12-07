@@ -60,8 +60,8 @@
     {
       "id": 6160600074,
       "node_id": "LA_kwDOF83__M8AAAABbzNMCg",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/tests-approved",
-      "name": "tests-approved",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/tests-started",
+      "name": "tests-started",
       "color": "2cbe4e",
       "default": false,
       "description": null

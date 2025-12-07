@@ -1717,6 +1717,12 @@ class PRContext:
     test_params: Dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
     granted_test_rights: Set[str] = field(default_factory=set)  # Users granted test rights
 
+    # Pending build/test commands - processed after all comments are seen
+    # List of (verb, comment_id, user, timestamp, parsed_result) tuples
+    pending_build_test_commands: List[Tuple[str, int, str, datetime, Any]] = field(
+        default_factory=list
+    )
+
     # Code checks
     code_checks_requested: bool = False
     code_checks_tool_conf: Optional[str] = None
@@ -3119,30 +3125,22 @@ def handle_build_test(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
-    Handle build/test command.
+    Handle build/test command - collects for deferred processing.
+
+    Commands are collected during comment processing and processed later by
+    process_pending_build_test_commands() after all comments are seen.
+
+    For 'test': Last one wins (only the last test command is processed)
+    For 'build': Skipped if comment already has +1 reaction from bot
 
     Syntax:
         build|test [workflows <wf_list>] [with <pr_list>] [for <queue>]
                    [using [full cmssw] [addpkg <pkg_list>]]
-
-    Examples:
-        test
-        build workflows 1.0,2.0
-        test with cms-sw/cmssw#12345
-        build for rhel8-amd64
-        test using full cmssw
-        build using addpkg RecoTracker/PixelSeeding
-
-    The test will only be triggered if all required signatures (categories)
-    specified in PRE_CHECKS are approved.
-
-    Values from 'test parameters:' command are used as defaults, but values
-    specified directly in this command override them.
     """
     # Get the full command line from the comment
     first_line = match.group(0)
 
-    # Try to get full first line from the actual comment (use cached comments)
+    # Try to get full first line from the actual comment
     for comment in context.comments:
         if comment.id == comment_id:
             first_line = extract_command_line(comment.body or "") or first_line
@@ -3155,6 +3153,206 @@ def handle_build_test(
         context.messages.append(f"Invalid build/test command: {e}")
         return False
 
+    # Collect for deferred processing
+    context.pending_build_test_commands.append((result.verb, comment_id, user, timestamp, result))
+    logger.debug(
+        f"Collected {result.verb} command from {user} (comment {comment_id}) for deferred processing"
+    )
+
+    return True
+
+
+def get_comment_reactions(context: PRContext, comment_id: int) -> List[str]:
+    """
+    Get list of reactions on a comment from the bot user.
+
+    Args:
+        context: PR processing context
+        comment_id: Comment ID to check
+
+    Returns:
+        List of reaction types (e.g., ['+1', '-1']) from bot
+    """
+    if not context.cmsbuild_user:
+        return []
+
+    reactions = []
+    for comment in context.comments:
+        if comment.id == comment_id:
+            # Check if comment object has reactions
+            try:
+                comment_reactions = comment.get_reactions()
+                for reaction in comment_reactions:
+                    if reaction.user.login == context.cmsbuild_user:
+                        reactions.append(reaction.content)
+            except Exception:
+                pass
+            break
+
+    return reactions
+
+
+def get_jenkins_status_url(context: PRContext) -> Optional[str]:
+    """
+    Get the URL from the bot/{prId}/jenkins commit status.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        URL from the status, or None if status doesn't exist
+    """
+    if not context.pr:
+        return None
+
+    pr_id = context.issue.number
+    status_context = f"bot/{pr_id}/jenkins"
+
+    try:
+        head_sha = context.pr.head.sha
+        repo = context.repo
+        commit = repo.get_commit(head_sha)
+
+        for status in commit.get_statuses():
+            if status.context == status_context:
+                return status.target_url
+    except Exception as e:
+        logger.debug(f"Error getting jenkins status: {e}")
+
+    return None
+
+
+def get_comment_url(context: PRContext, comment_id: int) -> str:
+    """
+    Get the URL for a comment.
+
+    Args:
+        context: PR processing context
+        comment_id: Comment ID
+
+    Returns:
+        Comment URL
+    """
+    # GitHub comment URL format: https://github.com/{owner}/{repo}/pull/{pr_number}#issuecomment-{comment_id}
+    repo_name = context.repo_name
+    repo_org = context.repo_org
+    pr_number = context.issue.number
+
+    return f"https://github.com/{repo_org}/{repo_name}/pull/{pr_number}#issuecomment-{comment_id}"
+
+
+def process_pending_build_test_commands(context: PRContext) -> None:
+    """
+    Process collected build/test commands after all comments have been seen.
+
+    Rules:
+    - For 'test': Last one wins (only process the last test command)
+    - For 'build': Skip if comment already has +1 reaction from bot
+    - For 'test': Skip if bot/{prId}/jenkins status exists and URL matches comment URL
+    """
+    if not context.pending_build_test_commands:
+        return
+
+    # Separate build and test commands
+    build_commands = []
+    test_commands = []
+
+    for verb, comment_id, user, timestamp, result in context.pending_build_test_commands:
+        if verb == "build":
+            build_commands.append((comment_id, user, timestamp, result))
+        else:  # test
+            test_commands.append((comment_id, user, timestamp, result))
+
+    # Process build commands - each one individually, skip if has +1 from bot
+    for comment_id, user, timestamp, result in build_commands:
+        # Check if comment has +1 reaction from bot
+        reactions = get_comment_reactions(context, comment_id)
+        if "+1" in reactions:
+            logger.info(f"Skipping build command (comment {comment_id}) - already has +1 from bot")
+            continue
+
+        _execute_build_test_command(context, comment_id, user, result)
+
+    # Process test commands - only the last one
+    if test_commands:
+        # Get jenkins status URL
+        jenkins_url = get_jenkins_status_url(context)
+
+        # Process only the last test command
+        comment_id, user, timestamp, result = test_commands[-1]
+        comment_url = get_comment_url(context, comment_id)
+
+        # Check if jenkins status URL matches this comment's URL
+        if jenkins_url:
+            if jenkins_url == comment_url:
+                logger.info(
+                    f"Skipping test command (comment {comment_id}) - jenkins status already set for this comment"
+                )
+                return
+
+        # Execute the test command
+        if _execute_build_test_command(context, comment_id, user, result):
+            # Update jenkins status URL to this comment's URL
+            set_jenkins_status_url(context, comment_url)
+
+
+def set_jenkins_status_url(context: PRContext, url: str) -> bool:
+    """
+    Set the bot/{prId}/jenkins commit status with the given URL.
+
+    This is used to track which test command comment triggered the current test,
+    so we don't re-trigger the same test on subsequent runs.
+
+    Args:
+        context: PR processing context
+        url: URL to set as the status target_url (typically the comment URL)
+
+    Returns:
+        True if status was set successfully
+    """
+    if not context.pr:
+        return False
+
+    if context.dry_run:
+        logger.info(f"[DRY RUN] Would set jenkins status URL to: {url}")
+        return True
+
+    pr_id = context.issue.number
+    status_context = f"bot/{pr_id}/jenkins"
+
+    try:
+        head_sha = context.pr.head.sha
+        repo = context.repo
+        commit = repo.get_commit(head_sha)
+
+        commit.create_status(
+            state="pending",
+            target_url=url,
+            description="Test triggered",
+            context=status_context,
+        )
+        logger.info(f"Set jenkins status URL to: {url}")
+        return True
+    except Exception as e:
+        logger.error(f"Error setting jenkins status: {e}")
+        return False
+
+
+def _execute_build_test_command(
+    context: PRContext, comment_id: int, user: str, result: "TestCmdResult"
+) -> bool:
+    """
+    Execute a build/test command (internal helper).
+
+    Args:
+        context: PR processing context
+        comment_id: Comment ID that triggered this
+        user: User who triggered the command
+        result: Parsed test command result
+
+    Returns:
+        True if command was executed successfully
+    """
     # Check if required signatures (PRE_CHECKS) are present
     pr_number = context.issue.number if context.issue else 0
     required_categories = get_pre_checks(context.repo_config, pr_number)
@@ -3214,7 +3412,6 @@ def handle_build_test(
     context.tests_to_run.append(request)
     logger.info(f"{result.verb.capitalize()} triggered by {user}: {request}")
 
-    # Note: build/test commands are not cached - only signatures (+1/-1) are cached
     return True
 
 
@@ -5635,6 +5832,10 @@ def process_pr(
 
     # Process all comments
     process_all_comments(context)
+
+    # Process deferred build/test commands (after all comments seen)
+    if is_pr:
+        process_pending_build_test_commands(context)
 
     # Check commit and file counts (for PRs only)
     if is_pr and pr:

@@ -187,6 +187,8 @@ def mock_cmssw_categories(monkeypatch):
         "tracking": ["Package/Tracking"],
     }
     monkeypatch.setattr("process_pr_v2.CMSSW_CATEGORIES", test_categories)
+    # Mock get_release_managers to accept any arguments
+    monkeypatch.setattr("process_pr_v2.get_release_managers", lambda *args: [])
     yield test_categories
 
 
@@ -840,6 +842,22 @@ class MockIssueComment:
         cls, data: Dict[str, Any], recorder: ActionRecorder = None
     ) -> "MockIssueComment":
         user_data = data.get("user", {})
+
+        # Parse reactions from _reaction_data if present (for testing)
+        # Note: GitHub API's "reactions" field is just statistics, not individual reactions
+        # We use "_reaction_data" in test data to specify individual reactions
+        reactions = []
+        if "_reaction_data" in data:
+            for r in data["_reaction_data"]:
+                reactions.append(
+                    MockReaction(
+                        id=r.get("id", len(reactions) + 1),
+                        content=r.get("content", "+1"),
+                        user=MockNamedUser.from_json(r.get("user", {})),
+                        _recorder=recorder,
+                    )
+                )
+
         return cls(
             id=data.get("id", 0),
             body=data.get("body", ""),
@@ -853,6 +871,7 @@ class MockIssueComment:
                 else None
             ),
             _recorder=recorder,
+            _reactions=reactions,
         )
 
 
@@ -4167,7 +4186,7 @@ class TestTestDeduplication:
         return request.config.getoption("--record-actions", default=False)
 
     def test_duplicate_test_commands_deduplicated(self, repo_config, record_mode):
-        """Test that identical test commands result in only one test."""
+        """Test that multiple test commands result in only the last one being processed."""
         create_basic_pr_data(
             "test_duplicate_test_commands_deduplicated",
             pr_number=1,
@@ -4183,13 +4202,11 @@ class TestTestDeduplication:
                     "id": 100,
                     "body": "test",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "test",
                     "user": {"login": "bob", "id": 3},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
             ],
         )
@@ -4210,9 +4227,11 @@ class TestTestDeduplication:
         )
 
         assert result["pr_number"] == 1
-        # Only one test should be triggered
+        # Only the last test should be triggered (last one wins)
         assert len(result["tests_triggered"]) == 1
         assert result["tests_triggered"][0]["verb"] == "test"
+        # The last test command was from bob
+        assert result["tests_triggered"][0]["triggered_by"] == "bob"
 
         if record_mode:
             recorder.save()
@@ -4220,7 +4239,7 @@ class TestTestDeduplication:
             recorder.verify()
 
     def test_different_verb_not_deduplicated(self, repo_config, record_mode):
-        """Test that build and test are treated as different."""
+        """Test that build and test are treated separately (last test wins, all builds processed)."""
         create_basic_pr_data(
             "test_different_verb_not_deduplicated",
             pr_number=1,
@@ -4236,13 +4255,11 @@ class TestTestDeduplication:
                     "id": 100,
                     "body": "test",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "build",
                     "user": {"login": "bob", "id": 3},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
             ],
         )
@@ -4273,10 +4290,10 @@ class TestTestDeduplication:
         else:
             recorder.verify()
 
-    def test_different_workflows_not_deduplicated(self, repo_config, record_mode):
-        """Test that tests with different workflows are not deduplicated."""
+    def test_different_workflows_last_one_wins(self, repo_config, record_mode):
+        """Test that only the last test command is processed (last one wins)."""
         create_basic_pr_data(
-            "test_different_workflows_not_deduplicated",
+            "test_different_workflows_last_one_wins",
             pr_number=1,
             files=[
                 {
@@ -4290,21 +4307,19 @@ class TestTestDeduplication:
                     "id": 100,
                     "body": "test workflows 1.0",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "test workflows 2.0",
                     "user": {"login": "bob", "id": 3},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
             ],
         )
 
-        recorder = ActionRecorder("test_different_workflows_not_deduplicated", record_mode)
-        gh = MockGithub("test_different_workflows_not_deduplicated", recorder)
-        repo = MockRepository("test_different_workflows_not_deduplicated", recorder=recorder)
-        issue = MockIssue("test_different_workflows_not_deduplicated", number=1, recorder=recorder)
+        recorder = ActionRecorder("test_different_workflows_last_one_wins", record_mode)
+        gh = MockGithub("test_different_workflows_last_one_wins", recorder)
+        repo = MockRepository("test_different_workflows_last_one_wins", recorder=recorder)
+        issue = MockIssue("test_different_workflows_last_one_wins", number=1, recorder=recorder)
 
         result = process_pr(
             repo_config=repo_config,
@@ -4317,18 +4332,20 @@ class TestTestDeduplication:
         )
 
         assert result["pr_number"] == 1
-        # Both tests should be triggered
-        assert len(result["tests_triggered"]) == 2
+        # Only the last test should be triggered (last one wins)
+        assert len(result["tests_triggered"]) == 1
+        # Should have workflow 2.0 from the last comment
+        assert "2.0" in result["tests_triggered"][0]["workflows"]
 
         if record_mode:
             recorder.save()
         else:
             recorder.verify()
 
-    def test_same_workflows_different_order_deduplicated(self, repo_config, record_mode):
-        """Test that same workflows in different order are deduplicated."""
+    def test_same_workflows_different_order_last_wins(self, repo_config, record_mode):
+        """Test that same workflows in different order - last one wins."""
         create_basic_pr_data(
-            "test_same_workflows_different_order_deduplicated",
+            "test_same_workflows_different_order_last_wins",
             pr_number=1,
             files=[
                 {
@@ -4342,24 +4359,20 @@ class TestTestDeduplication:
                     "id": 100,
                     "body": "test workflows 1.0,2.0",
                     "user": {"login": "alice", "id": 2},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "test workflows 2.0,1.0",
                     "user": {"login": "bob", "id": 3},
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 },
             ],
         )
 
-        recorder = ActionRecorder("test_same_workflows_different_order_deduplicated", record_mode)
-        gh = MockGithub("test_same_workflows_different_order_deduplicated", recorder)
-        repo = MockRepository(
-            "test_same_workflows_different_order_deduplicated", recorder=recorder
-        )
+        recorder = ActionRecorder("test_same_workflows_different_order_last_wins", record_mode)
+        gh = MockGithub("test_same_workflows_different_order_last_wins", recorder)
+        repo = MockRepository("test_same_workflows_different_order_last_wins", recorder=recorder)
         issue = MockIssue(
-            "test_same_workflows_different_order_deduplicated", number=1, recorder=recorder
+            "test_same_workflows_different_order_last_wins", number=1, recorder=recorder
         )
 
         result = process_pr(
@@ -4375,6 +4388,274 @@ class TestTestDeduplication:
         assert result["pr_number"] == 1
         # Only one test should be triggered (same workflows, different order)
         assert len(result["tests_triggered"]) == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_build_skipped_if_has_bot_reaction(self, repo_config, record_mode):
+        """Test that build command is skipped if comment has +1 from bot."""
+        create_basic_pr_data(
+            "test_build_skipped_if_has_bot_reaction",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "build",
+                    "user": {"login": "alice", "id": 2},
+                    "_reaction_data": [{"user": {"login": "cmsbuild"}, "content": "+1"}],
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_build_skipped_if_has_bot_reaction", record_mode)
+        gh = MockGithub("test_build_skipped_if_has_bot_reaction", recorder)
+        repo = MockRepository("test_build_skipped_if_has_bot_reaction", recorder=recorder)
+        issue = MockIssue("test_build_skipped_if_has_bot_reaction", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+        # Build should NOT be triggered because it already has +1 from bot
+        assert len(result["tests_triggered"]) == 0
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_build_processed_if_no_bot_reaction(self, repo_config, record_mode):
+        """Test that build command is processed if no +1 from bot."""
+        create_basic_pr_data(
+            "test_build_processed_if_no_bot_reaction",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "build",
+                    "user": {"login": "alice", "id": 2},
+                    # No reactions
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_build_processed_if_no_bot_reaction", record_mode)
+        gh = MockGithub("test_build_processed_if_no_bot_reaction", recorder)
+        repo = MockRepository("test_build_processed_if_no_bot_reaction", recorder=recorder)
+        issue = MockIssue("test_build_processed_if_no_bot_reaction", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result["pr_number"] == 1
+        # Build should be triggered
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["verb"] == "build"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_skipped_if_jenkins_status_matches(self, repo_config, record_mode):
+        """Test that test command is skipped if jenkins status URL matches comment URL."""
+        create_basic_pr_data(
+            "test_test_skipped_if_jenkins_status_matches",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_skipped_if_jenkins_status_matches", record_mode)
+        gh = MockGithub("test_test_skipped_if_jenkins_status_matches", recorder)
+        repo = MockRepository("test_test_skipped_if_jenkins_status_matches", recorder=recorder)
+        issue = MockIssue(
+            "test_test_skipped_if_jenkins_status_matches", number=1, recorder=recorder
+        )
+
+        # Mock get_jenkins_status_url to return the comment URL
+        # URL format: https://github.com/{org}/{repo}/pull/{pr_number}#issuecomment-{comment_id}
+        comment_url = "https://github.com/org/repo/pull/1#issuecomment-100"
+
+        import process_pr_v2
+
+        original_get_jenkins_status_url = process_pr_v2.get_jenkins_status_url
+        process_pr_v2.get_jenkins_status_url = lambda ctx: comment_url
+
+        try:
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=True,
+                cmsbuild_user="cmsbuild",
+                loglevel="WARNING",
+            )
+
+            assert result["pr_number"] == 1
+            # Test should NOT be triggered because jenkins status URL matches
+            assert len(result["tests_triggered"]) == 0
+        finally:
+            process_pr_v2.get_jenkins_status_url = original_get_jenkins_status_url
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_processed_if_no_jenkins_status(self, repo_config, record_mode):
+        """Test that test command is processed if jenkins status doesn't exist."""
+        create_basic_pr_data(
+            "test_test_processed_if_no_jenkins_status",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_processed_if_no_jenkins_status", record_mode)
+        gh = MockGithub("test_test_processed_if_no_jenkins_status", recorder)
+        repo = MockRepository("test_test_processed_if_no_jenkins_status", recorder=recorder)
+        issue = MockIssue("test_test_processed_if_no_jenkins_status", number=1, recorder=recorder)
+
+        # Mock get_jenkins_status_url to return None (no status)
+        import process_pr_v2
+
+        original_get_jenkins_status_url = process_pr_v2.get_jenkins_status_url
+        process_pr_v2.get_jenkins_status_url = lambda ctx: None
+
+        try:
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=True,
+                cmsbuild_user="cmsbuild",
+                loglevel="WARNING",
+            )
+
+            assert result["pr_number"] == 1
+            # Test should be triggered
+            assert len(result["tests_triggered"]) == 1
+            assert result["tests_triggered"][0]["verb"] == "test"
+        finally:
+            process_pr_v2.get_jenkins_status_url = original_get_jenkins_status_url
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_processed_if_jenkins_status_different(self, repo_config, record_mode):
+        """Test that test command is processed if jenkins status URL differs from comment URL."""
+        create_basic_pr_data(
+            "test_test_processed_if_jenkins_status_different",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_processed_if_jenkins_status_different", record_mode)
+        gh = MockGithub("test_test_processed_if_jenkins_status_different", recorder)
+        repo = MockRepository("test_test_processed_if_jenkins_status_different", recorder=recorder)
+        issue = MockIssue(
+            "test_test_processed_if_jenkins_status_different", number=1, recorder=recorder
+        )
+
+        # Mock get_jenkins_status_url to return a different URL
+        old_comment_url = (
+            "https://github.com/cms-sw/cmssw/pull/1#issuecomment-99"  # Different comment
+        )
+
+        import process_pr_v2
+
+        original_get_jenkins_status_url = process_pr_v2.get_jenkins_status_url
+        process_pr_v2.get_jenkins_status_url = lambda ctx: old_comment_url
+
+        try:
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=True,
+                cmsbuild_user="cmsbuild",
+                loglevel="WARNING",
+            )
+
+            assert result["pr_number"] == 1
+            # Test should be triggered because jenkins URL is for a different comment
+            assert len(result["tests_triggered"]) == 1
+            assert result["tests_triggered"][0]["verb"] == "test"
+        finally:
+            process_pr_v2.get_jenkins_status_url = original_get_jenkins_status_url
 
         if record_mode:
             recorder.save()
@@ -4618,7 +4899,7 @@ class TestCommitAndFileCountChecks:
         context.posted_messages = set()
         context.pending_bot_comments = []
         context.cmsbuild_user = "cmsbuild"
-        context.dry_run = False
+        context.dry_run = True
 
         result = check_commit_and_file_counts(context, dryRun=True)
 
@@ -4664,7 +4945,7 @@ class TestCommitAndFileCountChecks:
         context.posted_messages = set()
         context.pending_bot_comments = []
         context.cmsbuild_user = "cmsbuild"
-        context.dry_run = False
+        context.dry_run = True
 
         result = check_commit_and_file_counts(context, dryRun=True)
 
@@ -4710,7 +4991,7 @@ class TestCommitAndFileCountChecks:
         context.posted_messages = set()
         context.pending_bot_comments = []
         context.cmsbuild_user = "cmsbuild"
-        context.dry_run = False
+        context.dry_run = True
 
         result = check_commit_and_file_counts(context, dryRun=True)
 

@@ -13,7 +13,7 @@ GITHUB_BLACKLIST_AUTHORS = []
 CMSSW_ORP = ["sextonkennedy", "mandrenguyen", "ftenchini"]
 # CMS-SDT members who has admin rights to various github organizations and repositories.
 # They are also reposionsible to sign for externals
-CMS_SDT = ["iarspider", "smuzaffar", "akritkbehera"]
+CMS_SDT = ["iarspider", "smuzaffar", "akritkbehera", "raoatifshad"]
 # List of gh users who can approve a release build request
 APPROVE_BUILD_RELEASE = list(set(["smuzaffar"] + CMSSW_ORP + SPECIAL_RELEASE_MANAGERS))
 # List of gh users who can request to build a release.

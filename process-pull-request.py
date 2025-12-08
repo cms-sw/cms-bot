@@ -91,7 +91,15 @@ def main():
     api_rate_limits(gh)
 
     repo = gh.get_repo(opts.repository)
-    process_pr(repo_config, gh, repo, repo.get_issue(pr_id), opts.dry_run, force=opts.force)
+    process_pr(
+        repo_config,
+        gh,
+        repo,
+        repo.get_issue(pr_id),
+        opts.dry_run,
+        force=opts.force,
+        loglevel="DEBUG" if opts.debug else "INFO",
+    )
 
     api_rate_limits(gh)
 

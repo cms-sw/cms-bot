@@ -1783,8 +1783,9 @@ class PRContext:
     # Watchers for this PR
     watchers: Set[str] = field(default_factory=set)  # Users watching files/categories
 
-    # Changed files (cached)
+    # Changed files (cached from pr.get_files())
     _changed_files: Optional[List[str]] = field(default=None, repr=False)
+    _pr_files_with_sha: Optional[Dict[str, str]] = field(default=None, repr=False)
 
     @property
     def repo_name(self) -> str:
@@ -3443,6 +3444,30 @@ def _execute_build_test_command(
 # =============================================================================
 
 
+def get_pr_files_info(pr) -> Tuple[Dict[str, str], List[str]]:
+    """
+    Get all files in the PR with their blob SHAs and changed file list.
+
+    Fetches pr.get_files() once and returns both:
+    - Dict mapping filename to blob_sha (for files with SHAs)
+    - List of changed filenames including previous filenames for renames
+
+    Returns:
+        Tuple of (files_with_sha, changed_files_list)
+    """
+    files = {}
+    changed_files = []
+    for f in pr.get_files():
+        # For deleted files, sha might be None
+        if f.sha:
+            files[f.filename] = f.sha
+        changed_files.append(f.filename)
+        # Include previous filename for renamed files
+        if f.previous_filename:
+            changed_files.append(f.previous_filename)
+    return files, changed_files
+
+
 def get_pr_files(pr) -> Dict[str, str]:
     """
     Get all files in the PR with their blob SHAs.
@@ -3450,34 +3475,23 @@ def get_pr_files(pr) -> Dict[str, str]:
     Returns:
         Dict mapping filename to blob_sha
     """
-    files = {}
-    for f in pr.get_files():
-        # For deleted files, sha might be None
-        if f.sha:
-            files[f.filename] = f.sha
+    files, _ = get_pr_files_info(pr)
     return files
 
 
-def get_changed_files(repo, pr) -> List[str]:
+def get_changed_files(pr) -> List[str]:
     """
     Get list of changed file names in a PR.
 
-    Unlike get_pr_files, this returns only filenames (not SHAs) and includes
-    the previous filename for renamed files.
+    Includes the previous filename for renamed files.
 
     Args:
-        repo: Repository object
         pr: Pull request object
 
     Returns:
         List of changed file paths (including old names for renames)
     """
-    changed_files = []
-    for f in pr.get_files():
-        changed_files.append(f.filename)
-        # Include previous filename for renamed files
-        if f.previous_filename:
-            changed_files.append(f.previous_filename)
+    _, changed_files = get_pr_files_info(pr)
     return changed_files
 
 
@@ -3492,7 +3506,11 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
         - changed_files: Set of filenames that changed since last check
         - new_categories: Set of categories that are new (not seen before in this PR)
     """
-    current_files = get_pr_files(context.pr)
+    # Use cached files if available, otherwise fetch
+    if context._pr_files_with_sha is not None:
+        current_files = context._pr_files_with_sha
+    else:
+        current_files = get_pr_files(context.pr)
     changed_files = set()
     new_categories = set()
     now = datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
@@ -5726,7 +5744,6 @@ def process_pr(
     # Set repository info (these are stored, computed properties derive from them)
     context.repo_name = repo.name
     context.repo_org = repo.owner.login if hasattr(repo.owner, "login") else repo.owner
-    repository = context.repo_name  # Alias for compatibility
 
     # Log draft state (property computes it automatically)
     if context.is_draft:
@@ -5799,15 +5816,17 @@ def process_pr(
                     context.signing_categories.add("code-checks")
                 update_milestone(repo, issue, pr, dryRun)
 
-            chg_files = get_changed_files(repo, pr)
+            # Fetch PR files once and cache both formats
+            files_with_sha, chg_files = get_pr_files_info(pr)
+            context._pr_files_with_sha = files_with_sha
             context._changed_files = chg_files
             context.packages = set(file_to_package(repo_config, f) for f in chg_files)
             add_nonblocking_labels(chg_files, context.pending_labels)
             context.create_test_property = True
         else:
             # External repo handling
-            context.packages = {f"externals/{repository}"}
-            ex_pkg = external_to_package(repository)
+            context.packages = {f"externals/{repo.full_name}"}
+            ex_pkg = external_to_package(repo.full_name)
             if ex_pkg:
                 context.packages.add(ex_pkg)
 
@@ -5835,7 +5854,8 @@ def process_pr(
             # Check for non-blocking labels in external repos
             try:
                 if getattr(repo_config, "NONBLOCKING_LABELS", False):
-                    chg_files = get_changed_files(repo, pr)
+                    files_with_sha, chg_files = get_pr_files_info(pr)
+                    context._pr_files_with_sha = files_with_sha
                     context._changed_files = chg_files
                     add_nonblocking_labels(chg_files, context.pending_labels)
             except Exception:

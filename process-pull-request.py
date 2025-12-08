@@ -6,12 +6,13 @@ import argparse
 from os.path import dirname, abspath, join, exists
 from socket import setdefaulttimeout
 
+from github import Github
+
 from github_utils import (
     api_rate_limits,
     get_gh_token,
     enable_github_loggin,
 )
-
 from process_pr_v2 import process_pr
 
 setdefaulttimeout(120)

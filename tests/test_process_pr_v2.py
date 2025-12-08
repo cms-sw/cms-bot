@@ -3690,26 +3690,44 @@ class TestExtractCommandLine:
 
     def test_extract_simple(self):
         """Test extracting simple commands."""
-        assert extract_command_line("+1") == "+1"
-        assert extract_command_line("  +1  ") == "+1"
-        assert extract_command_line("+1\nsome text") == "+1"
+        assert extract_command_line("+1") == ("+1", False)
+        assert extract_command_line("  +1  ") == ("+1", False)
+        assert extract_command_line("+1\nsome text") == ("+1", False)
 
     def test_extract_with_prefix(self):
         """Test extracting commands with @cmsbuild prefix."""
-        assert extract_command_line("@cmsbuild +1") == "+1"
-        assert extract_command_line("@cmsbuild please +1") == "+1"
-        assert extract_command_line("please +1") == "+1"
+        line, mentioned = extract_command_line("@cmsbuild +1")
+        assert line == "+1"
+        assert mentioned is True
+
+        line, mentioned = extract_command_line("@cmsbuild please +1")
+        assert line == "+1"
+        assert mentioned is True
+
+        line, mentioned = extract_command_line("please +1")
+        assert line == "+1"
+        assert mentioned is False
+
+    def test_extract_with_custom_bot_user(self):
+        """Test extracting commands with custom bot username."""
+        line, mentioned = extract_command_line("@mybot +1", cmsbuild_user="mybot")
+        assert line == "+1"
+        assert mentioned is True
+
+        line, mentioned = extract_command_line("@cmsbuild +1", cmsbuild_user="mybot")
+        assert line == "@cmsbuild +1"  # Not stripped because different bot name
+        assert mentioned is False
 
     def test_extract_empty(self):
         """Test extracting from empty/whitespace content."""
-        assert extract_command_line("") is None
-        assert extract_command_line("   ") is None
-        assert extract_command_line("\n\n\n") is None
+        assert extract_command_line("") == (None, False)
+        assert extract_command_line("   ") == (None, False)
+        assert extract_command_line("\n\n\n") == (None, False)
 
     def test_extract_preserves_command(self):
         """Test that command content is preserved."""
-        assert extract_command_line("test workflows 1.0,2.0") == "test workflows 1.0,2.0"
-        assert extract_command_line("assign core,analysis") == "assign core,analysis"
+        assert extract_command_line("test workflows 1.0,2.0") == ("test workflows 1.0,2.0", False)
+        assert extract_command_line("assign core,analysis") == ("assign core,analysis", False)
 
 
 class TestHyphenatedCategories:
@@ -5591,34 +5609,151 @@ class TestCommandPreprocessingWhitespace:
 
     def test_multiple_spaces_collapsed(self):
         """Test that multiple spaces are collapsed to single space."""
-        result = preprocess_command("test   parameters")
+        result, mentioned = preprocess_command("test   parameters")
         assert result == "test parameters"
         assert "  " not in result
+        assert mentioned is False
 
     def test_tabs_converted_to_space(self):
         """Test that tabs are converted to spaces."""
-        result = preprocess_command("test\tparameters")
+        result, mentioned = preprocess_command("test\tparameters")
         assert result == "test parameters"
+        assert mentioned is False
 
     def test_leading_trailing_whitespace_stripped(self):
         """Test that leading/trailing whitespace is stripped."""
-        result = preprocess_command("  +1  ")
+        result, mentioned = preprocess_command("  +1  ")
         assert result == "+1"
+        assert mentioned is False
 
     def test_spaces_around_commas_removed(self):
         """Test that spaces around commas are removed."""
-        result = preprocess_command("assign cat1 , cat2 , cat3")
+        result, mentioned = preprocess_command("assign cat1 , cat2 , cat3")
         assert result == "assign cat1,cat2,cat3"
+        assert mentioned is False
 
     def test_cmsbuild_prefix_removed(self):
         """Test that @cmsbuild prefix is removed."""
-        result = preprocess_command("@cmsbuild please +1")
+        result, mentioned = preprocess_command("@cmsbuild please +1")
         assert result == "+1"
+        assert mentioned is True
 
     def test_please_prefix_removed(self):
         """Test that 'please' prefix is removed."""
-        result = preprocess_command("please test")
+        result, mentioned = preprocess_command("please test")
         assert result == "test"
+        assert mentioned is False
+
+    def test_custom_bot_user_prefix(self):
+        """Test that custom bot user prefix is removed and detected."""
+        result, mentioned = preprocess_command("@mybot +1", cmsbuild_user="mybot")
+        assert result == "+1"
+        assert mentioned is True
+
+        result, mentioned = preprocess_command("mybot please test", cmsbuild_user="mybot")
+        assert result == "test"
+        assert mentioned is True
+
+
+class TestBotMentionReaction:
+    """Tests for bot mention reaction behavior."""
+
+    def test_bot_mention_invalid_command_gets_minus_one(self, repo_config, record_mode):
+        """Test that mentioning bot with invalid command gets -1 reaction."""
+        # Use timestamp after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
+
+        create_basic_pr_data(
+            "test_bot_mention_invalid_command",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "@cmsbuild invalidcommand",  # Mention bot with invalid command
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": comment_time.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_bot_mention_invalid_command", record_mode)
+        gh = MockGithub("test_bot_mention_invalid_command", recorder)
+        repo = MockRepository("test_bot_mention_invalid_command", recorder=recorder)
+        issue = MockIssue("test_bot_mention_invalid_command", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        # The bot should have queued a -1 reaction for the invalid command
+        # (In dry run mode, reactions are just logged)
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_no_bot_mention_invalid_command_no_reaction(self, repo_config, record_mode):
+        """Test that invalid command without bot mention doesn't get reaction."""
+        # Use timestamp after the default commit time
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
+
+        create_basic_pr_data(
+            "test_no_bot_mention_invalid_command",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "src/core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "invalidcommand",  # No bot mention
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": comment_time.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_no_bot_mention_invalid_command", record_mode)
+        gh = MockGithub("test_no_bot_mention_invalid_command", recorder)
+        repo = MockRepository("test_no_bot_mention_invalid_command", recorder=recorder)
+        issue = MockIssue("test_no_bot_mention_invalid_command", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        # No reaction should be set for invalid command without bot mention
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
 
 
 # =============================================================================

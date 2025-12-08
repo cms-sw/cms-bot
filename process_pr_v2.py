@@ -1555,14 +1555,21 @@ def get_global_registry() -> CommandRegistry:
 # =============================================================================
 
 
-def preprocess_command(line: str) -> str:
+def preprocess_command(line: str, cmsbuild_user: Optional[str] = None) -> Tuple[str, bool]:
     """
     Preprocess a command line according to specification.
 
     - Normalize whitespace
     - Remove spaces around commas
     - Strip leading/trailing whitespace
-    - Remove @cmsbuild and 'please' prefixes
+    - Remove @cmsbuild_user and 'please' prefixes
+
+    Args:
+        line: The command line to preprocess
+        cmsbuild_user: The bot username (for @mention detection)
+
+    Returns:
+        Tuple of (preprocessed_line, bot_was_mentioned)
     """
     # Normalize whitespace
     line = " ".join(line.split())
@@ -1573,22 +1580,37 @@ def preprocess_command(line: str) -> str:
     # Strip leading/trailing whitespace
     line = line.strip()
 
-    # Remove prefixes
-    line = re.sub(r"^(@?cmsbuild\s?[,]*\s?)?(please\s?[,]*\s?)?", "", line, flags=re.IGNORECASE)
+    # Check if bot was mentioned and remove prefix
+    _cmsbuild_user = cmsbuild_user or "cmsbuild"
+    bot_pattern = rf"^(@?{re.escape(_cmsbuild_user)}\s?[,]*\s?)?(please\s?[,]*\s?)?"
+    match = re.match(bot_pattern, line, flags=re.IGNORECASE)
+    bot_mentioned = bool(match and match.group(1))
+    line = re.sub(bot_pattern, "", line, flags=re.IGNORECASE)
 
-    return line
+    return line, bot_mentioned
 
 
-def extract_command_line(comment_body: str) -> Optional[str]:
-    """Extract the first non-blank line from a comment for command parsing."""
+def extract_command_line(
+    comment_body: str, cmsbuild_user: Optional[str] = None
+) -> Tuple[Optional[str], bool]:
+    """
+    Extract the first non-blank line from a comment for command parsing.
+
+    Args:
+        comment_body: The comment body text
+        cmsbuild_user: The bot username (for @mention detection)
+
+    Returns:
+        Tuple of (command_line, bot_was_mentioned)
+    """
     if not comment_body:
-        return None
+        return None, False
 
     for line in comment_body.split("\n"):
         stripped = line.strip()
         if stripped:
-            return preprocess_command(stripped)
-    return None
+            return preprocess_command(stripped, cmsbuild_user)
+    return None, False
 
 
 # =============================================================================
@@ -1652,7 +1674,7 @@ def should_ignore_pr_body(pr_body: str) -> bool:
     Note: For full ignore checking including IGNORE_ISSUES and BUILD_REL,
     use should_ignore_issue() instead.
     """
-    first_line = extract_command_line(pr_body or "")
+    first_line, _ = extract_command_line(pr_body or "")
     if not first_line:
         return False
     return bool(RE_CMS_BOT_IGNORE.match(first_line))
@@ -1664,7 +1686,7 @@ def should_notify_without_at(pr_body: str) -> bool:
 
     Returns True if first non-blank line matches <notify></notify>.
     """
-    first_line = extract_command_line(pr_body or "")
+    first_line, _ = extract_command_line(pr_body or "")
     if not first_line:
         return False
     return bool(RE_NOTIFY_NO_AT.match(first_line))
@@ -3143,7 +3165,8 @@ def handle_build_test(
     # Try to get full first line from the actual comment
     for comment in context.comments:
         if comment.id == comment_id:
-            first_line = extract_command_line(comment.body or "") or first_line
+            extracted, _ = extract_command_line(comment.body or "", context.cmsbuild_user)
+            first_line = extracted or first_line
             break
 
     try:
@@ -3779,12 +3802,16 @@ def process_comment(context: PRContext, comment) -> None:
     if str(comment.id) in context.cache.comments:
         return
 
-    command_line = extract_command_line(comment.body or "")
+    command_line, bot_mentioned = extract_command_line(comment.body or "", context.cmsbuild_user)
     if not command_line:
         return
 
     result = context.command_registry.find_command(command_line, is_pr=context.is_pr)
     if not result:
+        # If bot was mentioned but command not found, react with -1
+        if bot_mentioned:
+            logger.info(f"Bot mentioned but command not recognized: {command_line}")
+            set_comment_reaction(context, comment, comment.id, success=False)
         return
 
     cmd, match = result
@@ -3810,7 +3837,7 @@ def process_comment(context: PRContext, comment) -> None:
     # Check ACL
     if not check_command_acl(context, cmd, user, timestamp):
         logger.info(f"User {user} not authorized for command: {cmd.name}")
-        # Set -1 reaction for unauthorized
+        # Set -1 reaction for unauthorized (always react if bot was mentioned or ACL failed)
         set_comment_reaction(context, comment, comment_id, success=False)
         return
 
@@ -3824,7 +3851,7 @@ def process_comment(context: PRContext, comment) -> None:
         logger.error(f"Command handler error: {e}")
         success = False
 
-    # Set reaction based on success
+    # Set reaction based on success (always react if bot was mentioned or command executed)
     set_comment_reaction(context, comment, comment_id, success=success)
 
 
@@ -3966,7 +3993,8 @@ def process_all_comments(context: PRContext) -> None:
                 continue
 
             # Check if comment was edited by comparing preprocessed first line
-            current_first_line = extract_command_line(comment.body or "") or ""
+            current_first_line, _ = extract_command_line(comment.body or "", context.cmsbuild_user)
+            current_first_line = current_first_line or ""
             if cached_info.first_line != current_first_line:
                 # Comment was edited - remove old info and re-process
                 logger.info(f"Comment {comment_id} was edited, re-processing")

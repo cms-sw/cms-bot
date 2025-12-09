@@ -12,7 +12,7 @@
   },
   "base": {
     "sha": "base123",
-    "ref": "main"
+    "ref": "master"
   },
   "user": {
     "login": "testuser",

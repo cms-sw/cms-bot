@@ -35,8 +35,3 @@ IGNORE_ISSUES = {
     GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO: [12368],
 }
 LEGACY_CATEGORIES = {"upgrade": datetime.datetime(2025, 10, 10, 0, 0, tzinfo=utc)}
-
-# Signatures required to trigger tests
-PRE_CHECKS = [(0, "code-format")]
-# Signatures required to merge PR
-EXTRA_CHECKS = [(0, "orp")]

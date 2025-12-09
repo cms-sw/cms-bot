@@ -38,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import the module under test
 from process_pr_v2 import (
     PRContext,
+    SigningChecks,
     TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
     TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
@@ -48,6 +49,7 @@ from process_pr_v2 import (
     create_property_file,
     extract_command_line,
     format_mention,
+    get_signing_checks,
     init_l2_data,
     is_valid_tester,
     parse_test_cmd,
@@ -97,16 +99,6 @@ def create_mock_repo_config(**overrides) -> types.ModuleType:
         "scipy": "analysis",
         "matplotlib": "visualization",
     }
-
-    # PRE_CHECKS: Signatures required before running tests
-    # List of (min_pr_number, [categories])
-    # These reset on every commit
-    module.PRE_CHECKS = [(0, ["code-checks"])]
-
-    # EXTRA_CHECKS: Signatures required for merge
-    # List of (min_pr_number, [categories])
-    # These reset on every commit
-    module.EXTRA_CHECKS = [(0, ["tests", "orp"])]
 
     # Automatically merge when fully signed
     module.AUTOMERGE = False
@@ -1316,11 +1308,21 @@ def create_basic_pr_data(
     comments: List[Dict] = None,
     commits: List[Dict] = None,
     labels: List[str] = None,
+    base_ref: str = "main",
 ) -> None:
     """
     Create basic test data files for a PR.
 
     This is a helper for setting up test fixtures.
+
+    Args:
+        test_name: Name of the test (used for directory)
+        pr_number: PR number
+        files: List of file dicts with filename, sha, status
+        comments: List of comment dicts
+        commits: List of commit dicts
+        labels: List of label names
+        base_ref: Target branch name (default "main", use "master" for cms-sw/cmssw)
     """
     dirpath = create_test_data_directory(test_name)
 
@@ -1399,7 +1401,7 @@ def create_basic_pr_data(
         "merged": False,
         "mergeable": True,
         "head": {"sha": commits[-1]["sha"] if commits else "abc123", "ref": "feature"},
-        "base": {"sha": "base123", "ref": "main"},
+        "base": {"sha": "base123", "ref": base_ref},
         "user": {"login": "testuser", "id": 1},
         "files": files,
         "commits": commits,
@@ -2211,11 +2213,8 @@ class TestMergeCommand:
 
     def test_merge_when_ready(self, repo_config, record_mode):
         """Test merge command when PR is ready."""
-        # Disable all checks for this test
-        config = create_mock_repo_config(
-            PRE_CHECKS=[],  # No pre-checks required
-            EXTRA_CHECKS=[],  # No extra checks required (including ORP)
-        )
+        # Use default config - signing checks are determined by repo/branch
+        config = create_mock_repo_config()
 
         create_basic_pr_data(
             "test_merge_when_ready",
@@ -2845,8 +2844,8 @@ class TestBuildTestCommand:
         """Test basic build command."""
         # Use timestamps after the default commit time
         comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
-        # Remove pre-checks for this test
-        config = create_mock_repo_config(PRE_CHECKS=[])
+        # Use default config - signing checks determined by repo/branch
+        config = create_mock_repo_config()
 
         create_basic_pr_data(
             "test_build_command_basic",
@@ -2895,7 +2894,7 @@ class TestBuildTestCommand:
         """Test test command with workflows parameter."""
         # Use timestamps after the default commit time
         comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
-        config = create_mock_repo_config(PRE_CHECKS=[])
+        config = create_mock_repo_config()
 
         create_basic_pr_data(
             "test_test_command_with_workflows",
@@ -2943,11 +2942,19 @@ class TestBuildTestCommand:
         else:
             recorder.verify()
 
-    def test_test_blocked_by_missing_signature(self, repo_config, record_mode):
+    def test_test_blocked_by_missing_signature(self, repo_config, record_mode, monkeypatch):
         """Test that test is blocked when required signature is missing."""
+        import process_pr_v2
+
+        # Mock forward_ports_map and CMSSW_DEVEL_BRANCH so code-checks is a pre-check
+        mock_fwports_module = types.ModuleType("forward_ports_map")
+        mock_fwports_module.GIT_REPO_FWPORTS = {"cmssw": {"CMSSW_14_1_X": []}}
+        monkeypatch.setattr(process_pr_v2, "forward_ports_map", mock_fwports_module)
+        monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
+
         # Use timestamps after the default commit time
         comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
-        config = create_mock_repo_config(PRE_CHECKS=[(0, ["code-checks"])])
+        config = create_mock_repo_config()
 
         create_basic_pr_data(
             "test_test_blocked_by_missing_signature",
@@ -2967,11 +2974,15 @@ class TestBuildTestCommand:
                     "created_at": comment_time.isoformat(),
                 }
             ],
+            base_ref="master",  # Use master branch to get code-checks as pre-check
         )
 
         recorder = ActionRecorder("test_test_blocked_by_missing_signature", record_mode)
         gh = MockGithub("test_test_blocked_by_missing_signature", recorder)
-        repo = MockRepository("test_test_blocked_by_missing_signature", recorder=recorder)
+        # Use cms-sw/cmssw on master to get code-checks as pre-check
+        repo = MockRepository(
+            "test_test_blocked_by_missing_signature", full_name="cms-sw/cmssw", recorder=recorder
+        )
         issue = MockIssue("test_test_blocked_by_missing_signature", number=1, recorder=recorder)
 
         result = process_pr(
@@ -3733,6 +3744,23 @@ class TestExtractCommandLine:
 class TestHyphenatedCategories:
     """Tests for hyphenated category names like code-checks."""
 
+    @pytest.fixture(autouse=True)
+    def mock_signing_checks(self, monkeypatch):
+        """Mock forward_ports_map and CMSSW_DEVEL_BRANCH for code-checks tests."""
+        import process_pr_v2
+
+        # Mock forward_ports_map
+        mock_fwports_module = types.ModuleType("forward_ports_map")
+        mock_fwports_module.GIT_REPO_FWPORTS = {
+            "cmssw": {
+                "CMSSW_14_1_X": ["CMSSW_14_0_X"],
+            }
+        }
+        monkeypatch.setattr(process_pr_v2, "forward_ports_map", mock_fwports_module)
+
+        # Mock CMSSW_DEVEL_BRANCH
+        monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
+
     def test_plus_category_with_hyphen(self, repo_config, record_mode):
         """Test +code-checks approval command."""
         # Use timestamp after the default commit time
@@ -3755,11 +3783,15 @@ class TestHyphenatedCategories:
                     "created_at": comment_time.isoformat(),
                 }
             ],
+            base_ref="master",  # Use master branch to get code-checks as pre-check
         )
 
         recorder = ActionRecorder("test_plus_category_with_hyphen", record_mode)
         gh = MockGithub("test_plus_category_with_hyphen", recorder)
-        repo = MockRepository("test_plus_category_with_hyphen", recorder=recorder)
+        # Use cms-sw/cmssw on master to get code-checks as a pre-check
+        repo = MockRepository(
+            "test_plus_category_with_hyphen", full_name="cms-sw/cmssw", recorder=recorder
+        )
         issue = MockIssue("test_plus_category_with_hyphen", number=1, recorder=recorder)
 
         result = process_pr(
@@ -3848,11 +3880,15 @@ class TestHyphenatedCategories:
                     "created_at": comment_time.isoformat(),
                 }
             ],
+            base_ref="master",  # Use master branch to get code-checks as pre-check
         )
 
         recorder = ActionRecorder("test_minus_category_with_hyphen", record_mode)
         gh = MockGithub("test_minus_category_with_hyphen", recorder)
-        repo = MockRepository("test_minus_category_with_hyphen", recorder=recorder)
+        # Use cms-sw/cmssw on master to get code-checks as a pre-check
+        repo = MockRepository(
+            "test_minus_category_with_hyphen", full_name="cms-sw/cmssw", recorder=recorder
+        )
         issue = MockIssue("test_minus_category_with_hyphen", number=1, recorder=recorder)
 
         result = process_pr(
@@ -3887,10 +3923,7 @@ class TestTypeCommand:
     @pytest.fixture
     def repo_config(self):
         """Create a mock repo config with minimal settings."""
-        return create_mock_repo_config(
-            PRE_CHECKS=[],
-            EXTRA_CHECKS=[],
-        )
+        return create_mock_repo_config()
 
     @pytest.fixture
     def record_mode(self, request):
@@ -4193,10 +4226,7 @@ class TestTestDeduplication:
     @pytest.fixture
     def repo_config(self):
         """Create a mock repo config."""
-        return create_mock_repo_config(
-            PRE_CHECKS=[],
-            EXTRA_CHECKS=[],
-        )
+        return create_mock_repo_config()
 
     @pytest.fixture
     def record_mode(self, request):
@@ -5989,6 +6019,240 @@ class TestCITestStatus:
 
 
 # =============================================================================
+# TESTS FOR get_signing_checks FUNCTION
+# =============================================================================
+
+
+class TestGetSigningChecks:
+    """Tests for the get_signing_checks function."""
+
+    @pytest.fixture(autouse=True)
+    def mock_forward_ports(self, monkeypatch):
+        """Mock forward_ports_map and CMSSW_DEVEL_BRANCH for all tests in this class."""
+        import process_pr_v2
+
+        # Mock forward_ports_map
+        mock_fwports_module = types.ModuleType("forward_ports_map")
+        mock_fwports_module.GIT_REPO_FWPORTS = {
+            "cmssw": {
+                "CMSSW_14_1_X": ["CMSSW_14_0_X", "CMSSW_13_3_X"],
+            }
+        }
+        monkeypatch.setattr(process_pr_v2, "forward_ports_map", mock_fwports_module)
+
+        # Mock CMSSW_DEVEL_BRANCH
+        monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
+
+    def test_cmssw_master_branch(self):
+        """Test checks for cms-sw/cmssw on master branch."""
+        from process_pr_v2 import get_signing_checks
+
+        result = get_signing_checks("cms-sw/cmssw", "master")
+
+        # Master branch should have code-checks as pre-check
+        assert "code-checks" in result.pre_checks
+        # Should have orp and tests as extra checks
+        assert "orp" in result.extra_checks
+        assert "tests" in result.extra_checks
+        # Should NOT have externals
+        assert "externals" not in result.extra_checks
+
+    def test_cmssw_other_branch(self):
+        """Test checks for cms-sw/cmssw on non-master, non-forward-port branch."""
+        from process_pr_v2 import get_signing_checks
+
+        # Use a branch that is NOT in the forward-ports list
+        result = get_signing_checks("cms-sw/cmssw", "CMSSW_12_0_X")
+
+        # Non-forward-port branch should NOT have code-checks
+        assert "code-checks" not in result.pre_checks
+        # Should have orp and tests as extra checks
+        assert "orp" in result.extra_checks
+        assert "tests" in result.extra_checks
+        # Should NOT have externals
+        assert "externals" not in result.extra_checks
+
+    def test_cmssw_forward_port_branch(self):
+        """Test checks for cms-sw/cmssw on a forward-port branch."""
+        from process_pr_v2 import get_signing_checks
+
+        # CMSSW_14_0_X is in the forward-ports list for CMSSW_14_1_X (devel branch)
+        result = get_signing_checks("cms-sw/cmssw", "CMSSW_14_0_X")
+
+        # Forward-port branch SHOULD have code-checks (like master)
+        assert "code-checks" in result.pre_checks
+        # Should have orp and tests as extra checks
+        assert "orp" in result.extra_checks
+        assert "tests" in result.extra_checks
+        # Should NOT have externals
+        assert "externals" not in result.extra_checks
+
+    def test_cmsdist(self):
+        """Test checks for cms-sw/cmsdist."""
+        from process_pr_v2 import get_signing_checks
+
+        result = get_signing_checks("cms-sw/cmsdist", "IB/CMSSW_14_0_X/master")
+
+        # Should NOT have code-checks
+        assert "code-checks" not in result.pre_checks
+        assert len(result.pre_checks) == 0
+        # Should have orp and externals as extra checks
+        assert "orp" in result.extra_checks
+        assert "externals" in result.extra_checks
+
+    def test_cms_data_repo(self):
+        """Test checks for cms-data/* repositories."""
+        from process_pr_v2 import get_signing_checks
+
+        result = get_signing_checks("cms-data/RecoEgamma-ElectronIdentification", "master")
+
+        # Should NOT have code-checks
+        assert "code-checks" not in result.pre_checks
+        # Should have orp and externals as extra checks
+        assert "orp" in result.extra_checks
+        assert "externals" in result.extra_checks
+
+    def test_cms_externals_repo(self):
+        """Test checks for cms-externals/* repositories."""
+        from process_pr_v2 import get_signing_checks
+
+        result = get_signing_checks("cms-externals/coral", "master")
+
+        # Should NOT have code-checks
+        assert "code-checks" not in result.pre_checks
+        # Should have orp and externals as extra checks
+        assert "orp" in result.extra_checks
+        assert "externals" in result.extra_checks
+
+    def test_non_cms_repo(self):
+        """Test checks for non-CMS repositories."""
+        from process_pr_v2 import get_signing_checks
+
+        result = get_signing_checks("some-org/some-repo", "main")
+
+        # Should NOT have code-checks, orp, or externals
+        assert "code-checks" not in result.pre_checks
+        assert "orp" not in result.extra_checks
+        assert "externals" not in result.extra_checks
+        # Should only have tests
+        assert "tests" in result.extra_checks
+
+    def test_invalid_repo_name(self):
+        """Test checks with invalid repository name."""
+        from process_pr_v2 import get_signing_checks
+
+        result = get_signing_checks("invalid", "master")
+
+        # Should return minimal checks
+        assert "tests" in result.extra_checks
+
+
+# =============================================================================
+# TESTS FOR UNASSIGN BEHAVIOR (ONLY MANUALLY ASSIGNED CATEGORIES)
+# =============================================================================
+
+
+class TestUnassignManuallyAssignedOnly:
+    """Tests for unassign command that only removes manually assigned categories."""
+
+    def test_unassign_manually_assigned_category(self):
+        """Test that unassign removes manually assigned categories."""
+        from process_pr_v2 import _handle_assign, _handle_unassign, PRContext, BotCache
+
+        # Create mock context
+        context = MagicMock(spec=PRContext)
+        context.signing_categories = set()
+        context.manually_assigned_categories = set()
+        context.messages = []
+        context.repo_config = MagicMock()
+
+        # Mock a valid match for assign
+        assign_match = MagicMock()
+        assign_match.groupdict.return_value = {"categories": "core"}
+
+        # Assign a category
+        with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
+            with patch("process_pr_v2.get_category_l2s", return_value=[]):
+                with patch("process_pr_v2.post_bot_comment"):
+                    _handle_assign(
+                        context, assign_match, "user1", 1, datetime.now(tz=timezone.utc)
+                    )
+
+        assert "core" in context.signing_categories
+        assert "core" in context.manually_assigned_categories
+
+        # Now unassign
+        unassign_match = MagicMock()
+        unassign_match.groupdict.return_value = {"categories": "core"}
+
+        with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
+            result = _handle_unassign(
+                context, unassign_match, "user1", 2, datetime.now(tz=timezone.utc)
+            )
+
+        assert result is True
+        assert "core" not in context.signing_categories
+        assert "core" not in context.manually_assigned_categories
+
+    def test_unassign_non_manually_assigned_category_fails(self):
+        """Test that unassign fails for categories not manually assigned."""
+        from process_pr_v2 import _handle_unassign, PRContext
+
+        # Create mock context with a category that was NOT manually assigned
+        context = MagicMock(spec=PRContext)
+        context.signing_categories = {"core"}  # Present in signing_categories
+        context.manually_assigned_categories = set()  # But NOT in manually_assigned
+        context.messages = []
+        context.repo_config = MagicMock()
+
+        # Try to unassign
+        unassign_match = MagicMock()
+        unassign_match.groupdict.return_value = {"categories": "core"}
+
+        with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
+            result = _handle_unassign(
+                context, unassign_match, "user1", 1, datetime.now(tz=timezone.utc)
+            )
+
+        # Should fail
+        assert result is False
+        # Category should still be in signing_categories
+        assert "core" in context.signing_categories
+        # Should have error message
+        assert any("not manually assigned" in msg for msg in context.messages)
+
+    def test_unassign_mixed_categories(self):
+        """Test unassign with mix of manually and non-manually assigned categories."""
+        from process_pr_v2 import _handle_unassign, PRContext
+
+        # Create mock context with both types of categories
+        context = MagicMock(spec=PRContext)
+        context.signing_categories = {"core", "analysis"}
+        context.manually_assigned_categories = {"analysis"}  # Only analysis was manually assigned
+        context.messages = []
+        context.repo_config = MagicMock()
+
+        # Try to unassign both
+        unassign_match = MagicMock()
+        unassign_match.groupdict.return_value = {"categories": "core,analysis"}
+
+        with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
+            result = _handle_unassign(
+                context, unassign_match, "user1", 1, datetime.now(tz=timezone.utc)
+            )
+
+        # Should succeed (at least one category was unassigned)
+        assert result is True
+        # analysis should be removed (was manually assigned)
+        assert "analysis" not in context.signing_categories
+        assert "analysis" not in context.manually_assigned_categories
+        # core should still be there (was not manually assigned)
+        assert "core" in context.signing_categories
+        # Should have warning about core
+        assert any("not manually assigned" in msg for msg in context.messages)
+
+
+# =============================================================================
 # CONFTEST HOOK FOR PYTEST OPTIONS
 # =============================================================================
 
@@ -6139,11 +6403,6 @@ def integration_test_helper():
     """
     # This fixture just provides the class - tests instantiate with their own path
     return IntegrationTestHelper
-
-
-# =============================================================================
-# OLD INTEGRATION TESTS
-# =============================================================================
 
 
 class TestOldTestForProcessPR:

@@ -211,10 +211,10 @@ REACTION_PLUS_ONE = "+1"
 REACTION_MINUS_ONE = "-1"
 
 # Commit and file count thresholds
-TOO_MANY_COMMITS_WARN_THRESHOLD = 150   # Warning level
-TOO_MANY_COMMITS_FAIL_THRESHOLD = 240   # Hard block level (no override possible)
-TOO_MANY_FILES_WARN_THRESHOLD = 1500    # Warning level
-TOO_MANY_FILES_FAIL_THRESHOLD = 3001    # Hard block level (no override possible)
+TOO_MANY_COMMITS_WARN_THRESHOLD = 150  # Warning level
+TOO_MANY_COMMITS_FAIL_THRESHOLD = 240  # Hard block level (no override possible)
+TOO_MANY_FILES_WARN_THRESHOLD = 1500  # Warning level
+TOO_MANY_FILES_FAIL_THRESHOLD = 3001  # Hard block level (no override possible)
 
 # Bot command patterns that are reset on new commits
 # (code-checks results, CI test results like +1/-1)
@@ -248,6 +248,7 @@ RE_PKG_LIST = re.compile(f"{CMSSW_PACKAGE_PATTERN}(,{CMSSW_PACKAGE_PATTERN})*")
 RE_QUEUE = re.compile(CMSSW_RELEASE_QUEUE_PATTERN)
 TEST_VERBS = ("build", "test")
 
+
 # GPU flavors (loaded from files)
 def _load_gpu_flavors() -> List[str]:
     """Load GPU flavors from configuration files."""
@@ -261,6 +262,7 @@ def _load_gpu_flavors() -> List[str]:
         except FileNotFoundError:
             pass
     return gpus
+
 
 ALL_GPUS = _load_gpu_flavors()
 ALL_GPU_BRANDS = sorted(set(gpu.split("_", 1)[0] for gpu in ALL_GPUS))
@@ -474,7 +476,9 @@ def read_repo_file(
     return contents
 
 
-def init_l2_data(repo_config: types.ModuleType, cms_repo: bool = True) -> Dict[str, List[Dict[str, Any]]]:
+def init_l2_data(
+    repo_config: types.ModuleType, cms_repo: bool = True
+) -> Dict[str, List[Dict[str, Any]]]:
     """
     Initialize L2 category membership data.
 
@@ -517,7 +521,6 @@ def init_l2_data(repo_config: types.ModuleType, cms_repo: bool = True) -> Dict[s
 
     _L2_DATA = l2_data
     return l2_data
-
 
 
 def get_watchers(
@@ -1094,8 +1097,10 @@ def save_cache_to_comments(
             logger.debug(f"Created cache comment {i + 1}/{len(chunks)}")
 
     # Delete extra old comments if new cache is smaller
-    for i, comment in enumerate(existing_cache_comments[len(chunks):], start=len(chunks)):
-        logger.debug(f"Deleting extra cache comment {i + 1 - len(chunks)}/{len(existing_cache_comments) - len(chunks)}")
+    for i, comment in enumerate(existing_cache_comments[len(chunks) :], start=len(chunks)):
+        logger.debug(
+            f"Deleting extra cache comment {i + 1 - len(chunks)}/{len(existing_cache_comments) - len(chunks)}"
+        )
         comment.delete()
 
 
@@ -1314,11 +1319,12 @@ def get_package_category(repo_config: types.ModuleType, package: str) -> Optiona
 class SigningChecks:
     """
     Required signing checks for a PR.
-    
+
     Attributes:
         pre_checks: Categories required before running tests (reset on every commit)
         extra_checks: Categories required before merging (reset on every commit)
     """
+
     pre_checks: List[str] = field(default_factory=list)
     extra_checks: List[str] = field(default_factory=list)
 
@@ -1326,12 +1332,12 @@ class SigningChecks:
 def get_signing_checks(repo_full_name: str, target_branch: str) -> SigningChecks:
     """
     Determine required signing checks based on repository and target branch.
-    
+
     This centralizes the logic for determining which categories require signatures
     based on the repository type and target branch.
-    
+
     Check requirements by repository:
-    
+
     | Repository           | code-checks | orp | externals | tests |
     |----------------------|-------------|-----|-----------|-------|
     | cms-sw/cmssw (master)| PRE         | EXT | -         | EXT   |
@@ -1341,36 +1347,36 @@ def get_signing_checks(repo_full_name: str, target_branch: str) -> SigningChecks
     | cms-data/*           | -           | EXT | EXT       | EXT*  |
     | cms-externals/*      | -           | EXT | EXT       | EXT*  |
     | Non-CMS repos        | -           | -   | -         | EXT   |
-    
+
     PRE = pre_check (required before tests)
     EXT = extra_check (required before merge)
     * = only if repo is in VALID_CMS_SW_REPOS_FOR_TESTS
-    
+
     Args:
         repo_full_name: Full repository name (e.g., "cms-sw/cmssw")
         target_branch: Target branch for the PR (e.g., "master", "CMSSW_14_0_X")
-    
+
     Returns:
         SigningChecks with pre_checks and extra_checks lists
     """
     pre_checks: List[str] = []
     extra_checks: List[str] = []
-    
+
     # Parse repo org and name
     parts = repo_full_name.split("/", 1)
     if len(parts) != 2:
         # Invalid repo name, return minimal checks
         return SigningChecks(pre_checks=[], extra_checks=["tests"])
-    
+
     repo_org, repo_name = parts
-    
+
     # Determine repo type
     is_cmssw = repo_full_name == f"{GH_CMSSW_ORGANIZATION}/{GH_CMSSW_REPO}"
     is_cmsdist = repo_full_name == f"{GH_CMSSW_ORGANIZATION}/{GH_CMSDIST_REPO}"
     is_cms_org = repo_org in EXTERNAL_REPOS
     is_cms_data = repo_org == "cms-data"
     is_cms_externals = repo_org == "cms-externals"
-    
+
     if is_cmssw:
         # cms-sw/cmssw repository
         # Check if target branch requires code-checks (master or forward-port branch)
@@ -1385,40 +1391,38 @@ def get_signing_checks(repo_full_name: str, target_branch: str) -> SigningChecks
                     needs_code_checks = True
             except Exception:
                 pass
-        
+
         if needs_code_checks:
             pre_checks.append("code-checks")
-        
+
         extra_checks.extend(["orp", "tests"])
-        
+
     elif is_cmsdist or is_cms_data or is_cms_externals:
         # cms-sw/cmsdist, cms-data/*, cms-externals/* repositories
         extra_checks.append("orp")
         extra_checks.append("externals")
-        
+
         # tests only if in VALID_CMS_SW_REPOS_FOR_TESTS
         if repo_name in VALID_CMS_SW_REPOS_FOR_TESTS:
             extra_checks.append("tests")
-            
+
     elif is_cms_org:
         # Other CMS organization repos (cms-sw/* except cmssw/cmsdist)
         extra_checks.append("orp")
         extra_checks.append("externals")
-        
+
         # tests only if in VALID_CMS_SW_REPOS_FOR_TESTS
         if repo_name in VALID_CMS_SW_REPOS_FOR_TESTS:
             extra_checks.append("tests")
-            
+
     else:
         # Non-CMS repos - only tests required
         extra_checks.append("tests")
-    
+
     return SigningChecks(pre_checks=pre_checks, extra_checks=extra_checks)
 
 
-def is_extra_check_category(
-    context: "PRContext", category: str
-) -> bool:
+def is_extra_check_category(context: "PRContext", category: str) -> bool:
     """
     Check if a category is an EXTRA_CHECK (or PRE_CHECK) category.
 
@@ -1670,20 +1674,20 @@ def should_ignore_issue(repo_config: types.ModuleType, repo: Any, issue: Any) ->
     """
     # Check IGNORE_ISSUES config
     ig_issues = getattr(repo_config, "IGNORE_ISSUES", {})
-    
+
     # Check if issue number is directly in IGNORE_ISSUES
     if issue.number in ig_issues:
         return True
-    
+
     # Check if issue number is in repo-specific ignore list
-    repo_full_name = repo.full_name if hasattr(repo, 'full_name') else ""
+    repo_full_name = repo.full_name if hasattr(repo, "full_name") else ""
     if repo_full_name in ig_issues and issue.number in ig_issues[repo_full_name]:
         return True
-    
+
     # Check if title matches BUILD_REL pattern (release build issues)
     if issue.title and re.match(BUILD_REL, issue.title):
         return True
-    
+
     # Check if body has ignore marker on first line
     if issue.body:
         # Get first non-blank line
@@ -1693,7 +1697,7 @@ def should_ignore_issue(repo_config: types.ModuleType, repo: Any, issue: Any) ->
                 return True
         except Exception:
             pass
-    
+
     return False
 
 
@@ -1702,7 +1706,7 @@ def should_ignore_pr_body(pr_body: str) -> bool:
     Check if PR should be ignored based on description only.
 
     Returns True if first non-blank line matches <cms-bot></cms-bot>.
-    
+
     Note: For full ignore checking including IGNORE_ISSUES and BUILD_REL,
     use should_ignore_issue() instead.
     """
@@ -1767,14 +1771,18 @@ class PRContext:
     holds: List[Hold] = field(default_factory=list)  # Active holds on the PR
     pending_labels: Set[str] = field(default_factory=set)  # Labels to add
     signing_categories: Set[str] = field(default_factory=set)  # Categories requiring signatures
-    manually_assigned_categories: Set[str] = field(default_factory=set)  # Categories assigned via 'assign' command
+    manually_assigned_categories: Set[str] = field(
+        default_factory=set
+    )  # Categories assigned via 'assign' command
     packages: Set[str] = field(default_factory=set)  # Packages touched by PR
     test_params: Dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
     granted_test_rights: Set[str] = field(default_factory=set)  # Users granted test rights
 
     # Pending build/test commands - processed after all comments are seen
     # List of (verb, comment_id, user, timestamp, parsed_result) tuples
-    pending_build_test_commands: List[Tuple[str, int, str, datetime, Any]] = field(default_factory=list)
+    pending_build_test_commands: List[Tuple[str, int, str, datetime, Any]] = field(
+        default_factory=list
+    )
 
     # Code checks
     code_checks_requested: bool = False
@@ -1855,10 +1863,7 @@ class PRContext:
     @property
     def external_repo(self) -> bool:
         """Check if this is an external repo."""
-        return (
-            self.repo_name != CMSSW_REPO_NAME
-            and self.repo_org in EXTERNAL_REPOS
-        )
+        return self.repo_name != CMSSW_REPO_NAME and self.repo_org in EXTERNAL_REPOS
 
     @property
     def is_draft(self) -> bool:
@@ -1884,7 +1889,7 @@ class PRContext:
     def get_signing_checks_for_pr(self) -> "SigningChecks":
         """
         Get signing checks for this PR based on repository and target branch.
-        
+
         Returns:
             SigningChecks with pre_checks and extra_checks lists
         """
@@ -1922,7 +1927,7 @@ def post_bot_comment(
 
     Checks if a message with the same key (tied to a comment_id if provided)
     has already been posted or queued. If so, skips queuing.
-    
+
     Messages are queued and posted later by flush_pending_comments() to allow
     later commands to potentially cancel or modify earlier messages.
 
@@ -1962,7 +1967,9 @@ def post_bot_comment(
     return True
 
 
-def cancel_pending_comment(context: PRContext, message_key: str, comment_id: Optional[int] = None) -> bool:
+def cancel_pending_comment(
+    context: PRContext, message_key: str, comment_id: Optional[int] = None
+) -> bool:
     """
     Cancel a pending bot comment that hasn't been posted yet.
 
@@ -2193,7 +2200,9 @@ def _handle_assign(
                 invalid_packages.append(pkg)
 
         if invalid_packages:
-            logger.warning(f"No category mapping found for packages: {', '.join(invalid_packages)}")
+            logger.warning(
+                f"No category mapping found for packages: {', '.join(invalid_packages)}"
+            )
             context.messages.append(f"Unknown packages: {', '.join(invalid_packages)}")
 
         if not categories:
@@ -2232,7 +2241,7 @@ def _handle_assign(
     if new_categories:
         # Add new categories to signing_categories
         context.signing_categories.update(new_categories)
-        
+
         # Track these as manually assigned (for unassign command)
         context.manually_assigned_categories.update(new_categories)
 
@@ -2292,7 +2301,7 @@ def _handle_unassign(
 ) -> bool:
     """
     Handle unassign command.
-    
+
     Only removes categories that were manually assigned via 'assign' command.
     Categories that are automatically assigned based on file changes cannot
     be unassigned.
@@ -2335,7 +2344,9 @@ def _handle_unassign(
                 invalid_packages.append(pkg)
 
         if invalid_packages:
-            logger.warning(f"No category mapping found for packages: {', '.join(invalid_packages)}")
+            logger.warning(
+                f"No category mapping found for packages: {', '.join(invalid_packages)}"
+            )
             context.messages.append(f"Unknown packages: {', '.join(invalid_packages)}")
 
         if not categories:
@@ -2372,13 +2383,13 @@ def _handle_unassign(
     # Categories from file changes cannot be unassigned
     removable = []
     not_manually_assigned = []
-    
+
     for cat in categories:
         if cat in context.manually_assigned_categories:
             removable.append(cat)
         else:
             not_manually_assigned.append(cat)
-    
+
     if not_manually_assigned:
         logger.warning(
             f"Cannot unassign categories that were not manually assigned: "
@@ -2388,10 +2399,10 @@ def _handle_unassign(
             f"Cannot unassign categories (not manually assigned): "
             f"{', '.join(not_manually_assigned)}"
         )
-    
+
     if not removable:
         return False
-    
+
     # Remove categories from both signing_categories and manually_assigned_categories
     for cat in removable:
         context.signing_categories.discard(cat)
@@ -2407,14 +2418,14 @@ def handle_hold(
 ) -> bool:
     """
     Handle hold command - prevents automerge.
-    
+
     Can be used by:
     - Users with L2 signing categories
     - Release managers
     - PR hold managers (PR_HOLD_MANAGERS)
     """
     user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
-    
+
     # Check if user is a release manager
     is_release_manager = False
     if context.pr:
@@ -2423,13 +2434,15 @@ def handle_hold(
             is_release_manager = user in release_managers
         except Exception:
             pass
-    
+
     # Check if user is a PR hold manager
     is_hold_manager = user in PR_HOLD_MANAGERS
-    
+
     # User must have L2 categories, be a release manager, or be a hold manager
     if not user_categories and not is_release_manager and not is_hold_manager:
-        logger.info(f"User {user} cannot place hold (no L2 categories, not release manager, not hold manager)")
+        logger.info(
+            f"User {user} cannot place hold (no L2 categories, not release manager, not hold manager)"
+        )
         return False
 
     # Determine which category to use for the hold
@@ -2461,7 +2474,12 @@ def handle_hold(
     return True
 
 
-@command("unhold", r"^unhold$", description="Remove hold (L2 for own category, ORP for all)", pr_only=True)
+@command(
+    "unhold",
+    r"^unhold$",
+    description="Remove hold (L2 for own category, ORP for all)",
+    pr_only=True,
+)
 def handle_unhold(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
@@ -2485,11 +2503,11 @@ def handle_unhold(
         context.holds = []
         logger.info(f"ORP user {user} removed all {removed_count} holds")
         return True  # ORP unhold always succeeds
-    
+
     # Build list of categories this user can unhold
     # Users can only remove their own holds
     removable_categories = set(user_categories)
-    
+
     # Check if user is a release manager
     if context.pr:
         try:
@@ -2498,15 +2516,15 @@ def handle_unhold(
                 removable_categories.add("release-manager")
         except Exception:
             pass
-    
+
     # Check if user is a PR hold manager
     if user in PR_HOLD_MANAGERS:
         removable_categories.add("hold-manager")
-    
+
     if not removable_categories:
         logger.info(f"User {user} cannot unhold (no permissions)")
         return False
-    
+
     # Remove holds that match user's categories AND were placed by this user
     # Also cancel pending hold messages for removed holds
     original_count = len(context.holds)
@@ -2519,7 +2537,7 @@ def handle_unhold(
             new_holds.append(h)
     context.holds = new_holds
     removed = original_count - len(context.holds)
-    
+
     if removed > 0:
         logger.info(f"User {user} removed {removed} hold(s)")
         return True
@@ -2639,7 +2657,7 @@ def handle_abort(
     # Check if there are tests to abort (tests must be in pending state)
     statuses = get_ci_test_statuses(context)
     has_pending_tests = False
-    
+
     for suffix, results in statuses.items():
         for result in results:
             if result.status == "pending":
@@ -2647,11 +2665,11 @@ def handle_abort(
                 break
         if has_pending_tests:
             break
-    
+
     if not has_pending_tests:
         logger.info(f"Ignoring abort from {user} - no pending tests")
         return False
-    
+
     context.abort_tests = True
     logger.info(f"Test abort requested by {user}")
     return True
@@ -2687,14 +2705,14 @@ def handle_backport(
     Adds 'backport' label, or 'backport-ok' if original PR is merged.
     """
     pr_num_str = match.group("pr_num")
-    
+
     # Validate PR number format (already validated by regex, but double-check)
     if not pr_num_str or not pr_num_str.isdigit():
         logger.warning(f"Invalid backport PR number: {pr_num_str}")
         return False
-    
+
     pr_num = int(pr_num_str)
-    
+
     # Try to find the original PR
     try:
         original_pr = context.repo.get_pull(pr_num)
@@ -2709,7 +2727,7 @@ def handle_backport(
             return True
     except Exception as e:
         logger.warning(f"Could not find original PR #{pr_num}: {e}")
-    
+
     # Original PR not found - don't add backport label
     logger.info(f"Backport command for #{pr_num} - original PR not found, skipping label")
     return False
@@ -2758,9 +2776,11 @@ def handle_code_checks(
     context.code_checks_tool_conf = tool_conf
     context.code_checks_apply_patch = apply_patch
 
-    logger.info(f"Code checks requested by {user}" +
-                (f" with {tool_conf}" if tool_conf else "") +
-                (" (apply patch)" if apply_patch else ""))
+    logger.info(
+        f"Code checks requested by {user}"
+        + (f" with {tool_conf}" if tool_conf else "")
+        + (" (apply patch)" if apply_patch else "")
+    )
     return True
 
 
@@ -2781,12 +2801,12 @@ def handle_ignore_tests_rejected(
     Valid reasons are defined in githublabels.TEST_IGNORE_REASON.
     """
     reason = match.group("reason")
-    
+
     # Validate reason against TEST_IGNORE_REASON
     if reason not in TEST_IGNORE_REASON:
         logger.warning(f"Invalid test ignore reason: {reason}")
         return False
-    
+
     context.ignore_tests_rejected = reason
     logger.info(f"Test rejection ignored by {user} with reason: {reason}")
     return True
@@ -2817,7 +2837,9 @@ def handle_commit_count_override(
             f"Cannot override: commit count ({commit_count}) is at or above "
             f"the hard limit ({TOO_MANY_COMMITS_FAIL_THRESHOLD})"
         )
-        logger.warning(f"Cannot override commit count: {commit_count} >= {TOO_MANY_COMMITS_FAIL_THRESHOLD}")
+        logger.warning(
+            f"Cannot override commit count: {commit_count} >= {TOO_MANY_COMMITS_FAIL_THRESHOLD}"
+        )
         return False
 
     context.ignore_commit_count = True
@@ -2850,7 +2872,9 @@ def handle_file_count_override(
             f"Cannot override: file count ({file_count}) is at or above "
             f"the hard limit ({TOO_MANY_FILES_FAIL_THRESHOLD})"
         )
-        logger.warning(f"Cannot override file count: {file_count} >= {TOO_MANY_FILES_FAIL_THRESHOLD}")
+        logger.warning(
+            f"Cannot override file count: {file_count} >= {TOO_MANY_FILES_FAIL_THRESHOLD}"
+        )
         return False
 
     context.ignore_file_count = True
@@ -2889,9 +2913,7 @@ def handle_type(
     # Validate label is in TYPE_COMMANDS
     if label not in TYPE_COMMANDS:
         valid_labels = ", ".join(sorted(TYPE_COMMANDS.keys()))
-        context.messages.append(
-            f"Invalid type label '{label}'. Valid labels: {valid_labels}"
-        )
+        context.messages.append(f"Invalid type label '{label}'. Valid labels: {valid_labels}")
         logger.warning(f"Invalid type label: {label}")
         return False
 
@@ -3066,9 +3088,7 @@ def get_check_functions() -> Dict[str, Callable]:
     return _CHECK_FUNCTIONS
 
 
-def parse_test_parameters(
-    comment_lines: List[str], repo
-) -> Dict[str, str]:
+def parse_test_parameters(comment_lines: List[str], repo) -> Dict[str, str]:
     """
     Parse test parameters from a multi-line comment.
 
@@ -3253,7 +3273,9 @@ def handle_build_test(
 
     # Collect for deferred processing
     context.pending_build_test_commands.append((result.verb, comment_id, user, timestamp, result))
-    logger.debug(f"Collected {result.verb} command from {user} (comment {comment_id}) for deferred processing")
+    logger.debug(
+        f"Collected {result.verb} command from {user} (comment {comment_id}) for deferred processing"
+    )
 
     return True
 
@@ -3381,7 +3403,9 @@ def process_pending_build_test_commands(context: PRContext) -> None:
         # Check if jenkins status URL matches this comment's URL
         if jenkins_url:
             if jenkins_url == comment_url:
-                logger.info(f"Skipping test command (comment {comment_id}) - jenkins status already set for this comment")
+                logger.info(
+                    f"Skipping test command (comment {comment_id}) - jenkins status already set for this comment"
+                )
                 return
 
         # Execute the test command
@@ -3602,7 +3626,7 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
 
     # Get old file version keys for comparison
     old_fv_keys = set(context.cache.current_file_versions)
-    
+
     # Get categories that were already known before this update
     old_categories = set()
     for fv_key in old_fv_keys:
@@ -3628,7 +3652,7 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
                 categories=categories,
             )
             changed_files.add(filename)
-            
+
             # Track categories that are new to this PR
             for cat in categories:
                 if cat not in old_categories:
@@ -3647,7 +3671,9 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
 
     # Update current file versions
     context.cache.current_file_versions = current_fv_keys
-    logger.debug(f"Updated file states: {len(current_fv_keys)} files, {len(changed_files)} changed, {len(new_categories)} new categories")
+    logger.debug(
+        f"Updated file states: {len(current_fv_keys)} files, {len(changed_files)} changed, {len(new_categories)} new categories"
+    )
 
     return changed_files, new_categories
 
@@ -3807,7 +3833,11 @@ def get_latest_commit_timestamp(context: PRContext) -> Optional[datetime]:
         try:
             commit_date = commit.commit.author.date
             if commit_date:
-                ts = ensure_tz_aware(commit_date) if isinstance(commit_date, datetime) else parse_timestamp(commit_date)
+                ts = (
+                    ensure_tz_aware(commit_date)
+                    if isinstance(commit_date, datetime)
+                    else parse_timestamp(commit_date)
+                )
                 if ts and (latest_ts is None or ts > latest_ts):
                     latest_ts = ts
         except Exception:
@@ -3884,9 +3914,7 @@ def process_comment(context: PRContext, comment) -> None:
     if str(comment.id) in context.cache.comments:
         return
 
-    command_line, bot_mentioned = extract_command_line(
-        comment.body or "", context.cmsbuild_user
-    )
+    command_line, bot_mentioned = extract_command_line(comment.body or "", context.cmsbuild_user)
     if not command_line:
         return
 
@@ -3989,7 +4017,9 @@ def has_commit_after(commit_timestamps: List[datetime], comment_timestamp: datet
     return False
 
 
-def get_last_commit_before(commit_timestamps: List[datetime], timestamp: datetime) -> Optional[datetime]:
+def get_last_commit_before(
+    commit_timestamps: List[datetime], timestamp: datetime
+) -> Optional[datetime]:
     """
     Get the timestamp of the last commit before the given timestamp.
 
@@ -4075,9 +4105,7 @@ def process_all_comments(context: PRContext) -> None:
                 continue
 
             # Check if comment was edited by comparing preprocessed first line
-            current_first_line, _ = extract_command_line(
-                comment.body or "", context.cmsbuild_user
-            )
+            current_first_line, _ = extract_command_line(comment.body or "", context.cmsbuild_user)
             current_first_line = current_first_line or ""
             if cached_info.first_line != current_first_line:
                 # Comment was edited - remove old info and re-process
@@ -4137,7 +4165,7 @@ def get_current_categories(context: PRContext) -> Dict[str, Set[str]]:
     # Add PRE_CHECKS and EXTRA_CHECKS categories from get_signing_checks
     # These are required signatures that apply to all files
     signing_checks = context.get_signing_checks_for_pr()
-    
+
     for cat in signing_checks.pre_checks + signing_checks.extra_checks:
         if cat not in categories:
             categories[cat] = set()
@@ -4346,7 +4374,7 @@ CMS_STATUS_PREFIX = "cms"
 @dataclass
 class CITestResult:
     """Result of CI test status check."""
-    
+
     status: str  # "pending", "success", "error"
     is_optional: bool
     context: str  # Full status context
@@ -4357,22 +4385,22 @@ class CITestResult:
 def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     """
     Get CI test statuses from GitHub commit statuses.
-    
+
     Looks for statuses matching patterns:
     - cms/<arch>/<test_type>/required
     - cms/<arch>/<test_type>/optional
-    
+
     And their sub-statuses:
     - cms/<arch>/build
     - cms/<arch>/relvals
     - etc.
-    
+
     Returns:
         Dict mapping suffix ("required" or "optional") to list of CITestResult
     """
     if not context.pr or not context.commits:
         return {}
-    
+
     # Get the head commit SHA
     try:
         head_sha = context.pr.head.sha
@@ -4381,7 +4409,7 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
             head_sha = context.commits[-1].sha
         else:
             return {}
-    
+
     # Get commit statuses
     try:
         commit = context.repo.get_commit(head_sha)
@@ -4389,10 +4417,10 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     except Exception as e:
         logger.warning(f"Failed to get commit statuses: {e}")
         return {}
-    
+
     if not statuses:
         return {}
-    
+
     # Group statuses by their context prefix
     # Build a map of context -> status for quick lookup
     status_map: Dict[str, Any] = {}
@@ -4401,29 +4429,29 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
         # Keep the most recent status for each context
         if ctx not in status_map:
             status_map[ctx] = status
-    
+
     results: Dict[str, List[CITestResult]] = {"required": [], "optional": []}
-    
+
     # Find all top-level test statuses (cms/<arch>/<test>/required or optional)
     prefix = f"{CMS_STATUS_PREFIX}/"
-    
+
     for ctx, status in status_map.items():
         if not ctx.startswith(prefix):
             continue
-        
+
         # Check if this is a top-level status (ends with /required or /optional)
         parts = ctx.rsplit("/", 1)
         if len(parts) != 2:
             continue
-        
+
         base_context, suffix = parts
         if suffix not in ("required", "optional"):
             continue
-        
+
         # This is a top-level test status
         # Determine overall status by checking sub-statuses
         overall_status = _compute_test_status(base_context, status_map)
-        
+
         result = CITestResult(
             status=overall_status,
             is_optional=(suffix == "optional"),
@@ -4432,47 +4460,49 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
             target_url=status.target_url,
         )
         results[suffix].append(result)
-    
+
     return results
 
 
 def _compute_test_status(base_context: str, status_map: Dict[str, Any]) -> str:
     """
     Compute the overall status for a test by checking its sub-statuses.
-    
+
     Args:
         base_context: The base context (e.g., "cms/el8_amd64_gcc12/build")
         status_map: Map of context -> status object
-        
+
     Returns:
         "pending", "success", or "error"
     """
     # Find all sub-statuses for this base context
     sub_statuses = []
     prefix = f"{base_context}/"
-    
+
     for ctx, status in status_map.items():
         if ctx.startswith(prefix) or ctx == base_context:
             sub_statuses.append(status)
-    
+
     if not sub_statuses:
         # No sub-statuses, check the main status
         if base_context in status_map:
             main_status = status_map[base_context]
             return _github_state_to_status(main_status.state)
         return "pending"
-    
+
     # Check all sub-statuses
     has_pending = False
     has_error = False
-    
+
     for status in sub_statuses:
-        state = status.state.lower() if hasattr(status.state, 'lower') else str(status.state).lower()
+        state = (
+            status.state.lower() if hasattr(status.state, "lower") else str(status.state).lower()
+        )
         if state == "pending":
             has_pending = True
         elif state in ("error", "failure"):
             has_error = True
-    
+
     if has_pending:
         return "pending"
     if has_error:
@@ -4482,7 +4512,7 @@ def _compute_test_status(base_context: str, status_map: Dict[str, Any]) -> str:
 
 def _github_state_to_status(state: str) -> str:
     """Convert GitHub status state to our status string."""
-    state = state.lower() if hasattr(state, 'lower') else str(state).lower()
+    state = state.lower() if hasattr(state, "lower") else str(state).lower()
     if state == "pending":
         return "pending"
     elif state in ("error", "failure"):
@@ -4495,27 +4525,27 @@ def _github_state_to_status(state: str) -> str:
 def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
     """
     Check if CI tests have completed and return their results.
-    
+
     Returns:
         Dict with keys "required" and/or "optional" mapping to "success" or "error",
         or None if tests are still pending or not found.
     """
     statuses = get_ci_test_statuses(context)
-    
+
     required_results = statuses.get("required", [])
     optional_results = statuses.get("optional", [])
-    
+
     if not required_results and not optional_results:
         return None
-    
+
     lab_stats: Dict[str, str] = {}
-    
+
     # Check required tests
     if required_results:
         all_success = True
         any_error = False
         any_pending = False
-        
+
         for result in required_results:
             if result.status == "pending":
                 any_pending = True
@@ -4524,25 +4554,25 @@ def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
                 all_success = False
             elif result.status != "success":
                 all_success = False
-        
+
         if not any_pending:
             lab_stats["required"] = "success" if all_success and not any_error else "error"
-    
+
     # Check optional tests
     if optional_results:
         all_success = True
         any_pending = False
-        
+
         for result in optional_results:
             if result.status == "pending":
                 any_pending = True
             elif result.status != "success":
                 all_success = False
-        
+
         if not any_pending:
             # Optional tests don't cause error state, just track success
             lab_stats["optional"] = "success" if all_success else "error"
-    
+
     return lab_stats if lab_stats else None
 
 
@@ -4570,16 +4600,16 @@ def process_ci_test_results(context: PRContext) -> None:
     """
     if not context.is_pr or not context.pr:
         return
-    
+
     lab_stats = check_ci_test_completion(context)
     if not lab_stats:
         return
-    
+
     statuses = get_ci_test_statuses(context)
-    
+
     # Get current commit SHA for unique message key
     head_sha = context.pr.head.sha[:8] if context.pr else "unknown"
-    
+
     for suffix, status_value in lab_stats.items():
         # Find a result with a target URL to fetch detailed results
         result_url = None
@@ -4589,23 +4619,26 @@ def process_ci_test_results(context: PRContext) -> None:
                 if result.description and not result.description.startswith("Finished"):
                     result_url = result.target_url
                     break
-        
+
         if not result_url:
             continue
-        
+
         # Transform URL to get pr-result endpoint
-        pr_result_url = result_url.replace(
-            "/SDT/jenkins-artifacts/",
-            "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/",
-        ) + "/pr-result"
-        
+        pr_result_url = (
+            result_url.replace(
+                "/SDT/jenkins-artifacts/",
+                "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/",
+            )
+            + "/pr-result"
+        )
+
         error_code, output = fetch_pr_result(pr_result_url)
-        
+
         if output:
             # Post result as comment using post_bot_comment for deduplication
             res = "+1" if status_value == "success" else "-1"
             comment_body = f"{res}\n\n{output}"
-            
+
             # Use suffix and head_sha as message key to avoid duplicates
             message_key = f"ci_result_{suffix}_{head_sha}"
             post_bot_comment(context, comment_body, message_key)
@@ -4657,7 +4690,8 @@ def generate_status_message(context: PRContext) -> str:
             reasons = []
             if pr_state == PRState.TESTS_PENDING:
                 pending_pre = [
-                    cat for cat in pre_checks
+                    cat
+                    for cat in pre_checks
                     if category_states.get(cat, ApprovalState.PENDING) != ApprovalState.APPROVED
                 ]
                 if pending_pre:
@@ -4668,8 +4702,7 @@ def generate_status_message(context: PRContext) -> str:
                 pending_cats = [
                     cat
                     for cat, state in category_states.items()
-                    if state != ApprovalState.APPROVED
-                    and cat.lower() != "orp"
+                    if state != ApprovalState.APPROVED and cat.lower() != "orp"
                 ]
                 if pending_cats:
                     reasons.append(f"Pending signatures: {', '.join(pending_cats)}")
@@ -4700,7 +4733,7 @@ def generate_status_message(context: PRContext) -> str:
 def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
     """
     Update PR/Issue labels and status based on current state.
-    
+
     Returns:
         Tuple of (old_labels, new_labels) for tracking state transitions
     """
@@ -4831,16 +4864,16 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
 def get_fully_signed_message(context: PRContext) -> str:
     """
     Generate the fully signed message for a PR.
-    
+
     Returns the message to post when a PR becomes fully signed.
     """
     pr = context.pr
     branch = pr.base.ref if pr else "unknown"
-    
+
     # Determine test status message
     requires_test = ""
     lab_stats = check_ci_test_completion(context)
-    
+
     if lab_stats:
         required_status = lab_stats.get("required")
         if required_status == "success":
@@ -4853,19 +4886,21 @@ def get_fully_signed_message(context: PRContext) -> str:
     else:
         # Tests not completed yet
         requires_test = " after it passes the integration tests"
-    
+
     # Check if this is a production branch that requires devel release validation
     dev_release_relval = ""
     if branch in RELEASE_BRANCH_PRODUCTION:
-        dev_release_relval = (
-            f" and once validation in the development release cycle {CMSSW_DEVEL_BRANCH} is complete"
-        )
-    
+        dev_release_relval = f" and once validation in the development release cycle {CMSSW_DEVEL_BRANCH} is complete"
+
     # Determine auto-merge message
     auto_merge_msg = ""
     managers = get_release_managers(branch)
-    managers_str = ", ".join(format_mention(context, m) for m in managers) if managers else "@cms-sw/release-managers"
-    
+    managers_str = (
+        ", ".join(format_mention(context, m) for m in managers)
+        if managers
+        else "@cms-sw/release-managers"
+    )
+
     if context.holds:
         # PR is on hold
         blockers = ", ".join(format_mention(context, h.user) for h in context.holds)
@@ -4875,7 +4910,9 @@ def get_fully_signed_message(context: PRContext) -> str:
         )
     elif has_new_package(context):
         # PR introduces new package
-        auto_merge_msg = f"This pull request requires a new package and will not be merged. {managers_str}"
+        auto_merge_msg = (
+            f"This pull request requires a new package and will not be merged. {managers_str}"
+        )
     elif needs_orp_review(context, branch):
         # PR needs ORP review
         auto_merge_msg = (
@@ -4885,13 +4922,13 @@ def get_fully_signed_message(context: PRContext) -> str:
     else:
         # Can be auto-merged
         auto_merge_msg = "This pull request will be automatically merged."
-    
+
     # Build the message
     message = (
         f"This pull request is fully signed and it will be integrated in one of the next "
         f"{branch} IBs{requires_test}{dev_release_relval}. {auto_merge_msg}"
     )
-    
+
     # Add notice about linked PRs if any
     linked_prs = get_linked_prs(context)
     if linked_prs:
@@ -4900,7 +4937,7 @@ def get_fully_signed_message(context: PRContext) -> str:
             f"\n\n**Notice** This PR was tested with additional Pull Request(s), "
             f"please also merge them if necessary: {linked_prs_str}"
         )
-    
+
     return message
 
 
@@ -4909,7 +4946,7 @@ def has_new_package(context: PRContext) -> bool:
     # Check if any file is in a package that doesn't exist yet
     if not context.pr:
         return False
-    
+
     for fv_key in context.cache.current_file_versions:
         if fv_key in context.cache.file_versions:
             fv = context.cache.file_versions[fv_key]
@@ -4920,7 +4957,7 @@ def has_new_package(context: PRContext) -> bool:
                     # This could indicate a new package
                     # More sophisticated check would look at actual package existence
                     pass
-    
+
     # For now, check pending labels for new-package indication
     return "new-package" in context.pending_labels
 
@@ -4930,21 +4967,21 @@ def needs_orp_review(context: PRContext, branch: str) -> bool:
     # Check if ORP is in EXTRA_CHECKS
     signing_checks = context.get_signing_checks_for_pr()
     extra_checks = signing_checks.extra_checks
-    
+
     if "orp" not in [c.lower() for c in extra_checks]:
         return False
-    
+
     # Check if ORP has approved
     category_states = compute_category_approval_states(context)
     orp_state = category_states.get("orp", ApprovalState.PENDING)
-    
+
     return orp_state != ApprovalState.APPROVED
 
 
 def get_linked_prs(context: PRContext) -> List[str]:
     """Get list of linked PRs that were tested together with this PR."""
     linked = []
-    
+
     # Check test parameters for 'with' PRs
     if context.test_params:
         with_prs = context.test_params.get("PULL_REQUESTS", "")
@@ -4953,7 +4990,7 @@ def get_linked_prs(context: PRContext) -> List[str]:
                 pr_ref = pr_ref.strip()
                 if pr_ref and pr_ref != str(context.issue.number):
                     linked.append(pr_ref)
-    
+
     return linked
 
 
@@ -4962,7 +4999,7 @@ def post_fully_signed_messages(
 ) -> None:
     """
     Post fully signed messages if PR/Issue transitions to fully signed state.
-    
+
     Args:
         context: PR processing context
         old_labels: Labels before processing
@@ -4973,22 +5010,23 @@ def post_fully_signed_messages(
         if "fully-signed" in new_labels and "fully-signed" not in old_labels:
             message = get_fully_signed_message(context)
             post_bot_comment(context, message, "fully_signed")
-        
+
         # Check for draft PR becoming fully signed
         if "fully-signed-draft" in new_labels and "fully-signed-draft" not in old_labels:
             user = context.pr.user.login if context.pr else "author"
             message = (
                 f"{format_mention(context, user)} if this PR is ready to be reviewed by the "
-                f"release team, please remove the \"Draft\" status."
+                f'release team, please remove the "Draft" status.'
             )
             post_bot_comment(context, message, "fully_signed_draft")
     else:
         # Check for issue becoming fully signed
         category_states = compute_category_approval_states(context)
-        all_approved = all(
-            state == ApprovalState.APPROVED
-            for state in category_states.values()
-        ) if category_states else False
+        all_approved = (
+            all(state == ApprovalState.APPROVED for state in category_states.values())
+            if category_states
+            else False
+        )
 
         if all_approved and category_states:
             # Check if we haven't already posted this
@@ -5245,9 +5283,7 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
             context.warned_too_many_files = True
 
     # Format trackers for mention
-    trackers_mention = ", ".join(
-        format_mention(context, t) for t in CMSSW_ISSUES_TRACKERS
-    )
+    trackers_mention = ", ".join(format_mention(context, t) for t in CMSSW_ISSUES_TRACKERS)
 
     # Check commit count
     if commit_count >= TOO_MANY_COMMITS_WARN_THRESHOLD:
@@ -5264,7 +5300,7 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                 )
                 post_bot_comment(context, msg, "too_many_commits_fail")
                 logger.warning(f"PR blocked: too many commits ({commit_count})")
-            
+
             # Always block at FAIL threshold - cannot be overridden
             context.blocked_by_commit_count = True
             flush_pending_comments(context)  # Flush before early return
@@ -5326,7 +5362,7 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
                 )
                 post_bot_comment(context, msg, "too_many_files_fail")
                 logger.warning(f"PR blocked: too many files ({file_count})")
-            
+
             # Always block at FAIL threshold - cannot be overridden
             context.blocked_by_file_count = True
             flush_pending_comments(context)  # Flush before early return
@@ -5424,9 +5460,7 @@ def post_welcome_message(context: PRContext) -> None:
     # Build watchers message
     watchers_msg = ""
     if context.watchers:
-        watcher_mentions = ", ".join(
-            format_mention(context, w) for w in sorted(context.watchers)
-        )
+        watcher_mentions = ", ".join(format_mention(context, w) for w in sorted(context.watchers))
         watchers_msg = f"{watcher_mentions} this is something you requested to watch as well.\n"
 
     # Build backport message (uses BACKPORT_STR from cms_static)
@@ -5492,7 +5526,8 @@ def _build_cmssw_welcome_message(
     if new_packages:
         new_package_msg = (
             "\nThe following packages do not have a category, yet:\n\n"
-            + "\n".join(new_packages) + "\n"
+            + "\n".join(new_packages)
+            + "\n"
             + "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py "
             "to assign category\n"
         )
@@ -5583,12 +5618,8 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
     # Build watchers message
     watchers_msg = ""
     if context.watchers:
-        watcher_mentions = ", ".join(
-            format_mention(context, w) for w in sorted(context.watchers)
-        )
-        watchers_msg = (
-            f"\n\n{watcher_mentions} this is something you requested to watch as well."
-        )
+        watcher_mentions = ", ".join(format_mention(context, w) for w in sorted(context.watchers))
+        watchers_msg = f"\n\n{watcher_mentions} this is something you requested to watch as well."
 
     # Build new categories message (similar to welcome message format)
     new_categories_msg = ""
@@ -5605,21 +5636,20 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
                     pkg_new_cats = [c for c in fv.categories if c in new_categories]
                     if pkg_new_cats:
                         new_pkg_lines.append(f"- {pkg} (**{', '.join(sorted(pkg_new_cats))}**)")
-        
+
         if new_pkg_lines:
             # Remove duplicates and sort
             unique_pkg_lines = sorted(set(new_pkg_lines))
-            new_categories_msg = (
-                "\n\nThe following packages are now also affected:\n"
-                + "\n".join(unique_pkg_lines)
+            new_categories_msg = "\n\nThe following packages are now also affected:\n" + "\n".join(
+                unique_pkg_lines
             )
-            
+
             # Add L2 mentions for new categories
             new_cat_l2s = set()
             for cat in new_categories:
                 cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
                 new_cat_l2s.update(cat_l2s)
-            
+
             if new_cat_l2s:
                 new_l2_mentions = ", ".join(
                     format_mention(context, l2) for l2 in sorted(new_cat_l2s)
@@ -5877,14 +5907,14 @@ def process_pr(
 
         # Process changes for the PR to determine required signatures
         chg_files: List[str] = []
-        
+
         # Get signing checks based on repo and branch
         signing_checks = context.get_signing_checks_for_pr()
-        
+
         # Add pre_checks categories (like code-checks) to signing_categories
         for cat in signing_checks.pre_checks:
             context.signing_categories.add(cat)
-        
+
         if context.cmssw_repo or not context.external_repo:
             if context.cmssw_repo:
                 update_milestone(repo, issue, pr, dryRun)
@@ -5893,9 +5923,7 @@ def process_pr(
             files_with_sha, chg_files = get_pr_files_info(pr)
             context._pr_files_with_sha = files_with_sha
             context._changed_files = chg_files
-            context.packages = set(
-                file_to_package(repo_config, f) for f in chg_files
-            )
+            context.packages = set(file_to_package(repo_config, f) for f in chg_files)
             add_nonblocking_labels(chg_files, context.pending_labels)
             context.create_test_property = True
         else:
@@ -5954,9 +5982,7 @@ def process_pr(
 
         # Load watchers based on changed files and categories
         if chg_files:
-            context.watchers = get_watchers(
-                context, chg_files, datetime.now(tz=timezone.utc)
-            )
+            context.watchers = get_watchers(context, chg_files, datetime.now(tz=timezone.utc))
 
         # Update file states (sets current_file_versions)
         changed_files, new_categories = update_file_states(context)
@@ -5964,7 +5990,7 @@ def process_pr(
             logger.info(f"Changed files: {changed_files}")
         if new_categories:
             logger.info(f"New categories: {new_categories}")
-        
+
         # Store new categories for use in PR updated message
         context._new_categories = new_categories
 
@@ -6040,7 +6066,9 @@ def process_pr(
         if context.create_test_property:
             for test_request in context.tests_to_run:
                 params = build_test_parameters(context, test_request)
-                logger.info(f"Creating test properties: {test_request.verb} triggered by {test_request.triggered_by}")
+                logger.info(
+                    f"Creating test properties: {test_request.verb} triggered by {test_request.triggered_by}"
+                )
                 create_test_properties_file(context, params)
 
         # Handle code checks request
@@ -6091,9 +6119,9 @@ def process_pr(
             name: {
                 "state": state.value,
                 "check_type": (
-                    "pre_check" if name in pre_checks else
-                    "extra_check" if name in extra_checks else
-                    "regular"
+                    "pre_check"
+                    if name in pre_checks
+                    else "extra_check" if name in extra_checks else "regular"
                 ),
             }
             for name, state in category_states.items()

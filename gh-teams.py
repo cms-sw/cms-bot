@@ -150,7 +150,7 @@ for org_name in CMS_ORGANIZATIONS:
                     add_organization_member(org_name, login, role="member")
                     chg_flag += 1
                 except Exception as ex:
-                    print("  =>", ex)
+                    print("  =>ERROR:", ex)
                     err_code = 1
         else:
             ok_mems.append(login)
@@ -228,7 +228,7 @@ for org_name in CMS_ORGANIZATIONS:
                             add_organization_member(org_name, login, role="member")
                             chg_flag += 1
                         except Exception as ex:
-                            print("  =>", ex)
+                            print("  =>ERROR:", ex)
                             err_code = 1
                     continue
                 if not login in cache["users"]:
@@ -237,7 +237,7 @@ for org_name in CMS_ORGANIZATIONS:
                     try:
                         team.add_to_members(cache["users"][login])
                     except Exception as e:
-                        print(e)
+                        print("  =>ERROR:", e)
                         err_code = 1
                 print("      =>Added member:", login)
                 chg_flag += 1

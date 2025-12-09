@@ -23,7 +23,6 @@ import json
 import os
 import sys
 import types
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -38,7 +37,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import the module under test
 from process_pr_v2 import (
     PRContext,
-    SigningChecks,
     TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
     TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
@@ -49,7 +47,6 @@ from process_pr_v2 import (
     create_property_file,
     extract_command_line,
     format_mention,
-    get_signing_checks,
     init_l2_data,
     is_valid_tester,
     parse_test_cmd,
@@ -6157,7 +6154,7 @@ class TestUnassignManuallyAssignedOnly:
 
     def test_unassign_manually_assigned_category(self):
         """Test that unassign removes manually assigned categories."""
-        from process_pr_v2 import _handle_assign, _handle_unassign, PRContext, BotCache
+        from process_pr_v2 import _handle_assign, _handle_unassign, PRContext
 
         # Create mock context
         context = MagicMock(spec=PRContext)

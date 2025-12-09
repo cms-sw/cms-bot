@@ -4295,6 +4295,10 @@ def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalSt
     1. All files signed are still current (haven't changed)
     2. No new files have been added to the category since signing
 
+    Special handling:
+    - 'tests' category: Determined by CI commit statuses, not user comments
+    - 'code-checks' category: Can be signed by CI or users
+
     Returns:
         Dict mapping category name to approval state
     """
@@ -4302,7 +4306,12 @@ def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalSt
     category_states: Dict[str, ApprovalState] = {}
 
     for cat_name, cat_files in categories.items():
-        # Find valid signatures for this category
+        # Special handling for 'tests' category - determined by CI status
+        if cat_name == "tests":
+            category_states[cat_name] = _get_tests_approval_state(context)
+            continue
+
+        # Find valid signatures for this category from comments
         approved = False
         rejected = False
 
@@ -4327,6 +4336,53 @@ def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalSt
             category_states[cat_name] = ApprovalState.PENDING
 
     return category_states
+
+
+def _get_tests_approval_state(context: PRContext) -> ApprovalState:
+    """
+    Get the approval state for the 'tests' category based on CI status.
+
+    The tests category is special - it's determined by GitHub commit statuses
+    from Jenkins CI, not by user comments.
+
+    Logic:
+    1. Check for required test statuses first
+    2. If no required tests, check optional tests
+    3. Map CI status to approval state:
+       - All success -> APPROVED
+       - Any error (on required) -> REJECTED
+       - Any pending or no tests -> PENDING
+
+    Returns:
+        ApprovalState for the tests category
+    """
+    lab_stats = check_ci_test_completion(context)
+
+    if not lab_stats:
+        # No test results yet - still pending
+        return ApprovalState.PENDING
+
+    # Check required tests first (they take precedence)
+    if "required" in lab_stats:
+        required_status = lab_stats["required"]
+        if required_status == "success":
+            return ApprovalState.APPROVED
+        elif required_status == "error":
+            # Check if test failures are being ignored
+            if context.ignore_tests_rejected:
+                return ApprovalState.APPROVED
+            return ApprovalState.REJECTED
+
+    # Fall back to optional tests if no required tests
+    if "optional" in lab_stats:
+        optional_status = lab_stats["optional"]
+        if optional_status == "success":
+            return ApprovalState.APPROVED
+        # Optional test errors don't cause rejection, just stay pending
+        # (unless we want different behavior)
+        return ApprovalState.PENDING
+
+    return ApprovalState.PENDING
 
 
 def determine_pr_state(context: PRContext) -> PRState:
@@ -4431,13 +4487,21 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     """
     Get CI test statuses from GitHub commit statuses.
 
-    Looks for statuses matching patterns:
-    - cms/<arch>/<test_type>/required
-    - cms/<arch>/<test_type>/optional
+    Looks for top-level statuses matching patterns:
+    - cms/<pr_id>[/<flavor>]/<arch>/required
+    - cms/<pr_id>[/<flavor>]/<arch>/optional
 
-    And their sub-statuses:
-    - cms/<arch>/build
-    - cms/<arch>/relvals
+    The <flavor> component is optional and omitted when flavor is DEFAULT.
+
+    Examples:
+    - cms/10246/el8_amd64_gcc13/required (default flavor, omitted)
+    - cms/10246/el8_amd64_gcc13/optional
+    - cms/10246/ROOT638/el8_amd64_gcc13/required (with flavor)
+    - cms/10246/ROOT638/el8_amd64_gcc13/optional
+
+    And their sub-statuses for determining overall status:
+    - cms/<pr_id>[/<flavor>]/<arch>/build
+    - cms/<pr_id>[/<flavor>]/<arch>/relvals
     - etc.
 
     Returns:
@@ -4514,7 +4578,9 @@ def _compute_test_status(base_context: str, status_map: Dict[str, Any]) -> str:
     Compute the overall status for a test by checking its sub-statuses.
 
     Args:
-        base_context: The base context (e.g., "cms/el8_amd64_gcc12/build")
+        base_context: The base context, e.g.:
+            - "cms/10246/el8_amd64_gcc13" (default flavor)
+            - "cms/10246/ROOT638/el8_amd64_gcc13" (with flavor)
         status_map: Map of context -> status object
 
     Returns:

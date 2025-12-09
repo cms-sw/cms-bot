@@ -10,7 +10,7 @@ from github_utils import api_rate_limits, github_api, add_organization_member
 from github_utils import create_team, get_pending_members, get_gh_token
 from github_utils import get_delete_pending_members, get_failed_pending_members
 from categories import CMSSW_ORP, CMSSW_L2, CMS_SDT
-from repo_config import LEGACY_CATEGORIE
+from repo_config import LEGACY_CATEGORIES
 
 setdefaulttimeout(120)
 

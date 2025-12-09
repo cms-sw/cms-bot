@@ -23,7 +23,7 @@ from functools import wraps
 from json import load as json_load
 from os import getenv as os_getenv
 from os.path import dirname, exists, join
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
 import forward_ports_map
 from _py2with3compatibility import run_cmd
@@ -1452,7 +1452,9 @@ class Command:
     Attributes:
         name: Command identifier
         pattern: Regex pattern to match the command
-        handler: Function to execute when command matches
+        handler: Function to execute when command matches.
+                 Returns True for success, False for failure, or None to indicate
+                 the command doesn't apply (allows fallthrough to other commands).
         acl: Access control (list of allowed users, L2 categories, or callback)
         description: Human-readable description
         pr_only: If True, command is only valid for PRs (not issues)
@@ -1461,7 +1463,7 @@ class Command:
 
     name: str
     pattern: re.Pattern
-    handler: Callable[..., bool]
+    handler: Callable[..., Optional[bool]]
     acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None
     description: str = ""
     pr_only: bool = False
@@ -1505,15 +1507,15 @@ class CommandRegistry:
         description: str = "",
         pr_only: bool = False,
         reset_on_push: bool = False,
-    ) -> Callable[[Callable[..., bool]], Callable[..., bool]]:
+    ) -> Callable[[Callable[..., Optional[bool]]], Callable[..., Optional[bool]]]:
         r"""
         Decorator to register a command handler.
 
         Usage:
             @registry.command("approve", r"^\+1$|^\+(\w+)$", description="Approve PR")
-            def handle_approve(context, match, user, comment_id, timestamp) -> bool:
+            def handle_approve(context, match, user, comment_id, timestamp) -> Optional[bool]:
                 # ... handler logic ...
-                return True  # Success
+                return True  # Success, False = failure, None = fallthrough
 
         Args:
             name: Command identifier
@@ -1527,9 +1529,9 @@ class CommandRegistry:
             Decorator function
         """
 
-        def decorator(func: Callable[..., bool]) -> Callable[..., bool]:
+        def decorator(func: Callable[..., Optional[bool]]) -> Callable[..., Optional[bool]]:
             @wraps(func)
-            def wrapper(*args, **kwargs) -> bool:
+            def wrapper(*args, **kwargs) -> Optional[bool]:
                 return func(*args, **kwargs)
 
             self.register(name, pattern, wrapper, acl, description, pr_only, reset_on_push)
@@ -1541,6 +1543,8 @@ class CommandRegistry:
         """
         Find a command matching the given text.
 
+        DEPRECATED: Use find_commands() for fallthrough support.
+
         Args:
             text: Command text to match
             is_pr: True if this is a PR, False if it's an Issue
@@ -1548,14 +1552,33 @@ class CommandRegistry:
         Returns:
             Tuple of (Command, Match) or None
         """
+        for cmd, match in self.find_commands(text, is_pr):
+            return cmd, match
+        return None
+
+    def find_commands(
+        self, text: str, is_pr: bool = True
+    ) -> Generator[Tuple[Command, re.Match], None, None]:
+        """
+        Find all commands matching the given text.
+
+        Yields commands in registration order, allowing handlers to return None
+        to indicate fallthrough to the next matching command.
+
+        Args:
+            text: Command text to match
+            is_pr: True if this is a PR, False if it's an Issue
+
+        Yields:
+            Tuple of (Command, Match) for each matching command
+        """
         for cmd in self.commands:
             # Skip PR-only commands when processing issues
             if cmd.pr_only and not is_pr:
                 continue
             match = cmd.pattern.match(text)
             if match:
-                return cmd, match
-        return None
+                yield cmd, match
 
 
 # Global command registry - commands register themselves via decorators
@@ -1569,14 +1592,14 @@ def command(
     description: str = "",
     pr_only: bool = False,
     reset_on_push: bool = False,
-) -> Callable[[Callable[..., bool]], Callable[..., bool]]:
+) -> Callable[[Callable[..., Optional[bool]]], Callable[..., Optional[bool]]]:
     r"""
     Module-level decorator to register commands.
 
     Usage:
         @command("approve", r"^\+1$|^\+(\w+)$", description="Approve PR", pr_only=True)
-        def handle_approve(context, match, user, comment_id, timestamp) -> bool:
-            return True
+        def handle_approve(context, match, user, comment_id, timestamp) -> Optional[bool]:
+            return True  # Success, False = failure, None = fallthrough
     """
     return _global_registry.command(name, pattern, acl, description, pr_only, reset_on_push)
 
@@ -2049,7 +2072,7 @@ CATEGORY_PATTERN = r"[\w-]+"
 )
 def handle_plus_one(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+) -> Optional[bool]:
     """Handle +1 or +<category> approval."""
     return _handle_approval(context, match, user, comment_id, timestamp, approved=True)
 
@@ -2062,7 +2085,7 @@ def handle_plus_one(
 )
 def handle_minus_one(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+) -> Optional[bool]:
     """Handle -1 or -<category> rejection."""
     return _handle_approval(context, match, user, comment_id, timestamp, approved=False)
 
@@ -2074,7 +2097,7 @@ def _handle_approval(
     comment_id: int,
     timestamp: datetime,
     approved: bool,
-) -> bool:
+) -> Optional[bool]:
     """
     Handle +1/-1 or +category/-category commands.
 
@@ -2087,14 +2110,21 @@ def _handle_approval(
         approved: True for approval, False for rejection
 
     Returns:
-        True if approval was recorded, False otherwise
+        True if approval was recorded
+        False if user lacks permission
+        None if the category is not a signing category (allows fallthrough)
     """
     category_str = match.group(1) if match.lastindex and match.group(1) else None
 
     # Determine which categories this signature applies to
     if category_str:
-        # Specific category
-        categories = [category_str.strip()]
+        # Specific category - check if it's a valid signing category
+        category = category_str.strip()
+        if category not in context.signing_categories:
+            # Not a signing category - return None to allow fallthrough to other commands
+            logger.debug(f"Category '{category}' is not a signing category, allowing fallthrough")
+            return None
+        categories = [category]
     else:
         # Generic +1/-1 applies to all user's L2 categories at that time
         categories = get_user_l2_categories(context.repo_config, user, timestamp)
@@ -3909,7 +3939,13 @@ def should_skip_command_before_latest_commit(
 
 
 def process_comment(context: PRContext, comment) -> None:
-    """Process a single comment for commands."""
+    """
+    Process a single comment for commands.
+
+    Iterates through all matching commands until one returns True (success)
+    or False (explicit failure). If a handler returns None, the next matching
+    command is tried (fallthrough).
+    """
     # Skip already processed comments
     if str(comment.id) in context.cache.comments:
         return
@@ -3918,53 +3954,62 @@ def process_comment(context: PRContext, comment) -> None:
     if not command_line:
         return
 
-    result = context.command_registry.find_command(command_line, is_pr=context.is_pr)
-    if not result:
-        # If bot was mentioned but command not found, react with -1
-        if bot_mentioned:
-            logger.info(f"Bot mentioned but command not recognized: {command_line}")
-            set_comment_reaction(context, comment, comment.id, success=False)
-        return
-
-    cmd, match = result
     user = comment.user.login
     timestamp = get_comment_timestamp(comment)
     comment_id = comment.id
-
-    # Check if command should be skipped because it's before the latest commit
     is_bot = context.cmsbuild_user and user == context.cmsbuild_user
-    if should_skip_command_before_latest_commit(context, cmd, command_line, timestamp, is_bot):
-        # Cache the comment as processed (locked) but don't execute
-        # This prevents re-processing on subsequent runs
-        context.cache.comments[str(comment_id)] = CommentInfo(
-            timestamp=timestamp.isoformat() if timestamp else "",
-            first_line=command_line,
-            ctype=cmd.name,
-            user=user,
-            locked=True,  # Mark as locked so it won't be re-processed
-        )
-        logger.debug(f"Cached skipped command '{cmd.name}' from comment {comment_id}")
-        return
 
-    # Check ACL
-    if not check_command_acl(context, cmd, user, timestamp):
-        logger.info(f"User {user} not authorized for command: {cmd.name}")
-        # Set -1 reaction for unauthorized (always react if bot was mentioned or ACL failed)
+    # Try each matching command until one handles it (returns True or False)
+    command_handled = False
+    for cmd, match in context.command_registry.find_commands(command_line, is_pr=context.is_pr):
+        # Check if command should be skipped because it's before the latest commit
+        if should_skip_command_before_latest_commit(context, cmd, command_line, timestamp, is_bot):
+            # Cache the comment as processed (locked) but don't execute
+            # This prevents re-processing on subsequent runs
+            context.cache.comments[str(comment_id)] = CommentInfo(
+                timestamp=timestamp.isoformat() if timestamp else "",
+                first_line=command_line,
+                ctype=cmd.name,
+                user=user,
+                locked=True,  # Mark as locked so it won't be re-processed
+            )
+            logger.debug(f"Cached skipped command '{cmd.name}' from comment {comment_id}")
+            command_handled = True
+            break
+
+        # Check ACL
+        if not check_command_acl(context, cmd, user, timestamp):
+            logger.info(f"User {user} not authorized for command: {cmd.name}")
+            # Set -1 reaction for unauthorized
+            set_comment_reaction(context, comment, comment_id, success=False)
+            command_handled = True
+            break
+
+        # Execute command - handler returns:
+        #   True  = success (stop processing)
+        #   False = failure (stop processing)
+        #   None  = doesn't apply, try next command (fallthrough)
+        logger.info(f"Trying command '{cmd.name}' from user {user}")
+        try:
+            result = cmd.handler(context, match, user, comment_id, timestamp)
+        except Exception as e:
+            logger.error(f"Command handler error: {e}")
+            result = False
+
+        if result is None:
+            # Handler returned None - command doesn't apply, try next match
+            logger.debug(f"Command '{cmd.name}' returned None, trying next match")
+            continue
+
+        # Command handled (success or failure)
+        command_handled = True
+        set_comment_reaction(context, comment, comment_id, success=result)
+        break
+
+    # If bot was mentioned but no command matched or handled, react with -1
+    if not command_handled and bot_mentioned:
+        logger.info(f"Bot mentioned but command not recognized: {command_line}")
         set_comment_reaction(context, comment, comment_id, success=False)
-        return
-
-    # Execute command - handler returns bool indicating success
-    logger.info(f"Executing command '{cmd.name}' from user {user}")
-    try:
-        success = cmd.handler(context, match, user, comment_id, timestamp)
-        if success is None:
-            success = True  # Default to success if handler doesn't return
-    except Exception as e:
-        logger.error(f"Command handler error: {e}")
-        success = False
-
-    # Set reaction based on success (always react if bot was mentioned or command executed)
-    set_comment_reaction(context, comment, comment_id, success=success)
 
 
 def get_commit_timestamps(context: PRContext) -> List[datetime]:

@@ -1,0 +1,40 @@
+{
+  "test_name": "test_ack_many_files",
+  "action_count": 4,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 2842137555,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 38,
+        "labels": [
+          "signatures-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 38,
+        "body": "A new Pull Request was created by  iarspider for master.\n\nIt involves the following packages:\n\n- (none)\n\n can you please review it and eventually sign? Thanks.\niarspider you are the release manager for this.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 38,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"2842137555\":\"+1\"},\"fv\":{}} -->"
+      }
+    }
+  ]
+}

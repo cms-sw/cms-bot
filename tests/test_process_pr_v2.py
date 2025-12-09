@@ -6412,20 +6412,25 @@ class TestOldTestForProcessPR:
         os.path.join(os.path.dirname(__file__), "..", "repos", "iarspider_cmssw", "cmssw")
     )
 
-    def test_abort(self, test_name, mock_gh, record_mode, integration_test_helper):
-        with integration_test_helper(self.REPO_CONFIG_DIR) as helper:
-            # Import process_pr AFTER setting up the helper
-            # so it uses the custom modules
+    @pytest.fixture(autouse=True)
+    def setup_fixtures(self, test_name, mock_gh, record_mode, integration_test_helper):
+        """Automatically inject fixtures as instance attributes."""
+        self.test_name = test_name
+        self.mock_gh = mock_gh
+        self.record_mode = record_mode
+        self.integration_test_helper = integration_test_helper
+
+    def _run(self, pr_id):
+        with self.integration_test_helper(self.REPO_CONFIG_DIR) as helper:
             from process_pr_v2 import process_pr
 
             repo_config = helper.get_repo_config()
 
-            recorder = ActionRecorder(test_name, record_mode)
-            gh = MockGithub(test_name, recorder)
+            recorder = ActionRecorder(self.test_name, self.record_mode)
+            gh = MockGithub(self.test_name, recorder)
             repo = gh.get_repo("iarspider-cmssw/cmssw")
-            issue = repo.get_issue(17)
+            issue = repo.get_issue(pr_id)
 
-            # Execute
             with FunctionHook(recorder.property_file_hook()):
                 result = process_pr(
                     repo_config=repo_config,
@@ -6439,10 +6444,16 @@ class TestOldTestForProcessPR:
 
             print(result)
 
-            if record_mode:
+            if self.record_mode:
                 recorder.save()
             else:
                 recorder.verify()
+
+    def test_abort(self):
+        self._run(17)
+
+    def test_ack_many_files(self):
+        self._run(38)
 
 
 # =============================================================================

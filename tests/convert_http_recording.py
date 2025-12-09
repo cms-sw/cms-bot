@@ -708,20 +708,22 @@ def write_test_data(files: Dict[str, Dict], output_dir: Path, test_name: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Convert HTTP recording to test data JSON format")
-    parser.add_argument("input_file", type=Path, help="Path to recording file")
+    parser.add_argument("test_name", type=str, help="Test name (used as subdirectory name)")
+    # parser.add_argument("input_file", type=Path, help="Path to recording file")
     parser.add_argument(
         "-o",
         "--output-dir",
         type=Path,
-        default=Path("ReplayData"),
-        help="Output directory (default: ReplayData)",
+        default=Path("ReplayData_integration"),
+        help="Output directory (default: ReplayData_integration)",
     )
-    parser.add_argument(
-        "-n", "--test-name", type=str, required=True, help="Test name (used as subdirectory name)"
-    )
+    # parser.add_argument(
+    #     "-n", "--test-name", type=str, required=True, help="Test name (used as subdirectory name)"
+    # )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
+    args.input_file = Path(f"ReplayData.old/TestProcessPr.{args.test_name}.txt")
 
     if not args.input_file.exists():
         print(f"Error: Input file not found: {args.input_file}", file=sys.stderr)

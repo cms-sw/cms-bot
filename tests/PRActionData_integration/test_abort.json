@@ -16,7 +16,7 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "signatures-pending"
+          "tests-pending"
         ]
       }
     },
@@ -26,7 +26,7 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "tests-pending"
+          "signatures-pending"
         ]
       }
     },

@@ -6421,6 +6421,11 @@ class TestOldTestForProcessPR:
         self.integration_test_helper = integration_test_helper
 
     def _run(self, pr_id):
+        global ACTION_DATA_DIR, REPLAY_DATA_DIR
+        old_action_dir = ACTION_DATA_DIR
+        old_replay_dir = REPLAY_DATA_DIR
+        ACTION_DATA_DIR = Path(__file__).parent / "PRActionData_integration"
+        REPLAY_DATA_DIR = Path(__file__).parent / "ReplayData_integration"
         with self.integration_test_helper(self.REPO_CONFIG_DIR) as helper:
             from process_pr_v2 import process_pr
 
@@ -6449,11 +6454,17 @@ class TestOldTestForProcessPR:
             else:
                 recorder.verify()
 
+        ACTION_DATA_DIR = old_action_dir
+        REPLAY_DATA_DIR = old_replay_dir
+
     def test_abort(self):
         self._run(17)
 
     def test_ack_many_files(self):
         self._run(38)
+
+    def test_assign(self):
+        self._run(17)
 
 
 # =============================================================================

@@ -172,7 +172,14 @@
       "category": [
         "upgrade"
       ],
+      "end_date": 1765238400,
       "start_date": 1726704000
+    },
+    {
+      "category": [
+        "reconstruction"
+      ],
+      "start_date": 1765238400
     }
   ],
   "Pavlov": [
@@ -2652,6 +2659,7 @@
       "category": [
         "upgrade"
       ],
+      "end_date": 1765238400,
       "start_date": 1702339200
     }
   ],

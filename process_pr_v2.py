@@ -4708,51 +4708,101 @@ def process_ci_test_results(context: PRContext) -> None:
 
     Checks if tests have completed, fetches results from Jenkins,
     and posts +1/-1 comments based on test outcomes.
+
+    Only posts results if:
+    1. "tests" category state is NOT pending (tests have completed)
+    2. Status description is NOT "Finished" (hasn't been processed yet)
+
+    After posting, updates the status description to "Finished" to prevent
+    duplicate posting on subsequent runs.
     """
     if not context.is_pr or not context.pr:
         return
 
-    lab_stats = check_ci_test_completion(context)
-    if not lab_stats:
+    # Check if tests category is still pending - if so, nothing to report yet
+    tests_state = _get_tests_approval_state(context)
+    if tests_state == ApprovalState.PENDING:
         return
 
     statuses = get_ci_test_statuses(context)
+    if not statuses:
+        return
 
     # Get current commit SHA for unique message key
     head_sha = context.pr.head.sha[:8] if context.pr else "unknown"
 
-    for suffix, status_value in lab_stats.items():
-        # Find a result with a target URL to fetch detailed results
-        result_url = None
-        for result in statuses.get(suffix, []):
-            if result.target_url and result.status != "pending":
-                # Check if description indicates completion
-                if result.description and not result.description.startswith("Finished"):
-                    result_url = result.target_url
-                    break
-
-        if not result_url:
+    # Process both required and optional results
+    for suffix in ["required", "optional"]:
+        results = statuses.get(suffix, [])
+        if not results:
             continue
 
-        # Transform URL to get pr-result endpoint
-        pr_result_url = (
-            result_url.replace(
-                "/SDT/jenkins-artifacts/",
-                "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/",
+        for result in results:
+            if not result.target_url or result.status == "pending":
+                continue
+
+            # Check if already processed (description starts with "Finished")
+            if result.description and result.description.startswith("Finished"):
+                continue
+
+            # Transform URL to get pr-result endpoint
+            pr_result_url = (
+                result.target_url.replace(
+                    "/SDT/jenkins-artifacts/",
+                    "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/",
+                )
+                + "/pr-result"
             )
-            + "/pr-result"
+
+            error_code, output = fetch_pr_result(pr_result_url)
+
+            if output:
+                # Post result as comment
+                res = "+1" if result.status == "success" else "-1"
+                comment_body = f"{res}\n\n{output}"
+
+                # Use context and head_sha as message key to avoid duplicates
+                message_key = f"ci_result_{result.context}_{head_sha}"
+                post_bot_comment(context, comment_body, message_key)
+
+                # Update status description to "Finished" to prevent duplicate posting
+                _mark_status_as_finished(context, result.context, result.status, result.target_url)
+
+
+def _mark_status_as_finished(
+    context: PRContext, status_context: str, state: str, target_url: Optional[str]
+) -> None:
+    """
+    Update a commit status description to "Finished" to mark it as processed.
+
+    Args:
+        context: PR context
+        status_context: The status context (e.g., "cms/10246/el8_amd64_gcc12/required")
+        state: The status state ("success", "error", etc.)
+        target_url: The target URL for the status
+    """
+    if context.dryRun:
+        logger.info(f"DRY RUN: Would update status {status_context} description to 'Finished'")
+        return
+
+    try:
+        head_sha = context.pr.head.sha
+        commit = context.repo.get_commit(head_sha)
+
+        # Map our state back to GitHub state
+        github_state = state
+        if state == "error":
+            github_state = "failure"
+
+        commit.create_status(
+            state=github_state,
+            target_url=target_url or "",
+            description="Finished",
+            context=status_context,
         )
-
-        error_code, output = fetch_pr_result(pr_result_url)
-
-        if output:
-            # Post result as comment using post_bot_comment for deduplication
-            res = "+1" if status_value == "success" else "-1"
-            comment_body = f"{res}\n\n{output}"
-
-            # Use suffix and head_sha as message key to avoid duplicates
-            message_key = f"ci_result_{suffix}_{head_sha}"
-            post_bot_comment(context, comment_body, message_key)
+        logger.info(f"Updated status {status_context} description to 'Finished'")
+    except Exception as e:
+        logger.warning(f"Failed to update status {status_context} to 'Finished': {e}")
 
 
 def generate_status_message(context: PRContext) -> str:

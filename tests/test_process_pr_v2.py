@@ -5908,7 +5908,7 @@ class TestCITestStatus:
 
         # Create mock statuses
         status1 = MagicMock()
-        status1.context = "cms/el8_amd64_gcc12/build/required"
+        status1.context = "cms/10246/el8_amd64_gcc12/required"
         status1.state = "success"
         status1.description = "Build successful"
         status1.target_url = "http://example.com/build"
@@ -5919,7 +5919,7 @@ class TestCITestStatus:
         result = get_ci_test_statuses(context)
         assert "required" in result
         assert len(result["required"]) == 1
-        assert result["required"][0].context == "cms/el8_amd64_gcc12/build/required"
+        assert result["required"][0].context == "cms/10246/el8_amd64_gcc12/required"
 
     def test_get_ci_test_statuses_with_optional(self):
         """Test get_ci_test_statuses with optional test status."""
@@ -5932,7 +5932,7 @@ class TestCITestStatus:
 
         # Create mock statuses
         status1 = MagicMock()
-        status1.context = "cms/el8_amd64_gcc12/relvals/optional"
+        status1.context = "cms/10246/el8_amd64_gcc12/optional"
         status1.state = "pending"
         status1.description = "Running tests"
         status1.target_url = "http://example.com/relvals"
@@ -5945,6 +5945,30 @@ class TestCITestStatus:
         assert len(result["optional"]) == 1
         assert result["optional"][0].is_optional is True
 
+    def test_get_ci_test_statuses_with_flavor(self):
+        """Test get_ci_test_statuses with flavor in context."""
+        from process_pr_v2 import get_ci_test_statuses
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = [MagicMock(sha="abc123")]
+
+        # Create mock statuses with flavor
+        status1 = MagicMock()
+        status1.context = "cms/10246/ROOT638/el8_amd64_gcc13/required"
+        status1.state = "success"
+        status1.description = "Tests passed"
+        status1.target_url = "http://example.com/tests"
+
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+
+        result = get_ci_test_statuses(context)
+        assert "required" in result
+        assert len(result["required"]) == 1
+        assert result["required"][0].context == "cms/10246/ROOT638/el8_amd64_gcc13/required"
+
     def test_check_ci_test_completion_pending(self):
         """Test check_ci_test_completion with pending tests."""
         from process_pr_v2 import check_ci_test_completion
@@ -5956,7 +5980,7 @@ class TestCITestStatus:
 
         # Create mock statuses with pending state
         status1 = MagicMock()
-        status1.context = "cms/el8_amd64_gcc12/build/required"
+        status1.context = "cms/10246/el8_amd64_gcc12/required"
         status1.state = "pending"
         status1.description = "Running"
         status1.target_url = None
@@ -5979,7 +6003,7 @@ class TestCITestStatus:
 
         # Create mock statuses with success state
         status1 = MagicMock()
-        status1.context = "cms/el8_amd64_gcc12/build/required"
+        status1.context = "cms/10246/el8_amd64_gcc12/required"
         status1.state = "success"
         status1.description = "Finished"
         status1.target_url = "http://example.com/build"
@@ -6002,7 +6026,7 @@ class TestCITestStatus:
 
         # Create mock statuses with error state
         status1 = MagicMock()
-        status1.context = "cms/el8_amd64_gcc12/build/required"
+        status1.context = "cms/10246/el8_amd64_gcc12/required"
         status1.state = "error"
         status1.description = "Build failed"
         status1.target_url = "http://example.com/build"
@@ -6013,6 +6037,610 @@ class TestCITestStatus:
         result = check_ci_test_completion(context)
         assert result is not None
         assert result.get("required") == "error"
+
+
+class TestTestsApprovalLabels:
+    """Tests for tests-approved/tests-rejected/tests-pending labels based on CI status."""
+
+    def _create_context_with_statuses(self, statuses_data):
+        """Helper to create a context with mock commit statuses."""
+        from process_pr_v2 import PRContext, BotCache
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.pr.merged = False
+        context.commits = [MagicMock(sha="abc123")]
+        context.is_pr = True
+        context.cache = BotCache()
+        context.signing_categories = {"tests", "core"}
+        context.ignore_tests_rejected = None
+
+        # Create mock statuses
+        mock_statuses = []
+        for ctx, state, desc in statuses_data:
+            status = MagicMock()
+            status.context = ctx
+            status.state = state
+            status.description = desc
+            status.target_url = "http://example.com/results"
+            mock_statuses.append(status)
+
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = mock_statuses
+
+        return context
+
+    def test_tests_approved_when_required_success(self):
+        """Test that tests category is approved when required tests succeed."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_tests_rejected_when_required_error(self):
+        """Test that tests category is rejected when required tests fail."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "error", "Build failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.REJECTED
+
+    def test_tests_pending_when_required_pending(self):
+        """Test that tests category is pending when required tests are running."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "pending", "Running"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.PENDING
+
+    def test_tests_approved_when_only_optional_success(self):
+        """Test that tests category is approved when only optional tests succeed."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/optional", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_tests_pending_when_optional_error(self):
+        """Test that tests category stays pending (not rejected) when optional tests fail."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/optional", "error", "Tests failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        # Optional test failures don't cause rejection, just stay pending
+        assert result == ApprovalState.PENDING
+
+    def test_required_takes_precedence_over_optional(self):
+        """Test that required test results take precedence over optional."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        # Required success + optional error = approved (required wins)
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el8_amd64_gcc13/optional", "error", "Failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_required_error_overrides_optional_success(self):
+        """Test that required error overrides optional success."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        # Required error + optional success = rejected
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "error", "Build failed"),
+                ("cms/10246/el8_amd64_gcc13/optional", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.REJECTED
+
+    def test_ignore_tests_rejected_overrides_failure(self):
+        """Test that ignore_tests_rejected flag overrides test failure."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "error", "Build failed"),
+            ]
+        )
+        context.ignore_tests_rejected = "known-issue"
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_multiple_required_all_success(self):
+        """Test that all required tests must succeed."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el9_amd64_gcc13/required", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_multiple_required_one_pending(self):
+        """Test that one pending required test means overall pending."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el9_amd64_gcc13/required", "pending", "Running"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.PENDING
+
+    def test_multiple_required_one_error(self):
+        """Test that one failed required test means overall rejected."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el9_amd64_gcc13/required", "error", "Failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.REJECTED
+
+    def test_with_flavor_in_context(self):
+        """Test status parsing with flavor component."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/ROOT638/el8_amd64_gcc13/required", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+
+class TestTestResultPostingDeduplication:
+    """Tests for test result posting deduplication logic."""
+
+    def _create_context_with_statuses(self, statuses_data, tests_state="approved"):
+        """Helper to create context with statuses and controlled tests state."""
+        from process_pr_v2 import PRContext, BotCache
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123def456"
+        context.pr.merged = False
+        context.commits = [MagicMock(sha="abc123def456")]
+        context.is_pr = True
+        context.cache = BotCache()
+        context.signing_categories = {"tests"}
+        context.ignore_tests_rejected = None
+        context.dryRun = False
+        context.posted_messages = {}
+
+        # Create mock statuses
+        mock_statuses = []
+        for ctx, state, desc, url in statuses_data:
+            status = MagicMock()
+            status.context = ctx
+            status.state = state
+            status.description = desc
+            status.target_url = url
+            mock_statuses.append(status)
+
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = mock_statuses
+
+        return context
+
+    def test_should_not_post_if_description_is_finished(self):
+        """Test that results are not posted if description starts with 'Finished'."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Finished: tests passed",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    mock_fetch.return_value = (0, "Test results here")
+                    process_ci_test_results(context)
+
+                    # Should NOT post because description starts with "Finished"
+                    mock_post.assert_not_called()
+
+    def test_should_not_post_if_tests_pending(self):
+        """Test that results are not posted if tests category is still pending."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "pending",
+                    "Running tests",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.PENDING
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    mock_fetch.return_value = (0, "Test results here")
+                    process_ci_test_results(context)
+
+                    # Should NOT post because tests are still pending
+                    mock_post.assert_not_called()
+
+    def test_posts_when_tests_approved_and_not_finished(self):
+        """Test that results are posted when tests approved and not yet finished."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Tests passed",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results here")
+                        process_ci_test_results(context)
+
+                        # Should post +1 and mark as finished
+                        mock_post.assert_called_once()
+                        call_args = mock_post.call_args
+                        assert "+1" in call_args[0][1]
+                        mock_mark.assert_called_once()
+
+    def test_posts_minus_one_when_tests_rejected(self):
+        """Test that -1 is posted when tests are rejected."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "error",
+                    "Build failed",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.REJECTED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Error details here")
+                        process_ci_test_results(context)
+
+                        mock_post.assert_called_once()
+                        call_args = mock_post.call_args
+                        assert "-1" in call_args[0][1]
+
+    def test_marks_status_as_finished_after_posting(self):
+        """Test that status is marked as 'Finished' after posting results."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results")
+                        process_ci_test_results(context)
+
+                        # Verify _mark_status_as_finished was called with correct args
+                        mock_mark.assert_called_once_with(
+                            context,
+                            "cms/10246/el8_amd64_gcc12/required",
+                            "success",
+                            "http://example.com/SDT/jenkins-artifacts/123",
+                        )
+
+    def test_second_run_skips_finished_status(self):
+        """Test that second run skips status already marked as Finished."""
+        from process_pr_v2 import process_ci_test_results
+
+        # First run: description is "Tests OK"
+        context1 = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        # Second run: description is "Finished" (set by first run)
+        context2 = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Finished",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results")
+
+                        # First run should post
+                        process_ci_test_results(context1)
+                        assert mock_post.call_count == 1
+                        assert mock_mark.call_count == 1
+
+                        # Reset mocks
+                        mock_post.reset_mock()
+                        mock_mark.reset_mock()
+
+                        # Second run should skip (description is "Finished")
+                        process_ci_test_results(context2)
+                        mock_post.assert_not_called()
+                        mock_mark.assert_not_called()
+
+    def test_processes_multiple_statuses(self):
+        """Test that multiple statuses are processed independently."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+                (
+                    "cms/10246/el9_amd64_gcc13/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/456",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results")
+                        process_ci_test_results(context)
+
+                        # Both statuses should be processed
+                        assert mock_post.call_count == 2
+                        assert mock_mark.call_count == 2
+
+    def test_skips_one_finished_processes_other(self):
+        """Test that finished status is skipped while unfinished is processed."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                # This one is already finished - skip
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Finished",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+                # This one is not finished - process
+                (
+                    "cms/10246/el9_amd64_gcc13/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/456",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results")
+                        process_ci_test_results(context)
+
+                        # Only one should be processed
+                        assert mock_post.call_count == 1
+                        assert mock_mark.call_count == 1
+                        # Check it was the second one
+                        mock_mark.assert_called_with(
+                            context,
+                            "cms/10246/el9_amd64_gcc13/required",
+                            "success",
+                            "http://example.com/SDT/jenkins-artifacts/456",
+                        )
+
+
+class TestMarkStatusAsFinished:
+    """Tests for _mark_status_as_finished function."""
+
+    def test_dry_run_does_not_update(self):
+        """Test that dry run mode doesn't actually update status."""
+        from process_pr_v2 import _mark_status_as_finished
+
+        context = MagicMock()
+        context.dryRun = True
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.repo = MagicMock()
+
+        _mark_status_as_finished(
+            context, "cms/10246/el8/required", "success", "http://example.com"
+        )
+
+        # Should not call create_status in dry run
+        context.repo.get_commit.return_value.create_status.assert_not_called()
+
+    def test_updates_status_to_finished(self):
+        """Test that status is updated with 'Finished' description."""
+        from process_pr_v2 import _mark_status_as_finished
+
+        context = MagicMock()
+        context.dryRun = False
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+
+        mock_commit = MagicMock()
+        context.repo.get_commit.return_value = mock_commit
+
+        _mark_status_as_finished(
+            context, "cms/10246/el8_amd64_gcc12/required", "success", "http://example.com/results"
+        )
+
+        mock_commit.create_status.assert_called_once_with(
+            state="success",
+            target_url="http://example.com/results",
+            description="Finished",
+            context="cms/10246/el8_amd64_gcc12/required",
+        )
+
+    def test_maps_error_to_failure(self):
+        """Test that 'error' state is mapped to 'failure' for GitHub."""
+        from process_pr_v2 import _mark_status_as_finished
+
+        context = MagicMock()
+        context.dryRun = False
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+
+        mock_commit = MagicMock()
+        context.repo.get_commit.return_value = mock_commit
+
+        _mark_status_as_finished(
+            context,
+            "cms/10246/el8_amd64_gcc12/required",
+            "error",  # Our internal state
+            "http://example.com/results",
+        )
+
+        # Should map to "failure" for GitHub
+        mock_commit.create_status.assert_called_once_with(
+            state="failure",
+            target_url="http://example.com/results",
+            description="Finished",
+            context="cms/10246/el8_amd64_gcc12/required",
+        )
+
+    def test_handles_exception_gracefully(self):
+        """Test that exceptions are handled without crashing."""
+        from process_pr_v2 import _mark_status_as_finished
+
+        context = MagicMock()
+        context.dryRun = False
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.repo.get_commit.side_effect = Exception("API error")
+
+        # Should not raise, just log warning
+        _mark_status_as_finished(
+            context, "cms/10246/el8_amd64_gcc12/required", "success", "http://example.com/results"
+        )
 
 
 # =============================================================================

@@ -25,7 +25,7 @@
         "filename": "trigger-tests-iarspider-cmssw-cmssw-40.properties",
         "parameters": {
           "PULL_REQUESTS": "iarspider-cmssw/cmssw#40",
-          "CONTEXT_PREFIX": "cms",
+          "CONTEXT_PREFIX": "cms/40",
           "BUILD_ONLY": "true"
         }
       }

@@ -5323,8 +5323,9 @@ def build_test_parameters(context: PRContext, test_request: "TestRequest") -> Di
         prs.extend(test_request.prs)
     params["PULL_REQUESTS"] = " ".join(prs)
 
-    # Context prefix
-    params["CONTEXT_PREFIX"] = "cms"
+    # Context prefix - includes PR ID for status context filtering
+    pr_id = context.issue.number
+    params["CONTEXT_PREFIX"] = f"cms/{pr_id}"
 
     # Workflows
     if test_request.workflows:
@@ -5368,9 +5369,10 @@ def create_code_checks_properties(
         tool_conf: Optional tool configuration path
         apply_patch: Whether to apply the patch after checks
     """
+    pr_id = context.issue.number
     params = {
-        "PULL_REQUEST": str(context.issue.number),
-        "CONTEXT_PREFIX": "cms",
+        "PULL_REQUEST": str(pr_id),
+        "CONTEXT_PREFIX": f"cms/{pr_id}",
     }
 
     if tool_conf:

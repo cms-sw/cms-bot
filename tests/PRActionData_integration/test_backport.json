@@ -32,7 +32,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "tests-pending"
+          "orp-pending"
         ]
       }
     },
@@ -42,7 +42,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "pending-signatures"
+          "tests-pending"
         ]
       }
     },
@@ -62,7 +62,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "code-checks-approved"
+          "pending-signatures"
         ]
       }
     },
@@ -72,7 +72,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "orp-pending"
+          "code-checks-approved"
         ]
       }
     },

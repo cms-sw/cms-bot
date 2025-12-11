@@ -36,7 +36,7 @@
         "filename": "trigger-tests-iarspider-cmssw-cmssw-24.properties",
         "parameters": {
           "PULL_REQUESTS": "iarspider-cmssw/cmssw#24 cms-sw/cmssw#543210",
-          "CONTEXT_PREFIX": "cms",
+          "CONTEXT_PREFIX": "cms/24",
           "MATRIX_EXTRAS": "33234.0,33634.0",
           "RELEASE_FORMAT": "CMSSW_12_6_X",
           "ARCHITECTURE_FILTER": "slc6_amd64_gcc930",

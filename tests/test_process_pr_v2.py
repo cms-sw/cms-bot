@@ -1405,11 +1405,11 @@ def create_basic_pr_data(
     commit_time = base_time
     comment_time = base_time + timedelta(hours=1)  # Comments are 1 hour after commits
 
-    # Default file
+    # Default file - uses Package/Core to map to 'core' category via CMSSW_CATEGORIES
     if files is None:
         files = [
             {
-                "filename": "src/core/main.py",
+                "filename": "Package/Core/main.py",
                 "sha": "abc123def456",
                 "status": "modified",
             }
@@ -1535,7 +1535,7 @@ class TestBasicFunctionality:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1579,7 +1579,7 @@ class TestBasicFunctionality:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1627,7 +1627,7 @@ class TestBasicFunctionality:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1671,7 +1671,7 @@ class TestBasicFunctionality:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1719,7 +1719,7 @@ class TestHoldMechanism:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1770,7 +1770,7 @@ class TestHoldMechanism:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1820,7 +1820,7 @@ class TestHoldMechanism:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1880,7 +1880,7 @@ class TestAssignCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1924,7 +1924,7 @@ class TestAssignCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -1973,7 +1973,7 @@ class TestCommandPreprocessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2020,7 +2020,7 @@ class TestCommandPreprocessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2076,12 +2076,12 @@ class TestMultipleFiles:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_1",
                     "status": "modified",
                 },
                 {
-                    "filename": "src/analysis/analyzer.py",
+                    "filename": "Package/Analysis/analyzer.py",
                     "sha": "file_sha_2",
                     "status": "modified",
                 },
@@ -2139,7 +2139,7 @@ class TestTestCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2195,7 +2195,7 @@ class TestTestCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2253,7 +2253,7 @@ class TestCacheManagement:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2298,7 +2298,7 @@ class TestMergeCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2353,7 +2353,7 @@ class TestBranchRewrite:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "new_file_sha_456",  # Different SHA simulates file change
                     "status": "modified",
                 }
@@ -2403,7 +2403,7 @@ class TestEdgeCases:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2447,7 +2447,7 @@ class TestEdgeCases:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2493,7 +2493,7 @@ class TestEdgeCases:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2537,7 +2537,7 @@ class TestEdgeCases:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2586,7 +2586,7 @@ class TestBotMessageProcessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2631,7 +2631,7 @@ class TestBotMessageProcessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2677,7 +2677,7 @@ class TestBotMessageProcessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2724,7 +2724,7 @@ class TestBotMessageProcessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2768,7 +2768,7 @@ class TestBotMessageProcessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2929,7 +2929,7 @@ class TestBuildTestCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -2978,7 +2978,7 @@ class TestBuildTestCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3038,7 +3038,7 @@ class TestBuildTestCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3258,7 +3258,7 @@ class TestPRIgnoreProcessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3311,7 +3311,7 @@ class TestPRIgnoreProcessing:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3373,7 +3373,7 @@ class TestSignatureLocking:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3435,7 +3435,7 @@ class TestSignatureLocking:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3484,6 +3484,534 @@ class TestSignatureLocking:
             recorder.verify()
 
 
+class TestSquashSignatureHandling:
+    """
+    Tests for signature handling during squash operations.
+
+    When a PR is squashed (commit SHA changes), signatures should be:
+    - Clean squash (file SHAs unchanged): Keep L2 signatures, reset code-checks/tests
+    - Dirty squash (all file SHAs changed): Reset all signatures
+    - Mixed squash (some file SHAs changed): Reset only signatures for changed files
+
+    In all cases, code-checks and tests categories should be reset since they
+    depend on the commit SHA, not file content.
+    """
+
+    def test_clean_squash_preserves_l2_signatures(self, repo_config, record_mode):
+        """
+        Test clean squash: commit SHA changes but file SHAs stay the same.
+
+        Expected behavior:
+        - code-checks and tests signatures should be reset (commit changed)
+        - L2 signatures should be preserved (file content unchanged)
+        """
+        # First run: PR with approval
+        # alice owns core and analysis
+        # Files must match CMSSW_CATEGORIES packages: Package/Core -> core, Package/Analysis -> analysis
+        create_basic_pr_data(
+            "test_clean_squash_preserves_l2_signatures",
+            pr_number=1,
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "file_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "file_sha_222",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                # L2 approval for core category
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},  # alice owns core
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                # L2 approval for analysis category
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},  # alice owns analysis
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                # code-checks approval (bot signature)
+                {
+                    "id": 102,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 1},
+                    "created_at": "2024-01-01T12:02:00Z",
+                },
+            ],
+            commits=[
+                # Original commit
+                {
+                    "sha": "original_commit_sha",
+                    "commit": {
+                        "message": "Original commit",
+                        "author": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_clean_squash_preserves_l2_signatures", record_mode)
+        gh = MockGithub("test_clean_squash_preserves_l2_signatures", recorder)
+        repo = MockRepository("test_clean_squash_preserves_l2_signatures", recorder=recorder)
+        issue = MockIssue("test_clean_squash_preserves_l2_signatures", number=1, recorder=recorder)
+
+        # First run to establish signatures
+        result1 = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result1["pr_number"] == 1
+
+        # Now simulate clean squash: new commit SHA, same file SHAs
+        create_basic_pr_data(
+            "test_clean_squash_preserves_l2_signatures_after",
+            pr_number=1,
+            files=[
+                # Same file SHAs as before (clean squash)
+                {"filename": "Package/Core/main.py", "sha": "file_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "file_sha_222",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                # Same approvals
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                {
+                    "id": 102,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 1},
+                    "created_at": "2024-01-01T12:02:00Z",
+                },
+            ],
+            commits=[
+                # NEW commit SHA (squashed)
+                {
+                    "sha": "squashed_commit_sha_new",
+                    "commit": {
+                        "message": "Squashed commit",
+                        "author": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        # Reload for second run
+        recorder2 = ActionRecorder("test_clean_squash_preserves_l2_signatures_after", record_mode)
+        gh2 = MockGithub("test_clean_squash_preserves_l2_signatures_after", recorder2)
+        repo2 = MockRepository(
+            "test_clean_squash_preserves_l2_signatures_after", recorder=recorder2
+        )
+        issue2 = MockIssue(
+            "test_clean_squash_preserves_l2_signatures_after", number=1, recorder=recorder2
+        )
+
+        result2 = process_pr(
+            repo_config=repo_config,
+            gh=gh2,
+            repo=repo2,
+            issue=issue2,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result2["pr_number"] == 1
+        # L2 signatures (core, analysis) should still be valid
+        # code-checks should be reset (commit changed, bot signature depends on commit)
+
+        if record_mode:
+            recorder.save()
+            recorder2.save()
+        else:
+            recorder.verify()
+            recorder2.verify()
+
+    def test_dirty_squash_resets_all_l2_signatures(self, repo_config, record_mode):
+        """
+        Test dirty squash: commit SHA changes AND all file SHAs change.
+
+        Expected behavior:
+        - code-checks and tests signatures should be reset
+        - ALL L2 signatures should be reset (all files changed)
+        """
+        # First run: PR with approvals
+        # alice owns core and analysis
+        # Files must match CMSSW_CATEGORIES packages: Package/Core -> core, Package/Analysis -> analysis
+        create_basic_pr_data(
+            "test_dirty_squash_resets_all_l2_signatures",
+            pr_number=1,
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "old_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "old_sha_222",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},  # alice owns core
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},  # alice owns analysis
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+            ],
+            commits=[
+                {
+                    "sha": "original_commit",
+                    "commit": {
+                        "message": "Original",
+                        "author": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_dirty_squash_resets_all_l2_signatures", record_mode)
+        gh = MockGithub("test_dirty_squash_resets_all_l2_signatures", recorder)
+        repo = MockRepository("test_dirty_squash_resets_all_l2_signatures", recorder=recorder)
+        issue = MockIssue(
+            "test_dirty_squash_resets_all_l2_signatures", number=1, recorder=recorder
+        )
+
+        result1 = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result1["pr_number"] == 1
+
+        # Now simulate dirty squash: new commit SHA AND new file SHAs
+        create_basic_pr_data(
+            "test_dirty_squash_resets_all_l2_signatures_after",
+            pr_number=1,
+            files=[
+                # ALL file SHAs changed (dirty squash)
+                {"filename": "Package/Core/main.py", "sha": "new_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "new_sha_222",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                # Same approvals (but they're now invalid)
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+            ],
+            commits=[
+                {
+                    "sha": "squashed_dirty_commit",
+                    "commit": {
+                        "message": "Squashed with changes",
+                        "author": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder2 = ActionRecorder("test_dirty_squash_resets_all_l2_signatures_after", record_mode)
+        gh2 = MockGithub("test_dirty_squash_resets_all_l2_signatures_after", recorder2)
+        repo2 = MockRepository(
+            "test_dirty_squash_resets_all_l2_signatures_after", recorder=recorder2
+        )
+        issue2 = MockIssue(
+            "test_dirty_squash_resets_all_l2_signatures_after", number=1, recorder=recorder2
+        )
+
+        result2 = process_pr(
+            repo_config=repo_config,
+            gh=gh2,
+            repo=repo2,
+            issue=issue2,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result2["pr_number"] == 1
+        # ALL signatures should be reset - both core and analysis
+        # because all file SHAs changed
+
+        if record_mode:
+            recorder.save()
+            recorder2.save()
+        else:
+            recorder.verify()
+            recorder2.verify()
+
+    def test_mixed_squash_resets_only_changed_file_signatures(self, repo_config, record_mode):
+        """
+        Test mixed squash: commit SHA changes, SOME file SHAs change.
+
+        Expected behavior:
+        - code-checks and tests signatures should be reset
+        - L2 signatures for unchanged files should be preserved
+        - L2 signatures for changed files should be reset
+        """
+        # First run: PR with approvals for multiple categories
+        # Using correct L2 users: alice=core/analysis, bob=simulation
+        # Files must match CMSSW_CATEGORIES packages
+        create_basic_pr_data(
+            "test_mixed_squash_resets_only_changed_file_signatures",
+            pr_number=1,
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "core_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "analysis_sha_222",
+                    "status": "modified",
+                },
+                {
+                    "filename": "Package/Simulation/sim.py",
+                    "sha": "sim_sha_333",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},  # alice owns core
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},  # alice owns analysis
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                {
+                    "id": 102,
+                    "body": "+simulation",
+                    "user": {"login": "bob", "id": 3},  # bob owns simulation
+                    "created_at": "2024-01-01T12:02:00Z",
+                },
+            ],
+            commits=[
+                {
+                    "sha": "original_mixed",
+                    "commit": {
+                        "message": "Original",
+                        "author": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder(
+            "test_mixed_squash_resets_only_changed_file_signatures", record_mode
+        )
+        gh = MockGithub("test_mixed_squash_resets_only_changed_file_signatures", recorder)
+        repo = MockRepository(
+            "test_mixed_squash_resets_only_changed_file_signatures", recorder=recorder
+        )
+        issue = MockIssue(
+            "test_mixed_squash_resets_only_changed_file_signatures", number=1, recorder=recorder
+        )
+
+        result1 = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result1["pr_number"] == 1
+
+        # Mixed squash: new commit SHA, only core file changed
+        create_basic_pr_data(
+            "test_mixed_squash_resets_only_changed_file_signatures_after",
+            pr_number=1,
+            files=[
+                # core file SHA changed
+                {"filename": "Package/Core/main.py", "sha": "core_sha_NEW", "status": "modified"},
+                # analysis file SHA unchanged
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "analysis_sha_222",
+                    "status": "modified",
+                },
+                # simulation file SHA unchanged
+                {
+                    "filename": "Package/Simulation/sim.py",
+                    "sha": "sim_sha_333",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                {
+                    "id": 102,
+                    "body": "+simulation",
+                    "user": {"login": "bob", "id": 3},
+                    "created_at": "2024-01-01T12:02:00Z",
+                },
+            ],
+            commits=[
+                {
+                    "sha": "squashed_mixed_commit",
+                    "commit": {
+                        "message": "Squashed with partial changes",
+                        "author": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder2 = ActionRecorder(
+            "test_mixed_squash_resets_only_changed_file_signatures_after", record_mode
+        )
+        gh2 = MockGithub("test_mixed_squash_resets_only_changed_file_signatures_after", recorder2)
+        repo2 = MockRepository(
+            "test_mixed_squash_resets_only_changed_file_signatures_after", recorder=recorder2
+        )
+        issue2 = MockIssue(
+            "test_mixed_squash_resets_only_changed_file_signatures_after",
+            number=1,
+            recorder=recorder2,
+        )
+
+        result2 = process_pr(
+            repo_config=repo_config,
+            gh=gh2,
+            repo=repo2,
+            issue=issue2,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="WARNING",
+        )
+
+        assert result2["pr_number"] == 1
+        # core signature should be reset (file SHA changed)
+        # analysis and simulation signatures should be preserved (file SHAs unchanged)
+
+        if record_mode:
+            recorder.save()
+            recorder2.save()
+        else:
+            recorder.verify()
+            recorder2.verify()
+
+
 class TestUnassignCommand:
     """Tests for unassign command."""
 
@@ -3494,7 +4022,7 @@ class TestUnassignCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3544,7 +4072,7 @@ class TestUnassignCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3594,7 +4122,7 @@ class TestCommaSeparatedAssign:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3638,7 +4166,7 @@ class TestCommaSeparatedAssign:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3688,7 +4216,7 @@ class TestCommaSeparatedAssign:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3847,7 +4375,7 @@ class TestHyphenatedCategories:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3898,7 +4426,7 @@ class TestHyphenatedCategories:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -3944,7 +4472,7 @@ class TestHyphenatedCategories:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4022,7 +4550,7 @@ class TestTypeCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4074,7 +4602,7 @@ class TestTypeCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4134,7 +4662,7 @@ class TestTypeCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4192,7 +4720,7 @@ class TestTypeCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4245,7 +4773,7 @@ class TestTypeCommand:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4317,7 +4845,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4370,7 +4898,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4422,7 +4950,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4474,7 +5002,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4526,7 +5054,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4572,7 +5100,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4619,7 +5147,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4678,7 +5206,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -4733,7 +5261,7 @@ class TestTestDeduplication:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -5775,7 +6303,7 @@ class TestBotMentionReaction:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }
@@ -5824,7 +6352,7 @@ class TestBotMentionReaction:
             pr_number=1,
             files=[
                 {
-                    "filename": "src/core/main.py",
+                    "filename": "Package/Core/main.py",
                     "sha": "file_sha_123",
                     "status": "modified",
                 }

@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "id": 100,
+      "body": "+core",
+      "user": {
+        "login": "alice",
+        "id": 2
+      },
+      "created_at": "2024-01-01T12:00:00Z"
+    },
+    {
+      "id": 101,
+      "body": "+analysis",
+      "user": {
+        "login": "bob",
+        "id": 3
+      },
+      "created_at": "2024-01-01T12:01:00Z"
+    }
+  ]
+}

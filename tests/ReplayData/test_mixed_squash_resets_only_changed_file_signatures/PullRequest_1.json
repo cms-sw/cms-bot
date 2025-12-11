@@ -1,0 +1,56 @@
+{
+  "id": 1,
+  "number": 1,
+  "title": "Test PR #1",
+  "body": "Test PR body",
+  "state": "open",
+  "merged": false,
+  "mergeable": true,
+  "head": {
+    "sha": "original_mixed",
+    "ref": "feature"
+  },
+  "base": {
+    "sha": "base123",
+    "ref": "master"
+  },
+  "user": {
+    "login": "testuser",
+    "id": 1
+  },
+  "files": [
+    {
+      "filename": "src/core/main.py",
+      "sha": "core_sha_111",
+      "status": "modified"
+    },
+    {
+      "filename": "src/analysis/data.py",
+      "sha": "analysis_sha_222",
+      "status": "modified"
+    },
+    {
+      "filename": "src/simulation/sim.py",
+      "sha": "sim_sha_333",
+      "status": "modified"
+    }
+  ],
+  "commits": [
+    {
+      "sha": "original_mixed",
+      "commit": {
+        "message": "Original",
+        "author": {
+          "date": "2024-01-01T10:00:00Z",
+          "name": "Author",
+          "email": "a@b.com"
+        },
+        "committer": {
+          "date": "2024-01-01T10:00:00Z",
+          "name": "Author",
+          "email": "a@b.com"
+        }
+      }
+    }
+  ]
+}

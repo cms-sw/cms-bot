@@ -23,7 +23,6 @@ import json
 import os
 import sys
 import types
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -38,7 +37,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import the module under test
 from process_pr_v2 import (
     PRContext,
-    SigningChecks,
     TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
     TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
@@ -239,6 +237,7 @@ class ActionRecorder:
                 result = process_pr(...)
         """
 
+        # noinspection PyUnusedLocal
         def on_create_property_file(filename, parameters, dry_run, res=None):
             self.record("create_property_file", filename=filename, parameters=parameters)
             return res
@@ -287,7 +286,8 @@ class ActionRecorder:
 
         return data.get("actions", [])
 
-    def _action_key(self, action: Dict[str, Any]) -> str:
+    @staticmethod
+    def _action_key(action: Dict[str, Any]) -> str:
         """
         Create a hashable key for an action for comparison.
 
@@ -298,7 +298,8 @@ class ActionRecorder:
         sorted_details = tuple(sorted((k, str(v)) for k, v in details.items()))
         return f"{action['action']}:{sorted_details}"
 
-    def _actions_match(self, actual: Dict[str, Any], expected: Dict[str, Any]) -> bool:
+    @staticmethod
+    def _actions_match(actual: Dict[str, Any], expected: Dict[str, Any]) -> bool:
         """
         Check if two actions match (same type and details).
         """
@@ -366,7 +367,7 @@ class ActionRecorder:
             raise AssertionError("\n".join(msg_parts))
 
 
-def _hook_and_call_original(hook, original_function, call_original, *args, **kwargs):
+def _hook_and_call_original(hook, original_function, call_original, *argsrgs, **kwargs):
     """
     Utility function for hooking into a function call.
 
@@ -374,20 +375,20 @@ def _hook_and_call_original(hook, original_function, call_original, *args, **kwa
     arguments plus the result.
 
     Args:
-        hook: Hook function to call with (*args, **kwargs, res=result)
+        hook: Hook function to call with (*argsrgs, **kwargs, res=result)
         original_function: The original function being hooked
         call_original: If True, call original function and pass result to hook
-        *args, **kwargs: Arguments passed to the function
+        *argsrgs, **kwargs: Arguments passed to the function
 
     Returns:
         Result from hook function
     """
     if call_original:
-        res = original_function(*args, **kwargs)
+        res = original_function(*argsrgs, **kwargs)
     else:
         res = None
 
-    return hook(*args, **kwargs, res=res)
+    return hook(*argsrgs, **kwargs, res=res)
 
 
 class FunctionHook:
@@ -427,7 +428,7 @@ class FunctionHook:
                 - module_path: Module path (e.g., "process_pr_v2")
                 - class_name: Class name if method, None for functions
                 - function_name: Name of function/method to hook
-                - hook_function: Callable with signature (*args, **kwargs, res=result)
+                - hook_function: Callable with signature (*argsrgs, **kwargs, res=result)
                 - call_original: Whether to call original function
         """
         self.hooks = hooks
@@ -746,8 +747,9 @@ class MockCommit:
                     data = json.load(f)
                 statuses = [MockCommitStatus.from_json(s) for s in data.get("statuses", [])]
                 return MockPaginatedList(statuses)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Failed to get statuses: {e}")
+            raise e
         return MockPaginatedList([])
 
     def create_status(
@@ -930,6 +932,7 @@ class MockPullRequest:
         number: int,
         recorder: ActionRecorder = None,
     ):
+        self.milestone = None
         self.test_name = test_name
         self.number = number
         self._recorder = recorder
@@ -1008,6 +1011,7 @@ class MockPullRequest:
         """Get commits in the PR."""
         return MockPaginatedList(self._commits)
 
+    # noinspection PyUnusedLocal
     def merge(
         self,
         commit_message: str = None,
@@ -1052,7 +1056,7 @@ class MockPullRequest:
     ) -> None:
         """Edit the PR (state, milestone, etc.)."""
         if self._recorder:
-            record_data = {"pr_number": self.number}
+            record_data: Dict[str, Any] = {"pr_number": self.number}
             if state is not None:
                 record_data["state"] = state
             if milestone is not None:
@@ -1199,7 +1203,7 @@ class MockIssue:
     ) -> None:
         """Edit the issue (state, milestone, etc.)."""
         if self._recorder:
-            record_data = {"issue_number": self.number}
+            record_data: Dict[str, Any] = {"issue_number": self.number}
             if state is not None:
                 record_data["state"] = state
             if milestone is not None:
@@ -1397,7 +1401,7 @@ def create_basic_pr_data(
         labels: List of label names
         base_ref: Target branch name (default "main", use "master" for cms-sw/cmssw)
     """
-    dirpath = create_test_data_directory(test_name)
+    create_test_data_directory(test_name)
 
     # Use fixed timestamps to ensure comments are after commits
     # This is important for reset_on_push logic
@@ -1457,8 +1461,9 @@ def create_basic_pr_data(
                         now = datetime.now(tz=timezone.utc)
                         if abs((parsed - now).total_seconds()) < 300:  # Within 5 minutes
                             comment["created_at"] = comment_time.isoformat()
-                except Exception:
-                    pass
+                except Exception as e:
+                    print("Error parsing comment:", e)
+                    raise e
 
     # Default labels (empty)
     if labels is None:
@@ -3087,7 +3092,8 @@ class TestBuildTestCommand:
 class TestPRDescriptionParsing:
     """Tests for PR/Issue ignore logic and notification tags."""
 
-    def _make_mock_issue(self, number=1, title="Test Issue", body=""):
+    @staticmethod
+    def _make_mock_issue(number=1, title="Test Issue", body=""):
         """Create a mock issue for testing."""
         issue = MagicMock()
         issue.number = number
@@ -3095,7 +3101,8 @@ class TestPRDescriptionParsing:
         issue.body = body
         return issue
 
-    def _make_mock_repo(self, full_name="cms-sw/cmssw"):
+    @staticmethod
+    def _make_mock_repo(full_name="cms-sw/cmssw"):
         """Create a mock repo for testing."""
         repo = MagicMock()
         repo.full_name = full_name
@@ -5480,7 +5487,7 @@ class TestValidTesterACL:
         """Test that random users are not valid testers."""
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
         monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
-        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: [])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *argsrgs: [])
 
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
@@ -5495,7 +5502,7 @@ class TestValidTesterACL:
         """Test that the repo organization is a valid tester."""
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
         monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
-        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: [])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *argsrgs: [])
 
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
@@ -6406,7 +6413,7 @@ class TestDraftPRHandling:
         context.is_draft = True  # This is now a property but we mock it
 
         # Mock the property
-        type(context).is_draft = property(lambda self: True)
+        type(context).is_draft = property(lambda _: True)
 
         result = format_mention(context, "testuser")
         assert result == "testuser"
@@ -6416,7 +6423,7 @@ class TestDraftPRHandling:
         """Test that non-draft PRs have @-mentions."""
         context = MagicMock(spec=PRContext)
         context.notify_without_at = False
-        type(context).is_draft = property(lambda self: False)
+        type(context).is_draft = property(lambda _: False)
 
         result = format_mention(context, "testuser")
         assert result == "@testuser"
@@ -6425,7 +6432,7 @@ class TestDraftPRHandling:
         """Test that notify_without_at flag overrides draft status."""
         context = MagicMock(spec=PRContext)
         context.notify_without_at = True
-        type(context).is_draft = property(lambda self: False)
+        type(context).is_draft = property(lambda _: False)
 
         result = format_mention(context, "testuser")
         assert result == "testuser"
@@ -6698,7 +6705,8 @@ class TestCITestStatus:
 class TestTestsApprovalLabels:
     """Tests for tests-approved/tests-rejected/tests-pending labels based on CI status."""
 
-    def _create_context_with_statuses(self, statuses_data, pr_number=10246):
+    @staticmethod
+    def _create_context_with_statuses(statuses_data, pr_number=10246):
         """Helper to create a context with mock commit statuses."""
         from process_pr_v2 import PRContext, BotCache
 
@@ -6898,9 +6906,8 @@ class TestTestsApprovalLabels:
 class TestTestResultPostingDeduplication:
     """Tests for test result posting deduplication logic."""
 
-    def _create_context_with_statuses(
-        self, statuses_data, tests_state="approved", pr_number=10246
-    ):
+    @staticmethod
+    def _create_context_with_statuses(statuses_data, pr_number=10246):
         """Helper to create context with statuses and controlled tests state."""
         from process_pr_v2 import PRContext, BotCache
 
@@ -7050,6 +7057,8 @@ class TestTestResultPostingDeduplication:
                         mock_post.assert_called_once()
                         call_args = mock_post.call_args
                         assert "-1" in call_args[0][1]
+                        # Status should also be marked as finished
+                        mock_mark.assert_called_once()
 
     def test_marks_status_as_finished_after_posting(self):
         """Test that status is marked as 'Finished' after posting results."""
@@ -7076,6 +7085,9 @@ class TestTestResultPostingDeduplication:
                     with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
                         mock_fetch.return_value = (0, "Test results")
                         process_ci_test_results(context)
+
+                        # Verify post_bot_comment was called
+                        mock_post.assert_called_once()
 
                         # Verify _mark_status_as_finished was called with correct args
                         mock_mark.assert_called_once_with(
@@ -7330,7 +7342,8 @@ class TestGetSigningChecks:
         # Mock CMSSW_DEVEL_BRANCH
         monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
 
-    def _make_mock_context(self, repo_name: str, repo_org: str, target_branch: str):
+    @staticmethod
+    def _make_mock_context(repo_name: str, repo_org: str, target_branch: str):
         """Create a mock PRContext with repo info."""
         context = MagicMock()
         context.repo_name = repo_name
@@ -7613,14 +7626,14 @@ class IntegrationTestHelper:
         "forward_ports_map",
     ]
 
-    def __init__(self, config_dir: str):
+    def __init__(self, config_dir: Path):
         """
         Initialize the helper.
 
         Args:
             config_dir: Path to directory containing repo_config.py and related modules
         """
-        self.config_dir = os.path.abspath(config_dir)
+        self.config_dir = str(config_dir.resolve())
         self._saved_path = None
         self._saved_modules = {}
         self._active = False
@@ -7710,12 +7723,19 @@ def integration_test_helper():
     return IntegrationTestHelper
 
 
+REPO_CONFIG_ROOT = Path(__file__).parent.parent / "repos"
+
+
 class TestOldTestForProcessPR:
     """Integration tests using custom repo_config from test fixtures."""
 
-    REPO_CONFIG_DIR = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "repos", "iarspider_cmssw", "cmssw")
-    )
+    @staticmethod
+    def get_repo_config_dir(repo: str):
+        repo = repo.replace("-", "_")
+        data = repo.split("/", 2)
+        assert len(data) == 2
+        owner, repo = data
+        return REPO_CONFIG_ROOT / owner / repo
 
     @pytest.fixture(autouse=True)
     def setup_fixtures(self, test_name, mock_gh, record_mode, integration_test_helper):
@@ -7725,13 +7745,14 @@ class TestOldTestForProcessPR:
         self.record_mode = record_mode
         self.integration_test_helper = integration_test_helper
 
-    def _run(self, pr_id):
+    def runTest(self, pr_id=17, repo="iarspider-cmssw/cmssw"):
         global ACTION_DATA_DIR, REPLAY_DATA_DIR
         old_action_dir = ACTION_DATA_DIR
         old_replay_dir = REPLAY_DATA_DIR
         ACTION_DATA_DIR = Path(__file__).parent / "PRActionData_integration"
         REPLAY_DATA_DIR = Path(__file__).parent / "ReplayData_integration"
-        with self.integration_test_helper(self.REPO_CONFIG_DIR) as helper:
+        repo_config_dir = TestOldTestForProcessPR.get_repo_config_dir(repo)
+        with self.integration_test_helper(repo_config_dir) as helper:
             from process_pr_v2 import process_pr
 
             repo_config = helper.get_repo_config()
@@ -7761,43 +7782,47 @@ class TestOldTestForProcessPR:
 
         ACTION_DATA_DIR = old_action_dir
         REPLAY_DATA_DIR = old_replay_dir
+        return result
 
     def test_abort(self):
-        self._run(17)
+        self.runTest(17)
 
     def test_ack_many_files(self):
-        self._run(38)
+        self.runTest(38)
 
     def test_assign(self):
-        self._run(17)
+        self.runTest(17)
 
     def test_assign_from_invalid(self):
-        self._run(27)
+        self.runTest(27)
 
     def test_assign_from(self):
-        self._run(27)
+        self.runTest(27)
 
     def test_assign_from_with_label(self):
-        self._run(27)
+        self.runTest(27)
 
     def test_backport(self):
-        self._run(26)
+        self.runTest(26)
+
+    def test_backport_ok(self):
+        ret = self.runTest(pr_id=9)
+        assert "backport-ok" in ret["labels"]
 
     def test_backport_already_seen(self):
-        self._run(26)
+        self.runTest(26)
 
     def test_build_only(self):
-        self._run(40)
+        self.runTest(40)
 
-    # TODO: generate data for clean/dirty/partial squash
-    # def test_clean_squash(self):
-    #     self._run(17)
-
-    # def test_dirty_squash(self):
-    #     self._run(17)
+    def test_close(self):
+        self.runTest()
 
     def test_test_all_params(self):
-        self._run(24)
+        self.runTest(24)
+
+    def test_test_cmsdist_start_tests(self):
+        self.runTest(1, "iarspider-cmssw/cmsdist")
 
 
 # =============================================================================
@@ -7813,8 +7838,8 @@ if __name__ == "__main__":
     record = "--record-actions" in sys.argv
 
     # Run pytest
-    args = [__file__, "-v"]
+    clargs = [__file__, "-v"]
     if record:
-        args.append("--record-actions")
+        clargs.append("--record-actions")
 
-    pytest.main(args)
+    pytest.main(clargs)

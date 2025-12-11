@@ -13,8 +13,8 @@
       "id": 101,
       "body": "+analysis",
       "user": {
-        "login": "bob",
-        "id": 3
+        "login": "alice",
+        "id": 2
       },
       "created_at": "2024-01-01T12:01:00Z"
     }

@@ -20,12 +20,12 @@
   },
   "files": [
     {
-      "filename": "src/core/main.py",
+      "filename": "Package/Core/main.py",
       "sha": "file_sha_1",
       "status": "modified"
     },
     {
-      "filename": "src/analysis/analyzer.py",
+      "filename": "Package/Analysis/analyzer.py",
       "sha": "file_sha_2",
       "status": "modified"
     },

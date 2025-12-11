@@ -20,7 +20,7 @@
   },
   "files": [
     {
-      "filename": "src/core/main.py",
+      "filename": "Package/Core/main.py",
       "sha": "file_sha_123",
       "status": "modified"
     }

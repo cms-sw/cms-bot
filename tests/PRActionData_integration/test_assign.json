@@ -24,7 +24,7 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "dqm-pending"
+          "db-pending"
         ]
       }
     },
@@ -34,7 +34,7 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "db-pending"
+          "dqm-pending"
         ]
       }
     },

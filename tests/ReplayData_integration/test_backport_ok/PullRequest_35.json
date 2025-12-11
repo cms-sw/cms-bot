@@ -1,15 +1,15 @@
 {
-  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/17",
-  "id": 1793833869,
-  "node_id": "PR_kwDOF83__M5q67uN",
-  "html_url": "https://github.com/iarspider-cmssw/cmssw/pull/17",
-  "diff_url": "https://github.com/iarspider-cmssw/cmssw/pull/17.diff",
-  "patch_url": "https://github.com/iarspider-cmssw/cmssw/pull/17.patch",
-  "issue_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/17",
-  "number": 17,
-  "state": "open",
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/35",
+  "id": 2488522597,
+  "node_id": "PR_kwDOF83__M6UU9dl",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/pull/35",
+  "diff_url": "https://github.com/iarspider-cmssw/cmssw/pull/35.diff",
+  "patch_url": "https://github.com/iarspider-cmssw/cmssw/pull/35.patch",
+  "issue_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/35",
+  "number": 35,
+  "state": "closed",
   "locked": false,
-  "title": "test5 [do-not-merge] Just for generating bot tests",
+  "title": "Test merge command",
   "user": {
     "login": "iarspider",
     "id": 636602,
@@ -28,52 +28,53 @@
     "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
     "received_events_url": "https://api.github.com/users/iarspider/received_events",
     "type": "User",
+    "user_view_type": "public",
     "site_admin": false
   },
   "body": "<notify></notify>\r\n#### PR description:\r\n\r\n<!-- Please replace this text with a description of the feature proposed or problem addressed, specifying:\r\n  - what changes are expected in the output if any, \r\n  - what other PRs or externals it depends upon if any,\r\n  - link to any additional material useful to provide a documentation for this PR (slides, JIRA tickets, related pull requestes, hypernews, TWiki or Indico pages)  -->\r\n\r\n#### PR validation:\r\n\r\n<!-- Please replace this text with a description of which tests have been performed to verify the correctness of the PR, including the eventual addition of new code for testing like unit tests, test configurations, additions or updates to the runTheMatrix test workflows -->\r\n\r\n#### If this PR is a backport please specify the original PR and why you need to backport that PR. If this PR will be backported please specify to which release cycle the backport is meant for:\r\n\r\n<!-- Please replace this text with any link to the master PR, or the intended backport release cycle numbers -->\r\n\r\nBefore submitting your pull requests, make sure you followed this checklist:\r\n- verify that the PR is really intended for the chosen branch\r\n- verify that changes follow [CMS Naming, Coding, And Style Rules](http://cms-sw.github.io/cms_coding_rules.html)\r\n- verify that the PR passes the basic test procedure suggested in the [CMSSW PR instructions](https://cms-sw.github.io/PRWorkflow.html)\r\n\r\n<!-- Please delete the text above after you verified all points of the checklist  -->\r\n",
-  "created_at": "2024-03-27T12:22:45Z",
-  "updated_at": "2024-04-16T10:22:26Z",
-  "closed_at": null,
-  "merged_at": null,
-  "merge_commit_sha": "e4fad0bedaef70d09fc2d0f227cfd94d1307ac7a",
+  "created_at": "2025-04-29T11:18:21Z",
+  "updated_at": "2025-04-30T07:48:55Z",
+  "closed_at": "2025-04-29T11:52:59Z",
+  "merged_at": "2025-04-29T11:52:59Z",
+  "merge_commit_sha": "05991ff49c6779cd862cf5bb81763ba394b60684",
   "assignee": null,
   "assignees": [],
   "requested_reviewers": [],
   "requested_teams": [],
   "labels": [
     {
-      "id": 6160598842,
-      "node_id": "LA_kwDOF83__M8AAAABbzNHOg",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/pending-signatures",
-      "name": "pending-signatures",
-      "color": "ff8000",
+      "id": 6005201389,
+      "node_id": "LA_kwDOF83__M8AAAABZfAZ7Q",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/fully-signed",
+      "name": "fully-signed",
+      "color": "2cbe4e",
+      "default": false,
+      "description": ""
+    },
+    {
+      "id": 6160599807,
+      "node_id": "LA_kwDOF83__M8AAAABbzNK_w",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/trk",
+      "name": "trk",
+      "color": "257fdb",
       "default": false,
       "description": null
     },
     {
-      "id": 6160599186,
-      "node_id": "LA_kwDOF83__M8AAAABbzNIkg",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/requires-external",
-      "name": "requires-external",
-      "color": "0000ff",
+      "id": 6160600013,
+      "node_id": "LA_kwDOF83__M8AAAABbzNLzQ",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/orp-approved",
+      "name": "orp-approved",
+      "color": "2cbe4e",
       "default": false,
       "description": null
     },
     {
-      "id": 6160599976,
-      "node_id": "LA_kwDOF83__M8AAAABbzNLqA",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/orp-pending",
-      "name": "orp-pending",
-      "color": "fbca04",
-      "default": false,
-      "description": null
-    },
-    {
-      "id": 6160600064,
-      "node_id": "LA_kwDOF83__M8AAAABbzNMAA",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/tests-pending",
-      "name": "tests-pending",
-      "color": "fbca04",
+      "id": 6160600074,
+      "node_id": "LA_kwDOF83__M8AAAABbzNMCg",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/tests-approved",
+      "name": "tests-approved",
+      "color": "2cbe4e",
       "default": false,
       "description": null
     },
@@ -87,29 +88,11 @@
       "description": null
     },
     {
-      "id": 6160600474,
-      "node_id": "LA_kwDOF83__M8AAAABbzNNmg",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/core-pending",
-      "name": "core-pending",
-      "color": "fbca04",
-      "default": false,
-      "description": null
-    },
-    {
-      "id": 6160600663,
-      "node_id": "LA_kwDOF83__M8AAAABbzNOVw",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/dqm-pending",
-      "name": "dqm-pending",
-      "color": "fbca04",
-      "default": false,
-      "description": null
-    },
-    {
-      "id": 6664469918,
-      "node_id": "LA_kwDOF83__M8AAAABjTu9ng",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/root",
-      "name": "root",
-      "color": "ededed",
+      "id": 6160600326,
+      "node_id": "LA_kwDOF83__M8AAAABbzNNBg",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/alca-approved",
+      "name": "alca-approved",
+      "color": "2cbe4e",
       "default": false,
       "description": null
     }
@@ -141,26 +124,27 @@
       "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
       "received_events_url": "https://api.github.com/users/iarspider/received_events",
       "type": "User",
+      "user_view_type": "public",
       "site_admin": false
     },
-    "open_issues": 2,
-    "closed_issues": 3,
+    "open_issues": 5,
+    "closed_issues": 16,
     "state": "open",
     "created_at": "2024-02-27T10:38:11Z",
-    "updated_at": "2024-04-15T14:02:44Z",
+    "updated_at": "2025-05-07T09:31:49Z",
     "due_on": null,
     "closed_at": null
   },
   "draft": false,
-  "commits_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/17/commits",
-  "review_comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/17/comments",
+  "commits_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/35/commits",
+  "review_comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/35/comments",
   "review_comment_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/comments{/number}",
-  "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/17/comments",
-  "statuses_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/statuses/35f9a4c06b006029da40ed8858e0dae4abd52cb3",
+  "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/35/comments",
+  "statuses_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/statuses/ef1fdd4522128ab6176ca2fa6a0d2e1934e2ed60",
   "head": {
-    "label": "iarspider-cmssw:bot-test-6",
-    "ref": "bot-test-6",
-    "sha": "35f9a4c06b006029da40ed8858e0dae4abd52cb3",
+    "label": "iarspider-cmssw:test-merge-command",
+    "ref": "test-merge-command",
+    "sha": "ef1fdd4522128ab6176ca2fa6a0d2e1934e2ed60",
     "user": {
       "login": "iarspider-cmssw",
       "id": 143407406,
@@ -179,6 +163,7 @@
       "events_url": "https://api.github.com/users/iarspider-cmssw/events{/privacy}",
       "received_events_url": "https://api.github.com/users/iarspider-cmssw/received_events",
       "type": "Organization",
+      "user_view_type": "public",
       "site_admin": false
     },
     "repo": {
@@ -205,6 +190,7 @@
         "events_url": "https://api.github.com/users/iarspider-cmssw/events{/privacy}",
         "received_events_url": "https://api.github.com/users/iarspider-cmssw/received_events",
         "type": "Organization",
+        "user_view_type": "public",
         "site_admin": false
       },
       "html_url": "https://github.com/iarspider-cmssw/cmssw",
@@ -248,14 +234,14 @@
       "releases_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/releases{/id}",
       "deployments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/deployments",
       "created_at": "2021-08-24T07:36:01Z",
-      "updated_at": "2023-11-02T12:14:49Z",
-      "pushed_at": "2024-04-16T10:22:26Z",
+      "updated_at": "2025-04-30T13:43:16Z",
+      "pushed_at": "2025-05-07T09:27:45Z",
       "git_url": "git://github.com/iarspider-cmssw/cmssw.git",
       "ssh_url": "git@github.com:iarspider-cmssw/cmssw.git",
       "clone_url": "https://github.com/iarspider-cmssw/cmssw.git",
       "svn_url": "https://github.com/iarspider-cmssw/cmssw",
       "homepage": "http://cms-sw.github.io/",
-      "size": 1207742,
+      "size": 1305063,
       "stargazers_count": 0,
       "watchers_count": 0,
       "language": "C++",
@@ -269,7 +255,7 @@
       "mirror_url": null,
       "archived": false,
       "disabled": false,
-      "open_issues_count": 3,
+      "open_issues_count": 9,
       "license": {
         "key": "apache-2.0",
         "name": "Apache License 2.0",
@@ -283,7 +269,7 @@
       "topics": [],
       "visibility": "public",
       "forks": 1,
-      "open_issues": 3,
+      "open_issues": 9,
       "watchers": 0,
       "default_branch": "master"
     }
@@ -291,7 +277,7 @@
   "base": {
     "label": "iarspider-cmssw:master",
     "ref": "master",
-    "sha": "a3adc2d589298214012d49f4afc4356baf30956c",
+    "sha": "c83ecb127f70592a95b0544c2e7e2404c9d7e440",
     "user": {
       "login": "iarspider-cmssw",
       "id": 143407406,
@@ -310,6 +296,7 @@
       "events_url": "https://api.github.com/users/iarspider-cmssw/events{/privacy}",
       "received_events_url": "https://api.github.com/users/iarspider-cmssw/received_events",
       "type": "Organization",
+      "user_view_type": "public",
       "site_admin": false
     },
     "repo": {
@@ -336,6 +323,7 @@
         "events_url": "https://api.github.com/users/iarspider-cmssw/events{/privacy}",
         "received_events_url": "https://api.github.com/users/iarspider-cmssw/received_events",
         "type": "Organization",
+        "user_view_type": "public",
         "site_admin": false
       },
       "html_url": "https://github.com/iarspider-cmssw/cmssw",
@@ -379,14 +367,14 @@
       "releases_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/releases{/id}",
       "deployments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/deployments",
       "created_at": "2021-08-24T07:36:01Z",
-      "updated_at": "2023-11-02T12:14:49Z",
-      "pushed_at": "2024-04-16T10:22:26Z",
+      "updated_at": "2025-04-30T13:43:16Z",
+      "pushed_at": "2025-05-07T09:27:45Z",
       "git_url": "git://github.com/iarspider-cmssw/cmssw.git",
       "ssh_url": "git@github.com:iarspider-cmssw/cmssw.git",
       "clone_url": "https://github.com/iarspider-cmssw/cmssw.git",
       "svn_url": "https://github.com/iarspider-cmssw/cmssw",
       "homepage": "http://cms-sw.github.io/",
-      "size": 1207742,
+      "size": 1305063,
       "stargazers_count": 0,
       "watchers_count": 0,
       "language": "C++",
@@ -400,7 +388,7 @@
       "mirror_url": null,
       "archived": false,
       "disabled": false,
-      "open_issues_count": 3,
+      "open_issues_count": 9,
       "license": {
         "key": "apache-2.0",
         "name": "Apache License 2.0",
@@ -414,50 +402,70 @@
       "topics": [],
       "visibility": "public",
       "forks": 1,
-      "open_issues": 3,
+      "open_issues": 9,
       "watchers": 0,
       "default_branch": "master"
     }
   },
   "_links": {
     "self": {
-      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/17"
+      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/35"
     },
     "html": {
-      "href": "https://github.com/iarspider-cmssw/cmssw/pull/17"
+      "href": "https://github.com/iarspider-cmssw/cmssw/pull/35"
     },
     "issue": {
-      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/17"
+      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/35"
     },
     "comments": {
-      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/17/comments"
+      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/35/comments"
     },
     "review_comments": {
-      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/17/comments"
+      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/35/comments"
     },
     "review_comment": {
       "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/comments{/number}"
     },
     "commits": {
-      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/17/commits"
+      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/pulls/35/commits"
     },
     "statuses": {
-      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/statuses/35f9a4c06b006029da40ed8858e0dae4abd52cb3"
+      "href": "https://api.github.com/repos/iarspider-cmssw/cmssw/statuses/ef1fdd4522128ab6176ca2fa6a0d2e1934e2ed60"
     }
   },
   "author_association": "MEMBER",
   "auto_merge": null,
   "active_lock_reason": null,
-  "merged": false,
-  "mergeable": true,
-  "rebaseable": true,
-  "mergeable_state": "clean",
-  "merged_by": null,
-  "comments": 22,
+  "merged": true,
+  "mergeable": null,
+  "rebaseable": null,
+  "mergeable_state": "unknown",
+  "merged_by": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "user_view_type": "public",
+    "site_admin": false
+  },
+  "comments": 7,
   "review_comments": 0,
   "maintainer_can_modify": false,
   "commits": 1,
-  "additions": 2,
+  "additions": 1,
   "deletions": 0,
   "changed_files": 1
 }

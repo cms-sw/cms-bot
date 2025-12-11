@@ -22,6 +22,7 @@
     "events_url": "https://api.github.com/users/iarspider-cmssw/events{/privacy}",
     "received_events_url": "https://api.github.com/users/iarspider-cmssw/received_events",
     "type": "Organization",
+    "user_view_type": "public",
     "site_admin": false
   },
   "html_url": "https://github.com/iarspider-cmssw/cmssw",
@@ -65,14 +66,14 @@
   "releases_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/releases{/id}",
   "deployments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/deployments",
   "created_at": "2021-08-24T07:36:01Z",
-  "updated_at": "2023-11-02T12:14:49Z",
-  "pushed_at": "2024-04-16T10:25:54Z",
+  "updated_at": "2025-04-30T13:43:16Z",
+  "pushed_at": "2025-05-07T09:27:45Z",
   "git_url": "git://github.com/iarspider-cmssw/cmssw.git",
   "ssh_url": "git@github.com:iarspider-cmssw/cmssw.git",
   "clone_url": "https://github.com/iarspider-cmssw/cmssw.git",
   "svn_url": "https://github.com/iarspider-cmssw/cmssw",
   "homepage": "http://cms-sw.github.io/",
-  "size": 1207742,
+  "size": 1305063,
   "stargazers_count": 0,
   "watchers_count": 0,
   "language": "C++",
@@ -86,7 +87,7 @@
   "mirror_url": null,
   "archived": false,
   "disabled": false,
-  "open_issues_count": 3,
+  "open_issues_count": 9,
   "license": {
     "key": "apache-2.0",
     "name": "Apache License 2.0",
@@ -100,7 +101,7 @@
   "topics": [],
   "visibility": "public",
   "forks": 1,
-  "open_issues": 3,
+  "open_issues": 9,
   "watchers": 0,
   "default_branch": "master",
   "permissions": {
@@ -141,6 +142,7 @@
     "events_url": "https://api.github.com/users/iarspider-cmssw/events{/privacy}",
     "received_events_url": "https://api.github.com/users/iarspider-cmssw/received_events",
     "type": "Organization",
+    "user_view_type": "public",
     "site_admin": false
   },
   "parent": {
@@ -167,6 +169,7 @@
       "events_url": "https://api.github.com/users/cms-sw/events{/privacy}",
       "received_events_url": "https://api.github.com/users/cms-sw/received_events",
       "type": "Organization",
+      "user_view_type": "public",
       "site_admin": false
     },
     "html_url": "https://github.com/cms-sw/cmssw",
@@ -210,16 +213,16 @@
     "releases_url": "https://api.github.com/repos/cms-sw/cmssw/releases{/id}",
     "deployments_url": "https://api.github.com/repos/cms-sw/cmssw/deployments",
     "created_at": "2013-06-26T14:09:07Z",
-    "updated_at": "2024-04-14T22:22:37Z",
-    "pushed_at": "2024-04-16T10:17:40Z",
+    "updated_at": "2025-05-07T07:56:35Z",
+    "pushed_at": "2025-05-07T09:07:47Z",
     "git_url": "git://github.com/cms-sw/cmssw.git",
     "ssh_url": "git@github.com:cms-sw/cmssw.git",
     "clone_url": "https://github.com/cms-sw/cmssw.git",
     "svn_url": "https://github.com/cms-sw/cmssw",
     "homepage": "http://cms-sw.github.io/",
-    "size": 1373448,
-    "stargazers_count": 1045,
-    "watchers_count": 1045,
+    "size": 1461660,
+    "stargazers_count": 1140,
+    "watchers_count": 1140,
     "language": "C++",
     "has_issues": true,
     "has_projects": true,
@@ -227,11 +230,11 @@
     "has_wiki": true,
     "has_pages": false,
     "has_discussions": false,
-    "forks_count": 4185,
+    "forks_count": 4427,
     "mirror_url": null,
     "archived": false,
     "disabled": false,
-    "open_issues_count": 897,
+    "open_issues_count": 1036,
     "license": {
       "key": "apache-2.0",
       "name": "Apache License 2.0",
@@ -249,9 +252,9 @@
       "hep"
     ],
     "visibility": "public",
-    "forks": 4185,
-    "open_issues": 897,
-    "watchers": 1045,
+    "forks": 4427,
+    "open_issues": 1036,
+    "watchers": 1140,
     "default_branch": "master"
   },
   "source": {
@@ -278,6 +281,7 @@
       "events_url": "https://api.github.com/users/cms-sw/events{/privacy}",
       "received_events_url": "https://api.github.com/users/cms-sw/received_events",
       "type": "Organization",
+      "user_view_type": "public",
       "site_admin": false
     },
     "html_url": "https://github.com/cms-sw/cmssw",
@@ -321,16 +325,16 @@
     "releases_url": "https://api.github.com/repos/cms-sw/cmssw/releases{/id}",
     "deployments_url": "https://api.github.com/repos/cms-sw/cmssw/deployments",
     "created_at": "2013-06-26T14:09:07Z",
-    "updated_at": "2024-04-14T22:22:37Z",
-    "pushed_at": "2024-04-16T10:17:40Z",
+    "updated_at": "2025-05-07T07:56:35Z",
+    "pushed_at": "2025-05-07T09:07:47Z",
     "git_url": "git://github.com/cms-sw/cmssw.git",
     "ssh_url": "git@github.com:cms-sw/cmssw.git",
     "clone_url": "https://github.com/cms-sw/cmssw.git",
     "svn_url": "https://github.com/cms-sw/cmssw",
     "homepage": "http://cms-sw.github.io/",
-    "size": 1373448,
-    "stargazers_count": 1045,
-    "watchers_count": 1045,
+    "size": 1461660,
+    "stargazers_count": 1140,
+    "watchers_count": 1140,
     "language": "C++",
     "has_issues": true,
     "has_projects": true,
@@ -338,11 +342,11 @@
     "has_wiki": true,
     "has_pages": false,
     "has_discussions": false,
-    "forks_count": 4185,
+    "forks_count": 4427,
     "mirror_url": null,
     "archived": false,
     "disabled": false,
-    "open_issues_count": 897,
+    "open_issues_count": 1036,
     "license": {
       "key": "apache-2.0",
       "name": "Apache License 2.0",
@@ -360,9 +364,9 @@
       "hep"
     ],
     "visibility": "public",
-    "forks": 4185,
-    "open_issues": 897,
-    "watchers": 1045,
+    "forks": 4427,
+    "open_issues": 1036,
+    "watchers": 1140,
     "default_branch": "master"
   },
   "security_and_analysis": {
@@ -375,10 +379,13 @@
     "dependabot_security_updates": {
       "status": "disabled"
     },
+    "secret_scanning_non_provider_patterns": {
+      "status": "disabled"
+    },
     "secret_scanning_validity_checks": {
       "status": "disabled"
     }
   },
-  "network_count": 4185,
-  "subscribers_count": 1
+  "network_count": 4427,
+  "subscribers_count": 0
 }

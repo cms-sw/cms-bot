@@ -20,17 +20,17 @@
   },
   "files": [
     {
-      "filename": "src/core/main.py",
+      "filename": "Package/Core/main.py",
       "sha": "core_sha_NEW",
       "status": "modified"
     },
     {
-      "filename": "src/analysis/data.py",
+      "filename": "Package/Analysis/data.py",
       "sha": "analysis_sha_222",
       "status": "modified"
     },
     {
-      "filename": "src/simulation/sim.py",
+      "filename": "Package/Simulation/sim.py",
       "sha": "sim_sha_333",
       "status": "modified"
     }

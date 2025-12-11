@@ -7,9 +7,9 @@
       "additions": 2,
       "deletions": 0,
       "changes": 2,
-      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/35f9a4c06b006029da40ed8858e0dae4abd52cb3/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml",
-      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/35f9a4c06b006029da40ed8858e0dae4abd52cb3/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml",
-      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml?ref=35f9a4c06b006029da40ed8858e0dae4abd52cb3",
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/dae848e38b8e387d7283a3e35818121487d9d76b/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/dae848e38b8e387d7283a3e35818121487d9d76b/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml?ref=dae848e38b8e387d7283a3e35818121487d9d76b",
       "patch": "@@ -4,6 +4,8 @@\n <test name=\"test-clang-tidy\" command=\"test-clang-tidy.sh\">\n   <use name=\"llvm\"/>\n </test>\n+<test name=\"scram-always-pass\" command=\"ture\"/>\n+<test name=\"scram-always-fail\" command=\"! pass\"/>\n <ifrelease name=\"!ASAN\">\n   <test name=\"TestValgrind\" command=\"test-valgrind.sh\">\n     <flags PRE_TEST=\"test-valgrind-memleak\"/>"
     }
   ]

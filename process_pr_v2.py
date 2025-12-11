@@ -6228,7 +6228,7 @@ def process_pr(
             else:
                 try:
                     issue.edit(state="closed")
-                    logger.info("Issue closed (target branch is closed)")
+                    logger.info("Closing issue")
                 except Exception as e:
                     logger.error(f"Failed to close issue: {e}")
                     context.messages.append(f"Failed to close issue: {e}")

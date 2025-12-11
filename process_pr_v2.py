@@ -1799,6 +1799,11 @@ class PRContext:
     test_params: Dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
     granted_test_rights: Set[str] = field(default_factory=set)  # Users granted test rights
 
+    # Test parameters status tracking
+    test_params_comment_id: Optional[int] = None  # Comment ID that last set test params
+    test_params_comment_url: Optional[str] = None  # HTML URL of the comment
+    test_params_errors: Optional[str] = None  # Error message if any
+
     # Pending build/test commands - processed after all comments are seen
     # List of (verb, comment_id, user, timestamp, parsed_result) tuples
     pending_build_test_commands: List[Tuple[str, int, str, datetime, Any]] = field(
@@ -3103,12 +3108,16 @@ def handle_test_parameters(
 
     The parameters are stored in context for later use when triggering tests.
     Note: The 'test' command values override these for overlapping parameters.
+
+    Updates bot/<prId>/test_parameters commit status with the current params.
     """
-    # Get the full comment body to parse all lines
+    # Get the full comment body and URL
     comment_body = None
+    comment_url = None
     for comment in context.comments:
         if comment.id == comment_id:
             comment_body = comment.body
+            comment_url = getattr(comment, "html_url", None)
             break
 
     if not comment_body:
@@ -3121,10 +3130,18 @@ def handle_test_parameters(
     # Parse parameters
     params = parse_test_parameters(lines, context.repo)
 
+    # Track this comment as the source of test params
+    context.test_params_comment_id = comment_id
+    context.test_params_comment_url = comment_url
+
     if "errors" in params:
+        context.test_params_errors = params["errors"]
         context.messages.append(params["errors"])
         logger.warning(f"Test parameters parsing errors: {params['errors']}")
         return False
+
+    # Clear any previous errors
+    context.test_params_errors = None
 
     # Store parameters in context for later use
     context.test_params.update(params)
@@ -3156,15 +3173,20 @@ def handle_build_test(
     Syntax:
         build|test [workflows <wf_list>] [with <pr_list>] [for <queue>]
                    [using [full cmssw] [addpkg <pkg_list>]]
+
+    This command also updates the test_params_comment tracking for the
+    bot/<prId>/test_parameters status.
     """
     # Get the full command line from the comment
     first_line = match.group(0)
+    comment_url = None
 
     # Try to get full first line from the actual comment
     for comment in context.comments:
         if comment.id == comment_id:
             extracted, _ = extract_command_line(comment.body or "", context.cmsbuild_user)
             first_line = extracted or first_line
+            comment_url = getattr(comment, "html_url", None)
             break
 
     try:
@@ -3173,6 +3195,11 @@ def handle_build_test(
         logger.warning(f"Invalid build/test command: {e}")
         context.messages.append(f"Invalid build/test command: {e}")
         return False
+
+    # Track this comment as the source of test params (build/test overrides test parameters:)
+    context.test_params_comment_id = comment_id
+    context.test_params_comment_url = comment_url
+    context.test_params_errors = None  # Clear any previous errors
 
     # Collect for deferred processing
     context.pending_build_test_commands.append((result.verb, comment_id, user, timestamp, result))
@@ -3356,6 +3383,98 @@ def set_jenkins_status_url(context: PRContext, url: str) -> bool:
         return True
     except Exception as e:
         logger.error(f"Error setting jenkins status: {e}")
+        return False
+
+
+def update_test_parameters_status(context: PRContext) -> bool:
+    """
+    Update the bot/{prId}/test_parameters commit status.
+
+    The status description is formatted as: {comment_id}:{message}
+    where message is either:
+    - Error message if there were parsing errors (prefixed with "ERRORS: ")
+    - JSON dump of test_params (sorted keys)
+    - "No special test parameter set." if no params
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        True if status was updated successfully
+    """
+    if not context.pr or not context.issue:
+        return False
+
+    pr_id = context.issue.number
+    status_context = f"bot/{pr_id}/test_parameters"
+
+    # Build the status message
+    comment_id = context.test_params_comment_id
+
+    if context.test_params_errors:
+        # There were errors parsing parameters
+        test_params_msg = f"ERRORS: {context.test_params_errors}"
+        state = "error"
+    elif context.test_params:
+        # Have valid parameters
+        test_params_msg = json.dumps(context.test_params, sort_keys=True)
+        state = "success"
+    else:
+        # No parameters set
+        test_params_msg = "No special test parameter set."
+        state = "success"
+
+    # Format: {comment_id}:{message}
+    if comment_id:
+        description = f"{comment_id}:{test_params_msg}"
+    else:
+        description = test_params_msg
+
+    # Truncate if too long (GitHub limit is 140 chars)
+    if len(description) > 140:
+        description = description[:135] + "..."
+
+    # Check if we need to update (compare with existing status)
+    try:
+        head_sha = context.pr.head.sha
+        repo = context.repo
+        commit = repo.get_commit(head_sha)
+
+        # Check existing status
+        existing_statuses = list(commit.get_statuses())
+        existing_status = None
+        for status in existing_statuses:
+            if status.context == status_context:
+                existing_status = status
+                break
+
+        # Only update if different or new
+        if existing_status and existing_status.description == description:
+            logger.debug(f"Test parameters status unchanged: {description}")
+            return True
+
+        if not existing_status and not context.test_params and not context.test_params_errors:
+            # No existing status and no params to set
+            logger.debug("No test parameters status to set")
+            return True
+
+        if context.dry_run:
+            logger.info(f"[DRY RUN] Would set test_parameters status: {description}")
+            return True
+
+        target_url = context.test_params_comment_url or ""
+
+        commit.create_status(
+            state=state,
+            target_url=target_url,
+            description=description,
+            context=status_context,
+        )
+        logger.info(f"Set test_parameters status: {description}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error setting test_parameters status: {e}")
         return False
 
 
@@ -4360,6 +4479,9 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     """
     Get CI test statuses from GitHub commit statuses.
 
+    Only processes statuses for the current PR (matching cms/<pr_id>/...).
+    This is important because a commit can be part of multiple PRs.
+
     Looks for top-level statuses matching patterns:
     - cms/<pr_id>[/<flavor>]/<arch>/required
     - cms/<pr_id>[/<flavor>]/<arch>/optional
@@ -4383,6 +4505,11 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     if not context.pr or not context.commits:
         return {}
 
+    # Get PR number for filtering statuses
+    pr_id = context.issue.number if context.issue else None
+    if not pr_id:
+        return {}
+
     # Get the head commit SHA
     try:
         head_sha = context.pr.head.sha
@@ -4403,24 +4530,26 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     if not statuses:
         return {}
 
+    # Filter statuses for this PR only
+    # Status context format: cms/<pr_id>/...
+    pr_prefix = f"{CMS_STATUS_PREFIX}/{pr_id}/"
+
     # Group statuses by their context prefix
     # Build a map of context -> status for quick lookup
     status_map: Dict[str, Any] = {}
     for status in statuses:
         ctx = status.context
+        # Only process statuses for this PR
+        if not ctx.startswith(pr_prefix):
+            continue
         # Keep the most recent status for each context
         if ctx not in status_map:
             status_map[ctx] = status
 
     results: Dict[str, List[CITestResult]] = {"required": [], "optional": []}
 
-    # Find all top-level test statuses (cms/<arch>/<test>/required or optional)
-    prefix = f"{CMS_STATUS_PREFIX}/"
-
+    # Find all top-level test statuses (cms/<pr_id>/<arch>/<test>/required or optional)
     for ctx, status in status_map.items():
-        if not ctx.startswith(prefix):
-            continue
-
         # Check if this is a top-level status (ends with /required or /optional)
         parts = ctx.rsplit("/", 1)
         if len(parts) != 2:
@@ -6063,6 +6192,8 @@ def process_pr(
     # Process deferred build/test commands (after all comments seen)
     if is_pr:
         process_pending_build_test_commands(context)
+        # Update test_parameters commit status
+        update_test_parameters_status(context)
 
     # Check commit and file counts (for PRs only)
     if is_pr and pr:

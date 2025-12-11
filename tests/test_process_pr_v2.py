@@ -23,6 +23,7 @@ import json
 import os
 import sys
 import types
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -37,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import the module under test
 from process_pr_v2 import (
     PRContext,
+    SigningChecks,
     TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
     TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
@@ -1197,7 +1199,7 @@ class MockIssue:
     ) -> None:
         """Edit the issue (state, milestone, etc.)."""
         if self._recorder:
-            record_data: dict[str, Any] = {"issue_number": self.number}
+            record_data = {"issue_number": self.number}
             if state is not None:
                 record_data["state"] = state
             if milestone is not None:
@@ -5957,6 +5959,7 @@ class TestCITestStatus:
         context = MagicMock(spec=PRContext)
         context.pr = None
         context.commits = []
+        context.issue = None
 
         result = get_ci_test_statuses(context)
         assert result == {}
@@ -5969,6 +5972,8 @@ class TestCITestStatus:
         context.pr = MagicMock()
         context.commits = []
         context.pr.head.sha = "abc123"
+        context.issue = MagicMock()
+        context.issue.number = 10246
         context.repo = MagicMock()
         context.repo.get_commit.return_value.get_statuses.return_value = []
 
@@ -5983,6 +5988,8 @@ class TestCITestStatus:
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
         context.commits = [MagicMock(sha="abc123")]
+        context.issue = MagicMock()
+        context.issue.number = 10246
 
         # Create mock statuses
         status1 = MagicMock()
@@ -6007,6 +6014,8 @@ class TestCITestStatus:
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
         context.commits = [MagicMock(sha="abc123")]
+        context.issue = MagicMock()
+        context.issue.number = 10246
 
         # Create mock statuses
         status1 = MagicMock()
@@ -6031,6 +6040,8 @@ class TestCITestStatus:
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
         context.commits = [MagicMock(sha="abc123")]
+        context.issue = MagicMock()
+        context.issue.number = 10246
 
         # Create mock statuses with flavor
         status1 = MagicMock()
@@ -6047,6 +6058,39 @@ class TestCITestStatus:
         assert len(result["required"]) == 1
         assert result["required"][0].context == "cms/10246/ROOT638/el8_amd64_gcc13/required"
 
+    def test_get_ci_test_statuses_filters_by_pr_id(self):
+        """Test that get_ci_test_statuses only returns statuses for current PR."""
+        from process_pr_v2 import get_ci_test_statuses
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = [MagicMock(sha="abc123")]
+        context.issue = MagicMock()
+        context.issue.number = 10246  # Current PR is 10246
+
+        # Create mock statuses - one for current PR, one for different PR
+        status1 = MagicMock()
+        status1.context = "cms/10246/el8_amd64_gcc12/required"  # Current PR
+        status1.state = "success"
+        status1.description = "Build successful"
+        status1.target_url = "http://example.com/build"
+
+        status2 = MagicMock()
+        status2.context = "cms/99999/el8_amd64_gcc12/required"  # Different PR
+        status2.state = "error"
+        status2.description = "Build failed"
+        status2.target_url = "http://example.com/build2"
+
+        context.repo = MagicMock()
+        context.repo.get_commit.return_value.get_statuses.return_value = [status1, status2]
+
+        result = get_ci_test_statuses(context)
+        # Should only have the status for PR 10246
+        assert "required" in result
+        assert len(result["required"]) == 1
+        assert result["required"][0].context == "cms/10246/el8_amd64_gcc12/required"
+
     def test_check_ci_test_completion_pending(self):
         """Test check_ci_test_completion with pending tests."""
         from process_pr_v2 import check_ci_test_completion
@@ -6055,6 +6099,8 @@ class TestCITestStatus:
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
         context.commits = [MagicMock(sha="abc123")]
+        context.issue = MagicMock()
+        context.issue.number = 10246
 
         # Create mock statuses with pending state
         status1 = MagicMock()
@@ -6078,6 +6124,8 @@ class TestCITestStatus:
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
         context.commits = [MagicMock(sha="abc123")]
+        context.issue = MagicMock()
+        context.issue.number = 10246
 
         # Create mock statuses with success state
         status1 = MagicMock()
@@ -6101,6 +6149,8 @@ class TestCITestStatus:
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
         context.commits = [MagicMock(sha="abc123")]
+        context.issue = MagicMock()
+        context.issue.number = 10246
 
         # Create mock statuses with error state
         status1 = MagicMock()
@@ -6120,7 +6170,7 @@ class TestCITestStatus:
 class TestTestsApprovalLabels:
     """Tests for tests-approved/tests-rejected/tests-pending labels based on CI status."""
 
-    def _create_context_with_statuses(self, statuses_data):
+    def _create_context_with_statuses(self, statuses_data, pr_number=10246):
         """Helper to create a context with mock commit statuses."""
         from process_pr_v2 import PRContext, BotCache
 
@@ -6133,6 +6183,8 @@ class TestTestsApprovalLabels:
         context.cache = BotCache()
         context.signing_categories = {"tests", "core"}
         context.ignore_tests_rejected = None
+        context.issue = MagicMock()
+        context.issue.number = pr_number
 
         # Create mock statuses
         mock_statuses = []
@@ -6318,7 +6370,9 @@ class TestTestsApprovalLabels:
 class TestTestResultPostingDeduplication:
     """Tests for test result posting deduplication logic."""
 
-    def _create_context_with_statuses(self, statuses_data, tests_state="approved"):
+    def _create_context_with_statuses(
+        self, statuses_data, tests_state="approved", pr_number=10246
+    ):
         """Helper to create context with statuses and controlled tests state."""
         from process_pr_v2 import PRContext, BotCache
 
@@ -6333,6 +6387,8 @@ class TestTestResultPostingDeduplication:
         context.ignore_tests_rejected = None
         context.dryRun = False
         context.posted_messages = {}
+        context.issue = MagicMock()
+        context.issue.number = pr_number
 
         # Create mock statuses
         mock_statuses = []
@@ -7204,6 +7260,9 @@ class TestOldTestForProcessPR:
 
     def test_clean_squash(self):
         self._run(17)
+
+    def test_build_only(self):
+        self._run(40)
 
 
 # =============================================================================

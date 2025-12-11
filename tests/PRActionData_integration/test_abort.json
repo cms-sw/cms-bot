@@ -1,6 +1,6 @@
 {
   "test_name": "test_abort",
-  "action_count": 6,
+  "action_count": 7,
   "actions": [
     {
       "sequence": 1,
@@ -20,6 +20,17 @@
     },
     {
       "sequence": 3,
+      "action": "create_status",
+      "details": {
+        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
+        "state": "success",
+        "target_url": "",
+        "description": "2056903278:{\"PULL_REQUESTS\": \"cms-sw/cms-bot#2134\", \"SKIP_TESTS\": \"header,static\"}",
+        "context": "bot/17/test_parameters"
+      }
+    },
+    {
+      "sequence": 4,
       "action": "add_labels",
       "details": {
         "issue_number": 17,
@@ -29,7 +40,7 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 5,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-abort-iarspider-cmssw-cmssw-17.properties",
@@ -39,7 +50,7 @@
       }
     },
     {
-      "sequence": 5,
+      "sequence": 6,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -47,7 +58,7 @@
       }
     },
     {
-      "sequence": 6,
+      "sequence": 7,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

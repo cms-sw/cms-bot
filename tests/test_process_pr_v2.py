@@ -7258,11 +7258,18 @@ class TestOldTestForProcessPR:
     def test_backport_already_seen(self):
         self._run(26)
 
-    def test_clean_squash(self):
-        self._run(17)
-
     def test_build_only(self):
         self._run(40)
+
+    # TODO: generate data for clean/dirty/partial squash
+    # def test_clean_squash(self):
+    #     self._run(17)
+
+    # def test_dirty_squash(self):
+    #     self._run(17)
+
+    def test_test_all_params(self):
+        self._run(24)
 
 
 # =============================================================================

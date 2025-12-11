@@ -1,0 +1,99 @@
+{
+  "test_name": "test_dirty_squash",
+  "action_count": 10,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 2045177271,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 2049536405,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 2056930228,
+        "reaction": "-1"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "1d7419a436293c0337ca346fe868cb50cfdedc18",
+        "state": "pending",
+        "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2056903278",
+        "description": "Test triggered",
+        "context": "bot/17/jenkins"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "1d7419a436293c0337ca346fe868cb50cfdedc18",
+        "state": "success",
+        "target_url": "",
+        "description": "2056903278:{\"PULL_REQUESTS\": \"cms-sw/cms-bot#2134\", \"SKIP_TESTS\": \"header,static\"}",
+        "context": "bot/17/test_parameters"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "remove_label",
+      "details": {
+        "issue_number": 17,
+        "label": "code-checks-pending"
+      }
+    },
+    {
+      "sequence": 7,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 17,
+        "labels": [
+          "code-checks-approved"
+        ]
+      }
+    },
+    {
+      "sequence": 8,
+      "action": "create_property_file",
+      "details": {
+        "filename": "trigger-tests-iarspider-cmssw-cmssw-17.properties",
+        "parameters": {
+          "SKIP_TESTS": "header,static",
+          "PULL_REQUESTS": "iarspider-cmssw/cmssw#17 cms-sw/cms-bot#2134",
+          "CONTEXT_PREFIX": "cms",
+          "RELEASE_FORMAT": "CMSSW_14_1_CPP20_X"
+        }
+      }
+    },
+    {
+      "sequence": 9,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 17,
+        "body": "New categories assigned: dqm, db\n\nantoniovagnerini, consuegs, francescobrivio, nothingface0, perrotta, rvenditti, saumyaphor4252, syuvivida, tjavaid you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2056796593-->"
+      }
+    },
+    {
+      "sequence": 10,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2045163329,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::08cedc77a303a689fbda9b90b2636950237425b2\"],\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"},\"2049242908\":{\"first_line\":\"+core\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"ts\":1711538467},\"2049536405\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::08cedc77a303a689fbda9b90b2636950237425b2\"],\"ts\":\"2024-04-11T11:58:16+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2045177271\":\"+1\",\"2049242908\":\"+1\",\"2049536405\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\",\"2056796593\":\"+1\",\"2056801055\":\"+1\",\"2056820593\":\"+1\",\"2056903278\":\"+1\",\"2056930228\":\"-1\",\"2056934192\":\"+1\",\"2056935714\":\"+1\",\"2056946596\":\"-1\",\"2056966759\":\"+1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::08cedc77a303a689fbda9b90b2636950237425b2\":{\"cats\":[\"core\"],\"ts\":\"2024-02-27T10:25:45Z\"}}} -->"
+      }
+    }
+  ]
+}

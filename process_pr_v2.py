@@ -1371,8 +1371,8 @@ def get_signing_checks(repo_full_name: str, target_branch: str) -> SigningChecks
     repo_org, repo_name = parts
 
     # Determine repo type
-    is_cmssw = repo_full_name == f"{GH_CMSSW_ORGANIZATION}/{GH_CMSSW_REPO}"
-    is_cmsdist = repo_full_name == f"{GH_CMSSW_ORGANIZATION}/{GH_CMSDIST_REPO}"
+    is_cmssw = repo_name == GH_CMSSW_REPO
+    is_cmsdist = repo_name == GH_CMSDIST_REPO
     is_cms_org = repo_org in EXTERNAL_REPOS
     is_cms_data = repo_org == "cms-data"
     is_cms_externals = repo_org == "cms-externals"
@@ -2067,8 +2067,7 @@ CATEGORY_PATTERN = r"[\w-]+"
 @command(
     "approve",
     rf"^\+1$|^\+({CATEGORY_PATTERN})$",
-    description="Approve PR for your L2 categories or specific category",
-    pr_only=True,
+    description="Approve for your L2 categories or specific category",
 )
 def handle_plus_one(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
@@ -2080,8 +2079,7 @@ def handle_plus_one(
 @command(
     "reject",
     rf"^-1$|^-({CATEGORY_PATTERN})$",
-    description="Reject PR for your L2 categories or specific category",
-    pr_only=True,
+    description="Reject for your L2 categories or specific category",
 )
 def handle_minus_one(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
@@ -2156,290 +2154,158 @@ def _handle_approval(
 
 
 @command(
-    "assign_category",
-    rf"^assign (?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
-    description="Assign categories for review (comma-separated)",
-    pr_only=True,
+    "assign_unassign",
+    rf"^(?P<action>assign|unassign)(?: (?:from|package))? (?P<target>(?!from$|package$)(?:{CATEGORY_PATTERN}|[\w]+/[\w/,-]+)(?:,(?:{CATEGORY_PATTERN}|[\w]+/[\w/,-]+))*)$",
+    description="Assign or unassign categories (directly or via package mapping)",
 )
-def handle_assign_category(
+def handle_assign_unassign(
     context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
-    """Handle assign <category>[,<category>,...] command."""
-    return _handle_assign(context, match, user, comment_id, timestamp, from_packages=False)
-
-
-@command(
-    "assign_from_package",
-    r"^assign from (?P<packages>[\w/,-]+(?:,[\w/,-]+)*)$",
-    description="Assign categories based on package mapping (comma-separated)",
-    pr_only=True,
-)
-def handle_assign_from_package(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
-    """Handle assign from <package>[,<package>,...] command."""
-    return _handle_assign(context, match, user, comment_id, timestamp, from_packages=True)
-
-
-def _handle_assign(
-    context: PRContext,
-    match: re.Match,
-    user: str,
-    comment_id: int,
-    timestamp: datetime,
-    from_packages: bool = False,
-) -> bool:
+) -> Optional[bool]:
     """
-    Handle assign command.
+    Handle assign/unassign commands for categories.
 
-    Syntax:
-    - assign <category>[,<category>,...]
-    - assign from <package>[,<package>,...]
+    Supported syntaxes:
+    - assign <category>
+    - assign <package>
+    - assign from <package>
+    - assign package <package>
+    - unassign <category>
+    - unassign <package>
+    - unassign from <package>
+    - unassign package <package>
 
-    Args:
-        context: PR processing context
-        match: Regex match object
-        user: Username who made the comment
-        comment_id: ID of the comment
-        timestamp: When the comment was made
-        from_packages: If True, input is package names to map to categories
-
-    Returns:
-        True if at least one category was assigned, False otherwise
+    Multiple targets can be comma-separated.
+    Package names contain '/' (e.g., Foo/Bar), category names don't.
     """
-    groups = match.groupdict()
+    action = match.group("action")  # "assign" or "unassign"
+    target_str = match.group("target")
 
-    if from_packages:
-        # Map packages to categories
-        packages_str = groups.get("packages", "")
-        packages = [p.strip() for p in packages_str.split(",") if p.strip()]
-
-        if not packages:
-            logger.warning("No packages specified for assign from command")
-            return False
-
-        categories = []
-        invalid_packages = []
-
-        for pkg in packages:
-            cat = get_package_category(context.repo_config, pkg)
-            if cat:
-                if cat not in categories:
-                    categories.append(cat)
-            else:
-                invalid_packages.append(pkg)
-
-        if invalid_packages:
-            logger.warning(
-                f"No category mapping found for packages: {', '.join(invalid_packages)}"
-            )
-            context.messages.append(f"Unknown packages: {', '.join(invalid_packages)}")
-
-        if not categories:
-            return False
-    else:
-        # Direct category assignment
-        categories_str = groups.get("categories", "")
-        categories = [c.strip() for c in categories_str.split(",") if c.strip()]
-
-        if not categories:
-            logger.warning("No categories specified for assign command")
-            return False
-
-        # Validate categories exist in CMSSW_CATEGORIES
-        valid_categories = []
-        invalid_categories = []
-
-        for cat in categories:
-            if cat in CMSSW_CATEGORIES:
-                valid_categories.append(cat)
-            else:
-                invalid_categories.append(cat)
-
-        if invalid_categories:
-            logger.warning(f"Invalid categories: {', '.join(invalid_categories)}")
-            context.messages.append(f"Unknown categories: {', '.join(invalid_categories)}")
-
-        if not valid_categories:
-            return False
-
-        categories = valid_categories
-
-    # Determine which categories are truly new
-    new_categories = [cat for cat in categories if cat not in context.signing_categories]
-
-    if new_categories:
-        # Add new categories to signing_categories
-        context.signing_categories.update(new_categories)
-
-        # Track these as manually assigned (for unassign command)
-        context.manually_assigned_categories.update(new_categories)
-
-        # Get L2s for the new categories
-        new_l2s = set()
-        for cat in new_categories:
-            cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
-            new_l2s.update(cat_l2s)
-
-        # Post message about new categories
-        if new_l2s:
-            l2_mentions = ", ".join(format_mention(context, l2) for l2 in sorted(new_l2s))
-            msg = (
-                f"New categories assigned: {', '.join(new_categories)}\n\n"
-                f"{l2_mentions} you have been requested to review this Pull request/Issue "
-                "and eventually sign. Thanks"
-            )
-            post_bot_comment(context, msg, "assign", comment_id)
-
-    logger.info(f"Assigned categories: {', '.join(categories)}")
-    return True
-
-
-@command(
-    "unassign_category",
-    rf"^unassign (?P<categories>(?:{CATEGORY_PATTERN})(?:,(?:{CATEGORY_PATTERN}))*)$",
-    description="Remove category assignment (comma-separated)",
-    pr_only=True,
-)
-def handle_unassign_category(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
-    """Handle unassign <category>[,<category>,...] command."""
-    return _handle_unassign(context, match, user, comment_id, timestamp, from_packages=False)
-
-
-@command(
-    "unassign_from_package",
-    r"^unassign from (?P<packages>[\w/,-]+(?:,[\w/,-]+)*)$",
-    description="Remove category assignment based on package (comma-separated)",
-    pr_only=True,
-)
-def handle_unassign_from_package(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
-    """Handle unassign from <package>[,<package>,...] command."""
-    return _handle_unassign(context, match, user, comment_id, timestamp, from_packages=True)
-
-
-def _handle_unassign(
-    context: PRContext,
-    match: re.Match,
-    user: str,
-    comment_id: int,
-    timestamp: datetime,
-    from_packages: bool = False,
-) -> bool:
-    """
-    Handle unassign command.
-
-    Only removes categories that were manually assigned via 'assign' command.
-    Categories that are automatically assigned based on file changes cannot
-    be unassigned.
-
-    Syntax:
-    - unassign <category>[,<category>,...]
-    - unassign from <package>[,<package>,...]
-
-    Args:
-        context: PR processing context
-        match: Regex match object
-        user: Username who made the comment
-        comment_id: ID of the comment
-        timestamp: When the comment was made
-        from_packages: If True, input is package names to map to categories
-
-    Returns:
-        True if at least one category was unassigned, False otherwise
-    """
-    groups = match.groupdict()
-
-    if from_packages:
-        # Map packages to categories
-        packages_str = groups.get("packages", "")
-        packages = [p.strip() for p in packages_str.split(",") if p.strip()]
-
-        if not packages:
-            logger.warning("No packages specified for unassign from command")
-            return False
-
-        categories = []
-        invalid_packages = []
-
-        for pkg in packages:
-            cat = get_package_category(context.repo_config, pkg)
-            if cat:
-                if cat not in categories:
-                    categories.append(cat)
-            else:
-                invalid_packages.append(pkg)
-
-        if invalid_packages:
-            logger.warning(
-                f"No category mapping found for packages: {', '.join(invalid_packages)}"
-            )
-            context.messages.append(f"Unknown packages: {', '.join(invalid_packages)}")
-
-        if not categories:
-            return False
-    else:
-        # Direct category unassignment
-        categories_str = groups.get("categories", "")
-        categories = [c.strip() for c in categories_str.split(",") if c.strip()]
-
-        if not categories:
-            logger.warning("No categories specified for unassign command")
-            return False
-
-        # Validate categories exist in CMSSW_CATEGORIES
-        valid_categories = []
-        invalid_categories = []
-
-        for cat in categories:
-            if cat in CMSSW_CATEGORIES:
-                valid_categories.append(cat)
-            else:
-                invalid_categories.append(cat)
-
-        if invalid_categories:
-            logger.warning(f"Invalid categories: {', '.join(invalid_categories)}")
-            context.messages.append(f"Unknown categories: {', '.join(invalid_categories)}")
-
-        if not valid_categories:
-            return False
-
-        categories = valid_categories
-
-    # Only remove categories that were manually assigned
-    # Categories from file changes cannot be unassigned
-    removable = []
-    not_manually_assigned = []
-
-    for cat in categories:
-        if cat in context.manually_assigned_categories:
-            removable.append(cat)
-        else:
-            not_manually_assigned.append(cat)
-
-    if not_manually_assigned:
-        logger.warning(
-            f"Cannot unassign categories that were not manually assigned: "
-            f"{', '.join(not_manually_assigned)}"
-        )
-        context.messages.append(
-            f"Cannot unassign categories (not manually assigned): "
-            f"{', '.join(not_manually_assigned)}"
-        )
-
-    if not removable:
+    # Split targets by comma
+    targets = [t.strip() for t in target_str.split(",") if t.strip()]
+    if not targets:
+        logger.warning(f"No targets specified for {action} command")
         return False
 
-    # Remove categories from both signing_categories and manually_assigned_categories
-    for cat in removable:
-        context.signing_categories.discard(cat)
-        context.manually_assigned_categories.discard(cat)
+    # Separate packages (contain '/') from direct categories
+    packages = []
+    direct_categories = []
 
-    logger.info(f"Unassigned categories: {', '.join(removable)}")
-    return True
+    for target in targets:
+        if "/" in target:
+            packages.append(target)
+        else:
+            direct_categories.append(target)
+
+    # Resolve all targets to categories
+    categories = []
+    invalid_items = []
+
+    # Process direct categories - validate against CMSSW_CATEGORIES
+    # If not a valid category, try as a package name
+    for cat in direct_categories:
+        if cat in CMSSW_CATEGORIES:
+            if cat not in categories:
+                categories.append(cat)
+        else:
+            # Not a category - try as a package name
+            mapped_cat = get_package_category(context.repo_config, cat)
+            if mapped_cat:
+                if mapped_cat not in categories:
+                    categories.append(mapped_cat)
+            else:
+                invalid_items.append(cat)
+
+    # Process packages (with '/') -> map to categories via repo config
+    for pkg in packages:
+        cat = get_package_category(context.repo_config, pkg)
+        if cat:
+            if cat not in categories:
+                categories.append(cat)
+        else:
+            invalid_items.append(pkg)
+
+    # Report invalid items
+    if invalid_items:
+        logger.warning(f"Unknown categories/packages for {action}: {', '.join(invalid_items)}")
+        context.messages.append(f"Unknown categories/packages: {', '.join(invalid_items)}")
+
+    if not categories:
+        return False
+
+    # Perform the action
+    if action == "assign":
+        # Determine which categories are truly new
+        new_categories = [cat for cat in categories if cat not in context.signing_categories]
+
+        if new_categories:
+            # Add new categories to signing_categories
+            context.signing_categories.update(new_categories)
+
+            # Track these as manually assigned (for unassign command)
+            context.manually_assigned_categories.update(new_categories)
+
+            # Get L2s for the new categories and notify them
+            new_l2s = set()
+            for cat in new_categories:
+                cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+                new_l2s.update(cat_l2s)
+
+            if new_l2s:
+                l2_mentions = ", ".join(format_mention(context, l2) for l2 in sorted(new_l2s))
+                msg = (
+                    f"New categories assigned: {', '.join(new_categories)}\n\n"
+                    f"{l2_mentions} you have been requested to review this Pull request/Issue "
+                    "and eventually sign. Thanks"
+                )
+                post_bot_comment(context, msg, "assign", comment_id)
+
+        # Add nonblocking labels for packages
+        # Packages are stored in the 'packages' list (items with '/')
+        # Also check direct_categories that were mapped via get_package_category
+        all_packages = packages.copy()
+        for item in direct_categories:
+            if item not in CMSSW_CATEGORIES:
+                # This was treated as a package name
+                all_packages.append(item)
+
+        if all_packages:
+            add_nonblocking_labels(all_packages, context.pending_labels)
+
+        logger.info(f"Assigned categories: {', '.join(categories)}")
+        return True
+
+    else:  # unassign
+        # Only remove categories that were manually assigned
+        # Categories from file changes cannot be unassigned
+        removable = []
+        not_manually_assigned = []
+
+        for cat in categories:
+            if cat in context.manually_assigned_categories:
+                removable.append(cat)
+            else:
+                not_manually_assigned.append(cat)
+
+        if not_manually_assigned:
+            logger.warning(
+                f"Cannot unassign categories that were not manually assigned: "
+                f"{', '.join(not_manually_assigned)}"
+            )
+            context.messages.append(
+                f"Cannot unassign categories (not manually assigned): "
+                f"{', '.join(not_manually_assigned)}"
+            )
+
+        if not removable:
+            return False
+
+        # Remove categories from both signing_categories and manually_assigned_categories
+        for cat in removable:
+            context.signing_categories.discard(cat)
+            context.manually_assigned_categories.discard(cat)
+
+        logger.info(f"Unassigned categories: {', '.join(removable)}")
+        return True
 
 
 @command("hold", r"^hold$", description="Place a hold to prevent automerge", pr_only=True)

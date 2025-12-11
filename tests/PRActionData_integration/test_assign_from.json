@@ -1,0 +1,30 @@
+{
+  "test_name": "test_assign_from",
+  "action_count": 3,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 2769192218,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 27,
+        "body": "New categories assigned: core\n\nDr15Jones, makortel, smuzaffar you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2769192218-->"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2769190932,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"2769192218\":\"+1\"},\"fv\":{}} -->"
+      }
+    }
+  ]
+}

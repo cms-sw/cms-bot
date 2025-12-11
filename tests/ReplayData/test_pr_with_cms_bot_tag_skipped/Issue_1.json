@@ -9,5 +9,8 @@
     "id": 1
   },
   "labels": [],
-  "comments": 1
+  "comments": 1,
+  "pull_request": {
+    "url": "https://api.github.com/repos/org/repo/pulls/1"
+  }
 }

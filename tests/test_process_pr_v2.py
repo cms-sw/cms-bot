@@ -23,6 +23,7 @@ import json
 import os
 import sys
 import types
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -37,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import the module under test
 from process_pr_v2 import (
     PRContext,
+    SigningChecks,
     TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
     TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
@@ -47,6 +49,7 @@ from process_pr_v2 import (
     create_property_file,
     extract_command_line,
     format_mention,
+    get_signing_checks,
     init_l2_data,
     is_valid_tester,
     parse_test_cmd,
@@ -1017,6 +1020,27 @@ class MockPullRequest:
             _recorder=self._recorder,
         )
 
+    def edit(
+        self,
+        state: str = None,
+        milestone: "MockMilestone" = None,
+        **kwargs,
+    ) -> None:
+        """Edit the PR (state, milestone, etc.)."""
+        if self._recorder:
+            record_data = {"pr_number": self.number}
+            if state is not None:
+                record_data["state"] = state
+            if milestone is not None:
+                record_data["milestone"] = milestone.title if milestone else None
+            record_data.update(kwargs)
+            self._recorder.record("edit_pr", **record_data)
+
+        if state is not None:
+            self.state = state
+        if milestone is not None:
+            self.milestone = milestone
+
 
 class MockIssue:
     """Mock for github.Issue.Issue"""
@@ -1026,16 +1050,23 @@ class MockIssue:
         test_name: str,
         number: int,
         recorder: ActionRecorder = None,
-        is_issue: bool = False,  # If True, this is an issue, not a PR
+        is_issue: bool = None,  # If None, auto-detect from JSON data
         comments_data: Optional[List[Dict]] = None,  # Optional inline comments data
     ):
         self.test_name = test_name
         self.number = number
         self._recorder = recorder
-        self._is_issue = is_issue
 
         # Load data from JSON
         data = load_json_data(test_name, "Issue", number)
+
+        # Auto-detect if this is an issue or PR based on 'pull_request' key in JSON
+        # If is_issue is explicitly provided, use that; otherwise check JSON data
+        if is_issue is not None:
+            self._is_issue = is_issue
+        else:
+            # GitHub API includes 'pull_request' key for PRs (even if just a URL object)
+            self._is_issue = "pull_request" not in data or data.get("pull_request") is None
 
         self.id = data.get("id", number)
         self.title = data.get("title", f"Issue #{number}")
@@ -1069,7 +1100,7 @@ class MockIssue:
             self._comments = self._load_comments(None)
 
         # Associated PR (if this is a PR issue)
-        self._pull_request = None if is_issue else "pending"
+        self._pull_request = None if self._is_issue else "pending"
 
     def _load_comments(self, comments_data: Optional[List[Dict]]) -> List[MockIssueComment]:
         """Load issue comments from data."""
@@ -1135,6 +1166,27 @@ class MockIssue:
         )
         self._comments.append(comment)
         return comment
+
+    def edit(
+        self,
+        state: str = None,
+        milestone: "MockMilestone" = None,
+        **kwargs,
+    ) -> None:
+        """Edit the issue (state, milestone, etc.)."""
+        if self._recorder:
+            record_data = {"issue_number": self.number}
+            if state is not None:
+                record_data["state"] = state
+            if milestone is not None:
+                record_data["milestone"] = milestone.title if milestone else None
+            record_data.update(kwargs)
+            self._recorder.record("edit_issue", **record_data)
+
+        if state is not None:
+            self.state = state
+        if milestone is not None:
+            self.milestone = milestone
 
     @property
     def pull_request(self):
@@ -1408,6 +1460,7 @@ def create_basic_pr_data(
 
     # Create Issue data (for the PR)
     # Note: In GitHub API, issue["comments"] is a count, not the actual comments
+    # Note: issue["pull_request"] indicates this Issue is associated with a PR
     issue_data = {
         "id": pr_number,
         "number": pr_number,
@@ -1417,6 +1470,9 @@ def create_basic_pr_data(
         "user": {"login": "testuser", "id": 1},
         "labels": [{"name": l} for l in labels],
         "comments": len(comments),  # Count, not the actual comments
+        "pull_request": {  # This indicates it's a PR, not a plain Issue
+            "url": f"https://api.github.com/repos/org/repo/pulls/{pr_number}",
+        },
     }
 
     save_json_data(test_name, "Issue", pr_number, issue_data)
@@ -6782,7 +6838,7 @@ class TestUnassignManuallyAssignedOnly:
 
     def test_unassign_manually_assigned_category(self):
         """Test that unassign removes manually assigned categories."""
-        from process_pr_v2 import _handle_assign, _handle_unassign, PRContext
+        from process_pr_v2 import handle_assign_unassign, PRContext
 
         # Create mock context
         context = MagicMock(spec=PRContext)
@@ -6790,16 +6846,17 @@ class TestUnassignManuallyAssignedOnly:
         context.manually_assigned_categories = set()
         context.messages = []
         context.repo_config = MagicMock()
+        context.is_pr = True
 
         # Mock a valid match for assign
         assign_match = MagicMock()
-        assign_match.groupdict.return_value = {"categories": "core"}
+        assign_match.group = lambda x: {"action": "assign", "target": "core"}[x]
 
         # Assign a category
         with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
             with patch("process_pr_v2.get_category_l2s", return_value=[]):
                 with patch("process_pr_v2.post_bot_comment"):
-                    _handle_assign(
+                    handle_assign_unassign(
                         context, assign_match, "user1", 1, datetime.now(tz=timezone.utc)
                     )
 
@@ -6808,10 +6865,10 @@ class TestUnassignManuallyAssignedOnly:
 
         # Now unassign
         unassign_match = MagicMock()
-        unassign_match.groupdict.return_value = {"categories": "core"}
+        unassign_match.group = lambda x: {"action": "unassign", "target": "core"}[x]
 
         with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
-            result = _handle_unassign(
+            result = handle_assign_unassign(
                 context, unassign_match, "user1", 2, datetime.now(tz=timezone.utc)
             )
 
@@ -6821,7 +6878,7 @@ class TestUnassignManuallyAssignedOnly:
 
     def test_unassign_non_manually_assigned_category_fails(self):
         """Test that unassign fails for categories not manually assigned."""
-        from process_pr_v2 import _handle_unassign, PRContext
+        from process_pr_v2 import handle_assign_unassign, PRContext
 
         # Create mock context with a category that was NOT manually assigned
         context = MagicMock(spec=PRContext)
@@ -6829,13 +6886,14 @@ class TestUnassignManuallyAssignedOnly:
         context.manually_assigned_categories = set()  # But NOT in manually_assigned
         context.messages = []
         context.repo_config = MagicMock()
+        context.is_pr = True
 
         # Try to unassign
         unassign_match = MagicMock()
-        unassign_match.groupdict.return_value = {"categories": "core"}
+        unassign_match.group = lambda x: {"action": "unassign", "target": "core"}[x]
 
         with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
-            result = _handle_unassign(
+            result = handle_assign_unassign(
                 context, unassign_match, "user1", 1, datetime.now(tz=timezone.utc)
             )
 
@@ -6848,7 +6906,7 @@ class TestUnassignManuallyAssignedOnly:
 
     def test_unassign_mixed_categories(self):
         """Test unassign with mix of manually and non-manually assigned categories."""
-        from process_pr_v2 import _handle_unassign, PRContext
+        from process_pr_v2 import handle_assign_unassign, PRContext
 
         # Create mock context with both types of categories
         context = MagicMock(spec=PRContext)
@@ -6856,13 +6914,14 @@ class TestUnassignManuallyAssignedOnly:
         context.manually_assigned_categories = {"analysis"}  # Only analysis was manually assigned
         context.messages = []
         context.repo_config = MagicMock()
+        context.is_pr = True
 
         # Try to unassign both
         unassign_match = MagicMock()
-        unassign_match.groupdict.return_value = {"categories": "core,analysis"}
+        unassign_match.group = lambda x: {"action": "unassign", "target": "core,analysis"}[x]
 
         with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
-            result = _handle_unassign(
+            result = handle_assign_unassign(
                 context, unassign_match, "user1", 1, datetime.now(tz=timezone.utc)
             )
 
@@ -7090,6 +7149,21 @@ class TestOldTestForProcessPR:
 
     def test_assign(self):
         self._run(17)
+
+    def test_assign_from_invalid(self):
+        self._run(27)
+
+    def test_assign_from(self):
+        self._run(27)
+
+    def test_assign_from_with_label(self):
+        self._run(27)
+
+    def test_backport(self):
+        self._run(26)
+
+    def test_backport_already_seen(self):
+        self._run(26)
 
 
 # =============================================================================

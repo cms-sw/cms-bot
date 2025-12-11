@@ -52,7 +52,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "code-checks-approved"
+          "orp-pending"
         ]
       }
     },
@@ -62,7 +62,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "signatures-pending"
+          "pending-signatures"
         ]
       }
     },
@@ -72,7 +72,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "orp-pending"
+          "code-checks-approved"
         ]
       }
     },

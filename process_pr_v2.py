@@ -1329,7 +1329,7 @@ class SigningChecks:
     extra_checks: List[str] = field(default_factory=list)
 
 
-def get_signing_checks(repo_full_name: str, target_branch: str) -> SigningChecks:
+def get_signing_checks(context: "PRContext") -> SigningChecks:
     """
     Determine required signing checks based on repository and target branch.
 
@@ -1353,8 +1353,7 @@ def get_signing_checks(repo_full_name: str, target_branch: str) -> SigningChecks
     * = only if repo is in VALID_CMS_SW_REPOS_FOR_TESTS
 
     Args:
-        repo_full_name: Full repository name (e.g., "cms-sw/cmssw")
-        target_branch: Target branch for the PR (e.g., "master", "CMSSW_14_0_X")
+        context: PR processing context
 
     Returns:
         SigningChecks with pre_checks and extra_checks lists
@@ -1362,18 +1361,17 @@ def get_signing_checks(repo_full_name: str, target_branch: str) -> SigningChecks
     pre_checks: List[str] = []
     extra_checks: List[str] = []
 
-    # Parse repo org and name
-    parts = repo_full_name.split("/", 1)
-    if len(parts) != 2:
-        # Invalid repo name, return minimal checks
-        return SigningChecks(pre_checks=[], extra_checks=["tests"])
+    # Use PRContext properties for repo info
+    repo_name = context.repo_name
+    repo_org = context.repo_org
+    target_branch = context.target_branch
 
-    repo_org, repo_name = parts
-
-    # Determine repo type
-    is_cmssw = repo_name == GH_CMSSW_REPO
-    is_cmsdist = repo_name == GH_CMSDIST_REPO
-    is_cms_org = repo_org in EXTERNAL_REPOS
+    # Determine repo type using PRContext properties
+    is_cmssw = context.cmssw_repo
+    is_cmsdist = context.cmsdist_repo
+    is_cms_org = context.cms_repo
+    is_cms_data = repo_org == "cms-data"
+    is_cms_externals = repo_org == "cms-externals"
     is_cms_data = repo_org == "cms-data"
     is_cms_externals = repo_org == "cms-externals"
 
@@ -1879,6 +1877,11 @@ class PRContext:
         return self.repo_name == GH_CMSSW_REPO
 
     @property
+    def cmsdist_repo(self) -> bool:
+        """Check if this is the CMSDIST repo."""
+        return self.repo_name == GH_CMSDIST_REPO
+
+    @property
     def cms_repo(self) -> bool:
         """Check if this is a CMS organization repo."""
         return self.repo_org in EXTERNAL_REPOS
@@ -1916,7 +1919,7 @@ class PRContext:
         Returns:
             SigningChecks with pre_checks and extra_checks lists
         """
-        return get_signing_checks(self.repo_full_name, self.target_branch)
+        return get_signing_checks(self)
 
 
 def format_mention(context: PRContext, username: str) -> str:
@@ -4774,33 +4777,8 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
     if context.is_pr:
         pr_state = determine_pr_state(context)
 
-        state_labels = {
-            PRState.TESTS_PENDING: "tests-pending",
-            PRState.SIGNATURES_PENDING: "signatures-pending",
-            PRState.FULLY_SIGNED: "fully-signed",
-            PRState.MERGED: "merged",
-        }
-
-        # Compute new state labels
-        for state, label in state_labels.items():
-            if state == pr_state:
-                new_labels.add(label)
-                if label not in old_labels:
-                    labels_to_add.add(label)
-            else:
-                if label in old_labels:
-                    labels_to_remove.add(label)
-
-        # Handle draft PR - use fully-signed-draft instead of fully-signed
-        if context.is_draft and pr_state == PRState.FULLY_SIGNED:
-            new_labels.discard("fully-signed")
-            new_labels.add("fully-signed-draft")
-            labels_to_add.discard("fully-signed")
-            labels_to_add.add("fully-signed-draft")
-            if "fully-signed-draft" in old_labels:
-                labels_to_add.discard("fully-signed-draft")
-
         # Handle category state labels (<cat>-pending, <cat>-approved, <cat>-rejected)
+        # This must come FIRST so we know what categories are pending
         category_states = compute_category_approval_states(context)
         state_suffixes = {
             ApprovalState.PENDING: "-pending",
@@ -4821,6 +4799,57 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
                     old_label = f"{cat}{suffix}"
                     if old_label in old_labels:
                         labels_to_remove.add(old_label)
+
+        # Overall state labels
+        # - "pending-signatures" = any category is pending or rejected (not fully signed)
+        # - "fully-signed" = all categories approved
+        # - "merged" = PR is merged
+        # Note: "tests-pending" and "signatures-pending" are NOT used as overall labels
+        # because they conflict with category labels. Use "pending-signatures" instead.
+        overall_state_labels = [
+            "pending-signatures",
+            "fully-signed",
+            "fully-signed-draft",
+            "merged",
+        ]
+
+        if pr_state == PRState.MERGED:
+            # Merged - only "merged" label
+            new_labels.add("merged")
+            if "merged" not in old_labels:
+                labels_to_add.add("merged")
+            # Remove other overall state labels
+            for label in overall_state_labels:
+                if label != "merged" and label in old_labels:
+                    labels_to_remove.add(label)
+        elif pr_state == PRState.FULLY_SIGNED:
+            # Fully signed
+            if context.is_draft:
+                new_labels.add("fully-signed-draft")
+                if "fully-signed-draft" not in old_labels:
+                    labels_to_add.add("fully-signed-draft")
+                if "fully-signed" in old_labels:
+                    labels_to_remove.add("fully-signed")
+            else:
+                new_labels.add("fully-signed")
+                if "fully-signed" not in old_labels:
+                    labels_to_add.add("fully-signed")
+                if "fully-signed-draft" in old_labels:
+                    labels_to_remove.add("fully-signed-draft")
+            # Remove pending-signatures and merged
+            if "pending-signatures" in old_labels:
+                labels_to_remove.add("pending-signatures")
+            if "merged" in old_labels:
+                labels_to_remove.add("merged")
+        else:
+            # Not fully signed (TESTS_PENDING or SIGNATURES_PENDING)
+            new_labels.add("pending-signatures")
+            if "pending-signatures" not in old_labels:
+                labels_to_add.add("pending-signatures")
+            # Remove fully-signed labels and merged
+            for label in ["fully-signed", "fully-signed-draft", "merged"]:
+                if label in old_labels:
+                    labels_to_remove.add(label)
 
         # Add auto-labels based on file patterns
         auto_labels = get_labels_for_pr(context)
@@ -5577,7 +5606,7 @@ def _build_cmssw_welcome_message(
     extra_rm = get_release_managers(branch)
 
     # For CMSDIST, also get managers for the base branch
-    if context.repo_name == GH_CMSDIST_REPO:
+    if context.cmsdist_repo:
         parts = branch.split("/")
         if len(parts) >= 2:
             br = "_".join(parts[-1].split("_")[:3]) + "_X"
@@ -5969,7 +5998,7 @@ def process_pr(
                 context.create_test_property = True
 
             # Skip invalid CMSDIST branches
-            if context.repo_name == GH_CMSDIST_REPO:
+            if context.cmsdist_repo:
                 if not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref):
                     logger.error("Skipping PR as it does not belong to valid CMSDIST branch")
                     return {

@@ -1,6 +1,6 @@
 {
   "test_name": "test_abort",
-  "action_count": 7,
+  "action_count": 6,
   "actions": [
     {
       "sequence": 1,
@@ -30,16 +30,6 @@
     },
     {
       "sequence": 4,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 17,
-        "labels": [
-          "signatures-pending"
-        ]
-      }
-    },
-    {
-      "sequence": 5,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-abort-iarspider-cmssw-cmssw-17.properties",
@@ -49,7 +39,7 @@
       }
     },
     {
-      "sequence": 6,
+      "sequence": 5,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -57,7 +47,7 @@
       }
     },
     {
-      "sequence": 7,
+      "sequence": 6,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

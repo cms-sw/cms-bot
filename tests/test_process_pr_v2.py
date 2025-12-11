@@ -49,7 +49,6 @@ from process_pr_v2 import (
     create_property_file,
     extract_command_line,
     format_mention,
-    get_signing_checks,
     init_l2_data,
     is_valid_tester,
     parse_test_cmd,
@@ -6724,11 +6723,27 @@ class TestGetSigningChecks:
         # Mock CMSSW_DEVEL_BRANCH
         monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
 
+    def _make_mock_context(self, repo_name: str, repo_org: str, target_branch: str):
+        """Create a mock PRContext with repo info."""
+        context = MagicMock()
+        context.repo_name = repo_name
+        context.repo_org = repo_org
+        context.target_branch = target_branch
+
+        # Set up derived properties
+        context.cmssw_repo = repo_name == "cmssw"
+        context.cmsdist_repo = repo_name == "cmsdist"
+        context.cms_repo = repo_org in ["cms-sw", "cms-data", "cms-externals"]
+        context.repo_full_name = f"{repo_org}/{repo_name}"
+
+        return context
+
     def test_cmssw_master_branch(self):
         """Test checks for cms-sw/cmssw on master branch."""
         from process_pr_v2 import get_signing_checks
 
-        result = get_signing_checks("cms-sw/cmssw", "master")
+        context = self._make_mock_context("cmssw", "cms-sw", "master")
+        result = get_signing_checks(context)
 
         # Master branch should have code-checks as pre-check
         assert "code-checks" in result.pre_checks
@@ -6743,7 +6758,8 @@ class TestGetSigningChecks:
         from process_pr_v2 import get_signing_checks
 
         # Use a branch that is NOT in the forward-ports list
-        result = get_signing_checks("cms-sw/cmssw", "CMSSW_12_0_X")
+        context = self._make_mock_context("cmssw", "cms-sw", "CMSSW_12_0_X")
+        result = get_signing_checks(context)
 
         # Non-forward-port branch should NOT have code-checks
         assert "code-checks" not in result.pre_checks
@@ -6758,7 +6774,8 @@ class TestGetSigningChecks:
         from process_pr_v2 import get_signing_checks
 
         # CMSSW_14_0_X is in the forward-ports list for CMSSW_14_1_X (devel branch)
-        result = get_signing_checks("cms-sw/cmssw", "CMSSW_14_0_X")
+        context = self._make_mock_context("cmssw", "cms-sw", "CMSSW_14_0_X")
+        result = get_signing_checks(context)
 
         # Forward-port branch SHOULD have code-checks (like master)
         assert "code-checks" in result.pre_checks
@@ -6772,7 +6789,8 @@ class TestGetSigningChecks:
         """Test checks for cms-sw/cmsdist."""
         from process_pr_v2 import get_signing_checks
 
-        result = get_signing_checks("cms-sw/cmsdist", "IB/CMSSW_14_0_X/master")
+        context = self._make_mock_context("cmsdist", "cms-sw", "IB/CMSSW_14_0_X/master")
+        result = get_signing_checks(context)
 
         # Should NOT have code-checks
         assert "code-checks" not in result.pre_checks
@@ -6785,7 +6803,10 @@ class TestGetSigningChecks:
         """Test checks for cms-data/* repositories."""
         from process_pr_v2 import get_signing_checks
 
-        result = get_signing_checks("cms-data/RecoEgamma-ElectronIdentification", "master")
+        context = self._make_mock_context(
+            "RecoEgamma-ElectronIdentification", "cms-data", "master"
+        )
+        result = get_signing_checks(context)
 
         # Should NOT have code-checks
         assert "code-checks" not in result.pre_checks
@@ -6797,7 +6818,8 @@ class TestGetSigningChecks:
         """Test checks for cms-externals/* repositories."""
         from process_pr_v2 import get_signing_checks
 
-        result = get_signing_checks("cms-externals/coral", "master")
+        context = self._make_mock_context("coral", "cms-externals", "master")
+        result = get_signing_checks(context)
 
         # Should NOT have code-checks
         assert "code-checks" not in result.pre_checks
@@ -6809,22 +6831,14 @@ class TestGetSigningChecks:
         """Test checks for non-CMS repositories."""
         from process_pr_v2 import get_signing_checks
 
-        result = get_signing_checks("some-org/some-repo", "main")
+        context = self._make_mock_context("some-repo", "some-org", "main")
+        result = get_signing_checks(context)
 
         # Should NOT have code-checks, orp, or externals
         assert "code-checks" not in result.pre_checks
         assert "orp" not in result.extra_checks
         assert "externals" not in result.extra_checks
         # Should only have tests
-        assert "tests" in result.extra_checks
-
-    def test_invalid_repo_name(self):
-        """Test checks with invalid repository name."""
-        from process_pr_v2 import get_signing_checks
-
-        result = get_signing_checks("invalid", "master")
-
-        # Should return minimal checks
         assert "tests" in result.extra_checks
 
 

@@ -1,6 +1,6 @@
 {
   "test_name": "test_backport_already_seen",
-  "action_count": 4,
+  "action_count": 2,
   "actions": [
     {
       "sequence": 1,
@@ -12,24 +12,6 @@
     },
     {
       "sequence": 2,
-      "action": "remove_label",
-      "details": {
-        "issue_number": 26,
-        "label": "tests-pending"
-      }
-    },
-    {
-      "sequence": 3,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 26,
-        "labels": [
-          "signatures-pending"
-        ]
-      }
-    },
-    {
-      "sequence": 4,
       "action": "edit_comment",
       "details": {
         "comment_id": 2761389356,

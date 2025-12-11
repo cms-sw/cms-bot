@@ -1,6 +1,6 @@
 {
   "test_name": "test_assign",
-  "action_count": 7,
+  "action_count": 6,
   "actions": [
     {
       "sequence": 1,
@@ -24,7 +24,7 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "db-pending"
+          "dqm-pending"
         ]
       }
     },
@@ -34,22 +34,12 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "signatures-pending"
+          "db-pending"
         ]
       }
     },
     {
       "sequence": 5,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 17,
-        "labels": [
-          "dqm-pending"
-        ]
-      }
-    },
-    {
-      "sequence": 6,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -57,7 +47,7 @@
       }
     },
     {
-      "sequence": 7,
+      "sequence": 6,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

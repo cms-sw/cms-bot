@@ -2470,9 +2470,11 @@ def handle_close(
     Handle close command.
 
     Can be used by L2s, release managers, and issue trackers.
+    Cancels any previous 'reopen' command.
     """
     # ACL check would be done at command dispatch level
     context.must_close = True
+    context.should_reopen = False  # Cancel any previous reopen
     logger.info(f"Close requested by {user}")
     return True
 
@@ -2485,8 +2487,10 @@ def handle_reopen(
     Handle open/reopen command.
 
     Can be used by L2s, release managers, and issue trackers.
+    Cancels any previous 'close' command.
     """
     context.should_reopen = True
+    context.must_close = False  # Cancel any previous close
     logger.info(f"Reopen requested by {user}")
     return True
 

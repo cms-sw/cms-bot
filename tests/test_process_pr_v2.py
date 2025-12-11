@@ -23,7 +23,6 @@ import json
 import os
 import sys
 import types
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -38,7 +37,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Import the module under test
 from process_pr_v2 import (
     PRContext,
-    SigningChecks,
     TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
     TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
     TOO_MANY_COMMITS_FAIL_THRESHOLD,
@@ -750,6 +748,31 @@ class MockCommit:
             pass
         return MockPaginatedList([])
 
+    def create_status(
+        self,
+        state: str,
+        target_url: str = None,
+        description: str = None,
+        context: str = None,
+    ) -> MockCommitStatus:
+        """Create a commit status."""
+        if self._recorder:
+            self._recorder.record(
+                "create_status",
+                sha=self.sha,
+                state=state,
+                target_url=target_url,
+                description=description,
+                context=context,
+            )
+
+        return MockCommitStatus(
+            state=state,
+            description=description or "",
+            context=context or "",
+            target_url=target_url or "",
+        )
+
 
 @dataclass
 class MockFile:
@@ -1174,7 +1197,7 @@ class MockIssue:
     ) -> None:
         """Edit the issue (state, milestone, etc.)."""
         if self._recorder:
-            record_data = {"issue_number": self.number}
+            record_data: dict[str, Any] = {"issue_number": self.number}
             if state is not None:
                 record_data["state"] = state
             if milestone is not None:
@@ -7178,6 +7201,9 @@ class TestOldTestForProcessPR:
 
     def test_backport_already_seen(self):
         self._run(26)
+
+    def test_clean_squash(self):
+        self._run(17)
 
 
 # =============================================================================

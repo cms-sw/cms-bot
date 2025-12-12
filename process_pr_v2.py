@@ -745,6 +745,7 @@ def update_milestone(repo, issue, pr, dry_run: bool = False) -> None:
     logger.info(f"Setting milestone to {milestone.title}")
 
     if dry_run:
+        logger.info(f"[DRY RUN] Would set milestone to {milestone.title}")
         return
 
     issue.edit(milestone=milestone)
@@ -1078,10 +1079,6 @@ def save_cache_to_comments(
         if body.startswith(CACHE_COMMENT_MARKER):
             existing_cache_comments.append(comment)
 
-    if dry_run:
-        logger.info(f"[DRY RUN] Would save cache ({len(chunks)} chunk(s))")
-        return
-
     # Update or create comments
     for i, chunk in enumerate(chunks):
         comment_body = f"{CACHE_COMMENT_MARKER} {chunk} {CACHE_COMMENT_END}"
@@ -1093,19 +1090,30 @@ def save_cache_to_comments(
                 logger.debug(f"Cache comment {i + 1}/{len(chunks)} unchanged, skipping")
                 continue
             # Update existing comment
-            existing_cache_comments[i].edit(comment_body)
-            logger.debug(f"Updated cache comment {i + 1}/{len(chunks)}")
+            if dry_run:
+                logger.info(f"[DRY RUN] Would update cache comment {i + 1}/{len(chunks)}")
+            else:
+                existing_cache_comments[i].edit(comment_body)
+                logger.debug(f"Updated cache comment {i + 1}/{len(chunks)}")
         else:
             # Create new comment
-            issue.create_comment(comment_body)
-            logger.debug(f"Created cache comment {i + 1}/{len(chunks)}")
+            if dry_run:
+                logger.info(f"[DRY RUN] Would create cache comment {i + 1}/{len(chunks)}")
+            else:
+                issue.create_comment(comment_body)
+                logger.debug(f"Created cache comment {i + 1}/{len(chunks)}")
 
     # Delete extra old comments if new cache is smaller
     for i, comment in enumerate(existing_cache_comments[len(chunks) :], start=len(chunks)):
-        logger.debug(
-            f"Deleting extra cache comment {i + 1 - len(chunks)}/{len(existing_cache_comments) - len(chunks)}"
-        )
-        comment.delete()
+        if dry_run:
+            logger.info(
+                f"[DRY RUN] Would delete extra cache comment {i + 1 - len(chunks)}/{len(existing_cache_comments) - len(chunks)}"
+            )
+        else:
+            logger.debug(
+                f"Deleting extra cache comment {i + 1 - len(chunks)}/{len(existing_cache_comments) - len(chunks)}"
+            )
+            comment.delete()
 
 
 # =============================================================================
@@ -2188,16 +2196,15 @@ def flush_pending_statuses(context: PRContext) -> int:
     if not context.pending_status_updates:
         return 0
 
-    if context.dry_run:
-        for sha, state, description, target_url, status_context in context.pending_status_updates:
-            logger.info(f"[DRY RUN] Would set status {status_context}: {state} - {description}")
-        context.pending_status_updates.clear()
-        return 0
-
     updated_count = 0
     shas_to_invalidate = set()
 
     for sha, state, description, target_url, status_context in context.pending_status_updates:
+        if context.dry_run:
+            logger.info(f"[DRY RUN] Would set status {status_context}: {state} - {description}")
+            updated_count += 1
+            continue
+
         try:
             # Get commit object - prefer cached, fallback to API
             if sha in context.commits:
@@ -2217,7 +2224,7 @@ def flush_pending_statuses(context: PRContext) -> int:
         except Exception as e:
             logger.error(f"Failed to set status {status_context}: {e}")
 
-    # Invalidate cache for all affected SHAs
+    # Invalidate cache for all affected SHAs (only in non-dry-run mode)
     for sha in shas_to_invalidate:
         if sha in context._commit_statuses:
             del context._commit_statuses[sha]
@@ -3522,10 +3529,6 @@ def set_jenkins_status_url(context: PRContext, url: str) -> bool:
     if not context.pr:
         return False
 
-    if context.dry_run:
-        logger.info(f"[DRY RUN] Would set jenkins status URL to: {url}")
-        return True
-
     pr_id = context.issue.number
     status_context = f"bot/{pr_id}/jenkins"
 
@@ -3616,10 +3619,6 @@ def update_test_parameters_status(context: PRContext) -> bool:
         if not existing_status and not context.test_params and not context.test_params_errors:
             # No existing status and no params to set
             logger.debug("No test parameters status to set")
-            return True
-
-        if context.dry_run:
-            logger.info(f"[DRY RUN] Would set test_parameters status: {description}")
             return True
 
         target_url = context.test_params_comment_url or ""
@@ -4956,10 +4955,6 @@ def _mark_status_as_finished(
         state: The status state ("success", "error", etc.)
         target_url: The target URL for the status
     """
-    if context.dryRun:
-        logger.info(f"DRY RUN: Would update status {status_context} description to 'Finished'")
-        return
-
     try:
         head_sha = context.pr.head.sha
 
@@ -5194,33 +5189,32 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
         if label not in labels_to_remove:
             new_labels.add(label)
 
-    if context.dry_run:
-        if labels_to_add:
-            logger.info(f"[DRY RUN] Would add labels: {sorted(labels_to_add)}")
-        if labels_to_remove:
-            logger.info(f"[DRY RUN] Would remove labels: {sorted(labels_to_remove)}")
-        return old_labels, new_labels
-
     # Log label changes
     if labels_to_add:
         logger.info(f"Adding labels: {sorted(labels_to_add)}")
     if labels_to_remove:
         logger.info(f"Removing labels: {sorted(labels_to_remove)}")
 
-    # Apply label changes
+    # Apply label changes (guarded by dry_run)
     for label in labels_to_remove:
-        try:
-            context.issue.remove_from_labels(label)
-            logger.debug(f"Removed label: {label}")
-        except Exception as e:
-            logger.warning(f"Could not remove label {label}: {e}")
+        if context.dry_run:
+            logger.info(f"[DRY RUN] Would remove label: {label}")
+        else:
+            try:
+                context.issue.remove_from_labels(label)
+                logger.debug(f"Removed label: {label}")
+            except Exception as e:
+                logger.warning(f"Could not remove label {label}: {e}")
 
     for label in labels_to_add:
-        try:
-            context.issue.add_to_labels(label)
-            logger.debug(f"Added label: {label}")
-        except Exception as e:
-            logger.warning(f"Could not add label {label}: {e}")
+        if context.dry_run:
+            logger.info(f"[DRY RUN] Would add label: {label}")
+        else:
+            try:
+                context.issue.add_to_labels(label)
+                logger.debug(f"Added label: {label}")
+            except Exception as e:
+                logger.warning(f"Could not add label {label}: {e}")
 
     return old_labels, new_labels
 
@@ -5573,9 +5567,6 @@ def trigger_pending_pre_checks(context: PRContext) -> None:
         context: PR processing context
     """
     if not context.pr or not context.is_pr:
-        return
-
-    if context.dry_run:
         return
 
     signing_checks = context.get_signing_checks_for_pr()

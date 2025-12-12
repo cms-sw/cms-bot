@@ -5564,6 +5564,7 @@ class TestCommitAndFileCountChecks:
         context.notify_without_at = False
         context.posted_messages = set()
         context.pending_bot_comments = []
+        context.pending_status_updates = []
         context.cmsbuild_user = "cmsbuild"
         context.dry_run = True
 
@@ -5610,6 +5611,7 @@ class TestCommitAndFileCountChecks:
         context.notify_without_at = False
         context.posted_messages = set()
         context.pending_bot_comments = []
+        context.pending_status_updates = []
         context.cmsbuild_user = "cmsbuild"
         context.dry_run = True
 
@@ -5656,6 +5658,7 @@ class TestCommitAndFileCountChecks:
         context.notify_without_at = False
         context.posted_messages = set()
         context.pending_bot_comments = []
+        context.pending_status_updates = []
         context.cmsbuild_user = "cmsbuild"
         context.dry_run = True
 
@@ -7231,44 +7234,46 @@ class TestTestResultPostingDeduplication:
 class TestMarkStatusAsFinished:
     """Tests for _mark_status_as_finished function."""
 
-    def test_dry_run_does_not_update(self):
-        """Test that dry run mode doesn't actually update status."""
+    def test_queues_status_update(self):
+        """Test that status update is queued (not called directly)."""
         from process_pr_v2 import _mark_status_as_finished
 
         context = MagicMock()
-        context.dryRun = True
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.repo = MagicMock()
+        context.pending_status_updates = []
 
         _mark_status_as_finished(
             context, "cms/10246/el8/required", "success", "http://example.com"
         )
 
-        # Should not call create_status in dry run
-        context.repo.get_commit.return_value.create_status.assert_not_called()
+        # Should queue status update via queue_status_update
+        context.queue_status_update.assert_called_once_with(
+            state="success",
+            description="Finished",
+            context_name="cms/10246/el8/required",
+            target_url="http://example.com",
+            sha="abc123",
+        )
 
     def test_updates_status_to_finished(self):
-        """Test that status is updated with 'Finished' description."""
+        """Test that status is queued with 'Finished' description."""
         from process_pr_v2 import _mark_status_as_finished
 
         context = MagicMock()
-        context.dryRun = False
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-
-        mock_commit = MagicMock()
-        context.repo.get_commit.return_value = mock_commit
 
         _mark_status_as_finished(
             context, "cms/10246/el8_amd64_gcc12/required", "success", "http://example.com/results"
         )
 
-        mock_commit.create_status.assert_called_once_with(
+        context.queue_status_update.assert_called_once_with(
             state="success",
-            target_url="http://example.com/results",
             description="Finished",
-            context="cms/10246/el8_amd64_gcc12/required",
+            context_name="cms/10246/el8_amd64_gcc12/required",
+            target_url="http://example.com/results",
+            sha="abc123",
         )
 
     def test_maps_error_to_failure(self):
@@ -7276,12 +7281,8 @@ class TestMarkStatusAsFinished:
         from process_pr_v2 import _mark_status_as_finished
 
         context = MagicMock()
-        context.dryRun = False
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-
-        mock_commit = MagicMock()
-        context.repo.get_commit.return_value = mock_commit
 
         _mark_status_as_finished(
             context,
@@ -7291,11 +7292,12 @@ class TestMarkStatusAsFinished:
         )
 
         # Should map to "failure" for GitHub
-        mock_commit.create_status.assert_called_once_with(
+        context.queue_status_update.assert_called_once_with(
             state="failure",
-            target_url="http://example.com/results",
             description="Finished",
-            context="cms/10246/el8_amd64_gcc12/required",
+            context_name="cms/10246/el8_amd64_gcc12/required",
+            target_url="http://example.com/results",
+            sha="abc123",
         )
 
     def test_handles_exception_gracefully(self):
@@ -7303,10 +7305,9 @@ class TestMarkStatusAsFinished:
         from process_pr_v2 import _mark_status_as_finished
 
         context = MagicMock()
-        context.dryRun = False
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.repo.get_commit.side_effect = Exception("API error")
+        context.queue_status_update.side_effect = Exception("Queue error")
 
         # Should not raise, just log warning
         _mark_status_as_finished(

@@ -24,6 +24,11 @@ Central context object holding all state during PR/Issue processing:
 - Pending labels and test triggers
 - Configuration flags (dry_run, force, etc.)
 - Package categories mapping
+- `commits`: Dict mapping SHA → commit object (for O(1) lookup)
+- `_last_commit`: Cached last commit (by committer date)
+- `_commit_statuses`: Cache mapping SHA → list of statuses
+- `pending_status_updates`: Queue of status updates to flush at end
+- `pending_bot_comments`: Queue of comments to post at end
 
 #### BotCache
 Compressed cache stored in issue comments:
@@ -151,40 +156,22 @@ Example:
 
 ### Pre-Checks and Extra-Checks
 
-Required signing checks are determined by `get_signing_checks(repo_full_name, target_branch)` based on repository type and target branch:
+- **PRE_CHECKS**: Categories that must be approved before tests can run (e.g., `code-checks`)
+- **EXTRA_CHECKS**: Additional categories required for merge (e.g., ORP)
 
-| Repository | `code-checks` | `orp` | `externals` | `tests` |
-|------------|---------------|-------|-------------|---------|
-| `cms-sw/cmssw` (master) | PRE | EXTRA | - | EXTRA |
-| `cms-sw/cmssw` (forward-port branch)* | PRE | EXTRA | - | EXTRA |
-| `cms-sw/cmssw` (other branch) | - | EXTRA | - | EXTRA |
-| `cms-sw/cmsdist` | - | EXTRA | EXTRA | EXTRA** |
-| `cms-data/*` | - | EXTRA | EXTRA | EXTRA** |
-| `cms-externals/*` | - | EXTRA | EXTRA | EXTRA** |
-| Non-CMS repos | - | - | - | EXTRA |
+#### Pre-Check Status Tracking
 
-- **PRE** = pre_check (required before running tests)
-- **EXTRA** = extra_check (required before merging)
-- \* = Branch in `forward_ports_map.GIT_REPO_FWPORTS[CMSSW_DEVEL_BRANCH]`
-- \** = Only if repository is in `VALID_CMS_SW_REPOS_FOR_TESTS`
+Pre-checks have associated GitHub commit statuses with context `cms/{prId}/{precheck}`:
 
-#### SigningChecks Data Structure
+| State | Description | Trigger |
+|-------|-------------|---------|
+| `pending` | `{precheck} requested` | Auto-triggered when tests are triggered |
+| `success` | `See details` | Pre-check signed with `+1` |
+| `error` | `See details` | Pre-check rejected with `-1` |
 
-```python
-@dataclass
-class SigningChecks:
-    pre_checks: List[str]   # Required before tests (e.g., ["code-checks"])
-    extra_checks: List[str] # Required before merge (e.g., ["orp", "tests"])
-```
+The status URL points to the comment that last signed the pre-check category.
 
-### Manual Category Assignment
-
-Categories can be assigned in two ways:
-
-1. **Automatic**: Based on changed files → packages → categories
-2. **Manual**: Via `assign <category>` command
-
-The `unassign` command only removes **manually assigned** categories. Categories that are automatically assigned based on file changes cannot be unassigned.
+**Auto-triggering**: When tests are triggered (`create_test_property=True`), pre-checks without existing status are automatically triggered via `trigger_pending_pre_checks()`.
 
 ## Build/Test Command Processing
 
@@ -209,6 +196,19 @@ After successfully triggering a test command, the bot sets a commit status:
 - Target URL: Comment URL that triggered the test
 
 This allows detecting if a test command was already processed.
+
+### Commit Status Caching
+
+The bot caches commit statuses to avoid repeated API calls:
+- `PRContext.get_commit_statuses(sha)`: Fetches and caches statuses for a commit
+- Cache is invalidated when statuses are updated via `flush_pending_statuses()`
+
+### Deferred Status Updates
+
+All commit status updates are queued during processing and executed at the end:
+1. Functions call `context.queue_status_update(state, description, context_name, target_url, sha)`
+2. At end of `process_pr()`, `flush_pending_statuses()` executes all queued updates
+3. This prevents cache invalidation during processing and ensures consistent state
 
 ### create_test_property Flag
 
@@ -433,10 +433,12 @@ Tests use a custom mock framework:
 ## File Structure
 
 ```
-process_pr_v2.py          # Main implementation (~6100 lines)
-test_process_pr_v2.py     # Test suite (~5850 lines)
+process_pr_v2.py          # Main implementation (~6750 lines)
+test_process_pr_v2.py     # Test suite (~7850 lines)
 conftest.py               # Pytest configuration
 PRActionData/             # Test data and recorded actions
+DESIGN.md                 # This design document
+TESTING.md                # Testing documentation
 ```
 
 ## Dependencies
@@ -458,3 +460,30 @@ PRActionData/             # Test data and recorded actions
 - Detailed logging for debugging
 - Dry-run mode for testing without side effects
 - Force mode to override ignore flags
+
+### Dry-Run Mode
+
+When `dry_run=True`, the bot executes all processing logic but guards only the mutating API calls:
+- `issue.create_comment()` → Logged but not executed
+- `issue.edit()` → Logged but not executed
+- `issue.add_to_labels()` / `remove_from_labels()` → Logged but not executed
+- `commit.create_status()` → Logged but not executed
+- `comment.edit()` / `comment.delete()` → Logged but not executed
+- Property file creation → Logged but not written
+
+This allows tests to verify full processing logic while preventing actual changes.
+
+## Cache Key Types
+
+**Important**: Cache keys are always strings, while GitHub object IDs are integers:
+- `cache.comments[str(comment_id)]` - Keys are strings
+- `cache.emoji[str(comment_id)]` - Keys are strings
+- `comment.id` - Integer from GitHub API
+
+When iterating cache and looking up in `context.comments`, convert appropriately:
+```python
+comment_id_int = int(comment_id)  # Convert cache key to int
+for comment in context.comments:
+    if comment.id == comment_id_int:
+        ...
+```

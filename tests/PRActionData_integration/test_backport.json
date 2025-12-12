@@ -42,7 +42,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "orp-pending"
+          "pending-signatures"
         ]
       }
     },
@@ -52,7 +52,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "tests-pending"
+          "orp-pending"
         ]
       }
     },
@@ -62,7 +62,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "pending-signatures"
+          "backport"
         ]
       }
     },
@@ -72,7 +72,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "backport"
+          "tests-pending"
         ]
       }
     },

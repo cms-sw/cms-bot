@@ -7826,6 +7826,12 @@ class TestOldTestForProcessPR:
     def test_cmsdist_start_tests(self):
         self.runTest(1, "iarspider-cmssw/cmsdist")
 
+    def test_code_check_approved(self):
+        self.runTest()
+
+    def test_code_checks_with(self):
+        self.runTest(25)
+
 
 # =============================================================================
 # MAIN ENTRY POINT

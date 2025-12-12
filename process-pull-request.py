@@ -99,6 +99,7 @@ def main():
         opts.dry_run,
         force=opts.force,
         loglevel="DEBUG" if opts.debug else "INFO",
+        cmsbuild_user="cmsbuild",
     )
 
     api_rate_limits(gh)

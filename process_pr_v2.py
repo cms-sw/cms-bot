@@ -7,14 +7,16 @@ It handles code ownership, approval workflows, and merge automation.
 """
 
 import base64
-import zlib
 import itertools
 import json
 import logging
 import re
+import ssl
 import sys
 import types
-import yaml
+import urllib.error
+import urllib.request
+import zlib
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -25,10 +27,11 @@ from os import getenv as os_getenv
 from os.path import dirname, exists, join
 from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
-import forward_ports_map
-from _py2with3compatibility import run_cmd
+import yaml
 
+import forward_ports_map
 from categories import (
+    CMSSW_CATEGORIES,
     CMSSW_L2,
     CMSSW_ORP,
     TRIGGER_PR_TESTS,
@@ -36,7 +39,6 @@ from categories import (
     PR_HOLD_MANAGERS,
     EXTERNAL_REPOS,
 )
-from categories import CMSSW_CATEGORIES
 
 # Import CMSSW_LABELS for auto-labeling based on file patterns
 try:
@@ -87,8 +89,10 @@ from cms_static import (
     VALID_CMS_SW_REPOS_FOR_TESTS,
     CREATE_REPO,
     CMSBOT_TECHNICAL_MSG,
+    BACKPORT_STR,
+    GH_CMSSW_ORGANIZATION,
+    CMSBOT_NO_NOTIFY_MSG,
 )
-from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
 
@@ -4700,8 +4704,21 @@ def fetch_pr_result(url: str) -> Tuple[int, str]:
         Tuple of (error_code, output_string)
         error_code is 0 on success, non-zero on failure
     """
-    e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
-    return e, o
+    # Equivalent to curl -k (ignore TLS verification)
+    context = ssl._create_unverified_context()
+
+    try:
+        with urllib.request.urlopen(url, context=context, timeout=60) as resp:
+            output = resp.read().decode("utf-8", errors="replace")
+        return 0, output
+
+    except urllib.error.HTTPError as e:
+        # HTTP errors (e.g., 404, 500)
+        return e.code, e.read().decode("utf-8", errors="replace")
+
+    except Exception as e:
+        # Network errors, timeouts, etc.
+        return 1, str(e)
 
 
 def process_ci_test_results(context: PRContext) -> None:
@@ -4758,6 +4775,11 @@ def process_ci_test_results(context: PRContext) -> None:
 
             error_code, output = fetch_pr_result(pr_result_url)
 
+            if error_code != 0:
+                logger.error("Failed to fetch PR results: code {error_code}")
+                logger.error(output)
+                raise RuntimeError("System-error: unable to get PR result")
+
             if output:
                 # Post result as comment
                 res = "+1" if result.status == "success" else "-1"
@@ -4769,6 +4791,9 @@ def process_ci_test_results(context: PRContext) -> None:
 
                 # Update status description to "Finished" to prevent duplicate posting
                 _mark_status_as_finished(context, result.context, result.status, result.target_url)
+            else:
+                logger.error("Server returned empty PR result")
+                exit(1)
 
 
 def _mark_status_as_finished(
@@ -5924,7 +5949,7 @@ def process_pr(
     repo,
     issue,
     dryRun: bool,
-    cmsbuild_user: Optional[str] = None,
+    cmsbuild_user: str,
     force: bool = False,
     loglevel: Union[str, int] = "INFO",
 ) -> Dict[str, Any]:
@@ -5944,6 +5969,11 @@ def process_pr(
     Returns:
         Dict with processing results
     """
+
+    if not cmsbuild_user:
+        logger.error("cmsbuild_user not set, quitting")
+        exit(1)
+
     setup_logging(loglevel)
 
     # Initialize label patterns for auto-labeling

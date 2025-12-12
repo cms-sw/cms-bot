@@ -994,12 +994,18 @@ class MockPullRequest:
     def _load_commits(self, commits_data: List[Dict]) -> List[MockCommit]:
         """Load PR commits from data."""
         if commits_data:
-            return [MockCommit.from_json(c) for c in commits_data]
+            return [
+                MockCommit.from_json_with_context(c, self.test_name, self._recorder)
+                for c in commits_data
+            ]
 
         # Try loading from separate file
         commits_json = load_json_data(self.test_name, "PullRequestCommits", self.number)
         if commits_json and "commits" in commits_json:
-            return [MockCommit.from_json(c) for c in commits_json["commits"]]
+            return [
+                MockCommit.from_json_with_context(c, self.test_name, self._recorder)
+                for c in commits_json["commits"]
+            ]
 
         return []
 
@@ -6493,7 +6499,7 @@ class TestCITestStatus:
 
         context = MagicMock(spec=PRContext)
         context.pr = None
-        context.commits = []
+        context.commits = {}
         context.issue = None
 
         result = get_ci_test_statuses(context)
@@ -6505,12 +6511,11 @@ class TestCITestStatus:
 
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
-        context.commits = []
+        context.commits = {}
         context.pr.head.sha = "abc123"
         context.issue = MagicMock()
         context.issue.number = 10246
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = []
+        context.get_commit_statuses.return_value = []
 
         result = get_ci_test_statuses(context)
         assert result == {}
@@ -6522,7 +6527,7 @@ class TestCITestStatus:
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.commits = [MagicMock(sha="abc123")]
+        context.commits = {"abc123": MagicMock(sha="abc123")}
         context.issue = MagicMock()
         context.issue.number = 10246
 
@@ -6533,8 +6538,7 @@ class TestCITestStatus:
         status1.description = "Build successful"
         status1.target_url = "http://example.com/build"
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = [status1]
 
         result = get_ci_test_statuses(context)
         assert "required" in result
@@ -6548,7 +6552,7 @@ class TestCITestStatus:
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.commits = [MagicMock(sha="abc123")]
+        context.commits = {"abc123": MagicMock(sha="abc123")}
         context.issue = MagicMock()
         context.issue.number = 10246
 
@@ -6559,8 +6563,7 @@ class TestCITestStatus:
         status1.description = "Running tests"
         status1.target_url = "http://example.com/relvals"
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = [status1]
 
         result = get_ci_test_statuses(context)
         assert "optional" in result
@@ -6574,7 +6577,7 @@ class TestCITestStatus:
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.commits = [MagicMock(sha="abc123")]
+        context.commits = {"abc123": MagicMock(sha="abc123")}
         context.issue = MagicMock()
         context.issue.number = 10246
 
@@ -6585,8 +6588,7 @@ class TestCITestStatus:
         status1.description = "Tests passed"
         status1.target_url = "http://example.com/tests"
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = [status1]
 
         result = get_ci_test_statuses(context)
         assert "required" in result
@@ -6600,7 +6602,7 @@ class TestCITestStatus:
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.commits = [MagicMock(sha="abc123")]
+        context.commits = {"abc123": MagicMock(sha="abc123")}
         context.issue = MagicMock()
         context.issue.number = 10246  # Current PR is 10246
 
@@ -6617,8 +6619,7 @@ class TestCITestStatus:
         status2.description = "Build failed"
         status2.target_url = "http://example.com/build2"
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = [status1, status2]
+        context.get_commit_statuses.return_value = [status1, status2]
 
         result = get_ci_test_statuses(context)
         # Should only have the status for PR 10246
@@ -6633,7 +6634,7 @@ class TestCITestStatus:
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.commits = [MagicMock(sha="abc123")]
+        context.commits = {"abc123": MagicMock(sha="abc123")}
         context.issue = MagicMock()
         context.issue.number = 10246
 
@@ -6644,8 +6645,7 @@ class TestCITestStatus:
         status1.description = "Running"
         status1.target_url = None
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = [status1]
 
         result = check_ci_test_completion(context)
         # Pending tests should return None or empty dict
@@ -6658,7 +6658,7 @@ class TestCITestStatus:
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.commits = [MagicMock(sha="abc123")]
+        context.commits = {"abc123": MagicMock(sha="abc123")}
         context.issue = MagicMock()
         context.issue.number = 10246
 
@@ -6669,8 +6669,7 @@ class TestCITestStatus:
         status1.description = "Finished"
         status1.target_url = "http://example.com/build"
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = [status1]
 
         result = check_ci_test_completion(context)
         assert result is not None
@@ -6683,7 +6682,7 @@ class TestCITestStatus:
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
-        context.commits = [MagicMock(sha="abc123")]
+        context.commits = {"abc123": MagicMock(sha="abc123")}
         context.issue = MagicMock()
         context.issue.number = 10246
 
@@ -6694,8 +6693,7 @@ class TestCITestStatus:
         status1.description = "Build failed"
         status1.target_url = "http://example.com/build"
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = [status1]
 
         result = check_ci_test_completion(context)
         assert result is not None
@@ -6714,7 +6712,7 @@ class TestTestsApprovalLabels:
         context.pr = MagicMock()
         context.pr.head.sha = "abc123"
         context.pr.merged = False
-        context.commits = [MagicMock(sha="abc123")]
+        context.commits = {"abc123": MagicMock(sha="abc123")}
         context.is_pr = True
         context.cache = BotCache()
         context.signing_categories = {"tests", "core"}
@@ -6732,8 +6730,7 @@ class TestTestsApprovalLabels:
             status.target_url = "http://example.com/results"
             mock_statuses.append(status)
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = mock_statuses
+        context.get_commit_statuses.return_value = mock_statuses
 
         return context
 
@@ -6915,7 +6912,7 @@ class TestTestResultPostingDeduplication:
         context.pr = MagicMock()
         context.pr.head.sha = "abc123def456"
         context.pr.merged = False
-        context.commits = [MagicMock(sha="abc123def456")]
+        context.commits = {"abc123def456": MagicMock(sha="abc123def456")}
         context.is_pr = True
         context.cache = BotCache()
         context.signing_categories = {"tests"}
@@ -6924,6 +6921,7 @@ class TestTestResultPostingDeduplication:
         context.posted_messages = {}
         context.issue = MagicMock()
         context.issue.number = pr_number
+        context._commit_statuses = {}
 
         # Create mock statuses
         mock_statuses = []
@@ -6935,8 +6933,7 @@ class TestTestResultPostingDeduplication:
             status.target_url = url
             mock_statuses.append(status)
 
-        context.repo = MagicMock()
-        context.repo.get_commit.return_value.get_statuses.return_value = mock_statuses
+        context.get_commit_statuses.return_value = mock_statuses
 
         return context
 

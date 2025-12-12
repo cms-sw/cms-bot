@@ -1783,7 +1783,18 @@ class PRContext:
     comments: List[Any] = field(default_factory=list)
 
     # Commits fetched once at the start of processing (PRs only)
-    commits: List[Any] = field(default_factory=list)
+    # Dict mapping commit SHA -> commit object
+    commits: Dict[str, Any] = field(default_factory=dict)
+    _last_commit: Optional[Any] = field(default=None, repr=False)
+
+    # Commit statuses cache (SHA -> list of statuses)
+    _commit_statuses: Dict[str, List[Any]] = field(default_factory=dict, repr=False)
+
+    # Pending commit status updates - executed at end of process_pr
+    # List of (sha, state, description, target_url, context) tuples
+    pending_status_updates: List[Tuple[str, str, str, str, str]] = field(
+        default_factory=list, repr=False
+    )
 
     # Processing state
     messages: List[str] = field(default_factory=list)
@@ -1920,6 +1931,99 @@ class PRContext:
         if self.pr and hasattr(self.pr, "base") and hasattr(self.pr.base, "ref"):
             return self.pr.base.ref
         return ""
+
+    @property
+    def last_commit(self) -> Optional[Any]:
+        """Get the last (most recent) commit in the PR."""
+        if not self.commits:
+            return None
+
+        if not self._last_commit:
+            self._last_commit = sorted(
+                self.commits.values(), key=lambda c: c.commit.committer.date
+            )[-1]
+
+        return self._last_commit
+
+    def get_commit_statuses(self, sha: Optional[str] = None) -> List[Any]:
+        """
+        Get commit statuses for a given SHA, with caching.
+
+        If SHA is not provided, uses the head commit SHA.
+        Results are cached in _commit_statuses to avoid repeated API calls.
+
+        Args:
+            sha: Commit SHA to get statuses for (defaults to head commit)
+
+        Returns:
+            List of commit status objects
+        """
+        if sha is None:
+            try:
+                sha = self.pr.head.sha if self.pr else None
+            except Exception:
+                if self.last_commit:
+                    sha = self.last_commit.sha
+
+        if not sha:
+            return []
+
+        # Return cached statuses if available
+        if sha in self._commit_statuses:
+            return self._commit_statuses[sha]
+
+        # Fetch statuses from API
+        try:
+            # Use cached commit if available, otherwise fetch
+            if sha in self.commits:
+                commit = self.commits[sha]
+                # MockCommit and real Commit both have get_statuses()
+                if hasattr(commit, "get_statuses"):
+                    statuses = list(commit.get_statuses())
+                else:
+                    # Fallback to repo.get_commit for real commits
+                    commit = self.repo.get_commit(sha)
+                    statuses = list(commit.get_statuses())
+            else:
+                commit = self.repo.get_commit(sha)
+                statuses = list(commit.get_statuses())
+            self._commit_statuses[sha] = statuses
+            return statuses
+        except Exception as e:
+            logger.debug(f"Failed to get commit statuses for {sha}: {e}")
+            self._commit_statuses[sha] = []
+            return []
+
+    def queue_status_update(
+        self,
+        state: str,
+        description: str,
+        context_name: str,
+        target_url: str = "",
+        sha: Optional[str] = None,
+    ) -> None:
+        """
+        Queue a commit status update to be executed at end of processing.
+
+        This avoids invalidating the status cache during processing, which
+        could cause issues with functions that check current status (like abort).
+
+        Args:
+            state: Status state (pending, success, failure, error)
+            description: Status description
+            context_name: Status context (e.g., "cms/123/code-checks")
+            target_url: Optional URL for the status
+            sha: Commit SHA (defaults to head commit)
+        """
+        if sha is None:
+            try:
+                sha = self.pr.head.sha if self.pr else None
+            except Exception:
+                if self.last_commit:
+                    sha = self.last_commit.sha
+
+        if sha:
+            self.pending_status_updates.append((sha, state, description, target_url, context_name))
 
     def get_signing_checks_for_pr(self) -> "SigningChecks":
         """
@@ -2066,6 +2170,62 @@ def flush_pending_comments(context: PRContext) -> int:
     context.pending_bot_comments.clear()
 
     return posted_count
+
+
+def flush_pending_statuses(context: PRContext) -> int:
+    """
+    Execute all pending commit status updates.
+
+    Should be called at the end of PR processing to avoid invalidating
+    status cache during processing.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        Number of statuses actually updated
+    """
+    if not context.pending_status_updates:
+        return 0
+
+    if context.dry_run:
+        for sha, state, description, target_url, status_context in context.pending_status_updates:
+            logger.info(f"[DRY RUN] Would set status {status_context}: {state} - {description}")
+        context.pending_status_updates.clear()
+        return 0
+
+    updated_count = 0
+    shas_to_invalidate = set()
+
+    for sha, state, description, target_url, status_context in context.pending_status_updates:
+        try:
+            # Get commit object - prefer cached, fallback to API
+            if sha in context.commits:
+                commit = context.commits[sha]
+            else:
+                commit = context.repo.get_commit(sha)
+
+            commit.create_status(
+                state=state,
+                description=description,
+                target_url=target_url,
+                context=status_context,
+            )
+            logger.info(f"Set status {status_context}: {state} - {description}")
+            updated_count += 1
+            shas_to_invalidate.add(sha)
+        except Exception as e:
+            logger.error(f"Failed to set status {status_context}: {e}")
+
+    # Invalidate cache for all affected SHAs
+    for sha in shas_to_invalidate:
+        if sha in context._commit_statuses:
+            del context._commit_statuses[sha]
+
+    # Clear the queue
+    context.pending_status_updates.clear()
+
+    return updated_count
 
 
 # =============================================================================
@@ -3261,11 +3421,8 @@ def get_jenkins_status_url(context: PRContext) -> Optional[str]:
     status_context = f"bot/{pr_id}/jenkins"
 
     try:
-        head_sha = context.pr.head.sha
-        repo = context.repo
-        commit = repo.get_commit(head_sha)
-
-        for status in commit.get_statuses():
+        statuses = context.get_commit_statuses()
+        for status in statuses:
             if status.context == status_context:
                 return status.target_url
     except Exception as e:
@@ -3360,7 +3517,7 @@ def set_jenkins_status_url(context: PRContext, url: str) -> bool:
         url: URL to set as the status target_url (typically the comment URL)
 
     Returns:
-        True if status was set successfully
+        True if status was queued successfully
     """
     if not context.pr:
         return False
@@ -3374,19 +3531,20 @@ def set_jenkins_status_url(context: PRContext, url: str) -> bool:
 
     try:
         head_sha = context.pr.head.sha
-        repo = context.repo
-        commit = repo.get_commit(head_sha)
 
-        commit.create_status(
+        # Queue status update (will be set at end of processing)
+        context.queue_status_update(
             state="pending",
-            target_url=url,
             description="Test triggered",
-            context=status_context,
+            context_name=status_context,
+            target_url=url,
+            sha=head_sha,
         )
-        logger.info(f"Set jenkins status URL to: {url}")
+
+        logger.info(f"Queued jenkins status URL: {url}")
         return True
     except Exception as e:
-        logger.error(f"Error setting jenkins status: {e}")
+        logger.error(f"Error queuing jenkins status: {e}")
         return False
 
 
@@ -3441,11 +3599,9 @@ def update_test_parameters_status(context: PRContext) -> bool:
     # Check if we need to update (compare with existing status)
     try:
         head_sha = context.pr.head.sha
-        repo = context.repo
-        commit = repo.get_commit(head_sha)
 
-        # Check existing status
-        existing_statuses = list(commit.get_statuses())
+        # Check existing status using cached statuses
+        existing_statuses = context.get_commit_statuses(head_sha)
         existing_status = None
         for status in existing_statuses:
             if status.context == status_context:
@@ -3468,17 +3624,20 @@ def update_test_parameters_status(context: PRContext) -> bool:
 
         target_url = context.test_params_comment_url or ""
 
-        commit.create_status(
+        # Queue status update (will be set at end of processing)
+        context.queue_status_update(
             state=state,
-            target_url=target_url,
             description=description,
-            context=status_context,
+            context_name=status_context,
+            target_url=target_url,
+            sha=head_sha,
         )
-        logger.info(f"Set test_parameters status: {description}")
+
+        logger.info(f"Queued test_parameters status: {description}")
         return True
 
     except Exception as e:
-        logger.error(f"Error setting test_parameters status: {e}")
+        logger.error(f"Error queuing test_parameters status: {e}")
         return False
 
 
@@ -3636,10 +3795,9 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
     now = datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
 
     # Get commit timestamp from cached commits
-    if context.commits:
-        last_commit = context.commits[-1]
+    if context.last_commit:
         try:
-            commit_ts = last_commit.commit.author.date
+            commit_ts = context.last_commit.commit.author.date
             if isinstance(commit_ts, datetime):
                 # Ensure tz-aware before formatting
                 commit_ts = ensure_tz_aware(commit_ts)
@@ -3851,25 +4009,21 @@ def get_latest_commit_timestamp(context: PRContext) -> Optional[datetime]:
     Returns:
         Timestamp of latest commit, or None if no commits
     """
-    if not context.commits:
+    if not context.last_commit:
         return None
 
-    latest_ts = None
-    for commit in context.commits:
-        try:
-            commit_date = commit.commit.author.date
-            if commit_date:
-                ts = (
-                    ensure_tz_aware(commit_date)
-                    if isinstance(commit_date, datetime)
-                    else parse_timestamp(commit_date)
-                )
-                if ts and (latest_ts is None or ts > latest_ts):
-                    latest_ts = ts
-        except Exception:
-            pass
+    try:
+        commit_date = context.last_commit.commit.author.date
+        if commit_date:
+            return (
+                ensure_tz_aware(commit_date)
+                if isinstance(commit_date, datetime)
+                else parse_timestamp(commit_date)
+            )
+    except Exception:
+        pass
 
-    return latest_ts
+    return None
 
 
 def is_bot_command_reset_on_push(command_line: str) -> bool:
@@ -4022,7 +4176,7 @@ def get_commit_timestamps(context: PRContext) -> List[datetime]:
         return []
 
     timestamps = []
-    for commit in context.commits:
+    for commit in context.commits.values():
         try:
             commit_date = commit.commit.author.date
             if commit_date:
@@ -4518,19 +4672,13 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     try:
         head_sha = context.pr.head.sha
     except Exception:
-        if context.commits:
-            head_sha = context.commits[-1].sha
+        if context.last_commit:
+            head_sha = context.last_commit.sha
         else:
             return {}
 
-    # Get commit statuses
-    try:
-        commit = context.repo.get_commit(head_sha)
-        statuses = list(commit.get_statuses())
-    except Exception as e:
-        logger.warning(f"Failed to get commit statuses: {e}")
-        return {}
-
+    # Get commit statuses using cached method
+    statuses = context.get_commit_statuses(head_sha)
     if not statuses:
         return {}
 
@@ -4814,22 +4962,24 @@ def _mark_status_as_finished(
 
     try:
         head_sha = context.pr.head.sha
-        commit = context.repo.get_commit(head_sha)
 
         # Map our state back to GitHub state
         github_state = state
         if state == "error":
             github_state = "failure"
 
-        commit.create_status(
+        # Queue status update (will be set at end of processing)
+        context.queue_status_update(
             state=github_state,
-            target_url=target_url or "",
             description="Finished",
-            context=status_context,
+            context_name=status_context,
+            target_url=target_url or "",
+            sha=head_sha,
         )
-        logger.info(f"Updated status {status_context} description to 'Finished'")
+
+        logger.info(f"Queued status {status_context} update to 'Finished'")
     except Exception as e:
-        logger.warning(f"Failed to update status {status_context} to 'Finished': {e}")
+        logger.warning(f"Failed to queue status {status_context} to 'Finished': {e}")
 
 
 def generate_status_message(context: PRContext) -> str:
@@ -5408,6 +5558,74 @@ def create_code_checks_properties(
     create_test_properties_file(context, params, req_type="code-checks")
 
 
+def trigger_pending_pre_checks(context: PRContext) -> None:
+    """
+    Automatically trigger pre-checks (like code-checks) if not yet triggered.
+
+    Checks the commit status for each pre-check category. If no status exists
+    (i.e., the check hasn't been triggered yet), creates the properties file
+    and queues a pending status update.
+
+    For code-checks, uses settings from the last code-checks command if available
+    (tool_conf, apply_patch), otherwise uses defaults.
+
+    Args:
+        context: PR processing context
+    """
+    if not context.pr or not context.is_pr:
+        return
+
+    if context.dry_run:
+        return
+
+    signing_checks = context.get_signing_checks_for_pr()
+    if not signing_checks.pre_checks:
+        return
+
+    pr_id = context.issue.number
+    head_sha = context.pr.head.sha
+    cms_status_prefix = f"cms/{pr_id}"
+
+    # Get current commit statuses
+    statuses = context.get_commit_statuses(head_sha)
+
+    # Build map of existing status contexts
+    existing_contexts = {s.context for s in statuses}
+
+    for pre_check in signing_checks.pre_checks:
+        status_context = f"{cms_status_prefix}/{pre_check}"
+
+        # Skip if status already exists (check has been triggered)
+        if status_context in existing_contexts:
+            logger.debug(f"Pre-check {pre_check} already has status, skipping auto-trigger")
+            continue
+
+        logger.info(f"Auto-triggering pre-check: {pre_check}")
+
+        # Create properties file for the pre-check
+        params = {
+            "PULL_REQUEST": str(pr_id),
+            "CONTEXT_PREFIX": cms_status_prefix,
+        }
+
+        if pre_check == "code-checks":
+            # Use settings from last code-checks command if available
+            if context.code_checks_tool_conf:
+                params["CMSSW_TOOL_CONF"] = context.code_checks_tool_conf
+            params["APPLY_PATCH"] = str(context.code_checks_apply_patch).lower()
+
+        create_test_properties_file(context, params, req_type=pre_check)
+
+        # Queue pending status (will be set at end of processing)
+        context.queue_status_update(
+            state="pending",
+            description=f"{pre_check} requested",
+            context_name=status_context,
+            target_url="",
+            sha=head_sha,
+        )
+
+
 def create_abort_properties(context: PRContext) -> None:
     """
     Create properties file to abort running tests.
@@ -5520,6 +5738,7 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
             # Always block at FAIL threshold - cannot be overridden
             context.blocked_by_commit_count = True
             flush_pending_comments(context)  # Flush before early return
+            flush_pending_statuses(context)
             return {
                 "pr_number": context.issue.number,
                 "is_pr": True,
@@ -5550,6 +5769,7 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
             if not context.ignore_commit_count:
                 context.blocked_by_commit_count = True
                 flush_pending_comments(context)  # Flush before early return
+                flush_pending_statuses(context)
                 return {
                     "pr_number": context.issue.number,
                     "is_pr": True,
@@ -5582,6 +5802,7 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
             # Always block at FAIL threshold - cannot be overridden
             context.blocked_by_file_count = True
             flush_pending_comments(context)  # Flush before early return
+            flush_pending_statuses(context)
             return {
                 "pr_number": context.issue.number,
                 "is_pr": True,
@@ -5612,6 +5833,7 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
             if not context.ignore_file_count:
                 context.blocked_by_file_count = True
                 flush_pending_comments(context)  # Flush before early return
+                flush_pending_statuses(context)
                 return {
                     "pr_number": context.issue.number,
                     "is_pr": True,
@@ -5885,11 +6107,11 @@ def check_for_new_commits(context: PRContext) -> None:
     Args:
         context: PR processing context
     """
-    if not context.is_pr or not context.commits:
+    if not context.is_pr or not context.last_commit:
         return
 
     # Get the SHA of the latest commit
-    latest_commit = context.commits[-1]
+    latest_commit = context.last_commit
     latest_sha = latest_commit.sha if hasattr(latest_commit, "sha") else str(latest_commit)
 
     # Check if we've already posted an update for this commit
@@ -5962,7 +6184,7 @@ def process_pr(
         repo: PyGithub Repository object
         issue: PyGithub Issue or PullRequest object
         dryRun: If True, don't make any changes
-        cmsbuild_user: Bot's username (to skip own comments)
+        cmsbuild_user: Bot's username (to detect own comments)
         force: If True, process PR/Issue even if marked with <cms-bot></cms-bot>
         loglevel: Logging level (string or int)
 
@@ -6030,11 +6252,12 @@ def process_pr(
     logger.debug(f"Fetched {len(comments)} comments")
 
     # Fetch commits once for PRs
-    commits = []
+    commits_dict: Dict[str, Any] = {}
     if is_pr and pr:
         try:
-            commits = list(pr.get_commits())
-            logger.debug(f"Fetched {len(commits)} commits")
+            commits_list = list(pr.get_commits())
+            commits_dict = {c.sha: c for c in commits_list}
+            logger.debug(f"Fetched {len(commits_dict)} commits")
         except Exception as e:
             logger.warning(f"Failed to fetch commits: {e}")
 
@@ -6057,7 +6280,7 @@ def process_pr(
         cmsbuild_user=cmsbuild_user,
         is_pr=is_pr,
         comments=comments,
-        commits=commits,
+        commits=commits_dict,
         notify_without_at=notify_without_at,
     )
 
@@ -6294,9 +6517,13 @@ def process_pr(
                 )
                 create_test_properties_file(context, params)
 
-        # Handle code checks request
+        # Auto-trigger pending pre-checks (like code-checks) if not yet triggered
+        if context.create_test_property:
+            trigger_pending_pre_checks(context)
+
+        # Handle manual code checks request (overrides auto-trigger settings)
         if context.code_checks_requested:
-            logger.info("Creating code-checks properties file")
+            logger.info("Creating code-checks properties file (manual request)")
             create_code_checks_properties(
                 context,
                 tool_conf=context.code_checks_tool_conf,
@@ -6314,6 +6541,9 @@ def process_pr(
 
     # Flush all pending bot comments
     flush_pending_comments(context)
+
+    # Flush all pending commit status updates
+    flush_pending_statuses(context)
 
     # Save cache
     save_cache_to_comments(issue, context.comments, cache, dryRun)

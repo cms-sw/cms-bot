@@ -1,0 +1,48 @@
+{
+  "test_name": "test_code_check_approved",
+  "action_count": 5,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 2045177271,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "remove_label",
+      "details": {
+        "issue_number": 17,
+        "label": "code-checks-pending"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 17,
+        "labels": [
+          "code-checks-approved"
+        ]
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 17,
+        "body": "A new Pull Request was created by  @iarspider for master.\n\nIt involves the following packages:\n\n- Utilities/ReleaseScripts (**core**)\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign? Thanks.\n@wddgit this is something you requested to watch as well.\n@iarspider you are the release manager for this.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2045163329,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::1963595dc5bad37400a61b64c43b5efbefa11b81\"],\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2045177271\":\"+1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::1963595dc5bad37400a61b64c43b5efbefa11b81\":{\"cats\":[\"core\"],\"ts\":\"2024-02-27T10:25:45Z\"}}} -->"
+      }
+    }
+  ]
+}

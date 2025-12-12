@@ -1,6 +1,6 @@
 {
   "test_name": "test_ack_many_files",
-  "action_count": 4,
+  "action_count": 6,
   "actions": [
     {
       "sequence": 1,
@@ -22,6 +22,18 @@
     },
     {
       "sequence": 3,
+      "action": "create_property_file",
+      "details": {
+        "filename": "trigger-code-checks-iarspider-cmssw-cmssw-38.properties",
+        "parameters": {
+          "PULL_REQUEST": "38",
+          "CONTEXT_PREFIX": "cms/38",
+          "APPLY_PATCH": "false"
+        }
+      }
+    },
+    {
+      "sequence": 4,
       "action": "create_comment",
       "details": {
         "issue_number": 38,
@@ -29,7 +41,18 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "b6db3e643d2bd16deee12590d1312a3addcd2d75",
+        "state": "pending",
+        "target_url": "",
+        "description": "code-checks requested",
+        "context": "cms/38/code-checks"
+      }
+    },
+    {
+      "sequence": 6,
       "action": "create_comment",
       "details": {
         "issue_number": 38,

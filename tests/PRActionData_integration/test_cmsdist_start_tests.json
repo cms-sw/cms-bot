@@ -12,17 +12,6 @@
     },
     {
       "sequence": 2,
-      "action": "create_status",
-      "details": {
-        "sha": "97b8e6b89e86de19afb3a428f54f08313457374e",
-        "state": "pending",
-        "target_url": "https://github.com/iarspider-cmssw/cmsdist/pull/1#issuecomment-2838027440",
-        "description": "Test triggered",
-        "context": "bot/1/jenkins"
-      }
-    },
-    {
-      "sequence": 3,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-user-tests-iarspider-cmssw-cmsdist-1.properties",
@@ -30,6 +19,17 @@
           "PULL_REQUESTS": "iarspider-cmssw/cmsdist#1",
           "CONTEXT_PREFIX": "cms/1"
         }
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_status",
+      "details": {
+        "sha": "97b8e6b89e86de19afb3a428f54f08313457374e",
+        "state": "pending",
+        "target_url": "https://github.com/iarspider-cmssw/cmsdist/pull/1#issuecomment-2838027440",
+        "description": "Test triggered",
+        "context": "bot/1/jenkins"
       }
     },
     {

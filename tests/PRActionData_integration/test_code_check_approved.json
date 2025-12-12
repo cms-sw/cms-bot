@@ -1,6 +1,6 @@
 {
   "test_name": "test_code_check_approved",
-  "action_count": 5,
+  "action_count": 6,
   "actions": [
     {
       "sequence": 1,
@@ -38,6 +38,17 @@
     },
     {
       "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "2a9454e30606b17e52000110972998326ce9e428",
+        "state": "success",
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/17/code-checks"
+      }
+    },
+    {
+      "sequence": 6,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

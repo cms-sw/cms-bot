@@ -5617,6 +5617,86 @@ def trigger_pending_pre_checks(context: PRContext) -> None:
         )
 
 
+def update_pre_check_statuses(context: PRContext) -> None:
+    """
+    Update commit statuses for pre-checks based on their signature state.
+
+    For each pre-check category (like code-checks), updates the commit status
+    to reflect whether it's been approved (+1) or rejected (-1).
+
+    The status URL is set to the HTML URL of the comment that last signed
+    the pre-check category.
+
+    Args:
+        context: PR processing context
+    """
+    if not context.pr or not context.is_pr:
+        return
+
+    signing_checks = context.get_signing_checks_for_pr()
+    if not signing_checks.pre_checks:
+        return
+
+    pr_id = context.issue.number
+    head_sha = context.pr.head.sha
+    cms_status_prefix = f"cms/{pr_id}"
+
+    # Get current category states
+    category_states = compute_category_approval_states(context)
+
+    # Get current categories and their files
+    categories = get_current_categories(context)
+
+    for pre_check in signing_checks.pre_checks:
+        status_context = f"{cms_status_prefix}/{pre_check}"
+
+        # Get the approval state for this pre-check
+        state = category_states.get(pre_check, ApprovalState.PENDING)
+
+        # Find the comment that last signed this pre-check (for the URL)
+        comment_url = ""
+        cat_files = categories.get(pre_check, set())
+
+        for comment_id, comment_info in context.cache.comments.items():
+            if comment_info.ctype not in ("+1", "-1"):
+                continue
+            if pre_check not in comment_info.categories:
+                continue
+            if not is_signature_valid_for_category(context, comment_info, pre_check, cat_files):
+                continue
+
+            # Found a valid signature - get the comment URL
+            # Look up the comment to get its HTML URL
+            for comment in context.comments:
+                if comment.id == comment_id:
+                    comment_url = getattr(comment, "html_url", "")
+                    break
+
+            # Use the last valid signature's URL
+            # (loop continues to find the most recent one)
+
+        # Map approval state to GitHub status state
+        if state == ApprovalState.APPROVED:
+            github_state = "success"
+            description = "See details"
+        elif state == ApprovalState.REJECTED:
+            github_state = "error"
+            description = "See details"
+        else:
+            # Don't update pending state - let the CI result or trigger handle it
+            continue
+
+        # Queue status update
+        context.queue_status_update(
+            state=github_state,
+            description=description,
+            context_name=status_context,
+            target_url=comment_url,
+            sha=head_sha,
+        )
+        logger.info(f"Queued pre-check status {pre_check}: {github_state}")
+
+
 def create_abort_properties(context: PRContext) -> None:
     """
     Create properties file to abort running tests.
@@ -6523,6 +6603,9 @@ def process_pr(
 
         # Check and process CI test results
         process_ci_test_results(context)
+
+        # Update pre-check statuses based on signatures
+        update_pre_check_statuses(context)
     else:
         # Issue-specific processing
         # Check for new data repo request issues

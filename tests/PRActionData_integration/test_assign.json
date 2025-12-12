@@ -1,6 +1,6 @@
 {
   "test_name": "test_assign",
-  "action_count": 6,
+  "action_count": 7,
   "actions": [
     {
       "sequence": 1,
@@ -24,7 +24,7 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "db-pending"
+          "dqm-pending"
         ]
       }
     },
@@ -34,7 +34,7 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "dqm-pending"
+          "db-pending"
         ]
       }
     },
@@ -48,6 +48,17 @@
     },
     {
       "sequence": 6,
+      "action": "create_status",
+      "details": {
+        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
+        "state": "success",
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/17/code-checks"
+      }
+    },
+    {
+      "sequence": 7,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

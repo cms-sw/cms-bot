@@ -1,6 +1,6 @@
 {
   "test_name": "test_backport",
-  "action_count": 12,
+  "action_count": 13,
   "actions": [
     {
       "sequence": 1,
@@ -32,7 +32,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "backport"
+          "pending-signatures"
         ]
       }
     },
@@ -42,7 +42,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "orp-pending"
+          "tests-pending"
         ]
       }
     },
@@ -52,7 +52,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "code-checks-approved"
+          "backport"
         ]
       }
     },
@@ -62,7 +62,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "pending-signatures"
+          "orp-pending"
         ]
       }
     },
@@ -72,7 +72,7 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "tests-pending"
+          "code-checks-approved"
         ]
       }
     },
@@ -109,6 +109,17 @@
     },
     {
       "sequence": 12,
+      "action": "create_status",
+      "details": {
+        "sha": "551c95f59caff42369887b5fee86583fe2bff161",
+        "state": "success",
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/26/code-checks"
+      }
+    },
+    {
+      "sequence": 13,
       "action": "create_comment",
       "details": {
         "issue_number": 26,

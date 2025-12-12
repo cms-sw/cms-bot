@@ -1,6 +1,6 @@
 {
   "test_name": "test_abort",
-  "action_count": 7,
+  "action_count": 8,
   "actions": [
     {
       "sequence": 1,
@@ -20,6 +20,34 @@
     },
     {
       "sequence": 3,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 17,
+        "labels": [
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_property_file",
+      "details": {
+        "filename": "trigger-abort-iarspider-cmssw-cmssw-17.properties",
+        "parameters": {
+          "PULL_REQUEST": "17"
+        }
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 17,
+        "body": "New categories assigned: dqm, db\n\nantoniovagnerini, consuegs, francescobrivio, nothingface0, perrotta, rvenditti, saumyaphor4252, syuvivida, tjavaid you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2056796593-->"
+      }
+    },
+    {
+      "sequence": 6,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -30,35 +58,18 @@
       }
     },
     {
-      "sequence": 4,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 17,
-        "labels": [
-          "tests-pending"
-        ]
-      }
-    },
-    {
-      "sequence": 5,
-      "action": "create_property_file",
-      "details": {
-        "filename": "trigger-abort-iarspider-cmssw-cmssw-17.properties",
-        "parameters": {
-          "PULL_REQUEST": "17"
-        }
-      }
-    },
-    {
-      "sequence": 6,
-      "action": "create_comment",
-      "details": {
-        "issue_number": 17,
-        "body": "New categories assigned: dqm, db\n\nantoniovagnerini, consuegs, francescobrivio, nothingface0, perrotta, rvenditti, saumyaphor4252, syuvivida, tjavaid you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2056796593-->"
-      }
-    },
-    {
       "sequence": 7,
+      "action": "create_status",
+      "details": {
+        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
+        "state": "success",
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/17/code-checks"
+      }
+    },
+    {
+      "sequence": 8,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

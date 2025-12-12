@@ -1276,11 +1276,20 @@ def process_pr(
             author_ = issue.user.login
             cats = get_commenter_categories(author_, int(issue.created_at.strftime("%s")))
             if "externals" in cats or "core" in cats:
+                logger.info("Testing cms-bot PR #{0}".format(pr.number))
                 with open("cms-bot.properties", "w") as f:
                     f.write("CMS_BOT_TEST_BRANCH=pull/{0}/head\n".format(pr.number))
                     f.write("FORCE_PULL_REQUEST={0}\n".format(pr.number))
                     f.write("CMS_BOT_TEST_PRS=cms-sw/cms-bot#{0}\n".format(pr.number))
                 return
+
+        if re.search("<new-?bot></new-?bot>", issue.body or ""):
+            logger.info("Testing new cms-bot")
+            with open("cms-bot.properties", "w") as f:
+                f.write("CMS_BOT_TEST_BRANCH=sign-hashes-not-commits\n")
+                f.write("FORCE_PULL_REQUEST={0}\n".format(pr.number))
+                f.write("CMS_BOT_TEST_PRS={0}#{1}\n".format(repo.full_name, pr.number))
+            return
 
         if pr.draft:
             logger.warning("Draft PR, mentions turned off")

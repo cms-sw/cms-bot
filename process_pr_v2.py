@@ -25,6 +25,7 @@ from functools import wraps
 from json import load as json_load
 from os import getenv as os_getenv
 from os.path import dirname, exists, join
+from subprocess import getstatusoutput
 from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
 import yaml
@@ -2043,7 +2044,7 @@ class PRContext:
         return get_signing_checks(self)
 
 
-def format_mention(context: PRContext, username: str) -> str:
+def format_mention(context: PRContext, username: str, force_at: bool = False) -> str:
     """
     Format a username for mentioning in a comment.
 
@@ -2054,10 +2055,13 @@ def format_mention(context: PRContext, username: str) -> str:
     Args:
         context: PR processing context
         username: GitHub username to mention
+        force_at: If True, always use @ mention even for draft PRs
 
     Returns:
         Formatted mention string (with or without @)
     """
+    if force_at:
+        return f"@{username}"
     if context.notify_without_at or context.is_draft:
         return username
     return f"@{username}"
@@ -2430,7 +2434,10 @@ def handle_assign_unassign(
                 new_l2s.update(cat_l2s)
 
             if new_l2s:
-                l2_mentions = ", ".join(format_mention(context, l2) for l2 in sorted(new_l2s))
+                # Always use @ mentions for assign command, even in draft mode
+                l2_mentions = ", ".join(
+                    format_mention(context, l2, force_at=True) for l2 in sorted(new_l2s)
+                )
                 msg = (
                     f"New categories assigned: {', '.join(new_categories)}\n\n"
                     f"{l2_mentions} you have been requested to review this Pull request/Issue "
@@ -4584,11 +4591,15 @@ def can_merge(context: PRContext) -> bool:
     Check if PR can be merged.
 
     Conditions:
-    1. PR state is fully-signed
-    2. No active holds
-    3. ORP approved (if in EXTRA_CHECKS)
+    1. PR is not in draft state
+    2. PR state is fully-signed
+    3. No active holds
+    4. ORP approved (if in EXTRA_CHECKS)
     """
     if not context.is_pr:
+        return False
+
+    if context.is_draft:
         return False
 
     pr_state = determine_pr_state(context)
@@ -4840,32 +4851,38 @@ def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
     return lab_stats if lab_stats else None
 
 
-def fetch_pr_result(url: str) -> Tuple[int, str]:
-    """
-    Fetch PR test result from Jenkins artifacts URL.
+#
+# def fetch_pr_result(url: str) -> Tuple[int, str]:
+#     """
+#     Fetch PR test result from Jenkins artifacts URL.
+#
+#     Args:
+#         url: URL to fetch results from
+#
+#     Returns:
+#         Tuple of (error_code, output_string)
+#         error_code is 0 on success, non-zero on failure
+#     """
+#     # Equivalent to curl -k (ignore TLS verification)
+#     context = ssl._create_unverified_context()
+#
+#     try:
+#         with urllib.request.urlopen(url, context=context, timeout=60) as resp:
+#             output = resp.read().decode("utf-8", errors="replace")
+#         return 0, output
+#
+#     except urllib.error.HTTPError as e:
+#         # HTTP errors (e.g., 404, 500)
+#         return e.code, e.read().decode("utf-8", errors="replace")
+#
+#     except Exception as e:
+#         # Network errors, timeouts, etc.
+#         return 1, str(e)
 
-    Args:
-        url: URL to fetch results from
 
-    Returns:
-        Tuple of (error_code, output_string)
-        error_code is 0 on success, non-zero on failure
-    """
-    # Equivalent to curl -k (ignore TLS verification)
-    context = ssl._create_unverified_context()
-
-    try:
-        with urllib.request.urlopen(url, context=context, timeout=60) as resp:
-            output = resp.read().decode("utf-8", errors="replace")
-        return 0, output
-
-    except urllib.error.HTTPError as e:
-        # HTTP errors (e.g., 404, 500)
-        return e.code, e.read().decode("utf-8", errors="replace")
-
-    except Exception as e:
-        # Network errors, timeouts, etc.
-        return 1, str(e)
+def fetch_pr_result(url):  # pragma: no cover
+    e, o = getstatusoutput(f"curl -k -s -L --max-time 60 {url}")
+    return e, o
 
 
 def process_ci_test_results(context: PRContext) -> None:
@@ -4923,7 +4940,7 @@ def process_ci_test_results(context: PRContext) -> None:
             error_code, output = fetch_pr_result(pr_result_url)
 
             if error_code != 0:
-                logger.error("Failed to fetch PR results: code {error_code}")
+                logger.error(f"Failed to fetch PR results: code {error_code}")
                 logger.error(output)
                 raise RuntimeError("System-error: unable to get PR result")
 
@@ -5021,6 +5038,11 @@ def generate_status_message(context: PRContext) -> str:
             lines.append("✅ **Ready to merge**")
         else:
             reasons = []
+
+            # Check draft status first
+            if context.is_draft:
+                reasons.append("PR is in draft state")
+
             if pr_state == PRState.TESTS_PENDING:
                 pending_pre = [
                     cat

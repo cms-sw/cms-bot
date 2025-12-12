@@ -947,6 +947,7 @@ class MockPullRequest:
         self.merged = data.get("merged", False)
         self.mergeable = data.get("mergeable", True)
         self.mergeable_state = data.get("mergeable_state", "clean")
+        self.draft = data.get("draft", False)
 
         # Head and base refs
         head_data = data.get("head", {})
@@ -1124,6 +1125,9 @@ class MockIssue:
             self.milestone = MockMilestone.from_json(milestone_data)
         else:
             self.milestone = None
+
+        # Draft status (for PRs viewed as issues)
+        self.draft = data.get("draft", False)
 
         # Comments - prefer inline data, then try loading from IssueComments file
         # Note: data.get("comments") is an integer count in GitHub API, not a list
@@ -7793,10 +7797,10 @@ class TestOldTestForProcessPR:
     def test_assign(self):
         self.runTest(17)
 
-    def test_assign_from_invalid(self):
+    def test_assign_from(self):
         self.runTest(27)
 
-    def test_assign_from(self):
+    def test_assign_from_invalid(self):
         self.runTest(27)
 
     def test_assign_from_with_label(self):
@@ -7805,21 +7809,18 @@ class TestOldTestForProcessPR:
     def test_backport(self):
         self.runTest(26)
 
+    def test_backport_already_seen(self):
+        self.runTest(26)
+
     def test_backport_ok(self):
         ret = self.runTest(pr_id=9)
         assert "backport-ok" in ret["labels"]
-
-    def test_backport_already_seen(self):
-        self.runTest(26)
 
     def test_build_only(self):
         self.runTest(40)
 
     def test_close(self):
         self.runTest()
-
-    def test_test_all_params(self):
-        self.runTest(24)
 
     def test_cmsdist_start_tests(self):
         self.runTest(1, "iarspider-cmssw/cmsdist")
@@ -7829,6 +7830,33 @@ class TestOldTestForProcessPR:
 
     def test_code_checks_with(self):
         self.runTest(25)
+
+    def test_create_repo(self):
+        self.runTest(30)
+
+    def test_draft_pr_opened(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_assign(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_updated(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_start_test(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_ready(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_ask_ready(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_fully_signed(self):
+        self.runTest(pr_id=21)
+
+    def test_test_all_params(self):
+        self.runTest(24)
 
 
 # =============================================================================

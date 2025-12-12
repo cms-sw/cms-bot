@@ -1,0 +1,64 @@
+{
+  "test_name": "test_draft_pr_updated",
+  "action_count": 6,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 2523514208,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_property_file",
+      "details": {
+        "filename": "trigger-code-checks-iarspider-cmssw-cmssw-21.properties",
+        "parameters": {
+          "PULL_REQUEST": "21",
+          "CONTEXT_PREFIX": "cms/21",
+          "APPLY_PATCH": "false"
+        }
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 21,
+        "body": "New categories assigned: l1\n\n@aloeliger, @epalencia you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2523442237-->"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
+        "state": "pending",
+        "target_url": "",
+        "description": "code-checks requested",
+        "context": "cms/21/code-checks"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
+        "state": "success",
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/21/code-checks"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2523322081,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"},\"2523514208\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\"],\"ts\":\"2024-12-06T15:36:43+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2523442237\":\"+1\",\"2523514208\":\"+1\"},\"fv\":{\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T15:34:01Z\"}}} -->"
+      }
+    }
+  ]
+}

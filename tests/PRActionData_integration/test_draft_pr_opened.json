@@ -1,0 +1,51 @@
+{
+  "test_name": "test_draft_pr_opened",
+  "action_count": 5,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 2523440118,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "remove_label",
+      "details": {
+        "issue_number": 21,
+        "label": "code-checks-pending"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 21,
+        "labels": [
+          "code-checks-approved"
+        ]
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "9138474754099798ff50cb07287e7caa4786f247",
+        "state": "success",
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/21/code-checks"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2523322081,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\"],\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2523440118\":\"+1\"},\"fv\":{\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T11:49:52Z\"}}} -->"
+      }
+    }
+  ]
+}

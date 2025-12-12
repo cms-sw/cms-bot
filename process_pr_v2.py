@@ -4851,36 +4851,17 @@ def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
     return lab_stats if lab_stats else None
 
 
-#
-# def fetch_pr_result(url: str) -> Tuple[int, str]:
-#     """
-#     Fetch PR test result from Jenkins artifacts URL.
-#
-#     Args:
-#         url: URL to fetch results from
-#
-#     Returns:
-#         Tuple of (error_code, output_string)
-#         error_code is 0 on success, non-zero on failure
-#     """
-#     # Equivalent to curl -k (ignore TLS verification)
-#     context = ssl._create_unverified_context()
-#
-#     try:
-#         with urllib.request.urlopen(url, context=context, timeout=60) as resp:
-#             output = resp.read().decode("utf-8", errors="replace")
-#         return 0, output
-#
-#     except urllib.error.HTTPError as e:
-#         # HTTP errors (e.g., 404, 500)
-#         return e.code, e.read().decode("utf-8", errors="replace")
-#
-#     except Exception as e:
-#         # Network errors, timeouts, etc.
-#         return 1, str(e)
-
-
 def fetch_pr_result(url):  # pragma: no cover
+    """
+    Fetch PR test result from Jenkins artifacts URL.
+
+    Args:
+        url: URL to fetch results from
+
+    Returns:
+        Tuple of (error_code, output_string)
+        error_code is 0 on success, non-zero on failure
+    """
     e, o = getstatusoutput(f"curl -k -s -L --max-time 60 {url}")
     return e, o
 
@@ -5218,25 +5199,27 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
         logger.info(f"Removing labels: {sorted(labels_to_remove)}")
 
     # Apply label changes (guarded by dry_run)
-    for label in labels_to_remove:
+    # Batch removals into a single call
+    if labels_to_remove:
         if context.dry_run:
-            logger.info(f"[DRY RUN] Would remove label: {label}")
+            logger.info(f"[DRY RUN] Would remove labels: {sorted(labels_to_remove)}")
         else:
             try:
-                context.issue.remove_from_labels(label)
-                logger.debug(f"Removed label: {label}")
+                context.issue.remove_from_labels(*sorted(labels_to_remove))
+                logger.debug(f"Removed labels: {sorted(labels_to_remove)}")
             except Exception as e:
-                logger.warning(f"Could not remove label {label}: {e}")
+                logger.warning(f"Could not remove labels {sorted(labels_to_remove)}: {e}")
 
-    for label in labels_to_add:
+    # Batch additions into a single call
+    if labels_to_add:
         if context.dry_run:
-            logger.info(f"[DRY RUN] Would add label: {label}")
+            logger.info(f"[DRY RUN] Would add labels: {sorted(labels_to_add)}")
         else:
             try:
-                context.issue.add_to_labels(label)
-                logger.debug(f"Added label: {label}")
+                context.issue.add_to_labels(*sorted(labels_to_add))
+                logger.debug(f"Added labels: {sorted(labels_to_add)}")
             except Exception as e:
-                logger.warning(f"Could not add label {label}: {e}")
+                logger.warning(f"Could not add labels {sorted(labels_to_add)}: {e}")
 
     return old_labels, new_labels
 

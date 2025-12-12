@@ -7759,7 +7759,7 @@ class TestOldTestForProcessPR:
 
             recorder = ActionRecorder(self.test_name, self.record_mode)
             gh = MockGithub(self.test_name, recorder)
-            repo = gh.get_repo("iarspider-cmssw/cmssw")
+            repo = gh.get_repo(repo)
             issue = repo.get_issue(pr_id)
 
             with FunctionHook(recorder.property_file_hook()):
@@ -7773,7 +7773,9 @@ class TestOldTestForProcessPR:
                     loglevel="DEBUG",
                 )
 
-            print(result)
+            from pprint import pprint
+
+            pprint(result)
 
             if self.record_mode:
                 recorder.save()
@@ -7821,7 +7823,7 @@ class TestOldTestForProcessPR:
     def test_test_all_params(self):
         self.runTest(24)
 
-    def test_test_cmsdist_start_tests(self):
+    def test_cmsdist_start_tests(self):
         self.runTest(1, "iarspider-cmssw/cmsdist")
 
 

@@ -5667,8 +5667,10 @@ def update_pre_check_statuses(context: PRContext) -> None:
 
             # Found a valid signature - get the comment URL
             # Look up the comment to get its HTML URL
+            # Note: cache keys are strings, comment.id is int
+            comment_id_int = int(comment_id)
             for comment in context.comments:
-                if comment.id == comment_id:
+                if comment.id == comment_id_int:
                     comment_url = getattr(comment, "html_url", "")
                     break
 

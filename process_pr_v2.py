@@ -4812,12 +4812,17 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
         # Determine overall status by checking sub-statuses
         overall_status = _compute_test_status(base_context, status_map)
 
+        # Get target_url from the base context status (cms/<prid>[/<flavor>]/<arch>)
+        # not from the /required or /optional status
+        base_status = status_map.get(base_context)
+        target_url = base_status.target_url
+
         result = CITestResult(
             status=overall_status,
             is_optional=(suffix == "optional"),
             context=ctx,
             description=status.description or "",
-            target_url=status.target_url,
+            target_url=target_url,
         )
         results[suffix].append(result)
 

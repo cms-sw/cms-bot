@@ -1963,6 +1963,9 @@ class PRContext:
         """
         Get commit statuses for the head commit as a dict, with caching.
 
+        Uses the combined status API which returns only the latest status
+        for each context, not the full history.
+
         Returns:
             Dict mapping status context name to status object
         """
@@ -1981,21 +1984,24 @@ class PRContext:
         if not sha:
             return {}
 
-        # Fetch statuses from API
+        # Fetch combined status from API
         try:
             # Use cached commit if available, otherwise fetch
             if sha in self.commits:
                 commit = self.commits[sha]
-                # MockCommit and real Commit both have get_statuses()
-                if hasattr(commit, "get_statuses"):
-                    statuses_list = list(commit.get_statuses())
-                else:
-                    # Fallback to repo.get_commit for real commits
-                    commit = self.repo.get_commit(sha)
-                    statuses_list = list(commit.get_statuses())
             else:
                 commit = self.repo.get_commit(sha)
+
+            # Use get_combined_status() which returns latest status per context
+            # For MockCommit, get_statuses() already returns from CommitCombinedStatus
+            if hasattr(commit, "get_combined_status"):
+                combined = commit.get_combined_status()
+                statuses_list = list(combined.statuses)
+            elif hasattr(commit, "get_statuses"):
+                # Fallback for mocks - get_statuses() loads from CommitCombinedStatus
                 statuses_list = list(commit.get_statuses())
+            else:
+                statuses_list = []
 
             # Convert to dict keyed by context
             self._commit_statuses = {s.context: s for s in statuses_list}
@@ -4166,7 +4172,6 @@ def process_comment(context: PRContext, comment) -> None:
     """
     # Skip already processed comments
     if str(comment.id) in context.cache.comments:
-        logger.debug(f"Comment {comment.id} already processed, skipping")
         return
 
     command_line, bot_mentioned = extract_command_line(comment.body or "", context.cmsbuild_user)
@@ -4208,7 +4213,7 @@ def process_comment(context: PRContext, comment) -> None:
         #   True  = success (stop processing)
         #   False = failure (stop processing)
         #   None  = doesn't apply, try next command (fallthrough)
-        logger.info(f"Trying command '{cmd.name}' from user {user} in comment {comment_id}")
+        logger.info(f"Trying command '{cmd.name}' from user {user}")
         try:
             result = cmd.handler(context, match, user, comment_id, timestamp)
         except Exception as e:
@@ -6649,9 +6654,6 @@ def process_pr(
                 params = build_test_parameters(context, test_request)
                 logger.info(
                     f"Creating test properties: {test_request.verb} triggered by {test_request.triggered_by}"
-                )
-                logger.debug(
-                    f"Test parameters: %s", ",".join(f"{k}={v}" for k, v in params.items())
                 )
                 create_test_properties_file(context, params)
 

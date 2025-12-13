@@ -2206,6 +2206,9 @@ def flush_pending_statuses(context: PRContext) -> int:
     Should be called at the end of PR processing to avoid invalidating
     status cache during processing.
 
+    Only updates statuses that have actually changed (different state,
+    description, or target_url).
+
     Args:
         context: PR processing context
 
@@ -2218,7 +2221,26 @@ def flush_pending_statuses(context: PRContext) -> int:
     updated_count = 0
     shas_to_invalidate = set()
 
+    # Get current statuses for comparison
+    current_statuses = context.get_commit_statuses()
+
     for sha, state, description, target_url, status_context in context.pending_status_updates:
+        # Check if status has changed
+        existing = current_statuses.get(status_context)
+        if existing:
+            # Compare state, description, and target_url
+            existing_state = getattr(existing, "state", None)
+            existing_desc = getattr(existing, "description", None) or ""
+            existing_url = getattr(existing, "target_url", None) or ""
+
+            if (
+                existing_state == state
+                and existing_desc == description
+                and existing_url == target_url
+            ):
+                logger.debug(f"Status {status_context} unchanged, skipping update")
+                continue
+
         if context.dry_run:
             logger.info(f"[DRY RUN] Would set status {status_context}: {state} - {description}")
             updated_count += 1
@@ -2244,9 +2266,9 @@ def flush_pending_statuses(context: PRContext) -> int:
             logger.error(f"Failed to set status {status_context}: {e}")
 
     # Invalidate cache for all affected SHAs (only in non-dry-run mode)
-    for sha in shas_to_invalidate:
-        if sha in context._commit_statuses:
-            del context._commit_statuses[sha]
+    if shas_to_invalidate:
+        # Since we only cache head commit statuses, just reset the cache
+        context._commit_statuses = None
 
     # Clear the queue
     context.pending_status_updates.clear()

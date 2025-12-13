@@ -2582,6 +2582,9 @@ def handle_hold(
         context.holds.append(hold)
         logger.info(f"Hold placed by {user} ({category})")
 
+    # Add hold label
+    context.pending_labels.add("hold")
+
     # Post hold notification
     blockers = format_mention(context, user)
     msg = (
@@ -4827,6 +4830,7 @@ def can_merge(context: PRContext) -> bool:
     2. PR state is fully-signed
     3. No active holds
     4. ORP approved (if in EXTRA_CHECKS)
+    5. No new-package-pending label
     """
     if not context.is_pr:
         return False
@@ -4840,6 +4844,11 @@ def can_merge(context: PRContext) -> bool:
         return False
 
     if context.holds:
+        return False
+
+    # Check for new-package-pending label
+    current_labels = {label.name for label in context.issue.get_labels()}
+    if "new-package-pending" in current_labels or "new-package-pending" in context.pending_labels:
         return False
 
     # Check if ORP is required (in EXTRA_CHECKS)
@@ -5408,6 +5417,17 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
                 )
                 if adding_type_label:
                     labels_to_remove.add(label)
+
+    # Handle hold label based on context.holds
+    if context.holds:
+        # There are active holds - ensure hold label is present
+        if "hold" not in old_labels and "hold" not in context.pending_labels:
+            labels_to_add.add("hold")
+        new_labels.add("hold")
+    else:
+        # No active holds - remove hold label if present
+        if "hold" in old_labels:
+            labels_to_remove.add("hold")
 
     # Add pending labels
     for label in context.pending_labels:
@@ -6791,6 +6811,19 @@ def process_pr(
                 except Exception as e:
                     logger.error(f"Failed to close issue: {e}")
                     context.messages.append(f"Failed to close issue: {e}")
+
+        # Handle should_reopen (reopen command)
+        if context.should_reopen:
+            if pr.state == "closed":
+                if dryRun:
+                    logger.info("[DRY RUN] Would reopen issue")
+                else:
+                    try:
+                        issue.edit(state="open")
+                        logger.info("Reopened issue")
+                    except Exception as e:
+                        logger.error(f"Failed to reopen issue: {e}")
+                        context.messages.append(f"Failed to reopen issue: {e}")
 
         # Handle automerge
         if getattr(repo_config, "AUTOMERGE", False) and can_merge(context):

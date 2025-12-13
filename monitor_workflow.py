@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 from os import system, getpid
 from sys import argv, exit
-from time import sleep, time
+from time import sleep, time, monotonic
 import psutil
 from threading import Thread
 import subprocess
+from json import dump
 
+SAMPLE_INTERVAL = 1.0
+cpu_times = {}
 job = {"exit_code": 0, "command": "true"}
 
 
@@ -14,6 +17,7 @@ def run_job(job):
 
 
 def update_stats(proc):
+    global cpu_times
     stats = {
         "rss": 0,
         "vms": 0,
@@ -26,16 +30,36 @@ def update_stats(proc):
         "processes": 0,
         "cpu": 0,
     }
-    children = proc.children(recursive=True)
+    try:
+        children = proc.children(recursive=True)
+    except:
+        return stats
     clds = len(children)
     if clds == 0:
         return stats
     stats["processes"] = clds
+    sleep(SAMPLE_INTERVAL)
+    new_cpu_times = {}
     for cld in children:
+        pid = cld.pid
         try:
-            cld.cpu_percent(interval=None)
-            sleep(0.1)
-            stats["cpu"] += int(cld.cpu_percent(interval=None))
+            current_time = monotonic()
+            new_cpu = cld.cpu_times()
+            old_cpu, last_time = cpu_times.get(pid, (None, None))
+            cpu_delta = 0
+            elapsed = 0
+            if old_cpu:
+                delta = (new_cpu.user - old_cpu.user) + (new_cpu.system - old_cpu.system)
+                elapsed = current_time - last_time
+            else:
+                delta = new_cpu.user + new_cpu.system
+                elapsed = time() - cld.create_time()
+            if elapsed >= 0.1:
+                stats["cpu"] += int((delta / elapsed) * 100.0)
+            new_cpu_times[pid] = (new_cpu, current_time)
+        except:
+            continue
+        try:
             stats["num_fds"] += cld.num_fds()
             stats["num_threads"] += cld.num_threads()
             mem = None
@@ -52,6 +76,7 @@ def update_stats(proc):
                 stats[a] += getattr(mem, a)
         except:
             pass
+    cpu_times = new_cpu_times
     return stats
 
 
@@ -83,15 +108,10 @@ def monitor(stop):
             stats = update_stats(p)
             if stats["processes"] == 0:
                 break
-            sleep_time = 1.0 - stats["processes"] * 0.1
             stats["time"] = int(time() - stime)
             data.append(stats)
         except:
             pass
-        if sleep_time > 0.1:
-            sleep(sleep_time)
-    from json import dump
-
     stat_file = open("wf_stats-%s.json" % step, "w")
     dump(data, stat_file)
     stat_file.close()

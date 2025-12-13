@@ -4102,6 +4102,7 @@ def set_comment_reaction(
     Set reaction on a comment based on command success.
 
     Uses cache to avoid redundant API calls.
+    Skips bot's own comments (bot shouldn't react to itself).
 
     Args:
         context: PR processing context
@@ -4109,6 +4110,12 @@ def set_comment_reaction(
         comment_id: Comment ID
         success: True for +1 reaction, False for -1 reaction
     """
+    # Don't put reactions on bot's own comments
+    if context.cmsbuild_user and hasattr(comment, "user") and comment.user:
+        if comment.user.login == context.cmsbuild_user:
+            logger.debug(f"Skipping reaction on bot's own comment {comment_id}")
+            return
+
     desired_reaction = REACTION_PLUS_ONE if success else REACTION_MINUS_ONE
     cached_reaction = context.cache.get_cached_reaction(comment_id)
 

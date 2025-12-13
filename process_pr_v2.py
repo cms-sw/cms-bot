@@ -4166,6 +4166,7 @@ def process_comment(context: PRContext, comment) -> None:
     """
     # Skip already processed comments
     if str(comment.id) in context.cache.comments:
+        logger.debug(f"Comment {comment.id} already processed, skipping")
         return
 
     command_line, bot_mentioned = extract_command_line(comment.body or "", context.cmsbuild_user)
@@ -4207,7 +4208,7 @@ def process_comment(context: PRContext, comment) -> None:
         #   True  = success (stop processing)
         #   False = failure (stop processing)
         #   None  = doesn't apply, try next command (fallthrough)
-        logger.info(f"Trying command '{cmd.name}' from user {user}")
+        logger.info(f"Trying command '{cmd.name}' from user {user} in comment {comment_id}")
         try:
             result = cmd.handler(context, match, user, comment_id, timestamp)
         except Exception as e:
@@ -6648,6 +6649,9 @@ def process_pr(
                 params = build_test_parameters(context, test_request)
                 logger.info(
                     f"Creating test properties: {test_request.verb} triggered by {test_request.triggered_by}"
+                )
+                logger.debug(
+                    f"Test parameters: %s", ",".join(f"{k}={v}" for k, v in params.items())
                 )
                 create_test_properties_file(context, params)
 

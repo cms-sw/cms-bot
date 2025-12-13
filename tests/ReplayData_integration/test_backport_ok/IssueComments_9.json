@@ -30,7 +30,7 @@
       "created_at": "2023-12-12T13:36:11Z",
       "updated_at": "2025-05-07T09:31:54Z",
       "author_association": "MEMBER",
-      "body": "cms-bot internal usage<!-- {\"comments\":{\"1852068434\":{\"first_line\":\"+dqm\",\"signed_files\":[\"Validation/TrackerHits/test/README\"],\"ts\":1702384310}},\"emoji\":{\"1852068434\":\"+1\",\"2857856131\":\"+1\",\"2857857384\":\"+1\"},\"fv\":{\"Validation/TrackerHits/test/README::commit::17338beb185f\":{\"cats\":[\"dqm\"],\"ts\":1702384310}}} -->",
+      "body": "cms-bot internal usage<!-- {\"comments\":{\"1852068434\":{\"cats\":[\"dqm\"],\"ctype\":\"+1\",\"first_line\":\"+dqm\",\"signed_files\":[\"Validation/TrackerHits/test/README::commit::17338beb185f\"],\"ts\":\"2023-12-12T13:45:49Z\",\"user\":\"iarspider\"}},\"emoji\":{\"1852068434\":\"+1\",\"2857856131\":\"+1\",\"2857857384\":\"+1\"},\"fv\":{\"Validation/TrackerHits/test/README::commit::17338beb185f\":{\"cats\":[\"dqm\"],\"ts\":\"2023-12-12T13:45:49Z\"}}} -->",
       "reactions": {
         "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/comments/1852047910/reactions",
         "total_count": 0,

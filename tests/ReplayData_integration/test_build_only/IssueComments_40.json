@@ -120,7 +120,7 @@
       "created_at": "2025-05-12T13:27:19Z",
       "updated_at": "2025-05-12T13:27:19Z",
       "author_association": "MEMBER",
-      "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{}} -->",
+      "body": "cms-bot internal usage<!-- {\"comments\":{\"2872567078\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc::faa9944e724742f98b149d49943697df443161bc\"],\"ts\":\"2025-05-12T13:24:31+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2872567078\":\"+1\"},\"fv\":{\"RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc::faa9944e724742f98b149d49943697df443161bc\":{\"cats\":[\"reconstruction\"],\"ts\":\"2025-05-12T13:24:00Z\"}}} -->",
       "reactions": {
         "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/issues/comments/2872582394/reactions",
         "total_count": 0,

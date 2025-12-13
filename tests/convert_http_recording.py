@@ -40,7 +40,13 @@ sys.path.insert(0, str(this_script.parent.parent))
 sys.path.insert(0, str(this_script.parent.parent / "repos" / "iarspider-cmssw" / "cmssw"))
 
 import repo_config
-from process_pr_v2 import initialize_labels, init_l2_data, get_file_l2_categories, parse_timestamp
+from process_pr_v2 import (
+    initialize_labels,
+    init_l2_data,
+    get_file_l2_categories,
+    get_user_l2_categories,
+    parse_timestamp,
+)
 
 initialize_labels(repo_config)
 init_l2_data(repo_config, True)
@@ -179,126 +185,126 @@ def extract_endpoint_info(path: str) -> Tuple[str, Optional[str], Optional[int]]
 
     # Rate limit (can be ignored)
     if path_no_query == "/rate_limit":
-        return ("RateLimit", None, None)
+        return "RateLimit", None, None
 
     # Repository
     match = re.match(r"^/repos/([^/]+)/([^/]+)$", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("Repository", owner_repo, None)
+        return "Repository", owner_repo, None
 
     # Pull Request
     match = re.match(r"^/repos/([^/]+)/([^/]+)/pulls/(\d+)$", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("PullRequest", owner_repo, int(match.group(3)))
+        return "PullRequest", owner_repo, int(match.group(3))
 
     # Pull Request Files
     match = re.match(r"^/repos/([^/]+)/([^/]+)/pulls/(\d+)/files", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("PullRequestFiles", owner_repo, int(match.group(3)))
+        return "PullRequestFiles", owner_repo, int(match.group(3))
 
     # Pull Request Commits
     match = re.match(r"^/repos/([^/]+)/([^/]+)/pulls/(\d+)/commits", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("PullRequestCommits", owner_repo, int(match.group(3)))
+        return "PullRequestCommits", owner_repo, int(match.group(3))
 
     # Pull Request Reviews
     match = re.match(r"^/repos/([^/]+)/([^/]+)/pulls/(\d+)/reviews", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("PullRequestReviews", owner_repo, int(match.group(3)))
+        return "PullRequestReviews", owner_repo, int(match.group(3))
 
     # Issue
     match = re.match(r"^/repos/([^/]+)/([^/]+)/issues/(\d+)$", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("Issue", owner_repo, int(match.group(3)))
+        return "Issue", owner_repo, int(match.group(3))
 
     # Issue Comments
     match = re.match(r"^/repos/([^/]+)/([^/]+)/issues/(\d+)/comments", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("IssueComments", owner_repo, int(match.group(3)))
+        return "IssueComments", owner_repo, int(match.group(3))
 
     # Issue Labels
     match = re.match(r"^/repos/([^/]+)/([^/]+)/issues/(\d+)/labels", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("IssueLabels", owner_repo, int(match.group(3)))
+        return "IssueLabels", owner_repo, int(match.group(3))
 
     # Issue/Comment Reactions
     match = re.match(r"^/repos/([^/]+)/([^/]+)/issues/comments/(\d+)/reactions", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("CommentReactions", owner_repo, int(match.group(3)))
+        return "CommentReactions", owner_repo, int(match.group(3))
 
     # Milestone
     match = re.match(r"^/repos/([^/]+)/([^/]+)/milestones/(\d+)", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("Milestone", owner_repo, int(match.group(3)))
+        return "Milestone", owner_repo, int(match.group(3))
 
     # Compare (commit ranges)
     match = re.match(r"^/repos/([^/]+)/([^/]+)/compare/([^/]+)\.\.\.([^/]+)", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
         # Use base...head as identifier
-        return ("Compare", owner_repo, f"{match.group(3)}...{match.group(4)}")
+        return "Compare", owner_repo, f"{match.group(3)}...{match.group(4)}"
 
     # Commit Status (combined status)
     match = re.match(r"^/repos/([^/]+)/([^/]+)/commits/([a-f0-9]+)/status", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("CommitCombinedStatus", owner_repo, match.group(3))
+        return "CommitCombinedStatus", owner_repo, match.group(3)
 
     # Commit Statuses (individual statuses, via /statuses/ endpoint)
     match = re.match(r"^/repos/([^/]+)/([^/]+)/statuses/([a-f0-9]+)", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("CommitStatus", owner_repo, match.group(3))
+        return "CommitStatus", owner_repo, match.group(3)
 
     # Git Commit (different from regular commit - has git/ in path)
     match = re.match(r"^/repos/([^/]+)/([^/]+)/git/commits/([a-f0-9]+)", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("GitCommit", owner_repo, match.group(3))
+        return "GitCommit", owner_repo, match.group(3)
 
     # Commit
     match = re.match(r"^/repos/([^/]+)/([^/]+)/commits/([a-f0-9]+)$", path_no_query)
     if match:
         owner_repo = f"{match.group(1)}_{match.group(2)}"
-        return ("Commit", owner_repo, match.group(3))
+        return "Commit", owner_repo, match.group(3)
 
     # Repository by ID - Pull Request Files (paginated)
     match = re.match(r"^/repositories/(\d+)/pulls/(\d+)/files", path_no_query)
     if match:
-        return ("RepoIdPullRequestFiles", match.group(1), int(match.group(2)))
+        return "RepoIdPullRequestFiles", match.group(1), int(match.group(2))
 
     # Repository by ID - Pull Request Commits (paginated)
     match = re.match(r"^/repositories/(\d+)/pulls/(\d+)/commits", path_no_query)
     if match:
-        return ("RepoIdPullRequestCommits", match.group(1), int(match.group(2)))
+        return "RepoIdPullRequestCommits", match.group(1), int(match.group(2))
 
     # Repository by ID - Commits (paginated, usually for commit history)
     match = re.match(r"^/repositories/(\d+)/commits/([a-f0-9]+)", path_no_query)
     if match:
-        return ("RepoIdCommits", match.group(1), match.group(2))
+        return "RepoIdCommits", match.group(1), match.group(2)
 
     # User
     match = re.match(r"^/users/([^/]+)$", path_no_query)
     if match:
-        return ("User", match.group(1), None)
+        return "User", match.group(1), None
 
     # Organization
     match = re.match(r"^/orgs/([^/]+)$", path_no_query)
     if match:
-        return ("Organization", match.group(1), None)
+        return "Organization", match.group(1), None
 
     # Unknown
-    return ("Unknown", path, None)
+    return "Unknown", path, None
 
 
 def is_bot_comment(comment: Dict[str, Any]) -> bool:
@@ -450,7 +456,7 @@ def convert_old_cache_to_new(
     {
         "emoji": {},
         "fv": { "<filename>::<sha>": {"ts": ..., "cats": [...]} },
-        "comments": { "<comment_id>": {"ts": ..., "first_line": ..., ...} }
+        "comments": { "<comment_id>": {"ts": ..., "first_line": ..., "ctype": ..., "cats": ..., "signed_files": ..., "user": ...} }
     }
 
     Args:
@@ -469,7 +475,6 @@ def convert_old_cache_to_new(
     for commit in commits_data:
         sha = commit.get("sha", "")
         if sha:
-            # Use "commit::<sha>" as placeholder for file hashes
             files = commit.get("files", [])
             file_list = []
             for f in files:
@@ -490,38 +495,81 @@ def convert_old_cache_to_new(
         elif commit_sha in commit_files:
             files = commit_files[commit_sha]
 
-        # Get timestamp
-        ts = ""
-        if commit_sha in commits_info:
-            ts = commits_info[commit_sha].get("time", "")
+        # Get comment info from all_comments
+        comment_id_int = int(comment_id)
+        comment_data = all_comments.get(comment_id_int, {})
 
-        # Create file version entries
+        # Get timestamp from comment (ISO format string)
+        ts = comment_data.get("created_at", "")
+
+        # Parse timestamp for category lookup
+        ts_dt = None
+        if ts:
+            try:
+                ts_dt = parse_timestamp(ts)
+            except Exception:
+                ts_dt = datetime.now(timezone.utc)
+        else:
+            ts_dt = datetime.now(timezone.utc)
+
+        # Build signed_files as filename::blob_sha keys
+        signed_file_keys = []
         for filename in files:
             # Use commit::<sha> as the blob sha since we don't have real blob shas
             key = f"{filename}::commit::{commit_sha[:12]}"
+            signed_file_keys.append(key)
             if key not in new_cache["fv"]:
                 new_cache["fv"][key] = {
                     "ts": ts,
-                    "cats": get_file_l2_categories(
-                        repo_config,
-                        filename,
-                        datetime.fromtimestamp(ts).replace(tzinfo=timezone.utc),
-                    ),  # Categories would need to be computed
+                    "cats": get_file_l2_categories(repo_config, filename, ts_dt),
                 }
 
-        # Get first_line from actual comment body
+        # Get first_line and detect ctype from comment body
+        body = comment_data.get("body", "")
         first_line = ""
-        comment_id_int = int(comment_id)
-        if comment_id_int in all_comments:
-            body = all_comments[comment_id_int].get("body", "")
-            if body:
-                first_line = body.split("\n")[0].strip()
+        ctype = None
+        cats = []
 
-        # Create comment entry
+        if body:
+            first_line = body.split("\n")[0].strip()
+            first_line_lower = first_line.lower()
+
+            # Parse signature: +1, -1, +<category>, -<category>
+            if first_line_lower == "+1":
+                ctype = "+1"
+                first_line = "+1"
+            elif first_line_lower == "-1":
+                ctype = "-1"
+                first_line = "-1"
+            elif first_line.startswith("+") and len(first_line) > 1:
+                # +<category>
+                ctype = "+1"
+                cat = first_line[1:].strip()
+                cats = [cat]
+            elif first_line.startswith("-") and len(first_line) > 1:
+                # -<category>
+                ctype = "-1"
+                cat = first_line[1:].strip()
+                cats = [cat]
+
+        # Get user from comment
+        user = None
+        user_data = comment_data.get("user", {})
+        if user_data:
+            user = user_data.get("login", "")
+
+        # For generic +1/-1, get user's L2 categories at that time
+        if ctype in ("+1", "-1") and not cats and user:
+            cats = get_user_l2_categories(repo_config, user, ts_dt)
+
+        # Create comment entry with all required fields
         new_cache["comments"][str(comment_id)] = {
             "ts": ts,
             "first_line": first_line,
-            "signed_files": files,
+            "ctype": ctype,
+            "cats": cats,
+            "signed_files": signed_file_keys,
+            "user": user,
         }
 
     return new_cache

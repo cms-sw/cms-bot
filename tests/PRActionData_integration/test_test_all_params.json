@@ -1,25 +1,9 @@
 {
   "test_name": "test_test_all_params",
-  "action_count": 6,
+  "action_count": 4,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2740055137,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 2,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2740383001,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 3,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-tests-iarspider-cmssw-cmssw-24.properties",
@@ -34,18 +18,18 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 2,
       "action": "create_status",
       "details": {
         "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
-        "state": "pending",
+        "state": "success",
         "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2740383001",
         "description": "Tests requested by iarspider at 2025-03-20 13:01:47 UTC.",
         "context": "bot/24/jenkins"
       }
     },
     {
-      "sequence": 5,
+      "sequence": 3,
       "action": "create_status",
       "details": {
         "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
@@ -56,11 +40,11 @@
       }
     },
     {
-      "sequence": 6,
+      "sequence": 4,
       "action": "edit_comment",
       "details": {
         "comment_id": 2740051887,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2740055137\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Validation/README::77764fb81876bf1924bd364f0683b4df078c3da8\"],\"ts\":\"2025-03-20T11:24:44+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2740055137\":\"+1\",\"2740383001\":\"+1\"},\"fv\":{\"Validation/README::77764fb81876bf1924bd364f0683b4df078c3da8\":{\"cats\":[],\"ts\":\"2025-03-20T11:21:50Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2740055137\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Validation/README::77764fb81876bf1924bd364f0683b4df078c3da8\"],\"ts\":\"2025-03-20T11:24:44+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"Validation/README::77764fb81876bf1924bd364f0683b4df078c3da8\":{\"cats\":[],\"ts\":\"2025-03-20T11:21:50Z\"}}} -->"
       }
     }
   ]

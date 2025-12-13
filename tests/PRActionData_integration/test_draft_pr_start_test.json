@@ -1,25 +1,9 @@
 {
   "test_name": "test_draft_pr_start_test",
-  "action_count": 7,
+  "action_count": 5,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2523514208,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 2,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2532358732,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 3,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-tests-iarspider-cmssw-cmssw-21.properties",
@@ -30,7 +14,7 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 2,
       "action": "create_comment",
       "details": {
         "issue_number": 21,
@@ -38,18 +22,18 @@
       }
     },
     {
-      "sequence": 5,
+      "sequence": 3,
       "action": "create_status",
       "details": {
         "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
-        "state": "pending",
+        "state": "success",
         "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/21#issuecomment-2532358732",
         "description": "Tests requested by iarspider at 2024-12-10 17:30:16 UTC.",
         "context": "bot/21/jenkins"
       }
     },
     {
-      "sequence": 6,
+      "sequence": 4,
       "action": "create_status",
       "details": {
         "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
@@ -60,11 +44,11 @@
       }
     },
     {
-      "sequence": 7,
+      "sequence": 5,
       "action": "edit_comment",
       "details": {
         "comment_id": 2523322081,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"},\"2523514208\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\"],\"ts\":\"2024-12-06T15:36:43+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2523442237\":\"+1\",\"2523514208\":\"+1\",\"2532358732\":\"+1\"},\"fv\":{\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T15:34:01Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"},\"2523514208\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\"],\"ts\":\"2024-12-06T15:36:43+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2523442237\":\"+1\"},\"fv\":{\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T15:34:01Z\"}}} -->"
       }
     }
   ]

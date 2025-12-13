@@ -4,14 +4,6 @@
   "actions": [
     {
       "sequence": 1,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2523440118,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 2,
       "action": "remove_labels",
       "details": {
         "issue_number": 21,
@@ -21,13 +13,24 @@
       }
     },
     {
-      "sequence": 3,
+      "sequence": 2,
       "action": "add_labels",
       "details": {
         "issue_number": 21,
         "labels": [
           "code-checks-approved"
         ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_status",
+      "details": {
+        "sha": "9138474754099798ff50cb07287e7caa4786f247",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/21/jenkins"
       }
     },
     {
@@ -46,7 +49,7 @@
       "action": "edit_comment",
       "details": {
         "comment_id": 2523322081,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\"],\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2523440118\":\"+1\"},\"fv\":{\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T11:49:52Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\"],\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T11:49:52Z\"}}} -->"
       }
     }
   ]

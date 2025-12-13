@@ -1,33 +1,9 @@
 {
   "test_name": "test_close",
-  "action_count": 12,
+  "action_count": 9,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2049536405,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 2,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2056930228,
-        "reaction": "-1"
-      }
-    },
-    {
-      "sequence": 3,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2056934192,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 4,
       "action": "remove_labels",
       "details": {
         "issue_number": 17,
@@ -37,17 +13,18 @@
       }
     },
     {
-      "sequence": 5,
+      "sequence": 2,
       "action": "add_labels",
       "details": {
         "issue_number": 17,
         "labels": [
+          "hold",
           "tests-approved"
         ]
       }
     },
     {
-      "sequence": 6,
+      "sequence": 3,
       "action": "edit_issue",
       "details": {
         "issue_number": 17,
@@ -55,7 +32,7 @@
       }
     },
     {
-      "sequence": 7,
+      "sequence": 4,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-tests-iarspider-cmssw-cmssw-17.properties",
@@ -68,7 +45,7 @@
       }
     },
     {
-      "sequence": 8,
+      "sequence": 5,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -76,18 +53,18 @@
       }
     },
     {
-      "sequence": 9,
+      "sequence": 6,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
-        "state": "pending",
+        "state": "success",
         "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2056903278",
         "description": "Tests requested by iarspider at 2024-04-15 13:46:04 UTC.",
         "context": "bot/17/jenkins"
       }
     },
     {
-      "sequence": 10,
+      "sequence": 7,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -98,7 +75,7 @@
       }
     },
     {
-      "sequence": 11,
+      "sequence": 8,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -109,11 +86,11 @@
       }
     },
     {
-      "sequence": 12,
+      "sequence": 9,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"},\"2049242908\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+core\",\"locked\":true,\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::commit::2a9454e30606\"],\"ts\":\"2024-04-11T09:00:53Z\",\"user\":\"iarspider\"},\"2049536405\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\"],\"ts\":\"2024-04-11T11:58:16+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2049242908\":\"+1\",\"2049536405\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\",\"2056796593\":\"+1\",\"2056801055\":\"+1\",\"2056820593\":\"+1\",\"2056903278\":\"+1\",\"2056930228\":\"-1\",\"2056934192\":\"+1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\":{\"cats\":[\"core\"],\"ts\":\"2024-04-11T11:54:10Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"},\"2049242908\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+core\",\"locked\":true,\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::commit::2a9454e30606\"],\"ts\":\"2024-04-11T09:00:53Z\",\"user\":\"iarspider\"},\"2049536405\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\"],\"ts\":\"2024-04-11T11:58:16+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2049242908\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\",\"2056796593\":\"+1\",\"2056801055\":\"+1\",\"2056820593\":\"+1\",\"2056903278\":\"+1\",\"2056930228\":\"+1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\":{\"cats\":[\"core\"],\"ts\":\"2024-04-11T11:54:10Z\"}}} -->"
       }
     }
   ]

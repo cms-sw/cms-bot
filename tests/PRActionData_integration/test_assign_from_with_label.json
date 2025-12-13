@@ -1,25 +1,9 @@
 {
   "test_name": "test_assign_from_with_label",
-  "action_count": 5,
+  "action_count": 2,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2769192218,
-        "reaction": "-1"
-      }
-    },
-    {
-      "sequence": 2,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2769330515,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 3,
       "action": "add_labels",
       "details": {
         "issue_number": 27,
@@ -29,19 +13,11 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 2,
       "action": "create_comment",
       "details": {
         "issue_number": 27,
         "body": "New categories assigned: xpog\n\nhqucms, vlimant you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2769330515-->"
-      }
-    },
-    {
-      "sequence": 5,
-      "action": "edit_comment",
-      "details": {
-        "comment_id": 2769190932,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"2769192218\":\"-1\",\"2769330515\":\"+1\"},\"fv\":{}} -->"
       }
     }
   ]

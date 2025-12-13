@@ -1,35 +1,20 @@
 {
   "test_name": "test_abort",
-  "action_count": 8,
+  "action_count": 7,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2049536405,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 2,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 2056930228,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 3,
       "action": "add_labels",
       "details": {
         "issue_number": 17,
         "labels": [
+          "hold",
           "tests-pending"
         ]
       }
     },
     {
-      "sequence": 4,
+      "sequence": 2,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-abort-iarspider-cmssw-cmssw-17.properties",
@@ -39,7 +24,7 @@
       }
     },
     {
-      "sequence": 5,
+      "sequence": 3,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -47,7 +32,18 @@
       }
     },
     {
-      "sequence": 6,
+      "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
+        "state": "pending",
+        "target_url": "",
+        "description": "Aborted, waiting for authorized user to issue the test command.",
+        "context": "bot/17/jenkins"
+      }
+    },
+    {
+      "sequence": 5,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -58,7 +54,7 @@
       }
     },
     {
-      "sequence": 7,
+      "sequence": 6,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -69,11 +65,11 @@
       }
     },
     {
-      "sequence": 8,
+      "sequence": 7,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"},\"2049242908\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+core\",\"locked\":true,\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::commit::2a9454e30606\"],\"ts\":\"2024-04-11T09:00:53Z\",\"user\":\"iarspider\"},\"2049536405\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\"],\"ts\":\"2024-04-11T11:58:16+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2049242908\":\"+1\",\"2049536405\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\",\"2056796593\":\"+1\",\"2056801055\":\"+1\",\"2056820593\":\"+1\",\"2056903278\":\"+1\",\"2056930228\":\"+1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\":{\"cats\":[\"core\"],\"ts\":\"2024-04-11T11:54:10Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"},\"2049242908\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+core\",\"locked\":true,\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::commit::2a9454e30606\"],\"ts\":\"2024-04-11T09:00:53Z\",\"user\":\"iarspider\"},\"2049536405\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\"],\"ts\":\"2024-04-11T11:58:16+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2049242908\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\",\"2056796593\":\"+1\",\"2056801055\":\"+1\",\"2056820593\":\"+1\",\"2056903278\":\"+1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\":{\"cats\":[\"core\"],\"ts\":\"2024-04-11T11:54:10Z\"}}} -->"
       }
     }
   ]

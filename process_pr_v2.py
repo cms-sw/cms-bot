@@ -2777,7 +2777,19 @@ def handle_abort(
 
     Aborts any pending tests for the PR.
     Only takes effect if tests are actually running (not just pending/not started).
+    Also sets jenkins status to 'pending' with "Aborted, waiting for..." to prevent
+    continuously triggering abort command.
+
+    Exits early if jenkins status description already starts with "Aborted".
     """
+    # Check if already aborted (to avoid continuously triggering abort)
+    jenkins_status = get_jenkins_status(context)
+    if jenkins_status:
+        description = jenkins_status.description or ""
+        if description.startswith("Aborted"):
+            logger.info(f"Ignoring abort from {user} - already aborted")
+            return False
+
     # Check if there are tests to abort (tests must be in pending state)
     statuses = get_ci_test_statuses(context)
     has_pending_tests = False
@@ -2795,6 +2807,10 @@ def handle_abort(
         return False
 
     context.abort_tests = True
+
+    # Set jenkins status to aborted to prevent re-triggering abort
+    set_jenkins_status_aborted(context)
+
     logger.info(f"Test abort requested by {user}")
     return True
 
@@ -3580,6 +3596,44 @@ def get_jenkins_status(context: PRContext) -> Optional[Any]:
     return context.get_commit_status(status_context)
 
 
+def initialize_jenkins_status(context: PRContext) -> None:
+    """
+    Initialize the bot/{prId}/jenkins commit status if not already set.
+
+    Sets status to 'pending' with "Waiting for authorized user to issue the test command."
+    if there's no existing status for the current head commit.
+
+    This should be called early in process_pr to ensure the status exists.
+
+    Args:
+        context: PR processing context
+    """
+    if not context.pr:
+        return
+
+    jenkins_status = get_jenkins_status(context)
+
+    # If no jenkins status exists, set it to waiting
+    if not jenkins_status:
+        set_jenkins_status_waiting(context)
+        return
+
+    # Check if status is from a test request (has "requested by" in description)
+    # If so, don't overwrite it - tests are in progress or completed
+    description = jenkins_status.description or ""
+    if " requested by " in description:
+        return
+
+    # Check if status is already in waiting or aborted state
+    if "Waiting for authorized user" in description:
+        return
+    if "Aborted, waiting for" in description:
+        return
+
+    # For any other state, keep it as is (could be legacy status)
+    logger.debug(f"Jenkins status exists with description: {description}")
+
+
 def has_unknown_release_error(context: PRContext) -> bool:
     """
     Check if there's an error status for cms/{prId}/unknown/release.
@@ -3606,8 +3660,9 @@ def set_jenkins_status_url(
     context: PRContext, url: str, user: str = None, timestamp: datetime = None
 ) -> bool:
     """
-    Set the bot/{prId}/jenkins commit status with the given URL.
+    Set the bot/{prId}/jenkins commit status when tests are requested.
 
+    Sets status to 'success' with description "Tests requested by {user} at {time} UTC."
     This is used to track which test command comment triggered the current test,
     so we don't re-trigger the same test on subsequent runs.
 
@@ -3629,17 +3684,17 @@ def set_jenkins_status_url(
     try:
         head_sha = context.pr.head.sha
 
-        # Build description with user and timestamp if available
+        # Build description with user and timestamp
         if user and timestamp:
             # Format timestamp as UTC
             ts_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
             description = f"Tests requested by {user} at {ts_str} UTC."
         else:
-            description = "Tests triggered"
+            description = "Tests requested."
 
-        # Queue status update (will be set at end of processing)
+        # Queue status update - state is 'success' to indicate tests were requested
         context.queue_status_update(
-            state="pending",
+            state="success",
             description=description,
             context_name=status_context,
             target_url=url,
@@ -3650,6 +3705,80 @@ def set_jenkins_status_url(
         return True
     except Exception as e:
         logger.error(f"Error queuing jenkins status: {e}")
+        return False
+
+
+def set_jenkins_status_waiting(context: PRContext) -> bool:
+    """
+    Set the bot/{prId}/jenkins commit status to waiting for test command.
+
+    Sets status to 'pending' with description "Waiting for authorized user to issue the test command."
+    This should be called when a new commit is pushed.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        True if status was queued successfully
+    """
+    if not context.pr:
+        return False
+
+    pr_id = context.issue.number
+    status_context = f"bot/{pr_id}/jenkins"
+
+    try:
+        head_sha = context.pr.head.sha
+
+        context.queue_status_update(
+            state="pending",
+            description="Waiting for authorized user to issue the test command.",
+            context_name=status_context,
+            target_url="",
+            sha=head_sha,
+        )
+
+        logger.info("Set jenkins status to waiting for test command")
+        return True
+    except Exception as e:
+        logger.error(f"Error setting jenkins status to waiting: {e}")
+        return False
+
+
+def set_jenkins_status_aborted(context: PRContext) -> bool:
+    """
+    Set the bot/{prId}/jenkins commit status to aborted.
+
+    Sets status to 'pending' with description "Aborted, waiting for authorized user to issue the test command."
+    This is used after processing the abort command to prevent continuously triggering abort.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        True if status was queued successfully
+    """
+    if not context.pr:
+        return False
+
+    pr_id = context.issue.number
+    status_context = f"bot/{pr_id}/jenkins"
+
+    try:
+        head_sha = context.pr.head.sha
+
+        context.queue_status_update(
+            state="pending",
+            description="Aborted, waiting for authorized user to issue the test command.",
+            context_name=status_context,
+            target_url="",
+            sha=head_sha,
+        )
+
+        logger.info("Set jenkins status to aborted")
+        return True
+    except Exception as e:
+        logger.error(f"Error setting jenkins status to aborted: {e}")
         return False
 
 
@@ -4815,7 +4944,7 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
         # Get target_url from the base context status (cms/<prid>[/<flavor>]/<arch>)
         # not from the /required or /optional status
         base_status = status_map.get(base_context)
-        target_url = base_status.target_url
+        target_url = base_status.target_url if base_status else status.target_url
 
         result = CITestResult(
             status=overall_status,
@@ -6607,6 +6736,9 @@ def process_pr(
 
         # Check for new commits and post update message if needed
         check_for_new_commits(context)
+
+        # Initialize jenkins status if not set (sets to "Waiting for authorized user...")
+        initialize_jenkins_status(context)
 
     # Process all comments
     process_all_comments(context)

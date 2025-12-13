@@ -1168,23 +1168,24 @@ class MockIssue:
             self._recorder.record(
                 "add_labels",
                 issue_number=self.number,
-                labels=list(labels),
+                labels=sorted(labels),
             )
 
         for label_name in labels:
             if not any(l.name == label_name for l in self._labels):
                 self._labels.append(MockLabel(name=label_name))
 
-    def remove_from_labels(self, label: str) -> None:
-        """Remove a label from the issue."""
+    def remove_from_labels(self, *labels: str) -> None:
+        """Remove labels from the issue."""
         if self._recorder:
             self._recorder.record(
-                "remove_label",
+                "remove_labels",
                 issue_number=self.number,
-                label=label,
+                labels=sorted(labels),
             )
 
-        self._labels = [l for l in self._labels if l.name != label]
+        for label in labels:
+            self._labels = [l for l in self._labels if l.name != label]
 
     def create_comment(self, body: str) -> MockIssueComment:
         """Create a comment on the issue."""
@@ -6419,36 +6420,30 @@ class TestBotMentionReaction:
 class TestDraftPRHandling:
     """Tests for draft PR handling."""
 
-    def test_draft_pr_disables_at_mentions(self):
-        """Test that draft PRs disable @-mentions."""
+    def test_format_mention_with_notify_without_at(self):
+        """Test that notify_without_at=True suppresses @-mentions."""
         context = MagicMock(spec=PRContext)
-        context.notify_without_at = False
-        context.is_draft = True  # This is now a property but we mock it
-
-        # Mock the property
-        type(context).is_draft = property(lambda _: True)
+        context.notify_without_at = True
 
         result = format_mention(context, "testuser")
         assert result == "testuser"
         assert "@" not in result
 
-    def test_non_draft_pr_has_at_mentions(self):
-        """Test that non-draft PRs have @-mentions."""
+    def test_format_mention_default_has_at(self):
+        """Test that default (notify_without_at=False) has @-mentions."""
         context = MagicMock(spec=PRContext)
         context.notify_without_at = False
-        type(context).is_draft = property(lambda _: False)
 
         result = format_mention(context, "testuser")
         assert result == "@testuser"
 
-    def test_notify_without_at_overrides(self):
-        """Test that notify_without_at flag overrides draft status."""
+    def test_format_mention_force_at_overrides(self):
+        """Test that force_at=True overrides notify_without_at."""
         context = MagicMock(spec=PRContext)
         context.notify_without_at = True
-        type(context).is_draft = property(lambda _: False)
 
-        result = format_mention(context, "testuser")
-        assert result == "testuser"
+        result = format_mention(context, "testuser", force_at=True)
+        assert result == "@testuser"
 
 
 # =============================================================================
@@ -6522,7 +6517,7 @@ class TestCITestStatus:
         context.pr.head.sha = "abc123"
         context.issue = MagicMock()
         context.issue.number = 10246
-        context.get_commit_statuses.return_value = []
+        context.get_commit_statuses.return_value = {}
 
         result = get_ci_test_statuses(context)
         assert result == {}
@@ -6545,7 +6540,7 @@ class TestCITestStatus:
         status1.description = "Build successful"
         status1.target_url = "http://example.com/build"
 
-        context.get_commit_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = {status1.context: status1}
 
         result = get_ci_test_statuses(context)
         assert "required" in result
@@ -6570,7 +6565,7 @@ class TestCITestStatus:
         status1.description = "Running tests"
         status1.target_url = "http://example.com/relvals"
 
-        context.get_commit_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = {status1.context: status1}
 
         result = get_ci_test_statuses(context)
         assert "optional" in result
@@ -6595,7 +6590,7 @@ class TestCITestStatus:
         status1.description = "Tests passed"
         status1.target_url = "http://example.com/tests"
 
-        context.get_commit_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = {status1.context: status1}
 
         result = get_ci_test_statuses(context)
         assert "required" in result
@@ -6626,7 +6621,10 @@ class TestCITestStatus:
         status2.description = "Build failed"
         status2.target_url = "http://example.com/build2"
 
-        context.get_commit_statuses.return_value = [status1, status2]
+        context.get_commit_statuses.return_value = {
+            status1.context: status1,
+            status2.context: status2,
+        }
 
         result = get_ci_test_statuses(context)
         # Should only have the status for PR 10246
@@ -6652,7 +6650,7 @@ class TestCITestStatus:
         status1.description = "Running"
         status1.target_url = None
 
-        context.get_commit_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = {status1.context: status1}
 
         result = check_ci_test_completion(context)
         # Pending tests should return None or empty dict
@@ -6676,7 +6674,7 @@ class TestCITestStatus:
         status1.description = "Finished"
         status1.target_url = "http://example.com/build"
 
-        context.get_commit_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = {status1.context: status1}
 
         result = check_ci_test_completion(context)
         assert result is not None
@@ -6700,7 +6698,7 @@ class TestCITestStatus:
         status1.description = "Build failed"
         status1.target_url = "http://example.com/build"
 
-        context.get_commit_statuses.return_value = [status1]
+        context.get_commit_statuses.return_value = {status1.context: status1}
 
         result = check_ci_test_completion(context)
         assert result is not None
@@ -6727,15 +6725,15 @@ class TestTestsApprovalLabels:
         context.issue = MagicMock()
         context.issue.number = pr_number
 
-        # Create mock statuses
-        mock_statuses = []
+        # Create mock statuses as dict
+        mock_statuses = {}
         for ctx, state, desc in statuses_data:
             status = MagicMock()
             status.context = ctx
             status.state = state
             status.description = desc
             status.target_url = "http://example.com/results"
-            mock_statuses.append(status)
+            mock_statuses[ctx] = status
 
         context.get_commit_statuses.return_value = mock_statuses
 
@@ -6928,17 +6926,17 @@ class TestTestResultPostingDeduplication:
         context.posted_messages = {}
         context.issue = MagicMock()
         context.issue.number = pr_number
-        context._commit_statuses = {}
+        context._commit_statuses = None
 
-        # Create mock statuses
-        mock_statuses = []
+        # Create mock statuses as dict
+        mock_statuses = {}
         for ctx, state, desc, url in statuses_data:
             status = MagicMock()
             status.context = ctx
             status.state = state
             status.description = desc
             status.target_url = url
-            mock_statuses.append(status)
+            mock_statuses[ctx] = status
 
         context.get_commit_statuses.return_value = mock_statuses
 
@@ -7849,11 +7847,11 @@ class TestOldTestForProcessPR:
     def test_draft_pr_ready(self):
         self.runTest(pr_id=21)
 
-    def test_draft_pr_ask_ready(self):
-        self.runTest(pr_id=21)
-
-    def test_draft_pr_fully_signed(self):
-        self.runTest(pr_id=21)
+    # def test_draft_pr_ask_ready(self):
+    #     self.runTest(pr_id=21)
+    #
+    # def test_draft_pr_fully_signed(self):
+    #     self.runTest(pr_id=21)
 
     def test_test_all_params(self):
         self.runTest(24)

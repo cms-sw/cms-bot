@@ -1,6 +1,6 @@
 {
   "test_name": "test_assign",
-  "action_count": 7,
+  "action_count": 6,
   "actions": [
     {
       "sequence": 1,
@@ -24,22 +24,13 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "db-pending"
-        ]
-      }
-    },
-    {
-      "sequence": 4,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 17,
-        "labels": [
+          "db-pending",
           "dqm-pending"
         ]
       }
     },
     {
-      "sequence": 5,
+      "sequence": 4,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -47,7 +38,7 @@
       }
     },
     {
-      "sequence": 6,
+      "sequence": 5,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -58,7 +49,7 @@
       }
     },
     {
-      "sequence": 7,
+      "sequence": 6,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

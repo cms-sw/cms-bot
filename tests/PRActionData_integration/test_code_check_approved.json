@@ -12,10 +12,12 @@
     },
     {
       "sequence": 2,
-      "action": "remove_label",
+      "action": "remove_labels",
       "details": {
         "issue_number": 17,
-        "label": "code-checks-pending"
+        "labels": [
+          "code-checks-pending"
+        ]
       }
     },
     {

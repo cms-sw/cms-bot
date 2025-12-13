@@ -1,6 +1,6 @@
 {
   "test_name": "test_backport",
-  "action_count": 13,
+  "action_count": 9,
   "actions": [
     {
       "sequence": 1,
@@ -32,52 +32,16 @@
       "details": {
         "issue_number": 26,
         "labels": [
-          "backport"
-        ]
-      }
-    },
-    {
-      "sequence": 5,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 26,
-        "labels": [
+          "backport",
+          "code-checks-approved",
+          "orp-pending",
+          "pending-signatures",
           "tests-pending"
         ]
       }
     },
     {
-      "sequence": 6,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 26,
-        "labels": [
-          "orp-pending"
-        ]
-      }
-    },
-    {
-      "sequence": 7,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 26,
-        "labels": [
-          "code-checks-approved"
-        ]
-      }
-    },
-    {
-      "sequence": 8,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 26,
-        "labels": [
-          "pending-signatures"
-        ]
-      }
-    },
-    {
-      "sequence": 9,
+      "sequence": 5,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-code-checks-iarspider-cmssw-cmssw-26.properties",
@@ -89,7 +53,7 @@
       }
     },
     {
-      "sequence": 10,
+      "sequence": 6,
       "action": "create_comment",
       "details": {
         "issue_number": 26,
@@ -97,7 +61,7 @@
       }
     },
     {
-      "sequence": 11,
+      "sequence": 7,
       "action": "create_status",
       "details": {
         "sha": "551c95f59caff42369887b5fee86583fe2bff161",
@@ -108,7 +72,7 @@
       }
     },
     {
-      "sequence": 12,
+      "sequence": 8,
       "action": "create_status",
       "details": {
         "sha": "551c95f59caff42369887b5fee86583fe2bff161",
@@ -119,7 +83,7 @@
       }
     },
     {
-      "sequence": 13,
+      "sequence": 9,
       "action": "create_comment",
       "details": {
         "issue_number": 26,

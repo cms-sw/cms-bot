@@ -11,11 +11,8 @@ import itertools
 import json
 import logging
 import re
-import ssl
 import sys
 import types
-import urllib.error
-import urllib.request
 import zlib
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
@@ -1104,7 +1101,7 @@ def save_cache_to_comments(
                 issue.create_comment(comment_body)
                 logger.debug(f"Created cache comment {i + 1}/{len(chunks)}")
 
-    # Delete extra old comments if new cache is smaller
+    # Delete additional cache comments if new cache is smaller
     for i, comment in enumerate(existing_cache_comments[len(chunks) :], start=len(chunks)):
         if dry_run:
             logger.info(
@@ -1796,8 +1793,8 @@ class PRContext:
     commits: Dict[str, Any] = field(default_factory=dict)
     _last_commit: Optional[Any] = field(default=None, repr=False)
 
-    # Commit statuses cache (SHA -> list of statuses)
-    _commit_statuses: Dict[str, List[Any]] = field(default_factory=dict, repr=False)
+    # Commit statuses cache for head commit (context -> status)
+    _commit_statuses: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
     # Pending commit status updates - executed at end of process_pr
     # List of (sha, state, description, target_url, context) tuples
@@ -1857,7 +1854,15 @@ class PRContext:
     create_test_property: bool = False  # Should create test properties?
 
     # PR description flags
-    notify_without_at: bool = False  # If True, don't use @ when mentioning users
+    _notify_without_at: bool = False  # If True, don't use @ when mentioning users
+
+    @property
+    def notify_without_at(self) -> bool:
+        return self._notify_without_at or self.is_draft
+
+    @notify_without_at.setter
+    def notify_without_at(self, value: bool) -> None:
+        self._notify_without_at = value
 
     # Message tracking (to avoid duplicate bot messages)
     posted_messages: Set[str] = field(default_factory=set)  # Message keys already posted
@@ -1954,32 +1959,27 @@ class PRContext:
 
         return self._last_commit
 
-    def get_commit_statuses(self, sha: Optional[str] = None) -> List[Any]:
+    def get_commit_statuses(self) -> Dict[str, Any]:
         """
-        Get commit statuses for a given SHA, with caching.
-
-        If SHA is not provided, uses the head commit SHA.
-        Results are cached in _commit_statuses to avoid repeated API calls.
-
-        Args:
-            sha: Commit SHA to get statuses for (defaults to head commit)
+        Get commit statuses for the head commit as a dict, with caching.
 
         Returns:
-            List of commit status objects
+            Dict mapping status context name to status object
         """
-        if sha is None:
-            try:
-                sha = self.pr.head.sha if self.pr else None
-            except Exception:
-                if self.last_commit:
-                    sha = self.last_commit.sha
+        # Return cached statuses if available
+        if self._commit_statuses is not None:
+            return self._commit_statuses
+
+        # Get head commit SHA
+        sha = None
+        try:
+            sha = self.pr.head.sha if self.pr else None
+        except Exception:
+            if self.last_commit:
+                sha = self.last_commit.sha
 
         if not sha:
-            return []
-
-        # Return cached statuses if available
-        if sha in self._commit_statuses:
-            return self._commit_statuses[sha]
+            return {}
 
         # Fetch statuses from API
         try:
@@ -1988,20 +1988,35 @@ class PRContext:
                 commit = self.commits[sha]
                 # MockCommit and real Commit both have get_statuses()
                 if hasattr(commit, "get_statuses"):
-                    statuses = list(commit.get_statuses())
+                    statuses_list = list(commit.get_statuses())
                 else:
                     # Fallback to repo.get_commit for real commits
                     commit = self.repo.get_commit(sha)
-                    statuses = list(commit.get_statuses())
+                    statuses_list = list(commit.get_statuses())
             else:
                 commit = self.repo.get_commit(sha)
-                statuses = list(commit.get_statuses())
-            self._commit_statuses[sha] = statuses
-            return statuses
+                statuses_list = list(commit.get_statuses())
+
+            # Convert to dict keyed by context
+            self._commit_statuses = {s.context: s for s in statuses_list}
+            return self._commit_statuses
         except Exception as e:
             logger.debug(f"Failed to get commit statuses for {sha}: {e}")
-            self._commit_statuses[sha] = []
-            return []
+            self._commit_statuses = {}
+            return {}
+
+    def get_commit_status(self, context_name: str) -> Optional[Any]:
+        """
+        Get a specific commit status by context name.
+
+        Args:
+            context_name: The status context (e.g., "bot/123/jenkins")
+
+        Returns:
+            Status object or None if not found
+        """
+        statuses = self.get_commit_statuses()
+        return statuses.get(context_name)
 
     def queue_status_update(
         self,
@@ -2047,24 +2062,18 @@ class PRContext:
 def format_mention(context: PRContext, username: str, force_at: bool = False) -> str:
     """
     Format a username for mentioning in a comment.
-
-    Omits @ symbol if:
-    - PR has <notify></notify> in its description
-    - PR is in draft state
-
     Args:
         context: PR processing context
         username: GitHub username to mention
-        force_at: If True, always use @ mention even for draft PRs
+        force_at: If True, use @ mention even if context.notify_without_at is True
 
     Returns:
         Formatted mention string (with or without @)
     """
-    if force_at:
+    if force_at or not context.notify_without_at:
         return f"@{username}"
-    if context.notify_without_at or context.is_draft:
-        return username
-    return f"@{username}"
+
+    return username
 
 
 def post_bot_comment(
@@ -2130,7 +2139,7 @@ def cancel_pending_comment(
         comment_id: Optional comment ID the message was in response to
 
     Returns:
-        True if a message was cancelled, False if not found
+        True if a message was canceled, False if not found
     """
     full_key = f"{message_key}:{comment_id}" if comment_id else message_key
 
@@ -2436,7 +2445,8 @@ def handle_assign_unassign(
             if new_l2s:
                 # Always use @ mentions for assign command, even in draft mode
                 l2_mentions = ", ".join(
-                    format_mention(context, l2, force_at=True) for l2 in sorted(new_l2s)
+                    format_mention(context, l2, force_at=context.is_draft)
+                    for l2 in sorted(new_l2s)
                 )
                 msg = (
                     f"New categories assigned: {', '.join(new_categories)}\n\n"
@@ -3434,13 +3444,10 @@ def get_jenkins_status_url(context: PRContext) -> Optional[str]:
     pr_id = context.issue.number
     status_context = f"bot/{pr_id}/jenkins"
 
-    try:
-        statuses = context.get_commit_statuses()
-        for status in statuses:
-            if status.context == status_context:
-                return status.target_url
-    except Exception as e:
-        logger.debug(f"Error getting jenkins status: {e}")
+    status = context.get_commit_status(status_context)
+    if status:
+        return status.target_url
+    return None
 
     return None
 
@@ -3498,28 +3505,78 @@ def process_pending_build_test_commands(context: PRContext) -> None:
 
     # Process test commands - only the last one
     if test_commands:
-        # Get jenkins status URL
+        # Get jenkins status
         jenkins_url = get_jenkins_status_url(context)
+        jenkins_status = get_jenkins_status(context)
 
         # Process only the last test command
         comment_id, user, timestamp, result = test_commands[-1]
         comment_url = get_comment_url(context, comment_id)
 
         # Check if jenkins status URL matches this comment's URL
-        if jenkins_url:
-            if jenkins_url == comment_url:
+        if jenkins_url and jenkins_url == comment_url:
+            # Status already set for this comment - check if tests actually started
+            if jenkins_status and " requested by " in (jenkins_status.description or ""):
+                # Tests were requested but may not have started yet
+                # This is the "started" state from old code
+                logger.info(
+                    f"Test command (comment {comment_id}) already requested, waiting for start"
+                )
+            else:
                 logger.info(
                     f"Skipping test command (comment {comment_id}) - jenkins status already set for this comment"
                 )
-                return
+            return
 
-        # Execute the test command
         if _execute_build_test_command(context, comment_id, user, result):
             # Update jenkins status URL to this comment's URL
-            set_jenkins_status_url(context, comment_url)
+            set_jenkins_status_url(context, comment_url, user, timestamp)
 
 
-def set_jenkins_status_url(context: PRContext, url: str) -> bool:
+def get_jenkins_status(context: PRContext) -> Optional[Any]:
+    """
+    Get the full bot/{prId}/jenkins commit status object.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        Status object, or None if status doesn't exist
+    """
+    if not context.pr:
+        return None
+
+    pr_id = context.issue.number
+    status_context = f"bot/{pr_id}/jenkins"
+
+    return context.get_commit_status(status_context)
+
+
+def has_unknown_release_error(context: PRContext) -> bool:
+    """
+    Check if there's an error status for cms/{prId}/unknown/release.
+
+    This indicates that tests failed to start properly and should be re-triggered.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        True if there's an error status for unknown/release
+    """
+    if not context.pr:
+        return False
+
+    pr_id = context.issue.number
+    error_context = f"cms/{pr_id}/unknown/release"
+
+    status = context.get_commit_status(error_context)
+    return status is not None and status.state == "error"
+
+
+def set_jenkins_status_url(
+    context: PRContext, url: str, user: str = None, timestamp: datetime = None
+) -> bool:
     """
     Set the bot/{prId}/jenkins commit status with the given URL.
 
@@ -3529,6 +3586,8 @@ def set_jenkins_status_url(context: PRContext, url: str) -> bool:
     Args:
         context: PR processing context
         url: URL to set as the status target_url (typically the comment URL)
+        user: Username who triggered the test (for description)
+        timestamp: When the test was triggered (for description)
 
     Returns:
         True if status was queued successfully
@@ -3542,10 +3601,18 @@ def set_jenkins_status_url(context: PRContext, url: str) -> bool:
     try:
         head_sha = context.pr.head.sha
 
+        # Build description with user and timestamp if available
+        if user and timestamp:
+            # Format timestamp as UTC
+            ts_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            description = f"Tests requested by {user} at {ts_str} UTC."
+        else:
+            description = "Tests triggered"
+
         # Queue status update (will be set at end of processing)
         context.queue_status_update(
             state="pending",
-            description="Test triggered",
+            description=description,
             context_name=status_context,
             target_url=url,
             sha=head_sha,
@@ -3611,12 +3678,7 @@ def update_test_parameters_status(context: PRContext) -> bool:
         head_sha = context.pr.head.sha
 
         # Check existing status using cached statuses
-        existing_statuses = context.get_commit_statuses(head_sha)
-        existing_status = None
-        for status in existing_statuses:
-            if status.context == status_context:
-                existing_status = status
-                break
+        existing_status = context.get_commit_status(status_context)
 
         # Only update if different or new
         if existing_status and existing_status.description == description:
@@ -4502,9 +4564,10 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
     from Jenkins CI, not by user comments.
 
     Logic:
-    1. Check for required test statuses first
-    2. If no required tests, check optional tests
-    3. Map CI status to approval state:
+    1. If there's an unknown/release error, tests are pending (failed to start)
+    2. Check for required test statuses first
+    3. If no required tests, check optional tests
+    4. Map CI status to approval state:
        - All success -> APPROVED
        - Any error (on required) -> REJECTED
        - Any pending or no tests -> PENDING
@@ -4512,6 +4575,11 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
     Returns:
         ApprovalState for the tests category
     """
+    # Check for unknown/release error - this means tests failed to start
+    # and should be considered pending (not failed)
+    if has_unknown_release_error(context):
+        return ApprovalState.PENDING
+
     lab_stats = check_ci_test_completion(context)
 
     if not lab_stats:
@@ -4687,31 +4755,22 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
         else:
             return {}
 
-    # Get commit statuses using cached method
-    statuses = context.get_commit_statuses(head_sha)
-    if not statuses:
+    # Get commit statuses using cached method (returns dict of context -> status)
+    status_map = context.get_commit_statuses()
+    if not status_map:
         return {}
 
     # Filter statuses for this PR only
     # Status context format: cms/<pr_id>/...
     pr_prefix = f"{CMS_STATUS_PREFIX}/{pr_id}/"
 
-    # Group statuses by their context prefix
-    # Build a map of context -> status for quick lookup
-    status_map: Dict[str, Any] = {}
-    for status in statuses:
-        ctx = status.context
-        # Only process statuses for this PR
-        if not ctx.startswith(pr_prefix):
-            continue
-        # Keep the most recent status for each context
-        if ctx not in status_map:
-            status_map[ctx] = status
-
     results: Dict[str, List[CITestResult]] = {"required": [], "optional": []}
 
     # Find all top-level test statuses (cms/<pr_id>/<arch>/<test>/required or optional)
     for ctx, status in status_map.items():
+        # Only process statuses for this PR
+        if not ctx.startswith(pr_prefix):
+            continue
         # Check if this is a top-level status (ends with /required or /optional)
         parts = ctx.rsplit("/", 1)
         if len(parts) != 2:
@@ -5582,17 +5641,14 @@ def trigger_pending_pre_checks(context: PRContext) -> None:
     head_sha = context.pr.head.sha
     cms_status_prefix = f"cms/{pr_id}"
 
-    # Get current commit statuses
-    statuses = context.get_commit_statuses(head_sha)
-
-    # Build map of existing status contexts
-    existing_contexts = {s.context for s in statuses}
+    # Get current commit statuses (dict of context -> status)
+    statuses = context.get_commit_statuses()
 
     for pre_check in signing_checks.pre_checks:
         status_context = f"{cms_status_prefix}/{pre_check}"
 
         # Skip if status already exists (check has been triggered)
-        if status_context in existing_contexts:
+        if status_context in statuses:
             logger.debug(f"Pre-check {pre_check} already has status, skipping auto-trigger")
             continue
 
@@ -6359,8 +6415,8 @@ def process_pr(
         is_pr=is_pr,
         comments=comments,
         commits=commits_dict,
-        notify_without_at=notify_without_at,
     )
+    context.notify_without_at = notify_without_at
 
     # Set repository info (these are stored, computed properties derive from them)
     context.repo_name = repo.name

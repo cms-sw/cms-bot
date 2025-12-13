@@ -28,7 +28,7 @@
         "sha": "97b8e6b89e86de19afb3a428f54f08313457374e",
         "state": "pending",
         "target_url": "https://github.com/iarspider-cmssw/cmsdist/pull/1#issuecomment-2838027440",
-        "description": "Test triggered",
+        "description": "Tests requested by iarspider at 2025-04-29 09:07:18 UTC.",
         "context": "bot/1/jenkins"
       }
     },

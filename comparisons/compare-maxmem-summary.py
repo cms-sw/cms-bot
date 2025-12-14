@@ -8,9 +8,9 @@ import os
 import json
 import glob
 import re
+import sys
 
-MAXMEM_WARN_THRESHOLD = 1.0
-MAXMEM_ERROR_THRESHOLD = 10.0
+import maxmem_threshold
 
 
 def KILL(message):
@@ -50,9 +50,9 @@ def compare_maxmem_summary(**kwargs):
                 nalloc_pr = max_memory_pr_dict[step].get("# allocations calls")
                 ndalloc_pr = max_memory_pr_dict[step].get("# deallocations calls")
                 nlalloc_pr = nalloc_pr - ndalloc_pr if (nalloc_pr and ndalloc_pr) else 0
-                max_memory_pr = max_mem_pr / 1000000 if max_mem_pr else 0.0
-                req_memory_pr = req_mem_pr / 1000000 if req_mem_pr else 0.0
-                leak_memory_pr = leak_mem_pr / 1000000 if leak_mem_pr else 0.0
+                max_memory_pr = max_mem_pr / (1024 * 1024) if max_mem_pr else 0.0
+                req_memory_pr = req_mem_pr / (1024 * 1024) if req_mem_pr else 0.0
+                leak_memory_pr = leak_mem_pr / (1024 * 1024) if leak_mem_pr else 0.0
                 nallocated_pr = nalloc_pr if nalloc_pr else 0
 
                 max_mem_base = max_memory_base_dict[step].get("max memory used")
@@ -61,9 +61,9 @@ def compare_maxmem_summary(**kwargs):
                 nalloc_base = max_memory_base_dict[step].get("# allocations calls")
                 ndalloc_base = max_memory_base_dict[step].get("# deallocations calls")
                 nlalloc_base = nalloc_base - ndalloc_base if (nalloc_base and ndalloc_base) else 0
-                max_memory_base = max_mem_base / 1000000 if max_mem_base else 0.0
-                req_memory_base = req_mem_base / 1000000 if req_mem_base else 0.0
-                leak_memory_base = leak_mem_base / 1000000 if leak_mem_base else 0.0
+                max_memory_base = max_mem_base / (1024 * 1024) if max_mem_base else 0.0
+                req_memory_base = req_mem_base / (1024 * 1024) if req_mem_base else 0.0
+                leak_memory_base = leak_mem_base / (1024 * 1024) if leak_mem_base else 0.0
                 nallocated_base = nalloc_base if nalloc_base else 0
 
                 max_mem_pdiff = max_memory_pdiff_dict[step].get("max memory used")
@@ -200,9 +200,27 @@ def compare_maxmem_summary(**kwargs):
             '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;PR - baseline (MB)&gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
+            threshold = workflows[workflow][step]["threshold"]
+            if not threshold:
+                threshold = maxmem_threshold.WARN_THRESHOLD
+            error_threshold = workflows[workflow][step].get("error_threshold")
+            if not error_threshold:
+                error_threshold = maxmem_threshold.ERROR_THRESHOLD
+            cellString = '<td style="border-bottom-style:hidden;border-top-style:hidden;" '
+            color = ""
+            if workflows[workflow][step]["max memory adiff"] > threshold:
+                color = 'bgcolor="orange"'
+            if workflows[workflow][step]["max memory adiff"] > error_threshold:
+                color = 'bgcolor="red"'
+            if workflows[workflow][step]["max memory adiff"] < -1 * threshold:
+                color = 'bgcolor="yellow"'
+            if workflows[workflow][step]["max memory adiff"] < -1 * error_threshold:
+                color = 'bgcolor="green"'
+            cellString += color
+            cellString += ">"
             summaryLine += [
-                '<td style="border-bottom-style:hidden;border-top-style:hidden;">',
-                "{:,.2f}".format(workflows[workflow][step]["max memory adiff"]),
+                cellString,
+                "{:,.3f}".format(workflows[workflow][step]["max memory adiff"]),
                 "</td>",
             ]
         summaryLine += [
@@ -212,23 +230,9 @@ def compare_maxmem_summary(**kwargs):
             '<tr><td style="border-top-style:hidden">&lt;100 * (PR - baseline)/baseline &gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
-            threshold = workflows[workflow][step]["threshold"]
-            if not threshold:
-                threshold = 1.0
-            error_threshold = workflows[workflow][step].get("error_threshold")
-            if not error_threshold:
-                error_threshold = 10.0
-            cellString = '<td style="border-top-style:hidden" '
-            color = ""
-            if abs(workflows[workflow][step]["max memory pdiff"]) > MAXMEM_WARN_THRESHOLD:
-                color = 'bgcolor="orange"'
-            if abs(workflows[workflow][step]["max memory pdiff"]) > MAXMEM_ERROR_THRESHOLD:
-                color = 'bgcolor="red"'
-            cellString += color
-            cellString += ">"
             summaryLine += [
-                cellString,
-                "{:,.3f}".format(workflows[workflow][step]["max memory pdiff"]),
+                '<td style="border-top-style:hidden;">',
+                "{:,.2f}".format(workflows[workflow][step]["max memory pdiff"]),
                 "%</td>",
             ]
         summaryLine += [
@@ -392,9 +396,6 @@ def compare_maxmem_summary(**kwargs):
                 "</td>",
             ]
         summaryLine += [
-            "</tr>",
-        ]
-        summaryLine += [
             '<tr><td style="border-bottom-style:hidden;border-top-style:hidden;">&lt;pull request &gt;</td>'
         ]
         for step in sorted(workflows[workflow].keys(), key=stepfn):
@@ -435,10 +436,17 @@ def compare_maxmem_summary(**kwargs):
     if summaryFormat == "html":
         summaryLines += [
             '</table><table><tr><td bgcolor="orange">'
-            + "maximum memory used warn threshold %0.3f" % MAXMEM_WARN_THRESHOLD
-            + '%</td></tr><tr><td bgcolor="red">'
-            + "maximum memory used error threshold %0.3f" % MAXMEM_ERROR_THRESHOLD
-            + "%</td></tr>",
+            + "default maximum memory used warn threshold %0.0f" % maxmem_threshold.WARN_THRESHOLD
+            + ' MB</td></tr><tr><td bgcolor="red">'
+            + "default maximum memory used error threshold %0.0f"
+            % maxmem_threshold.ERROR_THRESHOLD
+            + ' MB</td></tr><tr><td bgcolor="yellow">'
+            + "default maximum memory used warn threshold -1 * %0.0f"
+            % maxmem_threshold.WARN_THRESHOLD
+            + ' MB</td></tr><tr><td bgcolor="green">'
+            + "default maximum memory used error threshold -1 * %0.0f"
+            % maxmem_threshold.ERROR_THRESHOLD
+            + " MB</td></tr></table><table>",
         ]
         summaryLines += ["</table></body></html>"]
 

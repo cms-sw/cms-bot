@@ -26,7 +26,7 @@ parser = OptionParser(
     usage="usage: %prog ACTION [options] \n ACTION = PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
     "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE | PARSE_EXTERNAL_BUILD_FAIL "
     "| PARSE_ADDON_FAIL | PARSE_CRAB_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET "
-    "| PYTHON3_FAIL | PARSE_GPU_UNIT_TESTS_FAIL | MERGE_COMMITS"
+    "| PYTHON3_FAIL | PARSE_GPU_UNIT_TESTS_FAIL | MERGE_COMMITS | PARSE_MAXMEM_FAIL "
 )
 
 parser.add_option(
@@ -292,6 +292,26 @@ def read_addon_log_file(unit_tests_file):
 def read_material_budget_log_file(unit_tests_file):
     message = "\n## Material Budget\n\nThere was error running material budget tests."
     send_message_pr(message)
+
+
+#
+# reads maxmem comparison error files
+#
+def read_maxmem_comparison_file(unit_tests_file):
+    errors_found = ""
+    err_cnt = 0
+    for line in openlog(unit_tests_file):
+        if "exceeds" in line.lower():
+            err_cnt += 1
+            errors_found += " - " + line.split(":")[1] + "\n"
+
+    if err_cnt > 0:
+        message = (
+            "\n## Max Memory Comparisons exceeding threshold\n\n"
+            "@cms-sw/core-l2 , I found %s workflow step(s) with memory usage exceeding the error threshold:\n\n%s"
+            % (err_cnt, errors_found)
+        )
+        send_message_pr(message)
 
 
 def get_recent_merges_message():
@@ -643,6 +663,8 @@ elif ACTION == "PYTHON3_FAIL":
     read_python3_file(options.unit_tests_file)
 elif ACTION == "MATERIAL_BUDGET":
     read_material_budget_log_file(options.unit_tests_file)
+elif ACTION == "PARSE_MAXMEM_FAIL":
+    read_maxmem_comparison_file(options.unit_tests_file)
 elif ACTION == "MERGE_COMMITS":
     add_to_report(get_recent_merges_message())
 elif ACTION == "PARSE_CUDA_UNIT_TESTS_FAIL":

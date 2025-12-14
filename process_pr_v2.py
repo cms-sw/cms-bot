@@ -2094,7 +2094,7 @@ class PRContext:
 
             # Convert to dict keyed by context
             self._commit_statuses = {s.context: s for s in statuses_list}
-            logger.debug(f"Statuses for commit {sha}: {','.join(statuses_list)}")
+            logger.debug(f"Statuses for commit {sha}: {','.join(str(_) for _ in statuses_list)}")
             return self._commit_statuses
         except Exception as e:
             logger.debug(f"Failed to get commit statuses for {sha}: {e}")

@@ -5317,15 +5317,19 @@ def process_ci_test_results(context: PRContext) -> None:
     # Process both required and optional results
     for suffix in ["required", "optional"]:
         results = statuses.get(suffix, [])
+        logger.debug(f"Checking results for suffix {suffix}: {results}")
         if not results:
             continue
 
         for result in results:
+            logger.debug(f"Checking result {result}")
             if not result.target_url or result.status == "pending":
+                logger.debug("No target_url or still pending")
                 continue
 
             # Check if already processed (description starts with "Finished")
             if result.description and result.description.startswith("Finished"):
+                logger.debug("Already Finished")
                 continue
 
             # Transform URL to get pr-result endpoint
@@ -5337,7 +5341,9 @@ def process_ci_test_results(context: PRContext) -> None:
                 + "/pr-result"
             )
 
+            logger.debug(f"Fetching test results from {pr_result_url}")
             error_code, output = fetch_pr_result(pr_result_url)
+            logger.debug(f"error={error_code}, output={output}")
 
             if error_code != 0:
                 logger.error(f"Failed to fetch PR results: code {error_code}")

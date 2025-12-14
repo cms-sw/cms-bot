@@ -178,6 +178,45 @@ def setup_logging(loglevel):
 
 
 # =============================================================================
+# PYGITHUB PATCHES
+# =============================================================================
+# These patches fix known bugs in PyGithub. Set to False to disable once fixed upstream.
+
+APPLY_PYGITHUB_PATCHES = True
+
+if APPLY_PYGITHUB_PATCHES:
+    try:
+        import github.PaginatedList
+        import github.CommitStatus
+        import github.CommitCombinedStatus
+
+        def _patched_statuses(self):
+            """
+            Patched statuses property that properly paginates through all statuses.
+
+            The original PyGithub implementation doesn't handle pagination correctly
+            for combined status, causing it to miss statuses when there are many.
+
+            :type: list of :class:`CommitStatus`
+            """
+            return github.PaginatedList.PaginatedList(
+                contentClass=github.CommitStatus.CommitStatus,
+                requester=self._requester,
+                firstUrl=self.url,
+                firstParams={},
+                headers=None,
+                list_item="statuses",
+            )
+
+        # Patch the statuses property on CommitCombinedStatus
+        github.CommitCombinedStatus.CommitCombinedStatus.statuses = property(_patched_statuses)
+        logger.debug("Applied PyGithub CommitCombinedStatus.statuses patch")
+
+    except Exception as e:
+        logger.warning(f"Failed to apply PyGithub patches: {e}")
+
+
+# =============================================================================
 # ENUMS AND CONSTANTS
 # =============================================================================
 
@@ -273,8 +312,8 @@ ALL_GPU_BRANDS = sorted(set(gpu.split("_", 1)[0] for gpu in ALL_GPUS))
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
-    "|".join(EXTRA_RELVALS_TESTS)
-    + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi_microarchs"
+        "|".join(EXTRA_RELVALS_TESTS)
+        + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi_microarchs"
 )
 SKIP_TESTS = "|".join(["static", "header"])
 ENABLE_TEST_PTRN = "enable(_tests?)?"
@@ -390,7 +429,7 @@ def check_enable_bot_tests(value: str, *args) -> Tuple[str, Optional[str]]:
 
 
 def check_extra_matrix_args(
-    value: str, repo, params: Dict[str, str], key: str, param: str, *args
+        value: str, repo, params: Dict[str, str], key: str, param: str, *args
 ) -> Tuple[str, Optional[str]]:
     """Handle EXTRA_MATRIX_ARGS with suffix based on key."""
     key_parts = key.split("_")
@@ -400,7 +439,7 @@ def check_extra_matrix_args(
 
 
 def check_extra_matrix_command_args(
-    value: str, repo, params: Dict[str, str], key: str, param: str, *args
+        value: str, repo, params: Dict[str, str], key: str, param: str, *args
 ) -> Tuple[str, Optional[str]]:
     """Handle EXTRA_MATRIX_COMMAND_ARGS with suffix based on key."""
     # Same logic as check_extra_matrix_args
@@ -408,7 +447,7 @@ def check_extra_matrix_command_args(
 
 
 def check_matrix_extras(
-    value: str, repo, params: Dict[str, str], key: str, param: str, *args
+        value: str, repo, params: Dict[str, str], key: str, param: str, *args
 ) -> Tuple[str, Optional[str]]:
     """Handle MATRIX_EXTRAS with suffix and sort workflows."""
     key_parts = key.split("_")
@@ -426,7 +465,7 @@ def check_pull_requests(value: str, repo, *args) -> Tuple[str, Optional[str]]:
 
 
 def check_release_format(
-    value: str, repo, params: Dict[str, str], *args
+        value: str, repo, params: Dict[str, str], *args
 ) -> Tuple[str, Optional[str]]:
     """Handle RELEASE_FORMAT, extracting architecture if present."""
     release_queue = value
@@ -446,10 +485,10 @@ def check_release_format(
 
 
 def read_repo_file(
-    repo_config: types.ModuleType,
-    repo_file: str,
-    default: Any = None,
-    is_yaml: bool = True,
+        repo_config: types.ModuleType,
+        repo_file: str,
+        default: Any = None,
+        is_yaml: bool = True,
 ) -> Any:
     """
     Read a configuration file from the repository config directory.
@@ -479,7 +518,7 @@ def read_repo_file(
 
 
 def init_l2_data(
-    repo_config: types.ModuleType, cms_repo: bool = True
+        repo_config: types.ModuleType, cms_repo: bool = True
 ) -> Dict[str, List[Dict[str, Any]]]:
     """
     Initialize L2 category membership data.
@@ -526,9 +565,9 @@ def init_l2_data(
 
 
 def get_watchers(
-    context: "PRContext",
-    changed_files: List[str],
-    timestamp: datetime,
+        context: "PRContext",
+        changed_files: List[str],
+        timestamp: datetime,
 ) -> Set[str]:
     """
     Get watchers for the PR based on changed files and categories.
@@ -1046,7 +1085,7 @@ def load_cache_from_comments(comments: List[Any]) -> BotCache:
 
 
 def save_cache_to_comments(
-    issue, comments: List[Any], cache: BotCache, dry_run: bool = False
+        issue, comments: List[Any], cache: BotCache, dry_run: bool = False
 ) -> None:
     """
     Save bot cache to PR issue comments.
@@ -1216,7 +1255,7 @@ def detect_new_packages(context: "PRContext") -> List[str]:
 
 
 def get_file_l2_categories(
-    repo_config: types.ModuleType, filename: str, commit_timestamp: datetime
+        repo_config: types.ModuleType, filename: str, commit_timestamp: datetime
 ) -> List[str]:
     """
     Determine L2 categories for a file based on path and timestamp.
@@ -1251,7 +1290,7 @@ def get_file_l2_categories(
 
 
 def get_user_l2_categories(
-    repo_config: types.ModuleType, username: str, timestamp: datetime
+        repo_config: types.ModuleType, username: str, timestamp: datetime
 ) -> List[str]:
     """
     Determine which L2 categories a user belongs to at a given time.
@@ -1310,7 +1349,7 @@ def get_user_l2_categories(
 
 
 def get_category_l2s(
-    repo_config: types.ModuleType, category: str, timestamp: datetime
+        repo_config: types.ModuleType, category: str, timestamp: datetime
 ) -> List[str]:
     """
     Get the L2 signers for a specific category.
@@ -1535,14 +1574,14 @@ class CommandRegistry:
         self.commands: List[Command] = []
 
     def register(
-        self,
-        name: str,
-        pattern: str,
-        handler: Callable[..., bool],
-        acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
-        description: str = "",
-        pr_only: bool = False,
-        reset_on_push: bool = False,
+            self,
+            name: str,
+            pattern: str,
+            handler: Callable[..., bool],
+            acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
+            description: str = "",
+            pr_only: bool = False,
+            reset_on_push: bool = False,
     ) -> None:
         """Register a new command."""
         self.commands.append(
@@ -1558,13 +1597,13 @@ class CommandRegistry:
         )
 
     def command(
-        self,
-        name: str,
-        pattern: str,
-        acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
-        description: str = "",
-        pr_only: bool = False,
-        reset_on_push: bool = False,
+            self,
+            name: str,
+            pattern: str,
+            acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
+            description: str = "",
+            pr_only: bool = False,
+            reset_on_push: bool = False,
     ) -> Callable[[Callable[..., Optional[bool]]], Callable[..., Optional[bool]]]:
         r"""
         Decorator to register a command handler.
@@ -1615,7 +1654,7 @@ class CommandRegistry:
         return None
 
     def find_commands(
-        self, text: str, is_pr: bool = True
+            self, text: str, is_pr: bool = True
     ) -> Generator[Tuple[Command, re.Match], None, None]:
         """
         Find all commands matching the given text.
@@ -1644,12 +1683,12 @@ _global_registry = CommandRegistry()
 
 
 def command(
-    name: str,
-    pattern: str,
-    acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
-    description: str = "",
-    pr_only: bool = False,
-    reset_on_push: bool = False,
+        name: str,
+        pattern: str,
+        acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
+        description: str = "",
+        pr_only: bool = False,
+        reset_on_push: bool = False,
 ) -> Callable[[Callable[..., Optional[bool]]], Callable[..., Optional[bool]]]:
     r"""
     Module-level decorator to register commands.
@@ -1708,7 +1747,7 @@ def preprocess_command(line: str, cmsbuild_user: Optional[str] = None) -> Tuple[
 
 
 def extract_command_line(
-    comment_body: str, cmsbuild_user: Optional[str] = None
+        comment_body: str, cmsbuild_user: Optional[str] = None
 ) -> Tuple[Optional[str], bool]:
     """
     Extract the first non-blank line from a comment for command parsing.
@@ -2075,12 +2114,12 @@ class PRContext:
         return statuses.get(context_name)
 
     def queue_status_update(
-        self,
-        state: str,
-        description: str,
-        context_name: str,
-        target_url: str = "",
-        sha: Optional[str] = None,
+            self,
+            state: str,
+            description: str,
+            context_name: str,
+            target_url: str = "",
+            sha: Optional[str] = None,
     ) -> None:
         """
         Queue a commit status update to be executed at end of processing.
@@ -2133,7 +2172,7 @@ def format_mention(context: PRContext, username: str, force_at: bool = False) ->
 
 
 def has_bot_comment(
-    context: PRContext, message_key: str, comment_id: Optional[int] = None
+        context: PRContext, message_key: str, comment_id: Optional[int] = None
 ) -> bool:
     """
     Check if a bot comment with the given message key has been posted.
@@ -2170,10 +2209,10 @@ def has_bot_comment(
 
 
 def post_bot_comment(
-    context: PRContext,
-    message: str,
-    message_key: str,
-    comment_id: Optional[int] = None,
+        context: PRContext,
+        message: str,
+        message_key: str,
+        comment_id: Optional[int] = None,
 ) -> bool:
     """
     Queue a bot comment to be posted at the end of processing.
@@ -2217,7 +2256,7 @@ def post_bot_comment(
 
 
 def cancel_pending_comment(
-    context: PRContext, message_key: str, comment_id: Optional[int] = None
+        context: PRContext, message_key: str, comment_id: Optional[int] = None
 ) -> bool:
     """
     Cancel a pending bot comment that hasn't been posted yet.
@@ -2312,15 +2351,13 @@ def flush_pending_statuses(context: PRContext) -> int:
         existing = current_statuses.get(status_context)
         if existing:
             # Compare state, description, and target_url
-            existing_state = getattr(existing, "state", None)
-            existing_desc = getattr(existing, "description", None) or ""
-            existing_url = getattr(existing, "target_url", None) or ""
+            existing_state = getattr(existing, 'state', None)
+            existing_desc = getattr(existing, 'description', None) or ""
+            existing_url = getattr(existing, 'target_url', None) or ""
 
-            if (
-                existing_state == state
-                and existing_desc == description
-                and existing_url == target_url
-            ):
+            if (existing_state == state and
+                    existing_desc == description and
+                    existing_url == target_url):
                 logger.debug(f"Status {status_context} unchanged, skipping update")
                 continue
 
@@ -2373,7 +2410,7 @@ CATEGORY_PATTERN = r"[\w-]+"
     description="Approve for your L2 categories or specific category",
 )
 def handle_plus_one(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> Optional[bool]:
     """Handle +1 or +<category> approval."""
     return _handle_approval(context, match, user, comment_id, timestamp, approved=True)
@@ -2385,19 +2422,19 @@ def handle_plus_one(
     description="Reject for your L2 categories or specific category",
 )
 def handle_minus_one(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> Optional[bool]:
     """Handle -1 or -<category> rejection."""
     return _handle_approval(context, match, user, comment_id, timestamp, approved=False)
 
 
 def _handle_approval(
-    context: PRContext,
-    match: re.Match,
-    user: str,
-    comment_id: int,
-    timestamp: datetime,
-    approved: bool,
+        context: PRContext,
+        match: re.Match,
+        user: str,
+        comment_id: int,
+        timestamp: datetime,
+        approved: bool,
 ) -> Optional[bool]:
     """
     Handle +1/-1 or +category/-category commands.
@@ -2462,7 +2499,7 @@ def _handle_approval(
     description="Assign or unassign categories (directly or via package mapping)",
 )
 def handle_assign_unassign(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> Optional[bool]:
     """
     Handle assign/unassign commands for categories.
@@ -2617,7 +2654,7 @@ def handle_assign_unassign(
 
 @command("hold", r"^hold$", description="Place a hold to prevent automerge", pr_only=True)
 def handle_hold(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle hold command - prevents automerge.
@@ -2687,7 +2724,7 @@ def handle_hold(
     pr_only=True,
 )
 def handle_unhold(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle unhold command.
@@ -2754,7 +2791,7 @@ def handle_unhold(
 
 @command("merge", r"^merge$", description="Request merge of the PR", pr_only=True)
 def handle_merge(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """Handle merge command."""
     if not can_merge(context):
@@ -2771,7 +2808,7 @@ def handle_merge(
 
 @command("close", r"^close$", description="Close the PR/Issue")
 def handle_close(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle close command.
@@ -2788,7 +2825,7 @@ def handle_close(
 
 @command("reopen", r"^(?:re)?open$", description="Reopen the PR/Issue")
 def handle_reopen(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle open/reopen command.
@@ -2856,7 +2893,7 @@ def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
     reset_on_push=True,
 )
 def handle_abort(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle abort/abort test command.
@@ -2903,7 +2940,7 @@ def handle_abort(
 
 @command("urgent", r"^urgent$", description="Mark PR as urgent")
 def handle_urgent(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle urgent command.
@@ -2921,7 +2958,7 @@ def handle_urgent(
     description="Mark PR as backport of another PR",
 )
 def handle_backport(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle backport [of] #<num> command.
@@ -2966,7 +3003,7 @@ def handle_backport(
     pr_only=True,
 )
 def handle_allow_test_rights(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle 'allow @<user> test rights' command.
@@ -2987,7 +3024,7 @@ def handle_allow_test_rights(
     pr_only=True,
 )
 def handle_code_checks(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle code-checks command.
@@ -3018,7 +3055,7 @@ def handle_code_checks(
     reset_on_push=True,
 )
 def handle_ignore_tests_rejected(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle 'ignore tests-rejected with <reason>' command.
@@ -3046,7 +3083,7 @@ def handle_ignore_tests_rejected(
     pr_only=True,
 )
 def handle_commit_count_override(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle +commit-count command.
@@ -3081,7 +3118,7 @@ def handle_commit_count_override(
     pr_only=True,
 )
 def handle_file_count_override(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle +file-count command.
@@ -3114,7 +3151,7 @@ def handle_file_count_override(
     description="Add a type label to the PR/Issue",
 )
 def handle_type(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle type <label> command.
@@ -3410,7 +3447,7 @@ def parse_test_parameters(comment_lines: List[str], repo) -> Dict[str, str]:
     pr_only=True,
 )
 def handle_test_parameters(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle 'test parameters:' command.
@@ -3477,7 +3514,7 @@ def handle_test_parameters(
     reset_on_push=True,
 )
 def handle_build_test(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
+        context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
 ) -> bool:
     """
     Handle build/test command - collects for deferred processing.
@@ -3691,6 +3728,8 @@ def initialize_jenkins_status(context: PRContext) -> None:
 
     This should be called early in process_pr to ensure the status exists.
 
+    Does NOT create a new status if the PR is closed and no jenkins status exists.
+
     Args:
         context: PR processing context
     """
@@ -3699,8 +3738,12 @@ def initialize_jenkins_status(context: PRContext) -> None:
 
     jenkins_status = get_jenkins_status(context)
 
-    # If no jenkins status exists, set it to waiting
+    # If no jenkins status exists, set it to waiting (unless PR is closed)
     if not jenkins_status:
+        # Don't create jenkins status for closed PRs
+        if context.pr.state == "closed":
+            logger.debug("Skipping jenkins status creation for closed PR")
+            return
         set_jenkins_status_waiting(context)
         return
 
@@ -3743,7 +3786,7 @@ def has_unknown_release_error(context: PRContext) -> bool:
 
 
 def set_jenkins_status_url(
-    context: PRContext, url: str, user: str = None, timestamp: datetime = None
+        context: PRContext, url: str, user: str = None, timestamp: datetime = None
 ) -> bool:
     """
     Set the bot/{prId}/jenkins commit status when tests are requested.
@@ -3953,7 +3996,7 @@ def update_test_parameters_status(context: PRContext) -> bool:
 
 
 def _execute_build_test_command(
-    context: PRContext, comment_id: int, user: str, result: "TestCmdResult"
+        context: PRContext, comment_id: int, user: str, result: "TestCmdResult"
 ) -> bool:
     """
     Execute a build/test command (internal helper).
@@ -4179,10 +4222,10 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
 
 
 def set_comment_reaction(
-    context: PRContext,
-    comment,
-    comment_id: int,
-    success: bool,
+        context: PRContext,
+        comment,
+        comment_id: int,
+        success: bool,
 ) -> None:
     """
     Set reaction on a comment based on command success.
@@ -4197,7 +4240,7 @@ def set_comment_reaction(
         success: True for +1 reaction, False for -1 reaction
     """
     # Don't put reactions on bot's own comments
-    if context.cmsbuild_user and hasattr(comment, "user") and comment.user:
+    if context.cmsbuild_user and hasattr(comment, 'user') and comment.user:
         if comment.user.login == context.cmsbuild_user:
             logger.debug(f"Skipping reaction on bot's own comment {comment_id}")
             return
@@ -4221,8 +4264,8 @@ def set_comment_reaction(
                     # PyGithub API for removing reactions
                     for reaction in comment.get_reactions():
                         if (
-                            reaction.user.login == context.cmsbuild_user
-                            and reaction.content == cached_reaction
+                                reaction.user.login == context.cmsbuild_user
+                                and reaction.content == cached_reaction
                         ):
                             reaction.delete()
                             break
@@ -4297,7 +4340,7 @@ def get_comment_timestamp(comment) -> datetime:
 
 
 def check_command_acl(
-    context: PRContext, command: Command, user: str, timestamp: datetime
+        context: PRContext, command: Command, user: str, timestamp: datetime
 ) -> bool:
     """Check if user has permission to run a command."""
     if command.acl is None:
@@ -4360,11 +4403,11 @@ def is_bot_command_reset_on_push(command_line: str) -> bool:
 
 
 def should_skip_command_before_latest_commit(
-    context: PRContext,
-    command: Command,
-    command_line: str,
-    comment_timestamp: datetime,
-    is_bot_comment: bool,
+        context: PRContext,
+        command: Command,
+        command_line: str,
+        comment_timestamp: datetime,
+        is_bot_comment: bool,
 ) -> bool:
     """
     Check if a command should be skipped because it's before the latest commit.
@@ -4442,9 +4485,7 @@ def process_comment(context: PRContext, comment, use_cached: bool = False) -> No
                     user=user,
                     locked=True,  # Mark as locked so it won't be re-processed
                 )
-            logger.debug(
-                f"Skipped command '{cmd.name}' from comment {comment_id} (before latest commit)"
-            )
+            logger.debug(f"Skipped command '{cmd.name}' from comment {comment_id} (before latest commit)")
             command_handled = True
             break
 
@@ -4537,7 +4578,7 @@ def has_commit_after(commit_timestamps: List[datetime], comment_timestamp: datet
 
 
 def get_last_commit_before(
-    commit_timestamps: List[datetime], timestamp: datetime
+        commit_timestamps: List[datetime], timestamp: datetime
 ) -> Optional[datetime]:
     """
     Get the timestamp of the last commit before the given timestamp.
@@ -4725,7 +4766,7 @@ def get_files_for_categories(context: PRContext, categories: List[str]) -> List[
 
 
 def is_signature_valid_for_category(
-    context: PRContext, comment_info: CommentInfo, category: str, current_category_files: Set[str]
+        context: PRContext, comment_info: CommentInfo, category: str, current_category_files: Set[str]
 ) -> bool:
     """
     Check if a signature is still valid for a specific category.
@@ -5251,11 +5292,11 @@ def process_ci_test_results(context: PRContext) -> None:
 
             # Transform URL to get pr-result endpoint
             pr_result_url = (
-                result.target_url.replace(
-                    "/SDT/jenkins-artifacts/",
-                    "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/",
-                )
-                + "/pr-result"
+                    result.target_url.replace(
+                        "/SDT/jenkins-artifacts/",
+                        "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/",
+                    )
+                    + "/pr-result"
             )
 
             error_code, output = fetch_pr_result(pr_result_url)
@@ -5282,7 +5323,7 @@ def process_ci_test_results(context: PRContext) -> None:
 
 
 def _mark_status_as_finished(
-    context: PRContext, status_context: str, state: str, target_url: Optional[str]
+        context: PRContext, status_context: str, state: str, target_url: Optional[str]
 ) -> None:
     """
     Update a commit status description to "Finished" to mark it as processed.
@@ -5707,7 +5748,7 @@ def get_linked_prs(context: PRContext) -> List[str]:
 
 
 def post_fully_signed_messages(
-    context: PRContext, old_labels: Set[str], new_labels: Set[str]
+        context: PRContext, old_labels: Set[str], new_labels: Set[str]
 ) -> None:
     """
     Post fully signed messages if PR/Issue transitions to fully signed state.
@@ -5775,10 +5816,10 @@ def create_property_file(filename: str, parameters: Dict[str, Any], dry_run: boo
 
 
 def create_test_properties_file(
-    context: PRContext,
-    parameters: Dict[str, str],
-    abort: bool = False,
-    req_type: str = "tests",
+        context: PRContext,
+        parameters: Dict[str, str],
+        abort: bool = False,
+        req_type: str = "tests",
 ) -> None:
     """
     Create a properties file to trigger tests.
@@ -5880,9 +5921,9 @@ def build_test_parameters(context: PRContext, test_request: "TestRequest") -> Di
 
 
 def create_code_checks_properties(
-    context: PRContext,
-    tool_conf: Optional[str] = None,
-    apply_patch: bool = False,
+        context: PRContext,
+        tool_conf: Optional[str] = None,
+        apply_patch: bool = False,
 ) -> None:
     """
     Create properties file for code-checks trigger.
@@ -6122,13 +6163,9 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
     file_count = context.pr.changed_files
 
     # Check if bot has already posted warnings (using markers)
-    if has_bot_comment(context, "too_many_commits_warn") or has_bot_comment(
-        context, "too_many_commits_fail"
-    ):
+    if has_bot_comment(context, "too_many_commits_warn") or has_bot_comment(context, "too_many_commits_fail"):
         context.warned_too_many_commits = True
-    if has_bot_comment(context, "too_many_files_warn") or has_bot_comment(
-        context, "too_many_files_fail"
-    ):
+    if has_bot_comment(context, "too_many_files_warn") or has_bot_comment(context, "too_many_files_fail"):
         context.warned_too_many_files = True
 
     # Format trackers for mention
@@ -6338,12 +6375,12 @@ def post_welcome_message(context: PRContext) -> None:
 
 
 def _build_cmssw_welcome_message(
-    context: PRContext,
-    author: str,
-    l2_mentions: str,
-    watchers_msg: str,
-    backport_msg: str,
-    timestamp: datetime,
+        context: PRContext,
+        author: str,
+        l2_mentions: str,
+        watchers_msg: str,
+        backport_msg: str,
+        timestamp: datetime,
 ) -> str:
     """
     Build the detailed welcome message for CMSSW repo PRs.
@@ -6379,18 +6416,17 @@ def _build_cmssw_welcome_message(
                 all_known_packages.update(category_packages)
 
         new_packages = [
-            pkg
-            for pkg in context.packages
+            pkg for pkg in context.packages
             if not get_package_categories(pkg) and pkg not in all_known_packages
         ]
 
         if new_packages:
             new_package_msg = (
-                "\nThe following packages do not have a category, yet:\n\n"
-                + "\n".join(sorted(new_packages))
-                + "\n"
-                + "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py "
-                "to assign category\n"
+                    "\nThe following packages do not have a category, yet:\n\n"
+                    + "\n".join(sorted(new_packages))
+                    + "\n"
+                    + "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py "
+                      "to assign category\n"
             )
 
     # Build patch branch warning
@@ -6577,14 +6613,14 @@ def check_for_new_commits(context: PRContext) -> None:
 
 
 def process_pr(
-    repo_config: types.ModuleType,
-    gh,
-    repo,
-    issue,
-    dryRun: bool,
-    cmsbuild_user: str,
-    force: bool = False,
-    loglevel: Union[str, int] = "INFO",
+        repo_config: types.ModuleType,
+        gh,
+        repo,
+        issue,
+        dryRun: bool,
+        cmsbuild_user: str,
+        force: bool = False,
+        loglevel: Union[str, int] = "INFO",
 ) -> Dict[str, Any]:
     """
     Main entry point for processing a PR or Issue.
@@ -6705,11 +6741,11 @@ def process_pr(
 
     # Handle cms-bot self-test (PRs to cms-sw/cms-bot by core/externals L2s)
     if (
-        is_pr
-        and pr
-        and repo.full_name == "cms-sw/cms-bot"
-        and os_getenv("CMS_BOT_TEST_BRANCH", "master") == "master"
-        and pr.state != "closed"
+            is_pr
+            and pr
+            and repo.full_name == "cms-sw/cms-bot"
+            and os_getenv("CMS_BOT_TEST_BRANCH", "master") == "master"
+            and pr.state != "closed"
     ):
         author = issue.user.login
         author_categories = get_user_l2_categories(
@@ -6792,7 +6828,7 @@ def process_pr(
                 context.packages.add(ex_pkg)
 
             if (context.repo_org != GH_CMSSW_ORGANIZATION) or (
-                context.repo_name in VALID_CMS_SW_REPOS_FOR_TESTS
+                    context.repo_name in VALID_CMS_SW_REPOS_FOR_TESTS
             ):
                 context.create_test_property = True
 
@@ -7042,11 +7078,11 @@ def process_pr(
 
 
 def add_custom_command(
-    name: str,
-    pattern: str,
-    handler: Callable[..., bool],
-    acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
-    description: str = "",
+        name: str,
+        pattern: str,
+        handler: Callable[..., bool],
+        acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
+        description: str = "",
 ) -> None:
     """
     Add a custom command to the global registry.
@@ -7064,10 +7100,10 @@ def add_custom_command(
 
 
 def set_category_status(
-    context: PRContext,
-    category: str,
-    status: ApprovalState,
-    dry_run: bool = False,
+        context: PRContext,
+        category: str,
+        status: ApprovalState,
+        dry_run: bool = False,
 ) -> None:
     """
     Set the status of a category (e.g., tests, code-checks).

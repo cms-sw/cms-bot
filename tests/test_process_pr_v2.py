@@ -7850,8 +7850,8 @@ class TestOldTestForProcessPR:
     def test_draft_pr_ask_ready(self):
         self.runTest(pr_id=21)
 
-    # def test_draft_pr_fully_signed(self):
-    #     self.runTest(pr_id=21)
+    def test_draft_pr_fully_signed(self):
+        self.runTest(pr_id=21)
 
     def test_test_all_params(self):
         self.runTest(24)

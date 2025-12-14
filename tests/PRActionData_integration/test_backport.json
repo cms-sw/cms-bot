@@ -18,6 +18,7 @@
         "labels": [
           "backport",
           "code-checks-approved",
+          "new-package-pending",
           "orp-pending",
           "pending-signatures",
           "tests-pending"

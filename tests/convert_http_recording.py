@@ -441,6 +441,7 @@ def convert_old_cache_to_new(
     old_cache: Dict[str, Any],
     commits_data: List[Dict[str, Any]],
     all_comments: Dict[int, Dict[str, Any]],
+    pr_files_data: List[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Convert old-style bot cache to new format.
@@ -463,6 +464,7 @@ def convert_old_cache_to_new(
         old_cache: The old cache data
         commits_data: List of commit dicts from PullRequestCommits endpoint
         all_comments: Dict mapping comment_id -> comment dict (for first_line lookup)
+        pr_files_data: List of file dicts from PullRequestFiles endpoint (has real blob SHAs)
     """
     new_cache = {
         "emoji": old_cache.get("emoji", {}),
@@ -482,6 +484,21 @@ def convert_old_cache_to_new(
                 if filename:
                     file_list.append(filename)
             commit_files[sha] = file_list
+
+    # Determine head commit SHA (last commit in commits_data, sorted by date)
+    head_commit_sha = None
+    if commits_data:
+        # Commits are typically in chronological order, last one is head
+        head_commit_sha = commits_data[-1].get("sha", "")
+
+    # Build filename -> blob_sha mapping from pr_files_data (these are for head commit)
+    head_file_shas = {}
+    if pr_files_data:
+        for f in pr_files_data:
+            filename = f.get("filename", "")
+            blob_sha = f.get("sha", "")
+            if filename and blob_sha:
+                head_file_shas[filename] = blob_sha
 
     # Convert signatures to file versions
     signatures = old_cache.get("signatures", {})
@@ -512,11 +529,20 @@ def convert_old_cache_to_new(
         else:
             ts_dt = datetime.now(timezone.utc)
 
+        # Check if this signature is for the head commit
+        is_head_commit = commit_sha == head_commit_sha
+
         # Build signed_files as filename::blob_sha keys
         signed_file_keys = []
         for filename in files:
-            # Use commit::<sha> as the blob sha since we don't have real blob shas
-            key = f"{filename}::commit::{commit_sha[:12]}"
+            # For head commit, use real blob SHA if available
+            if is_head_commit and filename in head_file_shas:
+                blob_sha = head_file_shas[filename]
+                key = f"{filename}::{blob_sha}"
+            else:
+                # For older commits, use synthetic key (signature will be invalidated anyway)
+                key = f"{filename}::commit::{commit_sha[:12]}"
+
             signed_file_keys.append(key)
             if key not in new_cache["fv"]:
                 new_cache["fv"][key] = {
@@ -582,6 +608,7 @@ def convert_cache_comment(
     comment: Dict[str, Any],
     commits_data: List[Dict[str, Any]],
     all_comments: Dict[int, Dict[str, Any]],
+    pr_files_data: List[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Convert a cache comment from old format to new format.
@@ -593,6 +620,7 @@ def convert_cache_comment(
         comment: The cache comment to convert
         commits_data: List of commit dicts from PullRequestCommits endpoint
         all_comments: Dict mapping comment_id -> comment dict (for first_line lookup)
+        pr_files_data: List of file dicts from PullRequestFiles endpoint (has real blob SHAs)
     """
     body = comment.get("body", "")
     old_cache = parse_old_cache(body)
@@ -605,7 +633,7 @@ def convert_cache_comment(
         return comment  # Already new format
 
     # Convert to new format
-    new_cache = convert_old_cache_to_new(old_cache, commits_data, all_comments)
+    new_cache = convert_old_cache_to_new(old_cache, commits_data, all_comments, pr_files_data)
 
     # Serialize (compress if larger than chunk size, like old code but without b64: prefix)
     new_cache_json = json.dumps(new_cache, separators=(",", ":"), sort_keys=True)
@@ -626,10 +654,17 @@ def convert_cache_comment(
 
 
 def process_comments(
-    comments: List[Dict[str, Any]], commits_data: List[Dict[str, Any]]
+    comments: List[Dict[str, Any]],
+    commits_data: List[Dict[str, Any]],
+    pr_files_data: List[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Process all comments: add markers to bot comments and convert cache format.
+
+    Args:
+        comments: List of comment dicts
+        commits_data: List of commit dicts from PullRequestCommits endpoint
+        pr_files_data: List of file dicts from PullRequestFiles endpoint (has real blob SHAs)
     """
     # Build comment_id -> comment dict for first_line lookup during cache conversion
     all_comments: Dict[int, Dict[str, Any]] = {}
@@ -643,7 +678,7 @@ def process_comments(
         # First check if it's a cache comment
         body = comment.get("body", "")
         if CMSBOT_TECHNICAL_MSG in body:
-            comment = convert_cache_comment(comment, commits_data, all_comments)
+            comment = convert_cache_comment(comment, commits_data, all_comments, pr_files_data)
         elif is_bot_comment(comment):
             comment = add_bot_comment_marker(comment)
         processed.append(comment)
@@ -658,8 +693,9 @@ def convert_to_test_data(records: List[Dict[str, Any]], test_name: str) -> Dict[
     """
     files = {}
 
-    # First pass: collect commits data for cache conversion
+    # First pass: collect commits data and PR files data for cache conversion
     commits_data = []
+    pr_files_data = []
     for record in records:
         if record["status_code"] != 200:
             continue
@@ -669,6 +705,10 @@ def convert_to_test_data(records: List[Dict[str, Any]], test_name: str) -> Dict[
             body = parse_response_body(record["response_body"])
             if isinstance(body, list):
                 commits_data.extend(body)
+        elif endpoint_type in ("PullRequestFiles", "RepoIdPullRequestFiles"):
+            body = parse_response_body(record["response_body"])
+            if isinstance(body, list):
+                pr_files_data.extend(body)
 
     # Second pass: convert all endpoints
     for record in records:
@@ -721,7 +761,7 @@ def convert_to_test_data(records: List[Dict[str, Any]], test_name: str) -> Dict[
         if isinstance(body, list):
             # Process comments to add markers and convert cache
             if endpoint_type == "IssueComments":
-                body = process_comments(body, commits_data)
+                body = process_comments(body, commits_data, pr_files_data)
 
             # Wrap in appropriate key
             if endpoint_type in ("PullRequestFiles", "RepoIdPullRequestFiles"):

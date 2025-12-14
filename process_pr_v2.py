@@ -887,6 +887,9 @@ class BotCache:
                     categories=fv_data.get("cats", []),
                 )
 
+        # Note: current_file_versions is NOT loaded from cache
+        # It's rebuilt from PR files every run by update_file_states()
+
         # Load comments
         for cid, ci_data in data.get("comments", {}).items():
             cache.comments[str(cid)] = CommentInfo(
@@ -1135,12 +1138,18 @@ def file_to_package(repo_config: types.ModuleType, filename: str) -> str:
     """
     try:
         return repo_config.file2Package(filename)
-    except (AttributeError, Exception):
-        # Default: extract first two path components
-        parts = filename.split("/")
-        if len(parts) >= 2:
-            return "/".join(parts[0:2])
-        return filename
+    except AttributeError:
+        # file2Package not defined in repo_config - use default
+        pass
+    except Exception as e:
+        # Log unexpected exceptions
+        logger.warning(f"file2Package failed for {filename}: {e}")
+
+    # Default: extract first two path components
+    parts = filename.split("/")
+    if len(parts) >= 2:
+        return "/".join(parts[0:2])
+    return filename
 
 
 def get_package_categories(package: str) -> List[str]:
@@ -1163,6 +1172,47 @@ def get_package_categories(package: str) -> List[str]:
             categories.append(category)
 
     return categories
+
+
+def detect_new_packages(context: "PRContext") -> List[str]:
+    """
+    Detect packages that don't have a category assigned.
+
+    This is only relevant for cmssw_repo. If new packages are found,
+    adds 'new-package' to context.signing_categories.
+
+    Args:
+        context: PR processing context
+
+    Returns:
+        List of new package names (packages without categories)
+    """
+    if not context.cmssw_repo:
+        return []
+
+    if not context.packages:
+        return []
+
+    # Build list of all packages that have categories assigned
+    # (from the values of CMSSW_CATEGORIES, not keys)
+    all_known_packages: Set[str] = set()
+    if CMSSW_CATEGORIES:
+        for category_packages in CMSSW_CATEGORIES.values():
+            all_known_packages.update(category_packages)
+
+    # Find packages without categories
+    new_packages = []
+    for pkg in context.packages:
+        pkg_cats = get_package_categories(pkg)
+        if not pkg_cats and pkg not in all_known_packages:
+            new_packages.append(pkg)
+
+    # Add new-package signing category if there are new packages
+    if new_packages:
+        context.signing_categories.add("new-package")
+        logger.info(f"New packages detected: {new_packages}")
+
+    return new_packages
 
 
 def get_file_l2_categories(
@@ -2082,6 +2132,43 @@ def format_mention(context: PRContext, username: str, force_at: bool = False) ->
     return username
 
 
+def has_bot_comment(
+    context: PRContext, message_key: str, comment_id: Optional[int] = None
+) -> bool:
+    """
+    Check if a bot comment with the given message key has been posted.
+
+    Args:
+        context: PR processing context
+        message_key: The message key to look for (e.g., "welcome", "fully_signed")
+        comment_id: Optional comment ID for exact key matching (key:comment_id)
+
+    Returns:
+        True if a comment with this key marker exists
+    """
+    # Build the key to search for
+    if comment_id is not None:
+        # Exact match for key:comment_id
+        full_key = f"{message_key}:{comment_id}"
+        search_pattern = f"<!--{full_key}-->"
+    else:
+        # Match either <!--key--> or <!--key:...-->
+        search_pattern = None  # Will check both patterns
+
+    for comment in context.comments:
+        if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
+            body = comment.body or ""
+            if search_pattern:
+                # Exact match
+                if search_pattern in body:
+                    return True
+            else:
+                # Match base key with or without comment_id suffix
+                if f"<!--{message_key}-->" in body or f"<!--{message_key}:" in body:
+                    return True
+    return False
+
+
 def post_bot_comment(
     context: PRContext,
     message: str,
@@ -2109,14 +2196,10 @@ def post_bot_comment(
     # Build full key including comment_id if provided
     full_key = f"{message_key}:{comment_id}" if comment_id else message_key
 
-    # Check if already posted (scan existing comments for this message pattern)
-    for comment in context.comments:
-        if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
-            body = comment.body or ""
-            # Check if this comment contains our message key marker
-            if f"<!--{full_key}-->" in body:
-                logger.debug(f"Skipping duplicate message: {full_key}")
-                return False
+    # Check if already posted
+    if has_bot_comment(context, message_key, comment_id):
+        logger.debug(f"Skipping duplicate message: {full_key}")
+        return False
 
     # Check if we've already queued this message in current run
     if full_key in context.posted_messages:
@@ -4323,18 +4406,19 @@ def should_skip_command_before_latest_commit(
     return False
 
 
-def process_comment(context: PRContext, comment) -> None:
+def process_comment(context: PRContext, comment, use_cached: bool = False) -> None:
     """
     Process a single comment for commands.
 
     Iterates through all matching commands until one returns True (success)
     or False (explicit failure). If a handler returns None, the next matching
     command is tried (fallthrough).
-    """
-    # Skip already processed comments
-    if str(comment.id) in context.cache.comments:
-        return
 
+    Args:
+        context: PR processing context
+        comment: The comment object
+        use_cached: If True, skip setting reactions (comment was already processed before)
+    """
     command_line, bot_mentioned = extract_command_line(comment.body or "", context.cmsbuild_user)
     if not command_line:
         return
@@ -4350,23 +4434,26 @@ def process_comment(context: PRContext, comment) -> None:
         # Check if command should be skipped because it's before the latest commit
         if should_skip_command_before_latest_commit(context, cmd, command_line, timestamp, is_bot):
             # Cache the comment as processed (locked) but don't execute
-            # This prevents re-processing on subsequent runs
-            context.cache.comments[str(comment_id)] = CommentInfo(
-                timestamp=timestamp.isoformat() if timestamp else "",
-                first_line=command_line,
-                ctype=cmd.name,
-                user=user,
-                locked=True,  # Mark as locked so it won't be re-processed
+            if not use_cached:
+                context.cache.comments[str(comment_id)] = CommentInfo(
+                    timestamp=timestamp.isoformat() if timestamp else "",
+                    first_line=command_line,
+                    ctype=cmd.name,
+                    user=user,
+                    locked=True,  # Mark as locked so it won't be re-processed
+                )
+            logger.debug(
+                f"Skipped command '{cmd.name}' from comment {comment_id} (before latest commit)"
             )
-            logger.debug(f"Cached skipped command '{cmd.name}' from comment {comment_id}")
             command_handled = True
             break
 
         # Check ACL
         if not check_command_acl(context, cmd, user, timestamp):
             logger.info(f"User {user} not authorized for command: {cmd.name}")
-            # Set -1 reaction for unauthorized
-            set_comment_reaction(context, comment, comment_id, success=False)
+            # Set -1 reaction for unauthorized (skip if re-processing cached)
+            if not use_cached:
+                set_comment_reaction(context, comment, comment_id, success=False)
             command_handled = True
             break
 
@@ -4388,11 +4475,13 @@ def process_comment(context: PRContext, comment) -> None:
 
         # Command handled (success or failure)
         command_handled = True
-        set_comment_reaction(context, comment, comment_id, success=result)
+        # Set reaction (skip if re-processing cached comment)
+        if not use_cached:
+            set_comment_reaction(context, comment, comment_id, success=result)
         break
 
     # If bot was mentioned but no command matched or handled, react with -1
-    if not command_handled and bot_mentioned:
+    if not command_handled and bot_mentioned and not use_cached:
         logger.info(f"Bot mentioned but command not recognized: {command_line}")
         set_comment_reaction(context, comment, comment_id, success=False)
 
@@ -4476,8 +4565,10 @@ def process_all_comments(context: PRContext) -> None:
     This function handles:
     1. Locking signatures that have a commit after them
     2. Detecting deleted comments (remove from cache if not locked)
-    3. Detecting edited comments (re-process if not locked)
-    4. Processing new comments
+    3. Processing ALL comments:
+       - Locked comments: Use cached signature data (signatures are read from cache)
+       - Non-locked cached comments: Re-process (to apply side effects like holds)
+       - New comments: Process fully
 
     Uses context.comments which should be populated before calling this function.
     """
@@ -4509,11 +4600,12 @@ def process_all_comments(context: PRContext) -> None:
             comment_info = context.cache.comments[comment_id]
             if comment_info.locked:
                 # Keep locked signatures even if comment is deleted
+                # Signature data is already in cache, will be read by compute_category_approval_states
                 logger.debug(f"Keeping locked signature from deleted comment {comment_id}")
             else:
-                # Remove unlocked signature
+                # Remove unlocked comment from cache
                 deleted_comment_ids.append(comment_id)
-                logger.info(f"Removing signature from deleted comment {comment_id}")
+                logger.info(f"Removing deleted comment {comment_id} from cache")
 
     for comment_id in deleted_comment_ids:
         del context.cache.comments[comment_id]
@@ -4530,26 +4622,29 @@ def process_all_comments(context: PRContext) -> None:
 
         if cached_info:
             if cached_info.locked:
-                # Locked comment - don't re-process even if edited
-                logger.debug(f"Skipping locked comment {comment_id}")
+                # Locked comment - signature data is already in cache
+                # Will be read by compute_category_approval_states
+                # Don't re-process (would invalidate the locked signature)
+                logger.debug(f"Skipping locked comment {comment_id} (using cached signature)")
                 continue
 
             # Check if comment was edited by comparing preprocessed first line
             current_first_line, _ = extract_command_line(comment.body or "", context.cmsbuild_user)
             current_first_line = current_first_line or ""
             if cached_info.first_line != current_first_line:
-                # Comment was edited - remove old info and re-process
+                # Comment was edited - remove old info and re-process fully
                 logger.info(f"Comment {comment_id} was edited, re-processing")
                 del context.cache.comments[comment_id]
                 if comment_id in context.cache.emoji:
                     del context.cache.emoji[comment_id]
-                # Fall through to process_comment
+                process_comment(context, comment, use_cached=False)
             else:
-                # Comment unchanged, skip
-                continue
-
-        # Process the comment (new or edited)
-        process_comment(context, comment)
+                # Comment unchanged - re-process to apply side effects (e.g., holds)
+                # but skip setting reactions since we already did that
+                process_comment(context, comment, use_cached=True)
+        else:
+            # New comment - process fully
+            process_comment(context, comment, use_cached=False)
 
 
 # =============================================================================
@@ -4781,9 +4876,15 @@ def determine_pr_state(context: PRContext) -> PRState:
     Determine the current PR state.
 
     1. If merged -> merged
-    2. If any PRE_CHECKS pending/rejected -> tests-pending
-    3. If any EXTRA_CHECKS (except orp) pending/rejected -> signatures-pending
-    4. Else -> fully-signed
+    2. If any L2 category signatures pending/rejected -> signatures-pending
+    3. Else -> fully-signed
+
+    L2 categories come from:
+    - Automatic assignment based on file ownership
+    - Manual assignment via 'assign' command
+
+    Note: fully-signed does NOT wait for code-checks, tests, or orp.
+    Those are checked separately (code-checks for test trigger, tests+orp for merge).
     """
     # Check if already merged
     if context.pr and context.pr.merged:
@@ -4796,24 +4897,14 @@ def determine_pr_state(context: PRContext) -> PRState:
     pre_checks = signing_checks.pre_checks
     extra_checks = signing_checks.extra_checks
 
-    # Check PRE_CHECKS first (code-checks, etc.)
-    for cat in pre_checks:
-        state = category_states.get(cat, ApprovalState.PENDING)
-        if state != ApprovalState.APPROVED:
-            return PRState.TESTS_PENDING
+    # Categories to skip for fully-signed determination
+    # These are checked separately (code-checks for test trigger, tests+orp for merge)
+    skip_for_fully_signed = {"code-checks", "tests", "orp"}
 
-    # Check EXTRA_CHECKS (tests, orp, etc.) - but ORP is special
-    for cat in extra_checks:
-        if cat.lower() == "orp":
-            continue  # ORP is checked separately in can_merge
-        state = category_states.get(cat, ApprovalState.PENDING)
-        if state != ApprovalState.APPROVED:
-            return PRState.SIGNATURES_PENDING
-
-    # Check all other categories from file ownership
+    # Check all L2 categories (from file ownership and manual assignment)
     for cat_name, state in category_states.items():
-        # Skip categories we already checked
-        if cat_name in pre_checks or cat_name in extra_checks:
+        # Skip categories that don't block fully-signed
+        if cat_name.lower() in skip_for_fully_signed:
             continue
         if state != ApprovalState.APPROVED:
             return PRState.SIGNATURES_PENDING
@@ -4830,7 +4921,11 @@ def can_merge(context: PRContext) -> bool:
     2. PR state is fully-signed
     3. No active holds
     4. ORP approved (if in EXTRA_CHECKS)
-    5. No new-package-pending label
+    5. Tests approved (if in EXTRA_CHECKS)
+    6. new-package approved (if in signing_categories)
+
+    Note: fully-signed already checks L2 signatures, but we need to also check
+    tests and orp which are excluded from fully-signed determination.
     """
     if not context.is_pr:
         return False
@@ -4846,19 +4941,27 @@ def can_merge(context: PRContext) -> bool:
     if context.holds:
         return False
 
-    # Check for new-package-pending label
-    current_labels = {label.name for label in context.issue.get_labels()}
-    if "new-package-pending" in current_labels or "new-package-pending" in context.pending_labels:
-        return False
+    category_states = compute_category_approval_states(context)
+
+    # Check if new-package signature is required and approved
+    if "new-package" in context.signing_categories:
+        new_package_state = category_states.get("new-package", ApprovalState.PENDING)
+        if new_package_state != ApprovalState.APPROVED:
+            return False
 
     # Check if ORP is required (in EXTRA_CHECKS)
     signing_checks = context.get_signing_checks_for_pr()
     extra_checks = signing_checks.extra_checks
 
     if "orp" in [c.lower() for c in extra_checks]:
-        category_states = compute_category_approval_states(context)
         orp_state = category_states.get("orp", ApprovalState.PENDING)
         if orp_state != ApprovalState.APPROVED:
+            return False
+
+    # Check if tests are required (in EXTRA_CHECKS)
+    if "tests" in [c.lower() for c in extra_checks]:
+        tests_state = category_states.get("tests", ApprovalState.PENDING)
+        if tests_state != ApprovalState.APPROVED:
             return False
 
     return True
@@ -5261,21 +5364,13 @@ def generate_status_message(context: PRContext) -> str:
             if context.is_draft:
                 reasons.append("PR is in draft state")
 
-            if pr_state == PRState.TESTS_PENDING:
-                pending_pre = [
-                    cat
-                    for cat in pre_checks
-                    if category_states.get(cat, ApprovalState.PENDING) != ApprovalState.APPROVED
-                ]
-                if pending_pre:
-                    reasons.append(f"Pre-checks pending: {', '.join(pending_pre)}")
-                else:
-                    reasons.append("Tests not passed")
-            elif pr_state == PRState.SIGNATURES_PENDING:
+            if pr_state == PRState.SIGNATURES_PENDING:
+                # Categories that don't block fully-signed
+                skip_cats = {"code-checks", "tests", "orp"}
                 pending_cats = [
                     cat
                     for cat, state in category_states.items()
-                    if state != ApprovalState.APPROVED and cat.lower() != "orp"
+                    if state != ApprovalState.APPROVED and cat.lower() not in skip_cats
                 ]
                 if pending_cats:
                     reasons.append(f"Pending signatures: {', '.join(pending_cats)}")
@@ -5287,6 +5382,12 @@ def generate_status_message(context: PRContext) -> str:
                 orp_state = category_states.get("orp", ApprovalState.PENDING)
                 if orp_state != ApprovalState.APPROVED:
                     reasons.append("ORP approval required")
+
+            # Check tests
+            if "tests" in [c.lower() for c in extra_checks]:
+                tests_state = category_states.get("tests", ApprovalState.PENDING)
+                if tests_state != ApprovalState.APPROVED:
+                    reasons.append("Tests not passed")
 
             lines.append("❌ **Not ready to merge:**")
             for reason in reasons:
@@ -5385,7 +5486,7 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
             if "merged" in old_labels:
                 labels_to_remove.add("merged")
         else:
-            # Not fully signed (TESTS_PENDING or SIGNATURES_PENDING)
+            # Not fully signed (SIGNATURES_PENDING)
             new_labels.add("pending-signatures")
             if "pending-signatures" not in old_labels:
                 labels_to_add.add("pending-signatures")
@@ -6020,24 +6121,15 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
     commit_count = context.pr.commits
     file_count = context.pr.changed_files
 
-    # Scan existing comments for bot warnings
-    for comment in context.comments:
-        body = comment.body or ""
-        first_line = body.split("\n")[0] if body else ""
-
-        # Check for commit count warnings
-        if "This PR contains many commits" in first_line:
-            if commit_count < TOO_MANY_COMMITS_FAIL_THRESHOLD:
-                context.warned_too_many_commits = True
-        elif "This PR contains too many commits" in first_line:
-            context.warned_too_many_commits = True
-
-        # Check for file count warnings
-        if "This PR touches many files" in first_line:
-            if file_count < TOO_MANY_FILES_FAIL_THRESHOLD:
-                context.warned_too_many_files = True
-        elif "This PR touches too many files" in first_line:
-            context.warned_too_many_files = True
+    # Check if bot has already posted warnings (using markers)
+    if has_bot_comment(context, "too_many_commits_warn") or has_bot_comment(
+        context, "too_many_commits_fail"
+    ):
+        context.warned_too_many_commits = True
+    if has_bot_comment(context, "too_many_files_warn") or has_bot_comment(
+        context, "too_many_files_fail"
+    ):
+        context.warned_too_many_files = True
 
     # Format trackers for mention
     trackers_mention = ", ".join(format_mention(context, t) for t in CMSSW_ISSUES_TRACKERS)
@@ -6193,17 +6285,13 @@ def post_welcome_message(context: PRContext) -> None:
         logger.debug("Skipping welcome message for draft PR")
         return
 
-    entity_type = "Pull Request" if context.is_pr else "Issue"
-    msg_prefix = NEW_PR_PREFIX if context.is_pr else NEW_ISSUE_PREFIX
+    # Check if welcome message was already posted (using marker)
+    if has_bot_comment(context, "welcome"):
+        context.welcome_message_posted = True
+        return
 
-    # Check if welcome message was already posted
-    for comment in context.comments:
-        if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
-            body = comment.body or ""
-            # Check for either prefix style
-            if msg_prefix in body or f"A new {entity_type} was created by" in body:
-                context.welcome_message_posted = True
-                return
+    # Get message prefix based on entity type
+    msg_prefix = NEW_PR_PREFIX if context.is_pr else NEW_ISSUE_PREFIX
 
     # Get author
     author = context.issue.user.login if context.issue else "unknown"
@@ -6262,37 +6350,48 @@ def _build_cmssw_welcome_message(
 
     Includes package list, new package warnings, patch branch warnings,
     and release manager notifications.
+
+    Note: detect_new_packages() should be called before this to populate
+    context.signing_categories with 'new-package' if needed.
     """
     pr = context.pr
     branch = pr.base.ref
 
     # Build package list with categories
     pkg_lines = []
-    new_packages = []
-    all_known_packages = set(CMSSW_CATEGORIES.keys()) if CMSSW_CATEGORIES else set()
-
     for pkg in sorted(context.packages):
         pkg_cats = get_package_categories(pkg)
         if pkg_cats:
             pkg_lines.append(f"- {pkg} (**{', '.join(sorted(pkg_cats))}**)")
         else:
             pkg_lines.append(f"- {pkg} (**new**)")
-            if pkg not in all_known_packages:
-                new_packages.append(pkg)
 
     packages_str = "\n".join(pkg_lines) if pkg_lines else "- (none)"
 
     # Build new package message
+    # Note: new-package signing category was already added by detect_new_packages()
     new_package_msg = ""
-    if new_packages:
-        new_package_msg = (
-            "\nThe following packages do not have a category, yet:\n\n"
-            + "\n".join(new_packages)
-            + "\n"
-            + "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py "
-            "to assign category\n"
-        )
-        context.signing_categories.add("new-package")
+    if "new-package" in context.signing_categories:
+        # Get the list of new packages for the message
+        all_known_packages: Set[str] = set()
+        if CMSSW_CATEGORIES:
+            for category_packages in CMSSW_CATEGORIES.values():
+                all_known_packages.update(category_packages)
+
+        new_packages = [
+            pkg
+            for pkg in context.packages
+            if not get_package_categories(pkg) and pkg not in all_known_packages
+        ]
+
+        if new_packages:
+            new_package_msg = (
+                "\nThe following packages do not have a category, yet:\n\n"
+                + "\n".join(sorted(new_packages))
+                + "\n"
+                + "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py "
+                "to assign category\n"
+            )
 
     # Build patch branch warning
     patch_warning = ""
@@ -6438,28 +6537,17 @@ def check_for_new_commits(context: PRContext) -> None:
     latest_sha = latest_commit.sha if hasattr(latest_commit, "sha") else str(latest_commit)
 
     # Check if we've already posted an update for this commit
-    # Look for existing "PR was updated" messages in comments
-    for comment in context.comments:
-        if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
-            body = comment.body or ""
-            # Check if this comment is for this specific commit
-            if f"<!--pr_updated:{hash(latest_sha)}-->" in body:
-                logger.debug(f"Already posted update for commit {latest_sha[:8]}")
-                return
+    if has_bot_comment(context, "pr_updated", hash(latest_sha)):
+        logger.debug(f"Already posted update for commit {latest_sha[:8]}")
+        return
 
     # Check if we've already posted the welcome message
     # If not, this is the first time seeing the PR - don't post update
     if not context.welcome_message_posted:
-        # Check if welcome message exists
-        entity_type = "Pull Request" if context.is_pr else "Issue"
-        for comment in context.comments:
-            if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
-                body = comment.body or ""
-                if f"A new {entity_type} was created by" in body:
-                    context.welcome_message_posted = True
-                    break
-
-        if not context.welcome_message_posted:
+        # Check if welcome message exists (using marker)
+        if has_bot_comment(context, "welcome"):
+            context.welcome_message_posted = True
+        else:
             # This is a new PR, don't post "updated" message
             logger.debug("New PR/Issue, skipping update message")
             return
@@ -6738,10 +6826,17 @@ def process_pr(
         if context.packages:
             logger.info(f"Following packages affected: {', '.join(sorted(context.packages))}")
             pkg_categories: Set[str] = set()
+
             for package in context.packages:
                 pkg_cats = get_package_categories(package)
-                pkg_categories.update(pkg_cats)
+                if pkg_cats:
+                    pkg_categories.update(pkg_cats)
+
             context.signing_categories.update(pkg_categories)
+
+            # Detect new packages (only for cmssw_repo)
+            # This adds 'new-package' to signing_categories if there are packages without categories
+            detect_new_packages(context)
 
         # Set create_test_property to False if PR is closed
         if pr.state == "closed":

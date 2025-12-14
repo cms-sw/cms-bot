@@ -1,0 +1,25 @@
+{
+  "test_name": "test_grant",
+  "action_count": 2,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_status",
+      "details": {
+        "sha": "ceea69106c5e0e17c03c87c13bdf187f03214fec",
+        "state": "success",
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/25/code-checks"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2801536138,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2801602205\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"README::c367bf9be61c3a14b4a4712dae50f8cd9c9590af\"],\"ts\":\"2025-04-14T12:47:46+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2801525714\":\"+1\"},\"fv\":{\"README::c367bf9be61c3a14b4a4712dae50f8cd9c9590af\":{\"cats\":[],\"ts\":\"2025-03-28T11:41:21Z\"}}} -->"
+      }
+    }
+  ]
+}

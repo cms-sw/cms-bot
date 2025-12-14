@@ -1,0 +1,35 @@
+{
+  "sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
+  "node_id": "C_kwDOF83__NoAKDVhNzZjNWJkMmZjOTNlZjg3ZWFjOGE0OGY1ZmM1ODE2YjAxZDdmYzQ",
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
+  "author": {
+    "name": "iarspider",
+    "email": "iarspider@gmail.com",
+    "date": "2023-12-12T13:57:07Z"
+  },
+  "committer": {
+    "name": "GitHub",
+    "email": "noreply@github.com",
+    "date": "2023-12-12T13:57:07Z"
+  },
+  "tree": {
+    "sha": "08e45dc912b83bf43846eb037547f32e94f201d1",
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/08e45dc912b83bf43846eb037547f32e94f201d1"
+  },
+  "message": "Update README",
+  "parents": [
+    {
+      "sha": "4dfd0c268fa858e98fce9f9f9104e27e6e26fbac",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/4dfd0c268fa858e98fce9f9f9104e27e6e26fbac",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/4dfd0c268fa858e98fce9f9f9104e27e6e26fbac"
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "reason": "valid",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsBcBAABCAAQBQJleGazCRBK7hj4Ov3rIwAAeXcIAD8WJ1EG3fIzkuq3+wW1ERcK\n0Wjvhr7Fqwu1QaQhvsoMBQ7Jldi72tam9v3kyomchYx1X0oxWv+HLW5jXr3yAUya\nvCUwbl9As0P0r9+ZMjZFukwLQRX8wrPrTy0eaO1IGxi+d3I2fuzM1BncxaC0JRhy\n6MgQcbHBIu7Q6ntLPB3o5cfnnMUtzMOo0Ng3DPxeQtE1Rf/Bx7B7+dX8qIgugsfJ\n7FiQylG2aSDRdnn4CgyaJclJ90iWhf7x7Xo1IaEeVJTEI3t5XvJTn9R0Nl6Is8O+\nGdZQKH20TURi2NWxbYgQKwaZAzgU5qBj8YxlETjj6DVOI6SMumpOMyNIWkltb4A=\n=zg7r\n-----END PGP SIGNATURE-----\n",
+    "payload": "tree 08e45dc912b83bf43846eb037547f32e94f201d1\nparent 4dfd0c268fa858e98fce9f9f9104e27e6e26fbac\nauthor iarspider <iarspider@gmail.com> 1702389427 +0100\ncommitter GitHub <noreply@github.com> 1702389427 +0100\n\nUpdate README",
+    "verified_at": "2024-01-16T19:59:59Z"
+  }
+}

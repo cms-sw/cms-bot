@@ -694,6 +694,7 @@ def convert_to_test_data(records: List[Dict[str, Any]], test_name: str) -> Dict[
     files = {}
 
     # First pass: collect commits data and PR files data for cache conversion
+    # These may be paginated, so we need to collect all pages
     commits_data = []
     pr_files_data = []
     for record in records:
@@ -709,6 +710,9 @@ def convert_to_test_data(records: List[Dict[str, Any]], test_name: str) -> Dict[
             body = parse_response_body(record["response_body"])
             if isinstance(body, list):
                 pr_files_data.extend(body)
+
+    # Track which paginated endpoints we've seen to merge them
+    paginated_data: Dict[str, List] = {}
 
     # Second pass: convert all endpoints
     for record in records:
@@ -744,9 +748,14 @@ def convert_to_test_data(records: List[Dict[str, Any]], test_name: str) -> Dict[
             filename = f"{endpoint_type}_{identifier}_{safe_range}.json"
         elif endpoint_type == "Milestone":
             filename = f"{endpoint_type}_{identifier}_{number}.json"
-        elif endpoint_type in ("RepoIdPullRequestFiles", "RepoIdPullRequestCommits"):
-            # Repo ID based endpoints
-            filename = f"{endpoint_type}_{identifier}_{number}.json"
+        elif endpoint_type == "RepoIdPullRequestFiles":
+            # Repo ID based endpoints - normalize to regular endpoint filename
+            # so pagination pages get merged with page 1
+            filename = f"PullRequestFiles_{number}.json"
+        elif endpoint_type == "RepoIdPullRequestCommits":
+            # Repo ID based endpoints - normalize to regular endpoint filename
+            # so pagination pages get merged with page 1
+            filename = f"PullRequestCommits_{number}.json"
         elif endpoint_type == "RepoIdCommits":
             # Repo ID commits (paginated) - skip these as they're pagination of existing data
             continue
@@ -759,23 +768,39 @@ def convert_to_test_data(records: List[Dict[str, Any]], test_name: str) -> Dict[
 
         # Handle list responses (paginated)
         if isinstance(body, list):
-            # Process comments to add markers and convert cache
-            if endpoint_type == "IssueComments":
-                body = process_comments(body, commits_data, pr_files_data)
+            # Check if this is a paginated endpoint that should be merged
+            # Note: RepoId variants are normalized to regular endpoint names above
+            paginated_endpoints = {
+                "PullRequestCommits": "commits",
+                "RepoIdPullRequestCommits": "commits",
+                "PullRequestFiles": "files",
+                "RepoIdPullRequestFiles": "files",
+                "IssueComments": "comments",
+                "IssueLabels": "labels",
+                "PullRequestReviews": "reviews",
+                "CommentReactions": "reactions",
+            }
 
-            # Wrap in appropriate key
-            if endpoint_type in ("PullRequestFiles", "RepoIdPullRequestFiles"):
-                body = {"files": body}
-            elif endpoint_type in ("PullRequestCommits", "RepoIdPullRequestCommits"):
-                body = {"commits": body}
-            elif endpoint_type == "IssueComments":
-                body = {"comments": body}
-            elif endpoint_type == "IssueLabels":
-                body = {"labels": body}
-            elif endpoint_type == "PullRequestReviews":
-                body = {"reviews": body}
-            elif endpoint_type == "CommentReactions":
-                body = {"reactions": body}
+            if endpoint_type in paginated_endpoints:
+                key = paginated_endpoints[endpoint_type]
+
+                # Process comments to add markers and convert cache
+                if endpoint_type == "IssueComments":
+                    body = process_comments(body, commits_data, pr_files_data)
+
+                # Merge with existing data for this endpoint
+                # Using filename as key ensures RepoId pages merge with regular pages
+                if filename in paginated_data:
+                    paginated_data[filename].extend(body)
+                else:
+                    paginated_data[filename] = list(body)
+
+                # Store wrapped data (will be overwritten if more pages, final value is used)
+                files[filename] = {key: paginated_data[filename]}
+                continue
+
+            # Non-paginated list response - just wrap it
+            # (This shouldn't happen for known endpoints)
 
         files[filename] = body
 

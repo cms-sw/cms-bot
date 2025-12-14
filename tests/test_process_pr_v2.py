@@ -65,6 +65,17 @@ except ImportError:
     # Fallback pattern if cms_static not available: ^[Bb]uild[ ]+(CMSSW_[^ ]+)
     BUILD_REL = r"^[Bb]uild[ ]+(CMSSW_[^ ]+)"
 
+# Replace fetch_pr_result with a dummy function that doesn't make network calls
+import process_pr_v2
+
+
+def _dummy_fetch_pr_result(url):
+    """Dummy fetch_pr_result for testing - returns success with test passed message."""
+    return 0, "+1\n\nTests passed"
+
+
+process_pr_v2.fetch_pr_result = _dummy_fetch_pr_result
+
 
 def create_mock_repo_config(**overrides) -> types.ModuleType:
     """
@@ -7852,6 +7863,51 @@ class TestOldTestForProcessPR:
 
     def test_draft_pr_fully_signed(self):
         self.runTest(pr_id=21)
+
+    def test_empty_pr(self):
+        self.runTest(pr_id=33)
+
+    def test_enable_none(self):
+        self.runTest(pr_id=9)
+
+    def test_grant(self):
+        self.runTest(pr_id=25)
+
+    def test_hold(self):
+        self.runTest()
+
+    def test_ignore_rejected_invalid(self):
+        self.runTest(pr_id=25)
+
+    def test_ignore_rejected_valid(self):
+        self.runTest(pr_id=25)
+
+    def test_invalid_test_params(self):
+        self.runTest(pr_id=25)
+
+    def test_invalid_type(self):
+        self.runTest()
+
+    def test_many_commits_warn(self):
+        self.runTest(pr_id=18)
+
+    def test_many_commits_ok(self):
+        self.runTest(pr_id=18)
+
+    def test_merge_pr(self):
+        self.runTest(pr_id=36)
+
+    def test_new_issue(self):
+        self.runTest(pr_id=27)
+
+    def test_new_pr(self):
+        self.runTest()
+
+    def test_orp_issue(self):
+        self.runTest(pr_id=39)
+
+    def test_too_many_commits(self):
+        self.runTest(pr_id=18)
 
     def test_test_all_params(self):
         self.runTest(24)

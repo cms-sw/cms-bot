@@ -1,0 +1,25 @@
+{
+  "test_name": "test_enable_none",
+  "action_count": 2,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_status",
+      "details": {
+        "sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/9/jenkins"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 1852047910,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"1852049424\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2023-12-12T13:37:11+00:00\",\"user\":\"iarspider\"},\"1852068434\":{\"cats\":[\"dqm\"],\"ctype\":\"+1\",\"first_line\":\"+dqm\",\"locked\":true,\"signed_files\":[\"Validation/TrackerHits/test/README::commit::17338beb185f\"],\"ts\":\"2023-12-12T13:45:49Z\",\"user\":\"iarspider\"},\"1852079588\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2023-12-12T13:52:20+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"1852068434\":\"+1\",\"2857856131\":\"+1\",\"2857857384\":\"+1\"},\"fv\":{\"SimTracker/TrackTriggerAssociation/doc/README::9a83848133c1de5c6e0071f6c8ed7e527529534d\":{\"cats\":[\"l1\",\"simulation\"],\"ts\":\"2023-12-12T13:57:07Z\"},\"Validation/TrackerHits/test/README::fec8f9d86c13d6ca0ba7316317695d3df46af93d\":{\"cats\":[\"dqm\"],\"ts\":\"2023-12-12T13:57:07Z\"}}} -->"
+      }
+    }
+  ]
+}

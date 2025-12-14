@@ -5355,8 +5355,13 @@ def process_ci_test_results(context: PRContext) -> None:
                 res = "+1" if result.status == "success" else "-1"
                 comment_body = f"{res}\n\n{output}"
 
-                # Use context and head_sha as message key to avoid duplicates
-                message_key = f"ci_result_{result.context}_{head_sha}"
+                # Use status context + hash of target URL as message key
+                # The target URL is unique per test run (Jenkins build URL), so this allows
+                # posting new results when tests are re-triggered.
+                # The "Finished" description check above prevents duplicate posting within
+                # the same test run.
+                url_hash = hash(result.target_url) if result.target_url else head_sha
+                message_key = f"ci_result_{result.context}_{url_hash}"
                 post_bot_comment(context, comment_body, message_key)
 
                 # Update status description to "Finished" to prevent duplicate posting

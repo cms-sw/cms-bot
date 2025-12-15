@@ -1,9 +1,29 @@
 {
   "test_name": "test_draft_pr_ready",
-  "action_count": 7,
+  "action_count": 8,
   "actions": [
     {
       "sequence": 1,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 21,
+        "labels": [
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 21,
+        "labels": [
+          "tests-started"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-tests-iarspider-cmssw-cmssw-21.properties",
@@ -14,7 +34,7 @@
       }
     },
     {
-      "sequence": 2,
+      "sequence": 4,
       "action": "create_comment",
       "details": {
         "issue_number": 21,
@@ -22,7 +42,7 @@
       }
     },
     {
-      "sequence": 3,
+      "sequence": 5,
       "action": "create_comment",
       "details": {
         "issue_number": 21,
@@ -30,7 +50,7 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 6,
       "action": "create_status",
       "details": {
         "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
@@ -41,7 +61,7 @@
       }
     },
     {
-      "sequence": 5,
+      "sequence": 7,
       "action": "create_status",
       "details": {
         "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
@@ -52,18 +72,7 @@
       }
     },
     {
-      "sequence": 6,
-      "action": "create_status",
-      "details": {
-        "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
-        "state": "pending",
-        "target_url": "",
-        "description": "Tests started",
-        "context": "cms/21/tests"
-      }
-    },
-    {
-      "sequence": 7,
+      "sequence": 8,
       "action": "edit_comment",
       "details": {
         "comment_id": 2523322081,

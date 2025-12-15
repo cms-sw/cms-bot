@@ -1,6 +1,6 @@
 {
   "test_name": "test_different_verb_not_deduplicated",
-  "action_count": 7,
+  "action_count": 6,
   "actions": [
     {
       "sequence": 1,
@@ -26,7 +26,7 @@
         "labels": [
           "core-pending",
           "pending-signatures",
-          "tests-pending"
+          "tests-started"
         ]
       }
     },
@@ -51,17 +51,6 @@
     },
     {
       "sequence": 6,
-      "action": "create_status",
-      "details": {
-        "sha": "commit123",
-        "state": "pending",
-        "target_url": "",
-        "description": "Tests started",
-        "context": "cms/1/tests"
-      }
-    },
-    {
-      "sequence": 7,
       "action": "create_comment",
       "details": {
         "issue_number": 1,

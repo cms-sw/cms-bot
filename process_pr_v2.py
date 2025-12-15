@@ -227,6 +227,7 @@ class ApprovalState(Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+    STARTED = "started"  # Tests have been triggered but not yet completed
 
 
 class PRState(Enum):
@@ -2513,6 +2514,17 @@ def _handle_approval(
 
     # Handle pre-check categories - update commit status directly, don't cache
     if pre_check_categories and context.pr:
+        # Check if this command was made before the latest commit
+        # Pre-check signatures only apply to the current HEAD, not old commits
+        latest_commit_ts = get_latest_commit_timestamp(context)
+        if latest_commit_ts and timestamp < latest_commit_ts:
+            logger.debug(
+                f"Skipping pre-check command from {user} - comment ({timestamp}) is before latest commit ({latest_commit_ts})"
+            )
+            # Don't process pre-checks, but continue with regular categories if any
+            pre_check_categories = []
+
+    if pre_check_categories and context.pr:
         pr_id = context.issue.number
         github_state = "success" if approved else "error"
 
@@ -3743,7 +3755,7 @@ def process_pending_build_test_commands(context: PRContext) -> None:
 
     Rules:
     - For 'test': Process if tests signature is "pending" and jenkins URL doesn't match.
-      Updates tests signature to "started" and sets jenkins URL.
+      Sets jenkins URL (tests-started label is handled by _get_tests_approval_state).
     - For 'build': Process the command (reaction check already done in handler)
     - Skip all if abort_tests is True (abort was requested)
     """
@@ -3782,86 +3794,9 @@ def process_pending_build_test_commands(context: PRContext) -> None:
 
         if _execute_build_test_command(context, comment_id, user, result):
             # Update jenkins status URL to this comment's URL
+            # Note: tests-started label is handled automatically by _get_tests_approval_state
+            # which checks jenkins status description for "requested by"
             set_jenkins_status_url(context, comment_url, user, timestamp)
-            # Update tests signature to "started"
-            set_tests_signature_started(context)
-
-
-def set_tests_signature_started(context: PRContext) -> None:
-    """
-    Update the tests signature to "started" state.
-
-    This is called when tests are triggered to indicate tests have been requested
-    but results are not yet available.
-
-    Args:
-        context: PR processing context
-    """
-    if not context.pr:
-        return
-
-    pr_id = context.issue.number
-    status_context = f"cms/{pr_id}/tests"
-
-    context.queue_status_update(
-        state="pending",
-        description="Tests started",
-        context_name=status_context,
-        target_url="",
-    )
-    logger.info("Set tests signature to 'started'")
-
-
-def ensure_tests_signature_started(context: PRContext) -> None:
-    """
-    Ensure tests signature is "started" if tests have been requested.
-
-    Checks if bot/{prId}/jenkins status description contains "requested by",
-    indicating tests were requested. If so, and tests signature is still
-    "pending", updates it to "started".
-
-    This handles the case where tests were requested in a previous run but
-    the signature wasn't updated yet.
-
-    Args:
-        context: PR processing context
-    """
-    if not context.pr:
-        return
-
-    # Check jenkins status
-    jenkins_status = get_jenkins_status(context)
-    if not jenkins_status:
-        return
-
-    description = jenkins_status.description or ""
-    if "requested by" not in description.lower():
-        return
-
-    # Tests were requested - check if signature needs to be updated
-    pr_id = context.issue.number
-    status_context = f"cms/{pr_id}/tests"
-
-    # Check current tests status
-    tests_status = context.get_commit_status(status_context)
-    if tests_status:
-        # If already has a status (started, success, error), don't change it
-        desc = tests_status.description or ""
-        if "started" in desc.lower() or tests_status.state in ("success", "error", "failure"):
-            return
-
-    # Also check pending updates
-    if status_context in context.pending_status_updates:
-        return
-
-    # Update tests signature to "started"
-    context.queue_status_update(
-        state="pending",
-        description="Tests started",
-        context_name=status_context,
-        target_url="",
-    )
-    logger.info("Updated tests signature to 'started' (tests were previously requested)")
 
 
 def get_jenkins_status(context: PRContext) -> Optional[Any]:
@@ -4743,28 +4678,6 @@ def has_commit_after(commit_timestamps: List[datetime], comment_timestamp: datet
     return False
 
 
-def get_last_commit_before(
-    commit_timestamps: List[datetime], timestamp: datetime
-) -> Optional[datetime]:
-    """
-    Get the timestamp of the last commit before the given timestamp.
-
-    Args:
-        commit_timestamps: Sorted list of commit timestamps
-        timestamp: Timestamp to check against
-
-    Returns:
-        Timestamp of the last commit before the given time, or None if no commits before
-    """
-    last_commit = None
-    for commit_ts in commit_timestamps:
-        if commit_ts <= timestamp:
-            last_commit = commit_ts
-        else:
-            break
-    return last_commit
-
-
 def process_all_comments(context: PRContext) -> None:
     """
     Process all comments on the PR/Issue.
@@ -5043,9 +4956,11 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
 
     Logic:
     1. If there's an unknown/release error, tests are pending (failed to start)
-    2. Check for required test statuses first
-    3. If no required tests, check optional tests
-    4. Map CI status to approval state:
+    2. Check pending_status_updates for jenkins status changes in current run
+    3. Check jenkins status for "requested by" - if present, tests are STARTED
+    4. Check for required test statuses first
+    5. If no required tests, check optional tests
+    6. Map CI status to approval state:
        - All success -> APPROVED
        - Any error (on required) -> REJECTED
        - Any pending or no tests -> PENDING
@@ -5061,7 +4976,27 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
     lab_stats = check_ci_test_completion(context)
 
     if not lab_stats:
-        # No test results yet - still pending
+        # No test results yet - check if tests have been requested
+        # First check pending_status_updates for changes in current run (e.g., abort)
+        pr_id = context.issue.number if context.issue else None
+        if pr_id:
+            jenkins_context = f"bot/{pr_id}/jenkins"
+            if jenkins_context in context.pending_status_updates:
+                sha, state, description, target_url = context.pending_status_updates[
+                    jenkins_context
+                ]
+                # If aborted, tests are pending (not started)
+                if description.startswith("Aborted"):
+                    return ApprovalState.PENDING
+                if "requested by" in description.lower():
+                    return ApprovalState.STARTED
+
+        # Fall back to frozen jenkins status
+        jenkins_status = get_jenkins_status(context)
+        if jenkins_status:
+            description = jenkins_status.description or ""
+            if "requested by" in description.lower():
+                return ApprovalState.STARTED
         return ApprovalState.PENDING
 
     # Check required tests first (they take precedence)
@@ -5617,7 +5552,12 @@ def generate_status_message(context: PRContext) -> str:
                     type_str = "🔒"  # Extra check (required for merge)
                 else:
                     type_str = "📌"  # Regular category
-                state_emoji = {"approved": "✅", "rejected": "❌", "pending": "⏳"}[state.value]
+                state_emoji = {
+                    "approved": "✅",
+                    "rejected": "❌",
+                    "pending": "⏳",
+                    "started": "🔄",
+                }[state.value]
                 lines.append(f"- {type_str} {cat_name}: {state_emoji} {state.value}")
 
         # Holds
@@ -5701,13 +5641,14 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
     if context.is_pr:
         pr_state = determine_pr_state(context)
 
-        # Handle category state labels (<cat>-pending, <cat>-approved, <cat>-rejected)
+        # Handle category state labels (<cat>-pending, <cat>-approved, <cat>-rejected, <cat>-started)
         # This must come FIRST so we know what categories are pending
         category_states = compute_category_approval_states(context)
         state_suffixes = {
             ApprovalState.PENDING: "-pending",
             ApprovalState.APPROVED: "-approved",
             ApprovalState.REJECTED: "-rejected",
+            ApprovalState.STARTED: "-started",
         }
 
         for cat, state in category_states.items():
@@ -7125,8 +7066,6 @@ def process_pr(
     # Process deferred build/test commands (after all comments seen)
     if is_pr:
         process_pending_build_test_commands(context)
-        # Ensure tests signature is "started" if tests were previously requested
-        ensure_tests_signature_started(context)
         # Update test_parameters commit status
         update_test_parameters_status(context)
 

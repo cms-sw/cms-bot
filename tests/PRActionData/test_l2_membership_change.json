@@ -1,0 +1,83 @@
+{
+  "test_name": "test_l2_membership_change",
+  "action_count": 8,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 100,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 101,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "code-checks-pending",
+          "core-approved",
+          "dqm-approved",
+          "fully-signed",
+          "orp-pending",
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "This pull request is fully signed and it will be integrated in one of the next master IBs after it passes the integration tests and once validation in the development release cycle CMSSW_16_0_X is complete. This pull request will now be reviewed by the release team before it's merged. @cms-sw/release-managers (and backports should be raised in the release meeting by the corresponding L2)\n<!--fully_signed-->"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "A new Pull Request was created by  @testuser for master.\n\nIt involves the following packages:\n\n- Package/Core (**core**)\n- Package/DQM (**dqm**)\n\n@Dr15Jones, @ctarricone, @gabrielmscampos, @makortel, @nothingface0, @rseidita, @smuzaffar can you please review it and eventually sign? Thanks.\n@ftenchini, @mandrenguyen, @sextonkennedy you are the release manager for this.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "create_status",
+      "details": {
+        "sha": "commit_sha_1",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/1/jenkins"
+      }
+    },
+    {
+      "sequence": 7,
+      "action": "create_status",
+      "details": {
+        "sha": "commit_sha_1",
+        "state": "pending",
+        "target_url": "",
+        "description": "code-checks requested",
+        "context": "cms/1/code-checks"
+      }
+    },
+    {
+      "sequence": 8,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Core/main.py::file_sha_core\",\"Package/DQM/monitor.py::file_sha_dqm\"],\"ts\":\"2024-01-10T12:00:00+00:00\",\"user\":\"alice\"},\"101\":{\"cats\":[\"dqm\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Core/main.py::file_sha_core\",\"Package/DQM/monitor.py::file_sha_dqm\"],\"ts\":\"2024-01-20T12:00:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Core/main.py::file_sha_core\":{\"cats\":[\"core\"],\"ts\":\"2024-01-05T10:00:00Z\"},\"Package/DQM/monitor.py::file_sha_dqm\":{\"cats\":[\"dqm\"],\"ts\":\"2024-01-05T10:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

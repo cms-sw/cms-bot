@@ -1,9 +1,29 @@
 {
   "test_name": "test_cmsdist_start_tests",
-  "action_count": 4,
+  "action_count": 5,
   "actions": [
     {
       "sequence": 1,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "tests-started"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-user-tests-iarspider-cmssw-cmsdist-1.properties",
@@ -14,7 +34,7 @@
       }
     },
     {
-      "sequence": 2,
+      "sequence": 4,
       "action": "create_status",
       "details": {
         "sha": "97b8e6b89e86de19afb3a428f54f08313457374e",
@@ -25,18 +45,7 @@
       }
     },
     {
-      "sequence": 3,
-      "action": "create_status",
-      "details": {
-        "sha": "97b8e6b89e86de19afb3a428f54f08313457374e",
-        "state": "pending",
-        "target_url": "",
-        "description": "Tests started",
-        "context": "cms/1/tests"
-      }
-    },
-    {
-      "sequence": 4,
+      "sequence": 5,
       "action": "edit_comment",
       "details": {
         "comment_id": 2838026393,

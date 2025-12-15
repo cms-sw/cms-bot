@@ -1,6 +1,6 @@
 {
   "test_name": "test_test_with_params",
-  "action_count": 6,
+  "action_count": 5,
   "actions": [
     {
       "sequence": 1,
@@ -18,7 +18,7 @@
         "labels": [
           "core-pending",
           "pending-signatures",
-          "tests-pending"
+          "tests-started"
         ]
       }
     },
@@ -43,17 +43,6 @@
     },
     {
       "sequence": 5,
-      "action": "create_status",
-      "details": {
-        "sha": "commit123",
-        "state": "pending",
-        "target_url": "",
-        "description": "Tests started",
-        "context": "cms/1/tests"
-      }
-    },
-    {
-      "sequence": 6,
       "action": "create_comment",
       "details": {
         "issue_number": 1,

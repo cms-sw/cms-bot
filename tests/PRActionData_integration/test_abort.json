@@ -4,6 +4,16 @@
   "actions": [
     {
       "sequence": 1,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 17,
+        "labels": [
+          "tests-started"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
       "action": "add_labels",
       "details": {
         "issue_number": 17,
@@ -14,7 +24,7 @@
       }
     },
     {
-      "sequence": 2,
+      "sequence": 3,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-abort-iarspider-cmssw-cmssw-17.properties",
@@ -24,7 +34,7 @@
       }
     },
     {
-      "sequence": 3,
+      "sequence": 4,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -32,7 +42,7 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 5,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -43,7 +53,7 @@
       }
     },
     {
-      "sequence": 5,
+      "sequence": 6,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -51,17 +61,6 @@
         "target_url": "",
         "description": "Aborted, waiting for authorized user to issue the test command.",
         "context": "bot/17/jenkins"
-      }
-    },
-    {
-      "sequence": 6,
-      "action": "create_status",
-      "details": {
-        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
-        "state": "pending",
-        "target_url": "",
-        "description": "Tests started",
-        "context": "cms/17/tests"
       }
     },
     {

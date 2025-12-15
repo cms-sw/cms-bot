@@ -2650,10 +2650,11 @@ class TestBotMessageProcessing:
     """Tests for processing bot's own messages (CI results, code-checks, etc.)."""
 
     def test_bot_code_checks_pass(self, repo_config, record_mode):
-        """Test that +code-checks from bot is processed."""
+        """Test that +code-checks from bot sets commit status to success."""
         create_basic_pr_data(
             "test_bot_code_checks_pass",
             pr_number=1,
+            base_ref="master",  # Must be master for code-checks to be a pre-check
             files=[
                 {
                     "filename": "Package/Core/main.py",
@@ -2673,7 +2674,9 @@ class TestBotMessageProcessing:
 
         recorder = ActionRecorder("test_bot_code_checks_pass", record_mode)
         gh = MockGithub("test_bot_code_checks_pass", recorder)
-        repo = MockRepository("test_bot_code_checks_pass", recorder=recorder)
+        repo = MockRepository(
+            "test_bot_code_checks_pass", full_name="cms-sw/cmssw", recorder=recorder
+        )
         issue = MockIssue("test_bot_code_checks_pass", number=1, recorder=recorder)
 
         result = process_pr(
@@ -2687,7 +2690,14 @@ class TestBotMessageProcessing:
         )
 
         assert result["pr_number"] == 1
-        # The code-checks command should have been processed
+
+        # Verify code-checks status was set to success
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_statuses = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_statuses) == 1
+        assert code_checks_statuses[0]["details"]["state"] == "success"
 
         if record_mode:
             recorder.save()
@@ -2695,10 +2705,11 @@ class TestBotMessageProcessing:
             recorder.verify()
 
     def test_bot_code_checks_fail(self, repo_config, record_mode):
-        """Test that -code-checks from bot is processed."""
+        """Test that -code-checks from bot sets commit status to error."""
         create_basic_pr_data(
             "test_bot_code_checks_fail",
             pr_number=1,
+            base_ref="master",  # Must be master for code-checks to be a pre-check
             files=[
                 {
                     "filename": "Package/Core/main.py",
@@ -2718,7 +2729,9 @@ class TestBotMessageProcessing:
 
         recorder = ActionRecorder("test_bot_code_checks_fail", record_mode)
         gh = MockGithub("test_bot_code_checks_fail", recorder)
-        repo = MockRepository("test_bot_code_checks_fail", recorder=recorder)
+        repo = MockRepository(
+            "test_bot_code_checks_fail", full_name="cms-sw/cmssw", recorder=recorder
+        )
         issue = MockIssue("test_bot_code_checks_fail", number=1, recorder=recorder)
 
         result = process_pr(
@@ -2733,17 +2746,23 @@ class TestBotMessageProcessing:
 
         assert result["pr_number"] == 1
 
+        # Verify code-checks status was set to error
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_statuses = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_statuses) == 1
+        assert code_checks_statuses[0]["details"]["state"] == "error"
+
         if record_mode:
             recorder.save()
         else:
             recorder.verify()
 
-    def test_bot_ci_approval(self, repo_config, record_mode):
-        """Test that +1 from bot (CI results) is processed when bot has L2 categories."""
-        # L2 data is already set up by fixture with cmsbuild having tests/code-checks
-
+    def test_bot_hold_command(self, repo_config, record_mode):
+        """Test that hold command from bot works (bot has L2 categories)."""
         create_basic_pr_data(
-            "test_bot_ci_approval",
+            "test_bot_hold_command",
             pr_number=1,
             files=[
                 {
@@ -2755,17 +2774,17 @@ class TestBotMessageProcessing:
             comments=[
                 {
                     "id": 100,
-                    "body": "+1",
+                    "body": "hold",
                     "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
                     "created_at": datetime.now(tz=timezone.utc).isoformat(),
                 }
             ],
         )
 
-        recorder = ActionRecorder("test_bot_ci_approval", record_mode)
-        gh = MockGithub("test_bot_ci_approval", recorder)
-        repo = MockRepository("test_bot_ci_approval", recorder=recorder)
-        issue = MockIssue("test_bot_ci_approval", number=1, recorder=recorder)
+        recorder = ActionRecorder("test_bot_hold_command", record_mode)
+        gh = MockGithub("test_bot_hold_command", recorder)
+        repo = MockRepository("test_bot_hold_command", recorder=recorder)
+        issue = MockIssue("test_bot_hold_command", number=1, recorder=recorder)
 
         result = process_pr(
             repo_config=repo_config,
@@ -2778,102 +2797,7 @@ class TestBotMessageProcessing:
         )
 
         assert result["pr_number"] == 1
-        # The +1 should be processed for bot's L2 categories (tests, code-checks)
-
-        if record_mode:
-            recorder.save()
-        else:
-            recorder.verify()
-
-    def test_bot_category_specific_approval(self, repo_config, record_mode):
-        """Test that +tests from bot is processed."""
-        # L2 data is already set up by fixture with cmsbuild having tests/code-checks
-
-        create_basic_pr_data(
-            "test_bot_category_specific_approval",
-            pr_number=1,
-            files=[
-                {
-                    "filename": "Package/Core/main.py",
-                    "sha": "file_sha_123",
-                    "status": "modified",
-                }
-            ],
-            comments=[
-                {
-                    "id": 100,
-                    "body": "+tests",
-                    "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
-                }
-            ],
-        )
-
-        recorder = ActionRecorder("test_bot_category_specific_approval", record_mode)
-        gh = MockGithub("test_bot_category_specific_approval", recorder)
-        repo = MockRepository("test_bot_category_specific_approval", recorder=recorder)
-        issue = MockIssue("test_bot_category_specific_approval", number=1, recorder=recorder)
-
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
-
-        assert result["pr_number"] == 1
-
-        if record_mode:
-            recorder.save()
-        else:
-            recorder.verify()
-
-    def test_bot_comments_processed_like_normal_users(self, repo_config, record_mode):
-        """Test that bot comments are processed like normal users (via ACL)."""
-        create_basic_pr_data(
-            "test_bot_comments_processed_like_normal_users",
-            pr_number=1,
-            files=[
-                {
-                    "filename": "Package/Core/main.py",
-                    "sha": "file_sha_123",
-                    "status": "modified",
-                }
-            ],
-            comments=[
-                {
-                    "id": 100,
-                    "body": "hold",  # cmsbuild has L2 categories so this should work
-                    "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
-                    "created_at": datetime.now(tz=timezone.utc).isoformat(),
-                }
-            ],
-        )
-
-        recorder = ActionRecorder("test_bot_comments_processed_like_normal_users", record_mode)
-        gh = MockGithub("test_bot_comments_processed_like_normal_users", recorder)
-        repo = MockRepository("test_bot_comments_processed_like_normal_users", recorder=recorder)
-        issue = MockIssue(
-            "test_bot_comments_processed_like_normal_users", number=1, recorder=recorder
-        )
-
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
-
-        # Bot comments are now processed like normal users
-        # cmsbuild has L2 categories (tests, code-checks), so hold should work
-        assert result["pr_number"] == 1
-        # cmsbuild has tests and code-checks categories, so it can place holds
+        # Bot has L2 categories (tests, code-checks), so it can place holds
         assert len(result["holds"]) > 0
 
         if record_mode:
@@ -6117,21 +6041,20 @@ class TestAbortCommand:
     """Tests for abort test command."""
 
     def test_abort_command(self, record_mode, monkeypatch):
-        """Test that abort command sets abort_tests flag."""
+        """Test that abort command creates abort properties file when tests are running."""
         # Make the user a valid tester
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
 
         repo_config = create_mock_repo_config()
         init_l2_data(repo_config)
 
-        recorder = ActionRecorder("test_abort_command", record_mode)
-        gh = MockGithub("test_abort_command", recorder)
-        repo = MockRepository("test_abort_command", recorder=recorder)
-        issue = MockIssue(
+        # Create test data with running tests:
+        # - jenkins status with "requested by" (indicates test was triggered)
+        # - CI test status with "pending" state (indicates test is running)
+        create_basic_pr_data(
             "test_abort_command",
-            number=1,
-            recorder=recorder,
-            comments_data=[
+            pr_number=1,
+            comments=[
                 {
                     "id": 1001,
                     "user": {"login": "tester"},
@@ -6139,19 +6062,44 @@ class TestAbortCommand:
                     "created_at": "2024-01-15T12:00:00Z",
                 },
             ],
+            statuses=[
+                {
+                    "context": "bot/1/jenkins",
+                    "state": "success",
+                    "description": "Tests requested by tester at 2024-01-15 10:00:00 UTC.",
+                    "target_url": "https://example.com/comment/1000",
+                },
+                {
+                    "context": "cms/1/el8_amd64_gcc12/required",
+                    "state": "pending",
+                    "description": "Tests running",
+                    "target_url": "",
+                },
+            ],
         )
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        recorder = ActionRecorder("test_abort_command", record_mode)
+        gh = MockGithub("test_abort_command", recorder)
+        repo = MockRepository("test_abort_command", recorder=recorder)
+        issue = MockIssue("test_abort_command", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
+
+        # Verify abort properties file was created
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        abort_props = [a for a in prop_actions if "abort" in a.get("details", {}).get("filename")]
+        assert len(abort_props) == 1, "Should have created abort properties file"
 
         if record_mode:
             recorder.save()
@@ -6159,20 +6107,17 @@ class TestAbortCommand:
             recorder.verify()
 
     def test_abort_test_command(self, record_mode, monkeypatch):
-        """Test that 'abort test' command also works."""
+        """Test that 'abort test' command also creates abort properties file."""
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
 
         repo_config = create_mock_repo_config()
         init_l2_data(repo_config)
 
-        recorder = ActionRecorder("test_abort_test_command", record_mode)
-        gh = MockGithub("test_abort_test_command", recorder)
-        repo = MockRepository("test_abort_test_command", recorder=recorder)
-        issue = MockIssue(
+        # Create test data with running tests
+        create_basic_pr_data(
             "test_abort_test_command",
-            number=1,
-            recorder=recorder,
-            comments_data=[
+            pr_number=1,
+            comments=[
                 {
                     "id": 1001,
                     "user": {"login": "tester"},
@@ -6180,19 +6125,170 @@ class TestAbortCommand:
                     "created_at": "2024-01-15T12:00:00Z",
                 },
             ],
+            statuses=[
+                {
+                    "context": "bot/1/jenkins",
+                    "state": "success",
+                    "description": "Tests requested by tester at 2024-01-15 10:00:00 UTC.",
+                    "target_url": "https://example.com/comment/1000",
+                },
+                {
+                    "context": "cms/1/el8_amd64_gcc12/required",
+                    "state": "pending",
+                    "description": "Tests running",
+                    "target_url": "",
+                },
+            ],
         )
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        recorder = ActionRecorder("test_abort_test_command", record_mode)
+        gh = MockGithub("test_abort_test_command", recorder)
+        repo = MockRepository("test_abort_test_command", recorder=recorder)
+        issue = MockIssue("test_abort_test_command", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
+
+        # Verify abort properties file was created
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        abort_props = [a for a in prop_actions if "abort" in a.get("details", {}).get("filename")]
+        assert len(abort_props) == 1, "Should have created abort properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_abort_ignored_when_no_pending_tests(self, record_mode, monkeypatch):
+        """Test that abort command is ignored when no tests are pending."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Create test data with completed tests (no pending)
+        create_basic_pr_data(
+            "test_abort_ignored_no_pending",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "abort",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            statuses=[
+                {
+                    "context": "bot/1/jenkins",
+                    "state": "success",
+                    "description": "Tests requested by tester at 2024-01-15 10:00:00 UTC.",
+                    "target_url": "https://example.com/comment/1000",
+                },
+                {
+                    "context": "cms/1/el8_amd64_gcc12/required",
+                    "state": "success",  # Tests completed, not pending
+                    "description": "Tests passed",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_abort_ignored_no_pending", record_mode)
+        gh = MockGithub("test_abort_ignored_no_pending", recorder)
+        repo = MockRepository("test_abort_ignored_no_pending", recorder=recorder)
+        issue = MockIssue("test_abort_ignored_no_pending", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify NO abort properties file was created
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        abort_props = [a for a in prop_actions if "abort" in a.get("details", {}).get("filename")]
+        assert len(abort_props) == 0, "Should NOT have created abort properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_abort_ignored_when_already_aborted(self, record_mode, monkeypatch):
+        """Test that abort command is ignored when already aborted."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Create test data with already aborted status
+        create_basic_pr_data(
+            "test_abort_ignored_already_aborted",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "abort",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            statuses=[
+                {
+                    "context": "bot/1/jenkins",
+                    "state": "pending",
+                    "description": "Aborted, waiting for authorized user to issue the test command.",
+                    "target_url": "",
+                },
+                {
+                    "context": "cms/1/el8_amd64_gcc12/required",
+                    "state": "pending",
+                    "description": "Tests running",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_abort_ignored_already_aborted", record_mode)
+        gh = MockGithub("test_abort_ignored_already_aborted", recorder)
+        repo = MockRepository("test_abort_ignored_already_aborted", recorder=recorder)
+        issue = MockIssue("test_abort_ignored_already_aborted", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify NO abort properties file was created
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        abort_props = [a for a in prop_actions if "abort" in a.get("details", {}).get("filename")]
+        assert len(abort_props) == 0, "Should NOT have created abort properties file"
 
         if record_mode:
             recorder.save()
@@ -7070,6 +7166,7 @@ class TestTestsApprovalLabels:
         context.ignore_tests_rejected = None
         context.issue = MagicMock()
         context.issue.number = pr_number
+        context.pending_status_updates = {}  # Empty dict for pending updates
 
         # Create mock statuses as dict
         mock_statuses = {}

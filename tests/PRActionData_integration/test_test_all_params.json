@@ -1,9 +1,29 @@
 {
   "test_name": "test_test_all_params",
-  "action_count": 5,
+  "action_count": 6,
   "actions": [
     {
       "sequence": 1,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 24,
+        "labels": [
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 24,
+        "labels": [
+          "tests-started"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
       "action": "create_property_file",
       "details": {
         "filename": "trigger-tests-iarspider-cmssw-cmssw-24.properties",
@@ -18,7 +38,7 @@
       }
     },
     {
-      "sequence": 2,
+      "sequence": 4,
       "action": "create_status",
       "details": {
         "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
@@ -29,7 +49,7 @@
       }
     },
     {
-      "sequence": 3,
+      "sequence": 5,
       "action": "create_status",
       "details": {
         "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
@@ -40,18 +60,7 @@
       }
     },
     {
-      "sequence": 4,
-      "action": "create_status",
-      "details": {
-        "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
-        "state": "pending",
-        "target_url": "",
-        "description": "Tests started",
-        "context": "cms/24/tests"
-      }
-    },
-    {
-      "sequence": 5,
+      "sequence": 6,
       "action": "edit_comment",
       "details": {
         "comment_id": 2740051887,

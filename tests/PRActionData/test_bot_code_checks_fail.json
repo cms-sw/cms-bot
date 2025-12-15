@@ -1,6 +1,6 @@
 {
   "test_name": "test_bot_code_checks_fail",
-  "action_count": 4,
+  "action_count": 5,
   "actions": [
     {
       "sequence": 1,
@@ -8,7 +8,9 @@
       "details": {
         "issue_number": 1,
         "labels": [
+          "code-checks-rejected",
           "core-pending",
+          "orp-pending",
           "pending-signatures",
           "tests-pending"
         ]
@@ -19,7 +21,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "A new Pull Request was created by  @testuser.\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
+        "body": "A new Pull Request was created by  @testuser for master.\n\nIt involves the following packages:\n\n- Package/Core (**core**)\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign? Thanks.\n@ftenchini, @mandrenguyen, @sextonkennedy you are the release manager for this.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
       }
     },
     {
@@ -35,6 +37,17 @@
     },
     {
       "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "commit123",
+        "state": "error",
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/1/code-checks"
+      }
+    },
+    {
+      "sequence": 5,
       "action": "create_comment",
       "details": {
         "issue_number": 1,

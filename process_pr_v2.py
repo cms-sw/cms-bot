@@ -1886,9 +1886,10 @@ class PRContext:
     _commit_statuses: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
     # Pending commit status updates - executed at end of process_pr
-    # List of (sha, state, description, target_url, context) tuples
-    pending_status_updates: List[Tuple[str, str, str, str, str]] = field(
-        default_factory=list, repr=False
+    # Dict mapping context_name -> (sha, state, description, target_url)
+    # Using dict ensures last update wins for each context
+    pending_status_updates: Dict[str, Tuple[str, str, str, str]] = field(
+        default_factory=dict, repr=False
     )
 
     # Processing state
@@ -2094,7 +2095,6 @@ class PRContext:
 
             # Convert to dict keyed by context
             self._commit_statuses = {s.context: s for s in statuses_list}
-            logger.debug(f"Statuses for commit {sha}: {','.join(str(_) for _ in statuses_list)}")
             return self._commit_statuses
         except Exception as e:
             logger.debug(f"Failed to get commit statuses for {sha}: {e}")
@@ -2125,8 +2125,13 @@ class PRContext:
         """
         Queue a commit status update to be executed at end of processing.
 
-        This avoids invalidating the status cache during processing, which
-        could cause issues with functions that check current status (like abort).
+        The status cache is NOT updated here - it remains frozen to the state
+        at the beginning of processing. This ensures consistent behavior within
+        a single processing run. Status changes will take effect on the next
+        bot invocation (triggered by the status change webhook).
+
+        Using a dict keyed by context_name ensures that if the same status is
+        updated multiple times in a run, the last update wins.
 
         Args:
             state: Status state (pending, success, failure, error)
@@ -2143,7 +2148,7 @@ class PRContext:
                     sha = self.last_commit.sha
 
         if sha:
-            self.pending_status_updates.append((sha, state, description, target_url, context_name))
+            self.pending_status_updates[context_name] = (sha, state, description, target_url)
 
     def get_signing_checks_for_pr(self) -> "SigningChecks":
         """
@@ -2347,7 +2352,12 @@ def flush_pending_statuses(context: PRContext) -> int:
     # Get current statuses for comparison
     current_statuses = context.get_commit_statuses()
 
-    for sha, state, description, target_url, status_context in context.pending_status_updates:
+    for status_context, (
+        sha,
+        state,
+        description,
+        target_url,
+    ) in context.pending_status_updates.items():
         # Check if status has changed
         existing = current_statuses.get(status_context)
         if existing:
@@ -2458,6 +2468,9 @@ def _handle_approval(
     category_str = match.group(1) if match.lastindex and match.group(1) else None
 
     # Determine which categories this signature applies to
+    signing_checks = context.get_signing_checks_for_pr()
+    pre_checks = set(signing_checks.pre_checks)
+
     if category_str:
         # Specific category - check if it's a valid signing category
         category = category_str.strip()
@@ -2466,7 +2479,6 @@ def _handle_approval(
         # 1. L2 categories from file ownership (in context.signing_categories)
         # 2. Manually assigned categories (in context.signing_categories)
         # 3. Pre-checks and extra-checks (code-checks, tests, orp, externals)
-        signing_checks = context.get_signing_checks_for_pr()
         all_valid_categories = (
             context.signing_categories
             | set(signing_checks.pre_checks)
@@ -2486,25 +2498,59 @@ def _handle_approval(
         logger.info(f"User {user} has no L2 categories to sign with")
         return False
 
-    # Get current file versions for the categories being signed
-    # A signature is valid only if these exact file versions are still current
-    signed_files = get_files_for_categories(context, categories)
+    # Separate pre-check categories from regular categories
+    pre_check_categories = [c for c in categories if c in pre_checks]
+    regular_categories = [c for c in categories if c not in pre_checks]
 
-    # Update comment info in cache
-    comment_info = CommentInfo(
-        timestamp=timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
-        first_line="+1" if approved else "-1",
-        ctype="+1" if approved else "-1",
-        categories=categories,
-        signed_files=signed_files,
-        user=user,
-    )
-    context.cache.comments[str(comment_id)] = comment_info
+    # Handle pre-check categories - update commit status directly, don't cache
+    if pre_check_categories and context.pr:
+        pr_id = context.issue.number
+        github_state = "success" if approved else "error"
 
-    logger.info(
-        f"Recorded {'approval' if approved else 'rejection'} from {user} "
-        f"for categories: {categories} (signed {len(signed_files)} files)"
-    )
+        # Get comment URL for status target
+        comment_url = ""
+        for comment in context.comments:
+            if comment.id == comment_id:
+                comment_url = getattr(comment, "html_url", "")
+                break
+
+        for pre_check in pre_check_categories:
+            status_context = f"cms/{pr_id}/{pre_check}"
+            context.queue_status_update(
+                state=github_state,
+                description="See details",
+                context_name=status_context,
+                target_url=comment_url,
+            )
+            logger.info(f"Queued pre-check status {pre_check}: {github_state}")
+
+    # Handle regular categories - cache the signature
+    if regular_categories:
+        # Get current file versions for the categories being signed
+        # A signature is valid only if these exact file versions are still current
+        signed_files = get_files_for_categories(context, regular_categories)
+
+        # Update comment info in cache
+        comment_info = CommentInfo(
+            timestamp=timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp,
+            first_line="+1" if approved else "-1",
+            ctype="+1" if approved else "-1",
+            categories=regular_categories,
+            signed_files=signed_files,
+            user=user,
+        )
+        context.cache.comments[str(comment_id)] = comment_info
+
+        logger.info(
+            f"Recorded {'approval' if approved else 'rejection'} from {user} "
+            f"for categories: {regular_categories} (signed {len(signed_files)} files)"
+        )
+    elif pre_check_categories:
+        logger.info(
+            f"Recorded {'approval' if approved else 'rejection'} from {user} "
+            f"for pre-checks: {pre_check_categories} (status updated)"
+        )
+
     return True
 
 
@@ -3682,8 +3728,14 @@ def process_pending_build_test_commands(context: PRContext) -> None:
     - For 'test': Last one wins (only process the last test command)
     - For 'build': Skip if comment already has +1 reaction from bot
     - For 'test': Skip if bot/{prId}/jenkins status exists and URL matches comment URL
+    - Skip all if abort_tests is True (abort was requested)
     """
     if not context.pending_build_test_commands:
+        return
+
+    # If abort was requested, skip all test/build commands
+    if context.abort_tests:
+        logger.info("Skipping pending build/test commands - abort was requested")
         return
 
     # Separate build and test commands
@@ -4856,7 +4908,7 @@ def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalSt
 
     Special handling:
     - 'tests' category: Determined by CI commit statuses, not user comments
-    - 'code-checks' category: Can be signed by CI or users
+    - Pre-check categories (e.g., 'code-checks'): Determined by commit statuses
 
     Returns:
         Dict mapping category name to approval state
@@ -4864,10 +4916,19 @@ def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalSt
     categories = get_current_categories(context)
     category_states: Dict[str, ApprovalState] = {}
 
+    # Get pre-checks list for special handling
+    signing_checks = context.get_signing_checks_for_pr()
+    pre_checks = set(signing_checks.pre_checks)
+
     for cat_name, cat_files in categories.items():
         # Special handling for 'tests' category - determined by CI status
         if cat_name == "tests":
             category_states[cat_name] = _get_tests_approval_state(context)
+            continue
+
+        # Special handling for pre-checks - determined by commit status
+        if cat_name in pre_checks:
+            category_states[cat_name] = _get_pre_check_approval_state(context, cat_name)
             continue
 
         # Find valid signatures for this category from comments
@@ -4947,6 +5008,58 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
         # (unless we want different behavior)
         return ApprovalState.PENDING
 
+    return ApprovalState.PENDING
+
+
+def _get_pre_check_approval_state(context: PRContext, pre_check: str) -> ApprovalState:
+    """
+    Get the approval state for a pre-check category based on commit status.
+
+    Pre-checks (like code-checks) use commit statuses as the source of truth,
+    similar to tests. The status is set when:
+    - Auto-triggered: pending
+    - Signed with +pre_check: success
+    - Signed with -pre_check: error
+
+    Also checks pending_status_updates for status changes queued in the current
+    processing run, since commit status cache is frozen during processing.
+
+    Args:
+        context: PR processing context
+        pre_check: Pre-check category name (e.g., "code-checks")
+
+    Returns:
+        ApprovalState for the pre-check category
+    """
+    if not context.pr:
+        return ApprovalState.PENDING
+
+    pr_id = context.issue.number
+    status_context = f"cms/{pr_id}/{pre_check}"
+
+    # First, check if there's a pending status update for this pre-check
+    # (queued during this processing run)
+    if status_context in context.pending_status_updates:
+        sha, state, description, target_url = context.pending_status_updates[status_context]
+        if state == "success":
+            return ApprovalState.APPROVED
+        elif state in ("error", "failure"):
+            return ApprovalState.REJECTED
+        else:
+            return ApprovalState.PENDING
+
+    # Fall back to the frozen commit status from the start of processing
+    status = context.get_commit_status(status_context)
+
+    if status:
+        if status.state == "success":
+            return ApprovalState.APPROVED
+        elif status.state in ("error", "failure"):
+            return ApprovalState.REJECTED
+        else:
+            return ApprovalState.PENDING
+
+    # No status found - pending
     return ApprovalState.PENDING
 
 
@@ -5317,19 +5430,15 @@ def process_ci_test_results(context: PRContext) -> None:
     # Process both required and optional results
     for suffix in ["required", "optional"]:
         results = statuses.get(suffix, [])
-        logger.debug(f"Checking results for suffix {suffix}: {results}")
         if not results:
             continue
 
         for result in results:
-            logger.debug(f"Checking result {result}")
             if not result.target_url or result.status == "pending":
-                logger.debug("No target_url or still pending")
                 continue
 
             # Check if already processed (description starts with "Finished")
             if result.description and result.description.startswith("Finished"):
-                logger.debug("Already Finished")
                 continue
 
             # Transform URL to get pr-result endpoint
@@ -5341,9 +5450,7 @@ def process_ci_test_results(context: PRContext) -> None:
                 + "/pr-result"
             )
 
-            logger.debug(f"Fetching test results from {pr_result_url}")
             error_code, output = fetch_pr_result(pr_result_url)
-            logger.debug(f"error={error_code}, output={output}")
 
             if error_code != 0:
                 logger.error(f"Failed to fetch PR results: code {error_code}")
@@ -6065,88 +6172,6 @@ def trigger_pending_pre_checks(context: PRContext) -> None:
         )
 
 
-def update_pre_check_statuses(context: PRContext) -> None:
-    """
-    Update commit statuses for pre-checks based on their signature state.
-
-    For each pre-check category (like code-checks), updates the commit status
-    to reflect whether it's been approved (+1) or rejected (-1).
-
-    The status URL is set to the HTML URL of the comment that last signed
-    the pre-check category.
-
-    Args:
-        context: PR processing context
-    """
-    if not context.pr or not context.is_pr:
-        return
-
-    signing_checks = context.get_signing_checks_for_pr()
-    if not signing_checks.pre_checks:
-        return
-
-    pr_id = context.issue.number
-    head_sha = context.pr.head.sha
-    cms_status_prefix = f"cms/{pr_id}"
-
-    # Get current category states
-    category_states = compute_category_approval_states(context)
-
-    # Get current categories and their files
-    categories = get_current_categories(context)
-
-    for pre_check in signing_checks.pre_checks:
-        status_context = f"{cms_status_prefix}/{pre_check}"
-
-        # Get the approval state for this pre-check
-        state = category_states.get(pre_check, ApprovalState.PENDING)
-
-        # Find the comment that last signed this pre-check (for the URL)
-        comment_url = ""
-        cat_files = categories.get(pre_check, set())
-
-        for comment_id, comment_info in context.cache.comments.items():
-            if comment_info.ctype not in ("+1", "-1"):
-                continue
-            if pre_check not in comment_info.categories:
-                continue
-            if not is_signature_valid_for_category(context, comment_info, pre_check, cat_files):
-                continue
-
-            # Found a valid signature - get the comment URL
-            # Look up the comment to get its HTML URL
-            # Note: cache keys are strings, comment.id is int
-            comment_id_int = int(comment_id)
-            for comment in context.comments:
-                if comment.id == comment_id_int:
-                    comment_url = getattr(comment, "html_url", "")
-                    break
-
-            # Use the last valid signature's URL
-            # (loop continues to find the most recent one)
-
-        # Map approval state to GitHub status state
-        if state == ApprovalState.APPROVED:
-            github_state = "success"
-            description = "See details"
-        elif state == ApprovalState.REJECTED:
-            github_state = "error"
-            description = "See details"
-        else:
-            # Don't update pending state - let the CI result or trigger handle it
-            continue
-
-        # Queue status update
-        context.queue_status_update(
-            state=github_state,
-            description=description,
-            context_name=status_context,
-            target_url=comment_url,
-            sha=head_sha,
-        )
-        logger.info(f"Queued pre-check status {pre_check}: {github_state}")
-
-
 def create_abort_properties(context: PRContext) -> None:
     """
     Create properties file to abort running tests.
@@ -6626,6 +6651,7 @@ def check_for_new_commits(context: PRContext) -> None:
     Check if there are new commits since the last bot message.
 
     Posts a "PR updated" message if new commits are detected.
+    Also resets pre-check statuses to pending on new commits.
 
     Args:
         context: PR processing context
@@ -6667,9 +6693,42 @@ def check_for_new_commits(context: PRContext) -> None:
             commit_time = ensure_tz_aware(latest_commit.commit.author.date)
             if commit_time > last_bot_comment_time:
                 logger.info(f"New commit detected: {latest_sha[:8]}")
+
+                # Reset pre-check statuses to pending on new commits
+                reset_pre_check_statuses(context)
+
                 post_pr_updated_message(context, latest_sha)
         except Exception as e:
             logger.warning(f"Could not compare commit times: {e}")
+
+
+def reset_pre_check_statuses(context: PRContext) -> None:
+    """
+    Reset pre-check statuses to pending when new commits are pushed.
+
+    This ensures that pre-checks must be re-signed after each push.
+
+    Args:
+        context: PR processing context
+    """
+    if not context.pr or not context.is_pr:
+        return
+
+    signing_checks = context.get_signing_checks_for_pr()
+    if not signing_checks.pre_checks:
+        return
+
+    pr_id = context.issue.number
+
+    for pre_check in signing_checks.pre_checks:
+        status_context = f"cms/{pr_id}/{pre_check}"
+        context.queue_status_update(
+            state="pending",
+            description=f"{pre_check} pending",
+            context_name=status_context,
+            target_url="",
+        )
+        logger.info(f"Reset pre-check status {pre_check} to pending")
 
 
 # =============================================================================
@@ -7082,9 +7141,6 @@ def process_pr(
 
         # Check and process CI test results
         process_ci_test_results(context)
-
-        # Update pre-check statuses based on signatures
-        update_pre_check_statuses(context)
     else:
         # Issue-specific processing
         # Check for new data repo request issues

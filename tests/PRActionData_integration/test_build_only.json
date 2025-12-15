@@ -30,7 +30,7 @@
       "action": "edit_comment",
       "details": {
         "comment_id": 2872582394,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2872567078\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc::faa9944e724742f98b149d49943697df443161bc\"],\"ts\":\"2025-05-12T13:24:31+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc::faa9944e724742f98b149d49943697df443161bc\":{\"cats\":[\"reconstruction\"],\"ts\":\"2025-05-12T13:24:00Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc::faa9944e724742f98b149d49943697df443161bc\":{\"cats\":[\"reconstruction\"],\"ts\":\"2025-05-12T13:24:00Z\"}}} -->"
       }
     }
   ]

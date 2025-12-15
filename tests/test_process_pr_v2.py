@@ -698,6 +698,7 @@ class MockCommit:
                 self.committer = self.GitAuthor()
 
     commit: GitCommit = None
+    _created_statuses: List["MockCommitStatus"] = field(default_factory=list, repr=False)
 
     def __post_init__(self):
         if self.commit is None:
@@ -748,8 +749,10 @@ class MockCommit:
         return commit
 
     def get_statuses(self) -> "MockPaginatedList":
-        """Get commit statuses."""
-        # Try to load from CommitCombinedStatus file
+        """Get commit statuses, including any created during this test run."""
+        statuses = []
+
+        # First, load from file if available
         try:
             # Look for status file with this SHA
             data_dir = REPLAY_DATA_DIR / self._test_name
@@ -757,11 +760,17 @@ class MockCommit:
                 with open(status_file) as f:
                     data = json.load(f)
                 statuses = [MockCommitStatus.from_json(s) for s in data.get("statuses", [])]
-                return MockPaginatedList(statuses)
-        except Exception as e:
-            print(f"Failed to get statuses: {e}")
-            raise e
-        return MockPaginatedList([])
+                break
+        except Exception:
+            pass
+
+        # Then add any statuses created during this test run
+        # (replacing any with the same context)
+        existing_contexts = {s.context for s in self._created_statuses}
+        statuses = [s for s in statuses if s.context not in existing_contexts]
+        statuses.extend(self._created_statuses)
+
+        return MockPaginatedList(statuses)
 
     def create_status(
         self,
@@ -781,12 +790,19 @@ class MockCommit:
                 context=context,
             )
 
-        return MockCommitStatus(
+        status = MockCommitStatus(
             state=state,
             description=description or "",
             context=context or "",
             target_url=target_url or "",
         )
+
+        # Track this status so get_statuses() can return it
+        # Replace any existing status with the same context
+        self._created_statuses = [s for s in self._created_statuses if s.context != context]
+        self._created_statuses.append(status)
+
+        return status
 
 
 @dataclass
@@ -4039,6 +4055,143 @@ class TestSquashSignatureHandling:
         else:
             recorder.verify()
             recorder2.verify()
+
+
+class TestL2MembershipChanges:
+    """Tests for signature preservation when L2 membership changes over time."""
+
+    def test_signature_preserved_when_l2_membership_changes(self, repo_config, record_mode):
+        """
+        Test that signatures are preserved when a user's L2 membership changes.
+
+        Scenario:
+        - PR touches files with categories core and dqm
+        - At time T1, Alice (who is core L2 at that time) signs with +1
+        - At time T2 (> T1), Alice (who is now dqm L2, no longer core) signs with +1
+
+        Expected:
+        - The core signature from T1 should be preserved (used Alice's L2 at T1)
+        - The dqm signature from T2 should also be recorded (using Alice's L2 at T2)
+        - Both categories should be approved
+        """
+        import process_pr_v2
+
+        # Set up time-based L2 data:
+        # - Before T_change: Alice is core L2
+        # - After T_change: Alice is dqm L2
+        t_change = datetime(2024, 1, 15, 0, 0, 0, tzinfo=timezone.utc).timestamp()
+
+        l2_data = {
+            "alice": [
+                {
+                    "start_date": 0,
+                    "end_date": t_change,
+                    "category": ["core"],
+                },
+                {
+                    "start_date": t_change,
+                    "end_date": None,
+                    "category": ["dqm"],
+                },
+            ],
+            "cmsbuild": [{"start_date": 0, "category": ["tests", "code-checks"]}],
+        }
+        process_pr_v2._L2_DATA = l2_data
+
+        # T1: Alice signs while she's core L2 (before T_change)
+        t1 = "2024-01-10T12:00:00Z"  # Before Jan 15
+        # T2: Alice signs while she's dqm L2 (after T_change)
+        t2 = "2024-01-20T12:00:00Z"  # After Jan 15
+
+        create_basic_pr_data(
+            "test_l2_membership_change",
+            pr_number=1,
+            files=[
+                # File in core category
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_core",
+                    "status": "modified",
+                },
+                # File in dqm category (Package/DQM matches dqm category)
+                {
+                    "filename": "Package/DQM/monitor.py",
+                    "sha": "file_sha_dqm",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                # At T1: Alice signs +1 (she's core L2 at this time)
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": t1,
+                },
+                # At T2: Alice signs +1 again (she's now dqm L2)
+                {
+                    "id": 101,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": t2,
+                },
+            ],
+            commits=[
+                {
+                    "sha": "commit_sha_1",
+                    "commit": {
+                        "message": "Test commit",
+                        "author": {
+                            "date": "2024-01-05T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-05T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_l2_membership_change", record_mode)
+        gh = MockGithub("test_l2_membership_change", recorder)
+        repo = MockRepository(
+            "test_l2_membership_change", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_l2_membership_change", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=True,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Both core and dqm should be approved
+        # - core: approved via Alice's +1 at T1 (when she was core L2)
+        # - dqm: approved via Alice's +1 at T2 (when she was dqm L2)
+        assert "core" in result["categories"], "core category should be present"
+        assert "dqm" in result["categories"], "dqm category should be present"
+        assert (
+            result["categories"]["core"]["state"] == "approved"
+        ), "core should be approved (Alice was core L2 at T1)"
+        assert (
+            result["categories"]["dqm"]["state"] == "approved"
+        ), "dqm should be approved (Alice was dqm L2 at T2)"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
 
 
 class TestUnassignCommand:

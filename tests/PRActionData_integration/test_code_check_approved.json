@@ -57,7 +57,7 @@
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::1963595dc5bad37400a61b64c43b5efbefa11b81\"],\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::1963595dc5bad37400a61b64c43b5efbefa11b81\":{\"cats\":[\"core\"],\"ts\":\"2024-02-27T10:25:45Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::1963595dc5bad37400a61b64c43b5efbefa11b81\":{\"cats\":[\"core\"],\"ts\":\"2024-02-27T10:25:45Z\"}}} -->"
       }
     }
   ]

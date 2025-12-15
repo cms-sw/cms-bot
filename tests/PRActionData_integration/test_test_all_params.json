@@ -23,9 +23,9 @@
       "details": {
         "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
         "state": "success",
-        "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2740383001",
-        "description": "Tests requested by iarspider at 2025-03-20 13:01:47 UTC.",
-        "context": "bot/24/jenkins"
+        "target_url": "",
+        "description": "See details",
+        "context": "cms/24/code-checks"
       }
     },
     {
@@ -34,9 +34,9 @@
       "details": {
         "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
         "state": "success",
-        "target_url": "",
-        "description": "See details",
-        "context": "cms/24/code-checks"
+        "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/24#issuecomment-2740383001",
+        "description": "Tests requested by iarspider at 2025-03-20 13:01:47 UTC.",
+        "context": "bot/24/jenkins"
       }
     },
     {
@@ -44,7 +44,7 @@
       "action": "edit_comment",
       "details": {
         "comment_id": 2740051887,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2740055137\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Validation/README::77764fb81876bf1924bd364f0683b4df078c3da8\"],\"ts\":\"2025-03-20T11:24:44+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"Validation/README::77764fb81876bf1924bd364f0683b4df078c3da8\":{\"cats\":[],\"ts\":\"2025-03-20T11:21:50Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"Validation/README::77764fb81876bf1924bd364f0683b4df078c3da8\":{\"cats\":[],\"ts\":\"2025-03-20T11:21:50Z\"}}} -->"
       }
     }
   ]

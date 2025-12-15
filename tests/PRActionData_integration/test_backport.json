@@ -1,6 +1,6 @@
 {
   "test_name": "test_backport",
-  "action_count": 8,
+  "action_count": 7,
   "actions": [
     {
       "sequence": 1,
@@ -69,21 +69,10 @@
     },
     {
       "sequence": 7,
-      "action": "create_status",
-      "details": {
-        "sha": "551c95f59caff42369887b5fee86583fe2bff161",
-        "state": "success",
-        "target_url": "",
-        "description": "See details",
-        "context": "cms/26/code-checks"
-      }
-    },
-    {
-      "sequence": 8,
       "action": "create_comment",
       "details": {
         "issue_number": 26,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2761373098\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"README::131bcdaf098c6224cd0a7e3771661b9ba99eaa04\"],\"ts\":\"2025-03-28T13:30:18+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"README::131bcdaf098c6224cd0a7e3771661b9ba99eaa04\":{\"cats\":[],\"ts\":\"2025-03-28T13:08:22Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"README::131bcdaf098c6224cd0a7e3771661b9ba99eaa04\":{\"cats\":[],\"ts\":\"2025-03-28T13:08:22Z\"}}} -->"
       }
     }
   ]

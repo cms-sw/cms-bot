@@ -49,7 +49,7 @@
       "action": "edit_comment",
       "details": {
         "comment_id": 2523322081,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"cats\":[\"code-checks\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\"],\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T11:49:52Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T11:49:52Z\"}}} -->"
       }
     }
   ]

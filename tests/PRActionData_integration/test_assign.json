@@ -1,6 +1,6 @@
 {
   "test_name": "test_assign",
-  "action_count": 4,
+  "action_count": 5,
   "actions": [
     {
       "sequence": 1,
@@ -35,6 +35,17 @@
     },
     {
       "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
+        "state": "pending",
+        "target_url": "",
+        "description": "Tests started",
+        "context": "cms/17/tests"
+      }
+    },
+    {
+      "sequence": 5,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

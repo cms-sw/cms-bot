@@ -1,5 +1,72 @@
 {
   "test_name": "test_duplicate_test_commands_deduplicated",
-  "action_count": 0,
-  "actions": []
+  "action_count": 7,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 100,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 101,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "core-pending",
+          "pending-signatures",
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "A new Pull Request was created by  @testuser.\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "commit123",
+        "state": "success",
+        "target_url": "https://github.com/org/repo/pull/1#issuecomment-101",
+        "description": "Tests requested by bob at 2024-01-01 13:00:00 UTC.",
+        "context": "bot/1/jenkins"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "create_status",
+      "details": {
+        "sha": "commit123",
+        "state": "pending",
+        "target_url": "",
+        "description": "Tests started",
+        "context": "cms/1/tests"
+      }
+    },
+    {
+      "sequence": 7,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Core/main.py::file_sha_123\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T12:00:00Z\"}}} -->"
+      }
+    }
+  ]
 }

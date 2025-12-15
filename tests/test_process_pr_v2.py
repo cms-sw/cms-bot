@@ -26,7 +26,7 @@ import types
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -154,6 +154,14 @@ def setup_l2_data():
     import process_pr_v2
 
     process_pr_v2._L2_DATA = {}
+
+
+@pytest.fixture(autouse=True)
+def clear_mock_commit_statuses():
+    """Fixture to clear MockCommit shared statuses between tests."""
+    MockCommit._shared_statuses = {}
+    yield
+    MockCommit._shared_statuses = {}
 
 
 @pytest.fixture(autouse=True)
@@ -670,6 +678,10 @@ class MockCommitCombinedStatus:
 class MockCommit:
     """Mock for github.Commit.Commit"""
 
+    # Class-level storage for statuses, shared across all instances by SHA
+    # This ensures that create_status() on one instance is visible to get_statuses() on another
+    _shared_statuses: ClassVar[Dict[str, List["MockCommitStatus"]]] = {}
+
     sha: str
     message: str = ""
     author: Optional[MockNamedUser] = None
@@ -698,7 +710,6 @@ class MockCommit:
                 self.committer = self.GitAuthor()
 
     commit: GitCommit = None
-    _created_statuses: List["MockCommitStatus"] = field(default_factory=list, repr=False)
 
     def __post_init__(self):
         if self.commit is None:
@@ -764,11 +775,12 @@ class MockCommit:
         except Exception:
             pass
 
-        # Then add any statuses created during this test run
+        # Then add any statuses created during this test run (from shared storage)
         # (replacing any with the same context)
-        existing_contexts = {s.context for s in self._created_statuses}
+        created_statuses = MockCommit._shared_statuses.get(self.sha, [])
+        existing_contexts = {s.context for s in created_statuses}
         statuses = [s for s in statuses if s.context not in existing_contexts]
-        statuses.extend(self._created_statuses)
+        statuses.extend(created_statuses)
 
         return MockPaginatedList(statuses)
 
@@ -797,10 +809,14 @@ class MockCommit:
             target_url=target_url or "",
         )
 
-        # Track this status so get_statuses() can return it
+        # Track this status in shared storage so get_statuses() on any instance can return it
         # Replace any existing status with the same context
-        self._created_statuses = [s for s in self._created_statuses if s.context != context]
-        self._created_statuses.append(status)
+        if self.sha not in MockCommit._shared_statuses:
+            MockCommit._shared_statuses[self.sha] = []
+        MockCommit._shared_statuses[self.sha] = [
+            s for s in MockCommit._shared_statuses[self.sha] if s.context != context
+        ]
+        MockCommit._shared_statuses[self.sha].append(status)
 
         return status
 
@@ -1424,6 +1440,7 @@ def create_basic_pr_data(
     commits: List[Dict] = None,
     labels: List[str] = None,
     base_ref: str = "main",
+    statuses: List[Dict] = None,
 ) -> None:
     """
     Create basic test data files for a PR.
@@ -1438,6 +1455,7 @@ def create_basic_pr_data(
         commits: List of commit dicts
         labels: List of label names
         base_ref: Target branch name (default "main", use "master" for cms-sw/cmssw)
+        statuses: List of commit status dicts with context, state, description, target_url
     """
     create_test_data_directory(test_name)
 
@@ -1559,6 +1577,15 @@ def create_basic_pr_data(
 
     save_json_data(test_name, "Repository", "org_repo", repo_data)
 
+    # Create CommitCombinedStatus data if statuses provided
+    if statuses and commits:
+        head_sha = commits[-1]["sha"]
+        status_data = {
+            "state": "pending",  # Overall state
+            "statuses": statuses,
+        }
+        save_json_data(test_name, "CommitCombinedStatus", f"org_repo_{head_sha}", status_data)
+
 
 # =============================================================================
 # TESTS
@@ -1598,9 +1625,9 @@ class TestBasicFunctionality:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # Verify result structure
@@ -1649,9 +1676,9 @@ class TestBasicFunctionality:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # Verify
@@ -1695,9 +1722,9 @@ class TestBasicFunctionality:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -1739,9 +1766,9 @@ class TestBasicFunctionality:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -1793,9 +1820,9 @@ class TestHoldMechanism:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert len(result["holds"]) > 0
@@ -1844,9 +1871,9 @@ class TestHoldMechanism:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert len(result["holds"]) == 0
@@ -1900,9 +1927,9 @@ class TestHoldMechanism:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert len(result["holds"]) == 0
@@ -1948,9 +1975,9 @@ class TestAssignCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert "visualization" in result["categories"]
@@ -1992,9 +2019,9 @@ class TestAssignCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # numpy maps to 'analysis' category
@@ -2041,9 +2068,9 @@ class TestCommandPreprocessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2094,9 +2121,9 @@ class TestCommandPreprocessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # Check that a test was triggered (please prefix was removed)
@@ -2154,9 +2181,9 @@ class TestMultipleFiles:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # Should have multiple categories
@@ -2214,9 +2241,9 @@ class TestTestCommand:
                 gh=gh,
                 repo=repo,
                 issue=issue,
-                dryRun=True,
+                dryRun=False,
                 cmsbuild_user="cmsbuild",
-                loglevel="WARNING",
+                loglevel="DEBUG",
             )
 
         # Check that a test was triggered
@@ -2269,9 +2296,9 @@ class TestTestCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # Check that a test was triggered with workflows
@@ -2315,9 +2342,9 @@ class TestCacheManagement:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,  # Still dry run to not actually post
+            dryRun=False,  # Still dry run to not actually post
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2372,9 +2399,9 @@ class TestMergeCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2423,9 +2450,9 @@ class TestBranchRewrite:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2471,9 +2498,9 @@ class TestEdgeCases:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2515,9 +2542,9 @@ class TestEdgeCases:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # No tests should be triggered, no approvals processed
@@ -2561,9 +2588,9 @@ class TestEdgeCases:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2605,9 +2632,9 @@ class TestEdgeCases:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # User not in L2, so no approval should be recorded
@@ -2654,9 +2681,9 @@ class TestBotMessageProcessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2699,9 +2726,9 @@ class TestBotMessageProcessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2745,9 +2772,9 @@ class TestBotMessageProcessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2792,9 +2819,9 @@ class TestBotMessageProcessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -2838,9 +2865,9 @@ class TestBotMessageProcessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # Bot comments are now processed like normal users
@@ -2997,9 +3024,9 @@ class TestBuildTestCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -3046,9 +3073,9 @@ class TestBuildTestCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -3110,9 +3137,9 @@ class TestBuildTestCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -3336,9 +3363,9 @@ class TestPRIgnoreProcessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["skipped"] is True
@@ -3386,10 +3413,10 @@ class TestPRIgnoreProcessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
             force=True,  # Force processing
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # Should NOT be skipped because force=True
@@ -3460,9 +3487,9 @@ class TestSignatureLocking:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -3516,9 +3543,9 @@ class TestSignatureLocking:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -3620,9 +3647,9 @@ class TestSquashSignatureHandling:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result1["pr_number"] == 1
@@ -3698,9 +3725,9 @@ class TestSquashSignatureHandling:
             gh=gh2,
             repo=repo2,
             issue=issue2,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result2["pr_number"] == 1
@@ -3783,9 +3810,9 @@ class TestSquashSignatureHandling:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result1["pr_number"] == 1
@@ -3853,9 +3880,9 @@ class TestSquashSignatureHandling:
             gh=gh2,
             repo=repo2,
             issue=issue2,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result2["pr_number"] == 1
@@ -3954,9 +3981,9 @@ class TestSquashSignatureHandling:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result1["pr_number"] == 1
@@ -4040,9 +4067,9 @@ class TestSquashSignatureHandling:
             gh=gh2,
             repo=repo2,
             issue=issue2,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result2["pr_number"] == 1
@@ -4169,7 +4196,7 @@ class TestL2MembershipChanges:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
             loglevel="DEBUG",
         )
@@ -4235,9 +4262,9 @@ class TestUnassignCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4279,9 +4306,9 @@ class TestUnassignCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4329,9 +4356,9 @@ class TestCommaSeparatedAssign:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4379,9 +4406,9 @@ class TestCommaSeparatedAssign:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4423,9 +4450,9 @@ class TestCommaSeparatedAssign:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4469,9 +4496,9 @@ class TestIssueProcessing:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4548,12 +4575,18 @@ class TestHyphenatedCategories:
         # Mock CMSSW_DEVEL_BRANCH
         monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
 
-    def test_plus_category_with_hyphen(self, repo_config, record_mode):
-        """Test +code-checks approval command."""
-        # Use timestamp after the default commit time
+        # Mock GH_CMSSW_REPO to match our test repo name
+        monkeypatch.setattr(process_pr_v2, "GH_CMSSW_REPO", "cmssw")
+
+    def test_plus_code_checks_queues_status(self, repo_config, record_mode):
+        """
+        Test +code-checks approval command queues commit status update.
+
+        First run: Process +code-checks comment, verify status is queued.
+        """
         comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
         create_basic_pr_data(
-            "test_plus_category_with_hyphen",
+            "test_plus_code_checks_queues_status",
             pr_number=1,
             files=[
                 {
@@ -4570,31 +4603,233 @@ class TestHyphenatedCategories:
                     "created_at": comment_time.isoformat(),
                 }
             ],
-            base_ref="master",  # Use master branch to get code-checks as pre-check
+            base_ref="master",
         )
 
-        recorder = ActionRecorder("test_plus_category_with_hyphen", record_mode)
-        gh = MockGithub("test_plus_category_with_hyphen", recorder)
-        # Use cms-sw/cmssw on master to get code-checks as a pre-check
+        recorder = ActionRecorder("test_plus_code_checks_queues_status", record_mode)
+        gh = MockGithub("test_plus_code_checks_queues_status", recorder)
         repo = MockRepository(
-            "test_plus_category_with_hyphen", full_name="cms-sw/cmssw", recorder=recorder
+            "test_plus_code_checks_queues_status", full_name="cms-sw/cmssw", recorder=recorder
         )
-        issue = MockIssue("test_plus_category_with_hyphen", number=1, recorder=recorder)
+        issue = MockIssue("test_plus_code_checks_queues_status", number=1, recorder=recorder)
 
         result = process_pr(
             repo_config=repo_config,
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
-        # The code-checks category should be approved
+
+        # Verify that a create_status action was recorded for code-checks
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_status = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_status) > 0, "Should have queued code-checks status"
+        assert code_checks_status[0]["details"]["state"] == "success"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_plus_code_checks_approved_on_second_run(self, repo_config, record_mode):
+        """
+        Test +code-checks results in approved state on second run.
+
+        Second run: With code-checks status already set to success,
+        verify category state is approved.
+        """
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
+        create_basic_pr_data(
+            "test_plus_code_checks_approved_on_second_run",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": comment_time.isoformat(),
+                }
+            ],
+            base_ref="master",
+            # Simulate second run: status already set from first run
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "success",
+                    "description": "See details",
+                    "target_url": "",
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_plus_code_checks_approved_on_second_run", record_mode)
+        gh = MockGithub("test_plus_code_checks_approved_on_second_run", recorder)
+        repo = MockRepository(
+            "test_plus_code_checks_approved_on_second_run",
+            full_name="cms-sw/cmssw",
+            recorder=recorder,
+        )
+        issue = MockIssue(
+            "test_plus_code_checks_approved_on_second_run", number=1, recorder=recorder
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # The code-checks category should be approved (from commit status)
         assert "code-checks" in result["categories"]
         assert result["categories"]["code-checks"]["state"] == "approved"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_minus_code_checks_queues_status(self, repo_config, record_mode):
+        """
+        Test -code-checks rejection command queues commit status update.
+
+        First run: Process -code-checks comment, verify status is queued.
+        """
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
+        create_basic_pr_data(
+            "test_minus_code_checks_queues_status",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "-code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": comment_time.isoformat(),
+                }
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_minus_code_checks_queues_status", record_mode)
+        gh = MockGithub("test_minus_code_checks_queues_status", recorder)
+        repo = MockRepository(
+            "test_minus_code_checks_queues_status", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_minus_code_checks_queues_status", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify that a create_status action was recorded for code-checks with error state
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_status = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_status) > 0, "Should have queued code-checks status"
+        assert code_checks_status[0]["details"]["state"] == "error"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_minus_code_checks_rejected_on_second_run(self, repo_config, record_mode):
+        """
+        Test -code-checks results in rejected state on second run.
+
+        Second run: With code-checks status already set to error,
+        verify category state is rejected.
+        """
+        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
+        create_basic_pr_data(
+            "test_minus_code_checks_rejected_on_second_run",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "-code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": comment_time.isoformat(),
+                }
+            ],
+            base_ref="master",
+            # Simulate second run: status already set from first run
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "error",
+                    "description": "See details",
+                    "target_url": "",
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_minus_code_checks_rejected_on_second_run", record_mode)
+        gh = MockGithub("test_minus_code_checks_rejected_on_second_run", recorder)
+        repo = MockRepository(
+            "test_minus_code_checks_rejected_on_second_run",
+            full_name="cms-sw/cmssw",
+            recorder=recorder,
+        )
+        issue = MockIssue(
+            "test_minus_code_checks_rejected_on_second_run", number=1, recorder=recorder
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # The code-checks category should be rejected (from commit status)
+        assert "code-checks" in result["categories"]
+        assert result["categories"]["code-checks"]["state"] == "rejected"
 
         if record_mode:
             recorder.save()
@@ -4633,65 +4868,12 @@ class TestHyphenatedCategories:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
-
-        if record_mode:
-            recorder.save()
-        else:
-            recorder.verify()
-
-    def test_minus_category_with_hyphen(self, repo_config, record_mode):
-        """Test -code-checks rejection command."""
-        # Use timestamp after the default commit time
-        comment_time = datetime(2024, 1, 1, 13, 0, 0, tzinfo=timezone.utc)
-        create_basic_pr_data(
-            "test_minus_category_with_hyphen",
-            pr_number=1,
-            files=[
-                {
-                    "filename": "Package/Core/main.py",
-                    "sha": "file_sha_123",
-                    "status": "modified",
-                }
-            ],
-            comments=[
-                {
-                    "id": 100,
-                    "body": "-code-checks",
-                    "user": {"login": "cmsbuild", "id": 999},
-                    "created_at": comment_time.isoformat(),
-                }
-            ],
-            base_ref="master",  # Use master branch to get code-checks as pre-check
-        )
-
-        recorder = ActionRecorder("test_minus_category_with_hyphen", record_mode)
-        gh = MockGithub("test_minus_category_with_hyphen", recorder)
-        # Use cms-sw/cmssw on master to get code-checks as a pre-check
-        repo = MockRepository(
-            "test_minus_category_with_hyphen", full_name="cms-sw/cmssw", recorder=recorder
-        )
-        issue = MockIssue("test_minus_category_with_hyphen", number=1, recorder=recorder)
-
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=True,
-            cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
-        )
-
-        assert result["pr_number"] == 1
-        # The code-checks category should be rejected
-        assert "code-checks" in result["categories"]
-        assert result["categories"]["code-checks"]["state"] == "rejected"
 
         if record_mode:
             recorder.save()
@@ -4757,9 +4939,9 @@ class TestTypeCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4815,9 +4997,9 @@ class TestTypeCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4875,9 +5057,9 @@ class TestTypeCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4927,9 +5109,9 @@ class TestTypeCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -4986,9 +5168,9 @@ class TestTypeCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -5056,9 +5238,9 @@ class TestTestDeduplication:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -5109,9 +5291,9 @@ class TestTestDeduplication:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -5161,9 +5343,9 @@ class TestTestDeduplication:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -5215,9 +5397,9 @@ class TestTestDeduplication:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -5261,9 +5443,9 @@ class TestTestDeduplication:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -5307,9 +5489,9 @@ class TestTestDeduplication:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -5365,9 +5547,9 @@ class TestTestDeduplication:
                 gh=gh,
                 repo=repo,
                 issue=issue,
-                dryRun=True,
+                dryRun=False,
                 cmsbuild_user="cmsbuild",
-                loglevel="WARNING",
+                loglevel="DEBUG",
             )
 
             assert result["pr_number"] == 1
@@ -5419,9 +5601,9 @@ class TestTestDeduplication:
                 gh=gh,
                 repo=repo,
                 issue=issue,
-                dryRun=True,
+                dryRun=False,
                 cmsbuild_user="cmsbuild",
-                loglevel="WARNING",
+                loglevel="DEBUG",
             )
 
             assert result["pr_number"] == 1
@@ -5480,9 +5662,9 @@ class TestTestDeduplication:
                 gh=gh,
                 repo=repo,
                 issue=issue,
-                dryRun=True,
+                dryRun=False,
                 cmsbuild_user="cmsbuild",
-                loglevel="WARNING",
+                loglevel="DEBUG",
             )
 
             assert result["pr_number"] == 1
@@ -5712,7 +5894,7 @@ class TestCommitAndFileCountChecks:
         context.ignore_file_count = False
         context.notify_without_at = False
 
-        result = check_commit_and_file_counts(context, dryRun=True)
+        result = check_commit_and_file_counts(context, dryRun=False)
 
         assert result is None  # Not blocked
 
@@ -5737,7 +5919,7 @@ class TestCommitAndFileCountChecks:
         context.cmsbuild_user = "cmsbuild"
         context.dry_run = True
 
-        result = check_commit_and_file_counts(context, dryRun=True)
+        result = check_commit_and_file_counts(context, dryRun=False)
 
         assert result is not None
         assert result["blocked"] is True
@@ -5759,7 +5941,7 @@ class TestCommitAndFileCountChecks:
         context.ignore_file_count = False
         context.notify_without_at = False
 
-        result = check_commit_and_file_counts(context, dryRun=True)
+        result = check_commit_and_file_counts(context, dryRun=False)
 
         assert result is None  # Not blocked due to override
 
@@ -5784,7 +5966,7 @@ class TestCommitAndFileCountChecks:
         context.cmsbuild_user = "cmsbuild"
         context.dry_run = True
 
-        result = check_commit_and_file_counts(context, dryRun=True)
+        result = check_commit_and_file_counts(context, dryRun=False)
 
         assert result is not None
         assert result["blocked"] is True
@@ -5806,7 +5988,7 @@ class TestCommitAndFileCountChecks:
         context.ignore_file_count = False
         context.notify_without_at = False
 
-        result = check_commit_and_file_counts(context, dryRun=True)
+        result = check_commit_and_file_counts(context, dryRun=False)
 
         assert result is None  # Not blocked for external repos
 
@@ -5831,7 +6013,7 @@ class TestCommitAndFileCountChecks:
         context.cmsbuild_user = "cmsbuild"
         context.dry_run = True
 
-        result = check_commit_and_file_counts(context, dryRun=True)
+        result = check_commit_and_file_counts(context, dryRun=False)
 
         # Still blocked even with override because at FAIL threshold
         assert result is not None
@@ -5873,9 +6055,9 @@ class TestCloseReopenCommands:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # The close command should have been processed
@@ -5913,9 +6095,9 @@ class TestCloseReopenCommands:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -5964,9 +6146,9 @@ class TestAbortCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6005,9 +6187,9 @@ class TestAbortCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6053,9 +6235,9 @@ class TestUrgentBackportCommands:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6094,9 +6276,9 @@ class TestUrgentBackportCommands:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6143,9 +6325,9 @@ class TestAllowTestRightsCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6191,9 +6373,9 @@ class TestCodeChecksCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6230,9 +6412,9 @@ class TestCodeChecksCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6280,9 +6462,9 @@ class TestIgnoreTestsRejectedCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6321,9 +6503,9 @@ class TestIgnoreTestsRejectedCommand:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1
@@ -6513,9 +6695,9 @@ class TestBotMentionReaction:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # The bot should have queued a -1 reaction for the invalid command
@@ -6562,9 +6744,9 @@ class TestBotMentionReaction:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         # No reaction should be set for invalid command without bot mention
@@ -6638,9 +6820,9 @@ class TestWelcomeMessage:
             gh=gh,
             repo=repo,
             issue=issue,
-            dryRun=True,
+            dryRun=False,
             cmsbuild_user="cmsbuild",
-            loglevel="WARNING",
+            loglevel="DEBUG",
         )
 
         assert result["pr_number"] == 1

@@ -1916,10 +1916,10 @@ class PRContext:
     test_params_errors: Optional[str] = None  # Error message if any
 
     # Pending build/test commands - processed after all comments are seen
-    # List of (verb, comment_id, user, timestamp, parsed_result) tuples
-    pending_build_test_commands: List[Tuple[str, int, str, datetime, Any]] = field(
-        default_factory=list
-    )
+    # Only the last command of each type is kept (overwrites previous)
+    # Tuple of (comment_id, user, timestamp, parsed_result) or None
+    pending_build_command: Optional[Tuple[int, str, datetime, Any]] = None
+    pending_test_command: Optional[Tuple[int, str, datetime, Any]] = None
 
     # Code checks
     code_checks_requested: bool = False
@@ -2466,10 +2466,19 @@ def _handle_approval(
         None if the category is not a signing category (allows fallthrough)
     """
     category_str = match.group(1) if match.lastindex and match.group(1) else None
+    logger.debug(
+        f"_handle_approval: category_str={category_str}, user={user}, approved={approved}"
+    )
 
     # Determine which categories this signature applies to
     signing_checks = context.get_signing_checks_for_pr()
     pre_checks = set(signing_checks.pre_checks)
+    logger.debug(
+        f"_handle_approval: pre_checks={pre_checks}, extra_checks={signing_checks.extra_checks}"
+    )
+    logger.debug(
+        f"_handle_approval: context.pr={context.pr}, target_branch={context.target_branch}"
+    )
 
     if category_str:
         # Specific category - check if it's a valid signing category
@@ -3604,8 +3613,8 @@ def handle_build_test(
     Commands are collected during comment processing and processed later by
     process_pending_build_test_commands() after all comments are seen.
 
-    For 'test': Last one wins (only the last test command is processed)
-    For 'build': Skipped if comment already has +1 reaction from bot
+    For 'test': Last one wins (only the last test command is stored)
+    For 'build': Last one wins, skipped if comment already has +1 reaction from bot
 
     Syntax:
         build|test [workflows <wf_list>] [with <pr_list>] [for <queue>]
@@ -3638,11 +3647,19 @@ def handle_build_test(
     context.test_params_comment_url = comment_url
     context.test_params_errors = None  # Clear any previous errors
 
-    # Collect for deferred processing
-    context.pending_build_test_commands.append((result.verb, comment_id, user, timestamp, result))
-    logger.debug(
-        f"Collected {result.verb} command from {user} (comment {comment_id}) for deferred processing"
-    )
+    # For build commands, check if already processed (has +1 reaction from bot)
+    if result.verb == "build":
+        reactions = get_comment_reactions(context, comment_id)
+        if "+1" in reactions:
+            logger.debug(f"Build command (comment {comment_id}) already has +1, skipping")
+            return True  # Command was valid, but already processed
+        # Store as pending build command (overwrites previous)
+        context.pending_build_command = (comment_id, user, timestamp, result)
+        logger.debug(f"Stored build command from {user} (comment {comment_id})")
+    else:
+        # Store as pending test command (overwrites previous)
+        context.pending_test_command = (comment_id, user, timestamp, result)
+        logger.debug(f"Stored test command from {user} (comment {comment_id})")
 
     return True
 
@@ -3722,70 +3739,129 @@ def get_comment_url(context: PRContext, comment_id: int) -> str:
 
 def process_pending_build_test_commands(context: PRContext) -> None:
     """
-    Process collected build/test commands after all comments have been seen.
+    Process pending build/test command after all comments have been seen.
 
     Rules:
-    - For 'test': Last one wins (only process the last test command)
-    - For 'build': Skip if comment already has +1 reaction from bot
-    - For 'test': Skip if bot/{prId}/jenkins status exists and URL matches comment URL
+    - For 'test': Process if tests signature is "pending" and jenkins URL doesn't match.
+      Updates tests signature to "started" and sets jenkins URL.
+    - For 'build': Process the command (reaction check already done in handler)
     - Skip all if abort_tests is True (abort was requested)
     """
-    if not context.pending_build_test_commands:
-        return
-
     # If abort was requested, skip all test/build commands
     if context.abort_tests:
         logger.info("Skipping pending build/test commands - abort was requested")
         return
 
-    # Separate build and test commands
-    build_commands = []
-    test_commands = []
-
-    for verb, comment_id, user, timestamp, result in context.pending_build_test_commands:
-        if verb == "build":
-            build_commands.append((comment_id, user, timestamp, result))
-        else:  # test
-            test_commands.append((comment_id, user, timestamp, result))
-
-    # Process build commands - each one individually, skip if has +1 from bot
-    for comment_id, user, timestamp, result in build_commands:
-        # Check if comment has +1 reaction from bot
-        reactions = get_comment_reactions(context, comment_id)
-        if "+1" in reactions:
-            logger.info(f"Skipping build command (comment {comment_id}) - already has +1 from bot")
-            continue
-
+    # Process build command if present
+    if context.pending_build_command:
+        comment_id, user, timestamp, result = context.pending_build_command
         _execute_build_test_command(context, comment_id, user, result)
 
-    # Process test commands - only the last one
-    if test_commands:
-        # Get jenkins status
-        jenkins_url = get_jenkins_status_url(context)
-        jenkins_status = get_jenkins_status(context)
-
-        # Process only the last test command
-        comment_id, user, timestamp, result = test_commands[-1]
+    # Process test command if present
+    if context.pending_test_command:
+        comment_id, user, timestamp, result = context.pending_test_command
         comment_url = get_comment_url(context, comment_id)
+
+        # Get jenkins status (frozen from start of processing)
+        jenkins_url = get_jenkins_status_url(context)
 
         # Check if jenkins status URL matches this comment's URL
         if jenkins_url and jenkins_url == comment_url:
-            # Status already set for this comment - check if tests actually started
-            if jenkins_status and " requested by " in (jenkins_status.description or ""):
-                # Tests were requested but may not have started yet
-                # This is the "started" state from old code
-                logger.info(
-                    f"Test command (comment {comment_id}) already requested, waiting for start"
-                )
-            else:
-                logger.info(
-                    f"Skipping test command (comment {comment_id}) - jenkins status already set for this comment"
-                )
+            logger.info(
+                f"Skipping test command (comment {comment_id}) - jenkins status already set for this comment"
+            )
+            return
+
+        # Check tests signature - must be "pending" to trigger new tests
+        tests_state = _get_tests_approval_state(context)
+        if tests_state != ApprovalState.PENDING:
+            logger.info(
+                f"Skipping test command - tests signature is {tests_state.value}, not pending"
+            )
             return
 
         if _execute_build_test_command(context, comment_id, user, result):
             # Update jenkins status URL to this comment's URL
             set_jenkins_status_url(context, comment_url, user, timestamp)
+            # Update tests signature to "started"
+            set_tests_signature_started(context)
+
+
+def set_tests_signature_started(context: PRContext) -> None:
+    """
+    Update the tests signature to "started" state.
+
+    This is called when tests are triggered to indicate tests have been requested
+    but results are not yet available.
+
+    Args:
+        context: PR processing context
+    """
+    if not context.pr:
+        return
+
+    pr_id = context.issue.number
+    status_context = f"cms/{pr_id}/tests"
+
+    context.queue_status_update(
+        state="pending",
+        description="Tests started",
+        context_name=status_context,
+        target_url="",
+    )
+    logger.info("Set tests signature to 'started'")
+
+
+def ensure_tests_signature_started(context: PRContext) -> None:
+    """
+    Ensure tests signature is "started" if tests have been requested.
+
+    Checks if bot/{prId}/jenkins status description contains "requested by",
+    indicating tests were requested. If so, and tests signature is still
+    "pending", updates it to "started".
+
+    This handles the case where tests were requested in a previous run but
+    the signature wasn't updated yet.
+
+    Args:
+        context: PR processing context
+    """
+    if not context.pr:
+        return
+
+    # Check jenkins status
+    jenkins_status = get_jenkins_status(context)
+    if not jenkins_status:
+        return
+
+    description = jenkins_status.description or ""
+    if "requested by" not in description.lower():
+        return
+
+    # Tests were requested - check if signature needs to be updated
+    pr_id = context.issue.number
+    status_context = f"cms/{pr_id}/tests"
+
+    # Check current tests status
+    tests_status = context.get_commit_status(status_context)
+    if tests_status:
+        # If already has a status (started, success, error), don't change it
+        desc = tests_status.description or ""
+        if "started" in desc.lower() or tests_status.state in ("success", "error", "failure"):
+            return
+
+    # Also check pending updates
+    if status_context in context.pending_status_updates:
+        return
+
+    # Update tests signature to "started"
+    context.queue_status_update(
+        state="pending",
+        description="Tests started",
+        context_name=status_context,
+        target_url="",
+    )
+    logger.info("Updated tests signature to 'started' (tests were previously requested)")
 
 
 def get_jenkins_status(context: PRContext) -> Optional[Any]:
@@ -6114,7 +6190,8 @@ def trigger_pending_pre_checks(context: PRContext) -> None:
     """
     Automatically trigger pre-checks (like code-checks) if not yet triggered.
 
-    Checks the commit status for each pre-check category. If no status exists
+    Checks both the commit status AND pending_status_updates for each pre-check
+    category. If no status exists and no status has been queued in this run
     (i.e., the check hasn't been triggered yet), creates the properties file
     and queues a pending status update.
 
@@ -6135,15 +6212,20 @@ def trigger_pending_pre_checks(context: PRContext) -> None:
     head_sha = context.pr.head.sha
     cms_status_prefix = f"cms/{pr_id}"
 
-    # Get current commit statuses (dict of context -> status)
+    # Get current commit statuses (frozen from start of processing)
     statuses = context.get_commit_statuses()
 
     for pre_check in signing_checks.pre_checks:
         status_context = f"{cms_status_prefix}/{pre_check}"
 
-        # Skip if status already exists (check has been triggered)
+        # Skip if status already exists in frozen cache (check was triggered before this run)
         if status_context in statuses:
             logger.debug(f"Pre-check {pre_check} already has status, skipping auto-trigger")
+            continue
+
+        # Skip if status was queued in this run (e.g., from +code-checks comment)
+        if status_context in context.pending_status_updates:
+            logger.debug(f"Pre-check {pre_check} status queued in this run, skipping auto-trigger")
             continue
 
         logger.info(f"Auto-triggering pre-check: {pre_check}")
@@ -7043,6 +7125,8 @@ def process_pr(
     # Process deferred build/test commands (after all comments seen)
     if is_pr:
         process_pending_build_test_commands(context)
+        # Ensure tests signature is "started" if tests were previously requested
+        ensure_tests_signature_started(context)
         # Update test_parameters commit status
         update_test_parameters_status(context)
 

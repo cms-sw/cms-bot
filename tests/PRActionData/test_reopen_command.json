@@ -1,5 +1,30 @@
 {
   "test_name": "test_reopen_command",
-  "action_count": 0,
-  "actions": []
+  "action_count": 3,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 1001,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "A new Issue was created by  @author.\n\n@Dr15Jones, @ftenchini, @makortel, @mandrenguyen, @sextonkennedy, @smuzaffar can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"1001\":\"+1\"},\"fv\":{}} -->"
+      }
+    }
+  ]
 }

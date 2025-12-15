@@ -1,6 +1,6 @@
 {
   "test_name": "test_draft_pr_fully_signed",
-  "action_count": 7,
+  "action_count": 8,
   "actions": [
     {
       "sequence": 1,
@@ -60,6 +60,17 @@
     },
     {
       "sequence": 7,
+      "action": "create_status",
+      "details": {
+        "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
+        "state": "pending",
+        "target_url": "",
+        "description": "Tests started",
+        "context": "cms/21/tests"
+      }
+    },
+    {
+      "sequence": 8,
       "action": "edit_comment",
       "details": {
         "comment_id": 2523322081,

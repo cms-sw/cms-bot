@@ -1,6 +1,6 @@
 {
   "test_name": "test_close",
-  "action_count": 9,
+  "action_count": 7,
   "actions": [
     {
       "sequence": 1,
@@ -33,19 +33,6 @@
     },
     {
       "sequence": 4,
-      "action": "create_property_file",
-      "details": {
-        "filename": "trigger-tests-iarspider-cmssw-cmssw-17.properties",
-        "parameters": {
-          "SKIP_TESTS": "header,static",
-          "PULL_REQUESTS": "iarspider-cmssw/cmssw#17 cms-sw/cms-bot#2134",
-          "CONTEXT_PREFIX": "cms/17",
-          "RELEASE_FORMAT": "CMSSW_14_1_CPP20_X"
-        }
-      }
-    },
-    {
-      "sequence": 5,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -53,7 +40,7 @@
       }
     },
     {
-      "sequence": 6,
+      "sequence": 5,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -64,18 +51,7 @@
       }
     },
     {
-      "sequence": 7,
-      "action": "create_status",
-      "details": {
-        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
-        "state": "success",
-        "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2056903278",
-        "description": "Tests requested by iarspider at 2024-04-15 13:46:04 UTC.",
-        "context": "bot/17/jenkins"
-      }
-    },
-    {
-      "sequence": 8,
+      "sequence": 6,
       "action": "create_status",
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
@@ -86,7 +62,7 @@
       }
     },
     {
-      "sequence": 9,
+      "sequence": 7,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

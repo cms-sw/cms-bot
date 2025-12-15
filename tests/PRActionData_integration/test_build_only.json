@@ -1,6 +1,6 @@
 {
   "test_name": "test_build_only",
-  "action_count": 3,
+  "action_count": 4,
   "actions": [
     {
       "sequence": 1,
@@ -27,6 +27,17 @@
     },
     {
       "sequence": 3,
+      "action": "create_status",
+      "details": {
+        "sha": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+        "state": "pending",
+        "target_url": "",
+        "description": "Tests started",
+        "context": "cms/40/tests"
+      }
+    },
+    {
+      "sequence": 4,
       "action": "edit_comment",
       "details": {
         "comment_id": 2872582394,

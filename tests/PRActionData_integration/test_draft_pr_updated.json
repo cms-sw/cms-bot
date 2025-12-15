@@ -1,21 +1,9 @@
 {
   "test_name": "test_draft_pr_updated",
-  "action_count": 5,
+  "action_count": 4,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_property_file",
-      "details": {
-        "filename": "trigger-code-checks-iarspider-cmssw-cmssw-21.properties",
-        "parameters": {
-          "PULL_REQUEST": "21",
-          "CONTEXT_PREFIX": "cms/21",
-          "APPLY_PATCH": "false"
-        }
-      }
-    },
-    {
-      "sequence": 2,
       "action": "create_comment",
       "details": {
         "issue_number": 21,
@@ -23,7 +11,7 @@
       }
     },
     {
-      "sequence": 3,
+      "sequence": 2,
       "action": "create_status",
       "details": {
         "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
@@ -34,18 +22,18 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 3,
       "action": "create_status",
       "details": {
         "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
-        "state": "pending",
+        "state": "success",
         "target_url": "",
-        "description": "code-checks requested",
+        "description": "See details",
         "context": "cms/21/code-checks"
       }
     },
     {
-      "sequence": 5,
+      "sequence": 4,
       "action": "edit_comment",
       "details": {
         "comment_id": 2523322081,

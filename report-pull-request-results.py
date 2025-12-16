@@ -303,7 +303,7 @@ def read_maxmem_comparison_file(unit_tests_file):
     for line in openlog(unit_tests_file):
         if "exceeds" in line.lower():
             err_cnt += 1
-            errors_found += " - " + line.split(":")[1] + "\n"
+            errors_found += " - " + line.split(":")[1:] + "\n"
 
     if err_cnt > 0:
         message = (

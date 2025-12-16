@@ -25,7 +25,6 @@
         "issue_number": 1,
         "labels": [
           "core-pending",
-          "hold",
           "pending-signatures",
           "tests-pending"
         ]

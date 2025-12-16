@@ -29,8 +29,7 @@ Central context object holding all state during PR/Issue processing:
 - `_commit_statuses`: Frozen cache of commit statuses at start of processing
 - `pending_status_updates`: Dict mapping context_name → (sha, state, desc, url) for deferred updates
 - `pending_bot_comments`: Queue of comments to post at end
-- `pending_build_command`: Single pending build command (last one wins)
-- `pending_test_command`: Single pending test command (last one wins)
+- `pending_build_test_command`: Single pending build/test command (last one wins between build and test)
 - `pending_labels`: Set of labels to add
 - `pending_reactions`: Dict mapping comment_id → reaction to add
 
@@ -183,9 +182,10 @@ The status URL points to the comment that last signed the pre-check category.
 
 Build and test commands are collected during comment processing and executed after all comments have been seen. This enables deduplication and "last one wins" semantics.
 
-Commands are stored as single items (not lists):
-- `context.pending_build_command`: Last build command seen
-- `context.pending_test_command`: Last test command seen
+Commands are stored as a single item (not separate for build/test):
+- `context.pending_build_test_command`: Last build or test command seen
+
+**Why single slot?** Build and test commands write to the same properties file, so only one can actually be executed. Using "last one wins" prevents the PR from getting stuck if both commands are posted.
 
 ### Deduplication Rules
 

@@ -1916,11 +1916,11 @@ class PRContext:
     test_params_comment_url: Optional[str] = None  # HTML URL of the comment
     test_params_errors: Optional[str] = None  # Error message if any
 
-    # Pending build/test commands - processed after all comments are seen
-    # Only the last command of each type is kept (overwrites previous)
+    # Pending build/test command - processed after all comments are seen
+    # Only the LAST command is kept (build and test share same slot - last one wins)
+    # This is because build and test write to the same properties file
     # Tuple of (comment_id, user, timestamp, parsed_result) or None
-    pending_build_command: Optional[Tuple[int, str, datetime, Any]] = None
-    pending_test_command: Optional[Tuple[int, str, datetime, Any]] = None
+    pending_build_test_command: Optional[Tuple[int, str, datetime, Any]] = None
 
     # Code checks
     code_checks_requested: bool = False
@@ -2529,11 +2529,7 @@ def _handle_approval(
         github_state = "success" if approved else "error"
 
         # Get comment URL for status target
-        comment_url = ""
-        for comment in context.comments:
-            if comment.id == comment_id:
-                comment_url = getattr(comment, "html_url", "")
-                break
+        comment_url = get_comment_url(context, comment_id)
 
         for pre_check in pre_check_categories:
             status_context = f"cms/{pr_id}/{pre_check}"
@@ -2826,6 +2822,8 @@ def handle_unhold(
         for hold in context.holds:
             cancel_pending_comment(context, "hold", hold.comment_id)
         context.holds = []
+        # Remove hold label from pending_labels (in case hold commands were processed earlier)
+        context.pending_labels.discard("hold")
         logger.info(f"ORP user {user} removed all {removed_count} holds")
         return True  # ORP unhold always succeeds
 
@@ -2862,6 +2860,10 @@ def handle_unhold(
             new_holds.append(h)
     context.holds = new_holds
     removed = original_count - len(context.holds)
+
+    # If all holds are removed, remove hold label from pending_labels
+    if not context.holds:
+        context.pending_labels.discard("hold")
 
     if removed > 0:
         logger.info(f"User {user} removed {removed} hold(s)")
@@ -3113,13 +3115,51 @@ def handle_code_checks(
 
     Triggers code style/format checks on the PR.
     Optionally can specify tool configuration and apply patch.
+
+    Parameters from this command affect ALL code-checks triggers (including auto-trigger).
+    Only the latest command's parameters are used (processed chronologically).
+
+    Re-trigger rules:
+    - Cannot re-trigger while pending (code-checks already running)
+    - Can re-trigger after completion (success or error) - resets status to pending
     """
     tool_conf = match.group("tool_conf") if match.lastindex else None
     apply_patch = "apply patch" in (match.group(0) or "").lower()
 
-    context.code_checks_requested = True
+    # Always store parameters - they affect ALL triggers (including auto-trigger)
+    # Last command wins (comments processed chronologically)
     context.code_checks_tool_conf = tool_conf
     context.code_checks_apply_patch = apply_patch
+
+    # Check if code-checks are currently pending (running)
+    if context.pr:
+        pr_id = context.issue.number
+        status_context = f"cms/{pr_id}/code-checks"
+
+        # Check pending updates first (from current run)
+        if status_context in context.pending_status_updates:
+            sha, state, description, target_url = context.pending_status_updates[status_context]
+            if state == "pending":
+                logger.info(f"Ignoring code-checks from {user} - already pending in this run")
+                return True
+            # If success/error in pending, allow re-trigger and reset status below
+
+        # Check frozen cache (existing status)
+        status = context.get_commit_status(status_context)
+        if status and status.state == "pending":
+            logger.info(f"Ignoring code-checks from {user} - already running (pending)")
+            return True
+
+        # Reset the status to pending (re-triggering)
+        # This clears the previous success/error status
+        context.queue_status_update(
+            state="pending",
+            description="code-checks requested",
+            context_name=status_context,
+            target_url="",
+        )
+
+    context.code_checks_requested = True
 
     logger.info(
         f"Code checks requested by {user}"
@@ -3665,13 +3705,11 @@ def handle_build_test(
         if "+1" in reactions:
             logger.debug(f"Build command (comment {comment_id}) already has +1, skipping")
             return True  # Command was valid, but already processed
-        # Store as pending build command (overwrites previous)
-        context.pending_build_command = (comment_id, user, timestamp, result)
-        logger.debug(f"Stored build command from {user} (comment {comment_id})")
-    else:
-        # Store as pending test command (overwrites previous)
-        context.pending_test_command = (comment_id, user, timestamp, result)
-        logger.debug(f"Stored test command from {user} (comment {comment_id})")
+
+    # Store as pending build/test command (last one wins - build and test share same slot)
+    # This is because build and test write to the same properties file
+    context.pending_build_test_command = (comment_id, user, timestamp, result)
+    logger.debug(f"Stored {result.verb} command from {user} (comment {comment_id})")
 
     return True
 
@@ -3758,23 +3796,26 @@ def process_pending_build_test_commands(context: PRContext) -> None:
       Sets jenkins URL (tests-started label is handled by _get_tests_approval_state).
     - For 'build': Process the command (reaction check already done in handler)
     - Skip all if abort_tests is True (abort was requested)
+
+    Note: build and test share same slot (last one wins) since they write to same file.
     """
     # If abort was requested, skip all test/build commands
     if context.abort_tests:
         logger.info("Skipping pending build/test commands - abort was requested")
         return
 
-    # Process build command if present
-    if context.pending_build_command:
-        comment_id, user, timestamp, result = context.pending_build_command
+    # Process the pending command if present (last one wins between build/test)
+    if not context.pending_build_test_command:
+        return
+
+    comment_id, user, timestamp, result = context.pending_build_test_command
+    comment_url = get_comment_url(context, comment_id)
+
+    if result.verb == "build":
+        # Build command - just execute it (reaction check already done in handler)
         _execute_build_test_command(context, comment_id, user, result)
-
-    # Process test command if present
-    if context.pending_test_command:
-        comment_id, user, timestamp, result = context.pending_test_command
-        comment_url = get_comment_url(context, comment_id)
-
-        # Get jenkins status (frozen from start of processing)
+    else:
+        # Test command - check jenkins status and tests state first
         jenkins_url = get_jenkins_status_url(context)
 
         # Check if jenkins status URL matches this comment's URL
@@ -4802,10 +4843,13 @@ def get_current_categories(context: PRContext) -> Dict[str, Set[str]]:
 
     # Add manually assigned categories from context.signing_categories
     # (populated by assign/unassign command handlers during comment processing)
+    # Only add categories that don't already have files assigned
+    # (i.e., categories that were manually assigned but have no automatic file mapping)
     for cat in context.signing_categories:
         if cat not in categories:
-            categories[cat] = set()
-        categories[cat].update(current_files)
+            # This is a manually assigned category with no automatic file mapping
+            # Add all current files to it
+            categories[cat] = set(current_files)
 
     # Add PRE_CHECKS and EXTRA_CHECKS categories from get_signing_checks
     # These are required signatures that apply to all files
@@ -4870,8 +4914,7 @@ def is_signature_valid_for_category(
     signed_files_set = set(comment_info.signed_files)
     current_files_set = set(context.cache.current_file_versions)
 
-    # Check 1: All signed files for this category must still be current
-    # (Filter to only files that belong to this category)
+    # Check 1: All signed files must still be current (haven't changed)
     for signed_file in signed_files_set:
         if signed_file not in current_files_set:
             # This file has changed since signing
@@ -7086,37 +7129,38 @@ def process_pr(
     # Post welcome message if this is the first time seeing this PR/Issue
     post_welcome_message(context)
 
+    # Handle must_close (works for both PRs and Issues)
+    if context.must_close:
+        if dryRun:
+            logger.info("[DRY RUN] Would close issue")
+        else:
+            try:
+                issue.edit(state="closed")
+                logger.info("Closed issue")
+            except Exception as e:
+                logger.error(f"Failed to close issue: {e}")
+                context.messages.append(f"Failed to close issue: {e}")
+
+    # Handle should_reopen (works for both PRs and Issues)
+    if context.should_reopen:
+        current_state = issue.state if hasattr(issue, "state") else "open"
+        if current_state == "closed":
+            if dryRun:
+                logger.info("[DRY RUN] Would reopen issue")
+            else:
+                try:
+                    issue.edit(state="open")
+                    logger.info("Reopened issue")
+                except Exception as e:
+                    logger.error(f"Failed to reopen issue: {e}")
+                    context.messages.append(f"Failed to reopen issue: {e}")
+
     # PR-specific state determination and actions
     pr_state = None
     if is_pr:
         # Determine PR state
         pr_state = determine_pr_state(context)
         logger.info(f"PR state: {pr_state.value}")
-
-        # Handle must_close (e.g., PR to closed branch)
-        if context.must_close:
-            if dryRun:
-                logger.info("[DRY RUN] Would close issue (closed branch)")
-            else:
-                try:
-                    issue.edit(state="closed")
-                    logger.info("Closing issue")
-                except Exception as e:
-                    logger.error(f"Failed to close issue: {e}")
-                    context.messages.append(f"Failed to close issue: {e}")
-
-        # Handle should_reopen (reopen command)
-        if context.should_reopen:
-            if pr.state == "closed":
-                if dryRun:
-                    logger.info("[DRY RUN] Would reopen issue")
-                else:
-                    try:
-                        issue.edit(state="open")
-                        logger.info("Reopened issue")
-                    except Exception as e:
-                        logger.error(f"Failed to reopen issue: {e}")
-                        context.messages.append(f"Failed to reopen issue: {e}")
 
         # Handle automerge
         if getattr(repo_config, "AUTOMERGE", False) and can_merge(context):

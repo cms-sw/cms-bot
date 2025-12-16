@@ -55,7 +55,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\",\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/analyzer.py::file_sha_2\",\"Package/Core/main.py::file_sha_1\",\"docs/README.md::file_sha_3\"],\"ts\":\"2024-01-01T13:00:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\"},\"fv\":{\"Package/Analysis/analyzer.py::file_sha_2\":{\"cats\":[\"analysis\"],\"ts\":\"2024-01-01T12:00:00Z\"},\"Package/Core/main.py::file_sha_1\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T12:00:00Z\"},\"docs/README.md::file_sha_3\":{\"cats\":[],\"ts\":\"2024-01-01T12:00:00Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\",\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/analyzer.py::file_sha_2\",\"Package/Core/main.py::file_sha_1\"],\"ts\":\"2024-01-01T13:00:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\"},\"fv\":{\"Package/Analysis/analyzer.py::file_sha_2\":{\"cats\":[\"analysis\"],\"ts\":\"2024-01-01T12:00:00Z\"},\"Package/Core/main.py::file_sha_1\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T12:00:00Z\"},\"docs/README.md::file_sha_3\":{\"cats\":[],\"ts\":\"2024-01-01T12:00:00Z\"}}} -->"
       }
     }
   ]

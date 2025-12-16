@@ -1,5 +1,5 @@
 {
-  "test_name": "test_bot_comments_processed_like_normal_users",
+  "test_name": "test_bot_hold_command",
   "action_count": 5,
   "actions": [
     {

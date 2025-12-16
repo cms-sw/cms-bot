@@ -1,55 +1,23 @@
 {
   "test_name": "test_mixed_squash_resets_only_changed_file_signatures_after",
-  "action_count": 8,
+  "action_count": 4,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 100,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 2,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 101,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 3,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 102,
-        "reaction": "+1"
-      }
-    },
-    {
-      "sequence": 4,
       "action": "add_labels",
       "details": {
         "issue_number": 1,
         "labels": [
           "analysis-approved",
-          "core-approved",
-          "fully-signed",
+          "core-pending",
+          "pending-signatures",
           "simulation-approved",
           "tests-pending"
         ]
       }
     },
     {
-      "sequence": 5,
-      "action": "create_comment",
-      "details": {
-        "issue_number": 1,
-        "body": "This pull request is fully signed and it will be integrated in one of the next master IBs after it passes the integration tests and once validation in the development release cycle CMSSW_16_0_X is complete. This pull request will be automatically merged.\n<!--fully_signed-->"
-      }
-    },
-    {
-      "sequence": 6,
+      "sequence": 2,
       "action": "create_comment",
       "details": {
         "issue_number": 1,
@@ -57,7 +25,7 @@
       }
     },
     {
-      "sequence": 7,
+      "sequence": 3,
       "action": "create_status",
       "details": {
         "sha": "squashed_mixed_commit",
@@ -68,11 +36,11 @@
       }
     },
     {
-      "sequence": 8,
-      "action": "create_comment",
+      "sequence": 4,
+      "action": "edit_comment",
       "details": {
-        "issue_number": 1,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/data.py::analysis_sha_222\",\"Package/Core/main.py::core_sha_NEW\",\"Package/Simulation/sim.py::sim_sha_333\"],\"ts\":\"2024-01-01T12:00:00+00:00\",\"user\":\"alice\"},\"101\":{\"cats\":[\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/data.py::analysis_sha_222\",\"Package/Core/main.py::core_sha_NEW\",\"Package/Simulation/sim.py::sim_sha_333\"],\"ts\":\"2024-01-01T12:01:00+00:00\",\"user\":\"alice\"},\"102\":{\"cats\":[\"simulation\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/data.py::analysis_sha_222\",\"Package/Core/main.py::core_sha_NEW\",\"Package/Simulation/sim.py::sim_sha_333\"],\"ts\":\"2024-01-01T12:02:00+00:00\",\"user\":\"bob\"}},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\",\"102\":\"+1\"},\"fv\":{\"Package/Analysis/data.py::analysis_sha_222\":{\"cats\":[\"analysis\"],\"ts\":\"2024-01-01T14:00:00Z\"},\"Package/Core/main.py::core_sha_NEW\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T14:00:00Z\"},\"Package/Simulation/sim.py::sim_sha_333\":{\"cats\":[\"simulation\"],\"ts\":\"2024-01-01T14:00:00Z\"}}} -->"
+        "comment_id": 999,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"locked\":true,\"signed_files\":[\"Package/Core/main.py::core_sha_111\"],\"ts\":\"2024-01-01T12:00:00+00:00\",\"user\":\"alice\"},\"101\":{\"cats\":[\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"locked\":true,\"signed_files\":[\"Package/Analysis/data.py::analysis_sha_222\"],\"ts\":\"2024-01-01T12:01:00+00:00\",\"user\":\"alice\"},\"102\":{\"cats\":[\"simulation\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"locked\":true,\"signed_files\":[\"Package/Simulation/sim.py::sim_sha_333\"],\"ts\":\"2024-01-01T12:02:00+00:00\",\"user\":\"bob\"}},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\",\"102\":\"+1\"},\"fv\":{\"Package/Analysis/data.py::analysis_sha_222\":{\"cats\":[\"analysis\"],\"ts\":\"2024-01-01T10:00:00Z\"},\"Package/Core/main.py::core_sha_111\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T10:00:00Z\"},\"Package/Core/main.py::core_sha_NEW\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T14:00:00Z\"},\"Package/Simulation/sim.py::sim_sha_333\":{\"cats\":[\"simulation\"],\"ts\":\"2024-01-01T10:00:00Z\"}}} -->"
       }
     }
   ]

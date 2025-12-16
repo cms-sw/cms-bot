@@ -1,21 +1,78 @@
 {
   "test_name": "test_code_checks_with_tool",
-  "action_count": 2,
+  "action_count": 7,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_comment",
+      "action": "create_reaction",
       "details": {
-        "issue_number": 1,
-        "body": "A new Issue was created by  @author.\n\n@Dr15Jones, @ftenchini, @makortel, @mandrenguyen, @sextonkennedy, @smuzaffar can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
+        "comment_id": 1001,
+        "reaction": "+1"
       }
     },
     {
       "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "code-checks-pending",
+          "core-pending",
+          "orp-pending",
+          "pending-signatures",
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_property_file",
+      "details": {
+        "filename": "trigger-code-checks-cms-sw-cmssw-1.properties",
+        "parameters": {
+          "PULL_REQUEST": "1",
+          "CONTEXT_PREFIX": "cms/1",
+          "CMSSW_TOOL_CONF": "cms.week0.PR_abc12345/some-config",
+          "APPLY_PATCH": "false"
+        }
+      }
+    },
+    {
+      "sequence": 4,
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{}} -->"
+        "body": "A new Pull Request was created by  @testuser for master.\n\nIt involves the following packages:\n\n- Package/Core (**core**)\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign? Thanks.\n@ftenchini, @mandrenguyen, @sextonkennedy you are the release manager for this.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "commit123",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/1/jenkins"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "create_status",
+      "details": {
+        "sha": "commit123",
+        "state": "pending",
+        "target_url": "",
+        "description": "code-checks requested",
+        "context": "cms/1/code-checks"
+      }
+    },
+    {
+      "sequence": 7,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"1001\":\"+1\"},\"fv\":{\"Package/Core/main.py::abc123def456\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T12:00:00Z\"}}} -->"
       }
     }
   ]

@@ -41,7 +41,7 @@
       "details": {
         "sha": "commit123",
         "state": "error",
-        "target_url": "",
+        "target_url": "https://github.com/cms-sw/cmssw/pull/1#issuecomment-100",
         "description": "See details",
         "context": "cms/1/code-checks"
       }

@@ -1,6 +1,6 @@
 {
   "test_name": "test_minus_code_checks_rejected_on_second_run",
-  "action_count": 4,
+  "action_count": 5,
   "actions": [
     {
       "sequence": 1,
@@ -37,6 +37,17 @@
     },
     {
       "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "commit123",
+        "state": "error",
+        "target_url": "https://github.com/cms-sw/cmssw/pull/1#issuecomment-100",
+        "description": "See details",
+        "context": "cms/1/code-checks"
+      }
+    },
+    {
+      "sequence": 5,
       "action": "create_comment",
       "details": {
         "issue_number": 1,

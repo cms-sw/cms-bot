@@ -1,6 +1,6 @@
 {
   "test_name": "test_close_command",
-  "action_count": 3,
+  "action_count": 4,
   "actions": [
     {
       "sequence": 1,
@@ -12,6 +12,14 @@
     },
     {
       "sequence": 2,
+      "action": "edit_issue",
+      "details": {
+        "issue_number": 1,
+        "state": "closed"
+      }
+    },
+    {
+      "sequence": 3,
       "action": "create_comment",
       "details": {
         "issue_number": 1,
@@ -19,7 +27,7 @@
       }
     },
     {
-      "sequence": 3,
+      "sequence": 4,
       "action": "create_comment",
       "details": {
         "issue_number": 1,

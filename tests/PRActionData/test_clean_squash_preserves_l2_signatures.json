@@ -63,7 +63,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/data.py::file_sha_222\",\"Package/Core/main.py::file_sha_111\"],\"ts\":\"2024-01-01T12:00:00+00:00\",\"user\":\"alice\"},\"101\":{\"cats\":[\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/data.py::file_sha_222\",\"Package/Core/main.py::file_sha_111\"],\"ts\":\"2024-01-01T12:01:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Analysis/data.py::file_sha_222\":{\"cats\":[\"analysis\"],\"ts\":\"2024-01-01T10:00:00Z\"},\"Package/Core/main.py::file_sha_111\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T10:00:00Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Core/main.py::file_sha_111\"],\"ts\":\"2024-01-01T12:00:00+00:00\",\"user\":\"alice\"},\"101\":{\"cats\":[\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/data.py::file_sha_222\"],\"ts\":\"2024-01-01T12:01:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Analysis/data.py::file_sha_222\":{\"cats\":[\"analysis\"],\"ts\":\"2024-01-01T10:00:00Z\"},\"Package/Core/main.py::file_sha_111\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T10:00:00Z\"}}} -->"
       }
     }
   ]

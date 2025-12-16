@@ -17,6 +17,15 @@
         "id": 2
       },
       "created_at": "2024-01-01T12:01:00Z"
+    },
+    {
+      "id": 999,
+      "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Core/main.py::old_sha_111\"],\"ts\":\"2024-01-01T12:00:00+00:00\",\"user\":\"alice\"},\"101\":{\"cats\":[\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/data.py::old_sha_222\"],\"ts\":\"2024-01-01T12:01:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Core/main.py::old_sha_111\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T10:00:00Z\"},\"Package/Analysis/data.py::old_sha_222\":{\"cats\":[\"analysis\"],\"ts\":\"2024-01-01T10:00:00Z\"}}} -->",
+      "user": {
+        "login": "cmsbuild",
+        "id": 999
+      },
+      "created_at": "2024-01-01T13:00:00Z"
     }
   ]
 }

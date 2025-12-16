@@ -18,7 +18,6 @@
       "details": {
         "issue_number": 17,
         "labels": [
-          "hold",
           "tests-approved"
         ]
       }
@@ -45,7 +44,7 @@
       "details": {
         "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
         "state": "success",
-        "target_url": "",
+        "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2049536405",
         "description": "See details",
         "context": "cms/17/code-checks"
       }

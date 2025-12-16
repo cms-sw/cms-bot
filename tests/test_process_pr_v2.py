@@ -1130,6 +1130,7 @@ class MockIssue:
         recorder: ActionRecorder = None,
         is_issue: bool = None,  # If None, auto-detect from JSON data
         comments_data: Optional[List[Dict]] = None,  # Optional inline comments data
+        state: str = None,  # Issue state: "open" or "closed"
     ):
         self.test_name = test_name
         self.number = number
@@ -1149,7 +1150,8 @@ class MockIssue:
         self.id = data.get("id", number)
         self.title = data.get("title", f"Issue #{number}")
         self.body = data.get("body", "")
-        self.state = data.get("state", "open")
+        # Use explicit state parameter if provided, otherwise use JSON data
+        self.state = state if state is not None else data.get("state", "open")
 
         # Timestamps
         created_at_str = data.get("created_at", "2024-01-01T00:00:00Z")
@@ -2943,15 +2945,16 @@ class TestBuildTestCommand:
         repo = MockRepository("test_build_command_basic", recorder=recorder)
         issue = MockIssue("test_build_command_basic", number=1, recorder=recorder)
 
-        result = process_pr(
-            repo_config=config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
         assert len(result["tests_triggered"]) == 1
@@ -2992,15 +2995,16 @@ class TestBuildTestCommand:
         repo = MockRepository("test_test_command_with_workflows", recorder=recorder)
         issue = MockIssue("test_test_command_with_workflows", number=1, recorder=recorder)
 
-        result = process_pr(
-            repo_config=config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
         assert len(result["tests_triggered"]) == 1
@@ -3742,6 +3746,15 @@ class TestSquashSignatureHandling:
         assert result1["pr_number"] == 1
 
         # Now simulate dirty squash: new commit SHA AND new file SHAs
+        # Include a cache comment from the first run with OLD signed_files
+        # Each signature only contains files for that specific category
+        cache_comment = {
+            "id": 999,
+            "body": 'cms-bot internal usage<!-- {"comments":{"100":{"cats":["core"],"ctype":"+1","first_line":"+1","signed_files":["Package/Core/main.py::old_sha_111"],"ts":"2024-01-01T12:00:00+00:00","user":"alice"},"101":{"cats":["analysis"],"ctype":"+1","first_line":"+1","signed_files":["Package/Analysis/data.py::old_sha_222"],"ts":"2024-01-01T12:01:00+00:00","user":"alice"}},"emoji":{"100":"+1","101":"+1"},"fv":{"Package/Core/main.py::old_sha_111":{"cats":["core"],"ts":"2024-01-01T10:00:00Z"},"Package/Analysis/data.py::old_sha_222":{"cats":["analysis"],"ts":"2024-01-01T10:00:00Z"}}} -->',
+            "user": {"login": "cmsbuild", "id": 999},
+            "created_at": "2024-01-01T13:00:00Z",
+        }
+
         create_basic_pr_data(
             "test_dirty_squash_resets_all_l2_signatures_after",
             pr_number=1,
@@ -3755,7 +3768,7 @@ class TestSquashSignatureHandling:
                 },
             ],
             comments=[
-                # Same approvals (but they're now invalid)
+                # Same approvals (but they're now invalid because signed_files have old SHAs)
                 {
                     "id": 100,
                     "body": "+core",
@@ -3768,6 +3781,8 @@ class TestSquashSignatureHandling:
                     "user": {"login": "alice", "id": 2},
                     "created_at": "2024-01-01T12:01:00Z",
                 },
+                # Cache comment with OLD signed_files - this is key!
+                cache_comment,
             ],
             commits=[
                 {
@@ -3811,7 +3826,16 @@ class TestSquashSignatureHandling:
 
         assert result2["pr_number"] == 1
         # ALL signatures should be reset - both core and analysis
-        # because all file SHAs changed
+        # because all file SHAs changed (signed_files have old SHAs)
+        # Should NOT have fully-signed label
+        label_actions = [a for a in recorder2.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert "fully-signed" not in labels, "Should NOT be fully-signed after dirty squash"
+            assert "core-approved" not in labels, "core should NOT be approved after dirty squash"
+            assert (
+                "analysis-approved" not in labels
+            ), "analysis should NOT be approved after dirty squash"
 
         if record_mode:
             recorder.save()
@@ -3912,6 +3936,16 @@ class TestSquashSignatureHandling:
 
         assert result1["pr_number"] == 1
 
+        # Cache comment from first run with OLD signed_files
+        # Each signature only contains files for that specific category
+        # Core file will change, analysis and simulation will stay the same
+        cache_comment = {
+            "id": 999,
+            "body": 'cms-bot internal usage<!-- {"comments":{"100":{"cats":["core"],"ctype":"+1","first_line":"+1","signed_files":["Package/Core/main.py::core_sha_111"],"ts":"2024-01-01T12:00:00+00:00","user":"alice"},"101":{"cats":["analysis"],"ctype":"+1","first_line":"+1","signed_files":["Package/Analysis/data.py::analysis_sha_222"],"ts":"2024-01-01T12:01:00+00:00","user":"alice"},"102":{"cats":["simulation"],"ctype":"+1","first_line":"+1","signed_files":["Package/Simulation/sim.py::sim_sha_333"],"ts":"2024-01-01T12:02:00+00:00","user":"bob"}},"emoji":{"100":"+1","101":"+1","102":"+1"},"fv":{"Package/Core/main.py::core_sha_111":{"cats":["core"],"ts":"2024-01-01T10:00:00Z"},"Package/Analysis/data.py::analysis_sha_222":{"cats":["analysis"],"ts":"2024-01-01T10:00:00Z"},"Package/Simulation/sim.py::sim_sha_333":{"cats":["simulation"],"ts":"2024-01-01T10:00:00Z"}}} -->',
+            "user": {"login": "cmsbuild", "id": 999},
+            "created_at": "2024-01-01T13:00:00Z",
+        }
+
         # Mixed squash: new commit SHA, only core file changed
         create_basic_pr_data(
             "test_mixed_squash_resets_only_changed_file_signatures_after",
@@ -3951,6 +3985,8 @@ class TestSquashSignatureHandling:
                     "user": {"login": "bob", "id": 3},
                     "created_at": "2024-01-01T12:02:00Z",
                 },
+                # Cache comment with OLD signed_files - this is key!
+                cache_comment,
             ],
             commits=[
                 {
@@ -3999,6 +4035,16 @@ class TestSquashSignatureHandling:
         assert result2["pr_number"] == 1
         # core signature should be reset (file SHA changed)
         # analysis and simulation signatures should be preserved (file SHAs unchanged)
+        label_actions = [a for a in recorder2.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            # core should NOT be approved (file changed)
+            assert "core-approved" not in labels, "core should NOT be approved after file change"
+            # analysis and simulation SHOULD be approved (files unchanged)
+            assert "analysis-approved" in labels, "analysis should be approved (unchanged)"
+            assert "simulation-approved" in labels, "simulation should be approved (unchanged)"
+            # Should NOT be fully-signed (core is pending)
+            assert "fully-signed" not in labels, "Should NOT be fully-signed"
 
         if record_mode:
             recorder.save()
@@ -5157,15 +5203,16 @@ class TestTestDeduplication:
         repo = MockRepository("test_duplicate_test_commands_deduplicated", recorder=recorder)
         issue = MockIssue("test_duplicate_test_commands_deduplicated", number=1, recorder=recorder)
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
         # Only the last test should be triggered (last one wins)
@@ -5179,10 +5226,62 @@ class TestTestDeduplication:
         else:
             recorder.verify()
 
-    def test_different_verb_not_deduplicated(self, repo_config, record_mode):
-        """Test that build and test are treated separately (last test wins, all builds processed)."""
+    def test_build_then_test_last_one_wins(self, repo_config, record_mode):
+        """Test that build then test results in only test being processed (last one wins)."""
         create_basic_pr_data(
-            "test_different_verb_not_deduplicated",
+            "test_build_then_test_last_one_wins",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "build",
+                    "user": {"login": "alice", "id": 2},
+                },
+                {
+                    "id": 101,
+                    "body": "test",
+                    "user": {"login": "bob", "id": 3},
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_build_then_test_last_one_wins", record_mode)
+        gh = MockGithub("test_build_then_test_last_one_wins", recorder)
+        repo = MockRepository("test_build_then_test_last_one_wins", recorder=recorder)
+        issue = MockIssue("test_build_then_test_last_one_wins", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Only test should be triggered (last one wins - build and test share same slot)
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["verb"] == "test"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_then_build_last_one_wins(self, repo_config, record_mode):
+        """Test that test then build results in only build being processed (last one wins)."""
+        create_basic_pr_data(
+            "test_test_then_build_last_one_wins",
             pr_number=1,
             files=[
                 {
@@ -5205,26 +5304,26 @@ class TestTestDeduplication:
             ],
         )
 
-        recorder = ActionRecorder("test_different_verb_not_deduplicated", record_mode)
-        gh = MockGithub("test_different_verb_not_deduplicated", recorder)
-        repo = MockRepository("test_different_verb_not_deduplicated", recorder=recorder)
-        issue = MockIssue("test_different_verb_not_deduplicated", number=1, recorder=recorder)
+        recorder = ActionRecorder("test_test_then_build_last_one_wins", record_mode)
+        gh = MockGithub("test_test_then_build_last_one_wins", recorder)
+        repo = MockRepository("test_test_then_build_last_one_wins", recorder=recorder)
+        issue = MockIssue("test_test_then_build_last_one_wins", number=1, recorder=recorder)
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
-        # Both test and build should be triggered
-        assert len(result["tests_triggered"]) == 2
-        verbs = {t["verb"] for t in result["tests_triggered"]}
-        assert verbs == {"test", "build"}
+        # Only build should be triggered (last one wins - build and test share same slot)
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["verb"] == "build"
 
         if record_mode:
             recorder.save()
@@ -5262,15 +5361,16 @@ class TestTestDeduplication:
         repo = MockRepository("test_different_workflows_last_one_wins", recorder=recorder)
         issue = MockIssue("test_different_workflows_last_one_wins", number=1, recorder=recorder)
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
         # Only the last test should be triggered (last one wins)
@@ -5284,7 +5384,7 @@ class TestTestDeduplication:
             recorder.verify()
 
     def test_same_workflows_different_order_last_wins(self, repo_config, record_mode):
-        """Test that same workflows in different order - last one wins."""
+        """Test that same workflows in different order - last one wins (by triggered_by user)."""
         create_basic_pr_data(
             "test_same_workflows_different_order_last_wins",
             pr_number=1,
@@ -5316,19 +5416,24 @@ class TestTestDeduplication:
             "test_same_workflows_different_order_last_wins", number=1, recorder=recorder
         )
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
-        # Only one test should be triggered (same workflows, different order)
+        # Only one test should be triggered (last one wins)
         assert len(result["tests_triggered"]) == 1
+        # Workflows are normalized (sorted), so both "1.0,2.0" and "2.0,1.0" become "1.0,2.0"
+        assert result["tests_triggered"][0]["workflows"] == "1.0,2.0"
+        # Last command was from bob
+        assert result["tests_triggered"][0]["triggered_by"] == "bob"
 
         if record_mode:
             recorder.save()
@@ -5362,15 +5467,16 @@ class TestTestDeduplication:
         repo = MockRepository("test_build_skipped_if_has_bot_reaction", recorder=recorder)
         issue = MockIssue("test_build_skipped_if_has_bot_reaction", number=1, recorder=recorder)
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
         # Build should NOT be triggered because it already has +1 from bot
@@ -5408,15 +5514,16 @@ class TestTestDeduplication:
         repo = MockRepository("test_build_processed_if_no_bot_reaction", recorder=recorder)
         issue = MockIssue("test_build_processed_if_no_bot_reaction", number=1, recorder=recorder)
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
-        )
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
         # Build should be triggered
@@ -5466,15 +5573,16 @@ class TestTestDeduplication:
         process_pr_v2.get_jenkins_status_url = lambda ctx: comment_url
 
         try:
-            result = process_pr(
-                repo_config=repo_config,
-                gh=gh,
-                repo=repo,
-                issue=issue,
-                dryRun=False,
-                cmsbuild_user="cmsbuild",
-                loglevel="DEBUG",
-            )
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="cmsbuild",
+                    loglevel="DEBUG",
+                )
 
             assert result["pr_number"] == 1
             # Test should NOT be triggered because jenkins status URL matches
@@ -5520,15 +5628,16 @@ class TestTestDeduplication:
         process_pr_v2.get_jenkins_status_url = lambda ctx: None
 
         try:
-            result = process_pr(
-                repo_config=repo_config,
-                gh=gh,
-                repo=repo,
-                issue=issue,
-                dryRun=False,
-                cmsbuild_user="cmsbuild",
-                loglevel="DEBUG",
-            )
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="cmsbuild",
+                    loglevel="DEBUG",
+                )
 
             assert result["pr_number"] == 1
             # Test should be triggered
@@ -5581,15 +5690,16 @@ class TestTestDeduplication:
         process_pr_v2.get_jenkins_status_url = lambda ctx: old_comment_url
 
         try:
-            result = process_pr(
-                repo_config=repo_config,
-                gh=gh,
-                repo=repo,
-                issue=issue,
-                dryRun=False,
-                cmsbuild_user="cmsbuild",
-                loglevel="DEBUG",
-            )
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="cmsbuild",
+                    loglevel="DEBUG",
+                )
 
             assert result["pr_number"] == 1
             # Test should be triggered because jenkins URL is for a different comment
@@ -5993,7 +6103,7 @@ class TestCloseReopenCommands:
             recorder.verify()
 
     def test_reopen_command(self, record_mode):
-        """Test that reopen command is processed."""
+        """Test that reopen command reopens a closed issue/PR."""
         repo_config = create_mock_repo_config()
         init_l2_data(repo_config)
 
@@ -6004,6 +6114,7 @@ class TestCloseReopenCommands:
             "test_reopen_command",
             number=1,
             recorder=recorder,
+            state="closed",  # Must be closed for reopen to take effect
             comments_data=[
                 {
                     "id": 1001,
@@ -6025,6 +6136,11 @@ class TestCloseReopenCommands:
         )
 
         assert result["pr_number"] == 1
+
+        # Verify issue was reopened
+        edit_actions = [a for a in recorder.actions if a["action"] == "edit_issue"]
+        reopen_actions = [a for a in edit_actions if a.get("details", {}).get("state") == "open"]
+        assert len(reopen_actions) == 1, "Should have reopened the issue"
 
         if record_mode:
             recorder.save()
@@ -6442,19 +6558,18 @@ class TestAllowTestRightsCommand:
 class TestCodeChecksCommand:
     """Tests for code-checks command."""
 
-    def test_code_checks_basic(self, record_mode):
-        """Test basic code-checks command."""
+    def test_code_checks_retrigger_after_success(self, record_mode):
+        """Test code-checks command re-triggers after previous success and resets status."""
         repo_config = create_mock_repo_config()
         init_l2_data(repo_config)
 
-        recorder = ActionRecorder("test_code_checks_basic", record_mode)
-        gh = MockGithub("test_code_checks_basic", recorder)
-        repo = MockRepository("test_code_checks_basic", recorder=recorder)
-        issue = MockIssue(
+        # Must use cms-sw/cmssw repo and master branch for code-checks to be a pre-check
+        # Set initial code-checks status to success (completed) - allows re-trigger
+        create_basic_pr_data(
             "test_code_checks_basic",
-            number=1,
-            recorder=recorder,
-            comments_data=[
+            pr_number=1,
+            base_ref="master",
+            comments=[
                 {
                     "id": 1001,
                     "user": {"login": "contributor"},
@@ -6462,19 +6577,51 @@ class TestCodeChecksCommand:
                     "created_at": "2024-01-15T12:00:00Z",
                 },
             ],
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "success",
+                    "description": "Passed",
+                    "target_url": "",
+                },
+            ],
         )
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
+        recorder = ActionRecorder("test_code_checks_basic", record_mode)
+        gh = MockGithub("test_code_checks_basic", recorder)
+        repo = MockRepository(
+            "test_code_checks_basic", full_name="cms-sw/cmssw", recorder=recorder
         )
+        issue = MockIssue("test_code_checks_basic", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
+
+        # Verify code-checks property file was created (re-triggered)
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        code_checks_props = [
+            a for a in prop_actions if "code-checks" in a.get("details", {}).get("filename", "")
+        ]
+        assert len(code_checks_props) == 1, "Should have created code-checks properties file"
+
+        # Verify status was reset to pending
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_status = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_status) >= 1, "Should have reset code-checks status"
+        # The last status update should be pending (reset)
+        assert code_checks_status[-1]["details"]["state"] == "pending"
 
         if record_mode:
             recorder.save()
@@ -6482,18 +6629,16 @@ class TestCodeChecksCommand:
             recorder.verify()
 
     def test_code_checks_with_tool_conf(self, record_mode):
-        """Test code-checks with tool configuration."""
+        """Test code-checks with tool configuration re-triggers after previous success."""
         repo_config = create_mock_repo_config()
         init_l2_data(repo_config)
 
-        recorder = ActionRecorder("test_code_checks_with_tool", record_mode)
-        gh = MockGithub("test_code_checks_with_tool", recorder)
-        repo = MockRepository("test_code_checks_with_tool", recorder=recorder)
-        issue = MockIssue(
+        # Set initial code-checks status to success (completed) - allows re-trigger
+        create_basic_pr_data(
             "test_code_checks_with_tool",
-            number=1,
-            recorder=recorder,
-            comments_data=[
+            pr_number=1,
+            base_ref="master",
+            comments=[
                 {
                     "id": 1001,
                     "user": {"login": "contributor"},
@@ -6501,19 +6646,102 @@ class TestCodeChecksCommand:
                     "created_at": "2024-01-15T12:00:00Z",
                 },
             ],
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "success",
+                    "description": "Passed",
+                    "target_url": "",
+                },
+            ],
         )
 
-        result = process_pr(
-            repo_config=repo_config,
-            gh=gh,
-            repo=repo,
-            issue=issue,
-            dryRun=False,
-            cmsbuild_user="cmsbuild",
-            loglevel="DEBUG",
+        recorder = ActionRecorder("test_code_checks_with_tool", record_mode)
+        gh = MockGithub("test_code_checks_with_tool", recorder)
+        repo = MockRepository(
+            "test_code_checks_with_tool", full_name="cms-sw/cmssw", recorder=recorder
         )
+        issue = MockIssue("test_code_checks_with_tool", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
 
         assert result["pr_number"] == 1
+
+        # Verify code-checks property file was created with tool config
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        code_checks_props = [
+            a for a in prop_actions if "code-checks" in a.get("details", {}).get("filename", "")
+        ]
+        assert len(code_checks_props) == 1, "Should have created code-checks properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_code_checks_skipped_when_pending(self, record_mode):
+        """Test code-checks command is skipped when already pending (running)."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set initial code-checks status to pending (running) - should skip
+        create_basic_pr_data(
+            "test_code_checks_skipped_pending",
+            pr_number=1,
+            base_ref="master",
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "contributor"},
+                    "body": "code-checks",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "pending",
+                    "description": "Running",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_code_checks_skipped_pending", record_mode)
+        gh = MockGithub("test_code_checks_skipped_pending", recorder)
+        repo = MockRepository(
+            "test_code_checks_skipped_pending", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_code_checks_skipped_pending", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify NO code-checks property file was created (skipped because pending)
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        code_checks_props = [
+            a for a in prop_actions if "code-checks" in a.get("details", {}).get("filename", "")
+        ]
+        assert len(code_checks_props) == 0, "Should NOT have created code-checks properties file"
 
         if record_mode:
             recorder.save()
@@ -6530,20 +6758,17 @@ class TestIgnoreTestsRejectedCommand:
     """Tests for 'ignore tests-rejected with <reason>' command."""
 
     def test_ignore_tests_rejected_manual_override(self, record_mode, monkeypatch):
-        """Test ignore tests-rejected with manual-override reason."""
+        """Test ignore tests-rejected with manual-override reason when tests are failing."""
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
 
         repo_config = create_mock_repo_config()
         init_l2_data(repo_config)
 
-        recorder = ActionRecorder("test_ignore_tests_rejected", record_mode)
-        gh = MockGithub("test_ignore_tests_rejected", recorder)
-        repo = MockRepository("test_ignore_tests_rejected", recorder=recorder)
-        issue = MockIssue(
+        # Set up PR with tests in failed state
+        create_basic_pr_data(
             "test_ignore_tests_rejected",
-            number=1,
-            recorder=recorder,
-            comments_data=[
+            pr_number=1,
+            comments=[
                 {
                     "id": 1001,
                     "user": {"login": "tester"},
@@ -6551,7 +6776,21 @@ class TestIgnoreTestsRejectedCommand:
                     "created_at": "2024-01-15T12:00:00Z",
                 },
             ],
+            # Tests are in failed (error) state - required for ignore command to work
+            statuses=[
+                {
+                    "context": "cms/1/relval/required",
+                    "state": "error",
+                    "description": "Tests failed",
+                    "target_url": "",
+                },
+            ],
         )
+
+        recorder = ActionRecorder("test_ignore_tests_rejected", record_mode)
+        gh = MockGithub("test_ignore_tests_rejected", recorder)
+        repo = MockRepository("test_ignore_tests_rejected", recorder=recorder)
+        issue = MockIssue("test_ignore_tests_rejected", number=1, recorder=recorder)
 
         result = process_pr(
             repo_config=repo_config,
@@ -6564,6 +6803,12 @@ class TestIgnoreTestsRejectedCommand:
         )
 
         assert result["pr_number"] == 1
+
+        # Verify tests-manual-override label was added
+        label_actions = [a for a in recorder.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert "tests-manual-override" in labels, "Should have tests-manual-override label"
 
         if record_mode:
             recorder.save()
@@ -6571,20 +6816,17 @@ class TestIgnoreTestsRejectedCommand:
             recorder.verify()
 
     def test_ignore_tests_rejected_ib_failure(self, record_mode, monkeypatch):
-        """Test ignore tests-rejected with ib-failure reason."""
+        """Test ignore tests-rejected with ib-failure reason when tests are failing."""
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
 
         repo_config = create_mock_repo_config()
         init_l2_data(repo_config)
 
-        recorder = ActionRecorder("test_ignore_tests_ib_failure", record_mode)
-        gh = MockGithub("test_ignore_tests_ib_failure", recorder)
-        repo = MockRepository("test_ignore_tests_ib_failure", recorder=recorder)
-        issue = MockIssue(
+        # Set up PR with tests in failed state
+        create_basic_pr_data(
             "test_ignore_tests_ib_failure",
-            number=1,
-            recorder=recorder,
-            comments_data=[
+            pr_number=1,
+            comments=[
                 {
                     "id": 1001,
                     "user": {"login": "tester"},
@@ -6592,7 +6834,21 @@ class TestIgnoreTestsRejectedCommand:
                     "created_at": "2024-01-15T12:00:00Z",
                 },
             ],
+            # Tests are in failed (error) state - required for ignore command to work
+            statuses=[
+                {
+                    "context": "cms/1/relval/required",
+                    "state": "error",
+                    "description": "Tests failed",
+                    "target_url": "",
+                },
+            ],
         )
+
+        recorder = ActionRecorder("test_ignore_tests_ib_failure", record_mode)
+        gh = MockGithub("test_ignore_tests_ib_failure", recorder)
+        repo = MockRepository("test_ignore_tests_ib_failure", recorder=recorder)
+        issue = MockIssue("test_ignore_tests_ib_failure", number=1, recorder=recorder)
 
         result = process_pr(
             repo_config=repo_config,
@@ -6605,6 +6861,125 @@ class TestIgnoreTestsRejectedCommand:
         )
 
         assert result["pr_number"] == 1
+
+        # Verify tests-ib-failure label was added
+        label_actions = [a for a in recorder.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert "tests-ib-failure" in labels, "Should have tests-ib-failure label"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_ignore_tests_rejected_no_effect_when_tests_passing(self, record_mode, monkeypatch):
+        """Test ignore tests-rejected has no effect when tests are passing."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set up PR with tests in success state
+        create_basic_pr_data(
+            "test_ignore_tests_no_effect",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "ignore tests-rejected with manual-override",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            # Tests are passing - ignore command should have no effect
+            statuses=[
+                {
+                    "context": "cms/1/relval/required",
+                    "state": "success",
+                    "description": "Tests passed",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_ignore_tests_no_effect", record_mode)
+        gh = MockGithub("test_ignore_tests_no_effect", recorder)
+        repo = MockRepository("test_ignore_tests_no_effect", recorder=recorder)
+        issue = MockIssue("test_ignore_tests_no_effect", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify tests-manual-override label was NOT added (tests weren't failing)
+        label_actions = [a for a in recorder.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert (
+                "tests-manual-override" not in labels
+            ), "Should NOT have tests-manual-override label"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_ignore_tests_rejected_no_effect_when_no_tests(self, record_mode, monkeypatch):
+        """Test ignore tests-rejected has no effect when no tests have run."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set up PR with no test statuses
+        create_basic_pr_data(
+            "test_ignore_tests_no_tests",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "ignore tests-rejected with manual-override",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            # No test statuses - ignore command should have no effect
+            statuses=[],
+        )
+
+        recorder = ActionRecorder("test_ignore_tests_no_tests", record_mode)
+        gh = MockGithub("test_ignore_tests_no_tests", recorder)
+        repo = MockRepository("test_ignore_tests_no_tests", recorder=recorder)
+        issue = MockIssue("test_ignore_tests_no_tests", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify tests-manual-override label was NOT added (no tests ran)
+        label_actions = [a for a in recorder.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert (
+                "tests-manual-override" not in labels
+            ), "Should NOT have tests-manual-override label"
 
         if record_mode:
             recorder.save()

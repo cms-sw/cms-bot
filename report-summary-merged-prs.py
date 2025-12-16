@@ -1698,9 +1698,9 @@ if __name__ == "__main__":
         + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = (
-        "ls "
+        "ls -d"
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3-*.gprof-cc.csv.gz 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/ 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME/||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3 = (
         "ls "

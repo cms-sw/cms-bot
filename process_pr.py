@@ -624,7 +624,7 @@ def ignore_issue(repo_config, repo, issue):
     if issue.body:
         if re.search(
             CMSBOT_IGNORE_MSG,
-            issue.body.encode("ascii", "ignore").decode().split("\n", 1)[0].strip(),
+            ensure_ascii(issue.body),
             re.I,
         ):
             return True
@@ -634,7 +634,7 @@ def ignore_issue(repo_config, repo, issue):
 def notify_user(issue):
     if issue.body and re.search(
         CMSBOT_NO_NOTIFY_MSG,
-        issue.body.encode("ascii", "ignore").decode().split("\n", 1)[0].strip(),
+        ensure_ascii(issue.body),
         re.I,
     ):
         return False
@@ -1261,34 +1261,34 @@ def process_pr(
     is_draft_pr = False
     build_comment = None
 
+    # Retrigger the job if PR is for cms-bot repo and author is core or externals l2
+    if (
+        repo.full_name == "cms-sw/cms-bot"
+        and os.getenv("CMS_BOT_TEST_BRANCH", "master") == "master"
+        and issue.state != "closed"
+    ):
+        author_ = issue.user.login
+        cats = get_commenter_categories(author_, int(issue.created_at.strftime("%s")))
+        if "externals" in cats or "core" in cats:
+            logger.info("Testing cms-bot PR #{0}".format(issue.number))
+            with open("cms-bot.issueoperties", "w") as f:
+                f.write("CMS_BOT_TEST_BRANCH=pull/{0}/head\n".format(issue.number))
+                f.write("FORCE_PULL_REQUEST={0}\n".format(issue.number))
+                f.write("CMS_BOT_TEST_PRS=cms-sw/cms-bot#{0}\n".format(issue.number))
+            return
+
+    if re.search("<new-?bot></new-?bot>", issue.body or ""):
+        logger.info("Testing new cms-bot")
+        with open("cms-bot.issueoperties", "w") as f:
+            f.write("CMS_BOT_TEST_BRANCH=sign-hashes-not-commits\n")
+            f.write("FORCE_PULL_REQUEST={0}\n".format(issue.number))
+            f.write("CMS_BOT_TEST_PRS={0}#{1}\n".format(repo.full_name, issue.number))
+        return
+
     if issue.pull_request:
         pr = repo.get_pull(prId)
         if pr.changed_files == 0:
             logger.error("Ignoring: PR with no files changed")
-            return
-
-        # Retrigger the job if PR is for cms-bot repo and author is core or externals l2
-        if (
-            repo.full_name == "cms-sw/cms-bot"
-            and os.getenv("CMS_BOT_TEST_BRANCH", "master") == "master"
-            and pr.state != "closed"
-        ):
-            author_ = issue.user.login
-            cats = get_commenter_categories(author_, int(issue.created_at.strftime("%s")))
-            if "externals" in cats or "core" in cats:
-                logger.info("Testing cms-bot PR #{0}".format(pr.number))
-                with open("cms-bot.properties", "w") as f:
-                    f.write("CMS_BOT_TEST_BRANCH=pull/{0}/head\n".format(pr.number))
-                    f.write("FORCE_PULL_REQUEST={0}\n".format(pr.number))
-                    f.write("CMS_BOT_TEST_PRS=cms-sw/cms-bot#{0}\n".format(pr.number))
-                return
-
-        if re.search("<new-?bot></new-?bot>", issue.body or ""):
-            logger.info("Testing new cms-bot")
-            with open("cms-bot.properties", "w") as f:
-                f.write("CMS_BOT_TEST_BRANCH=sign-hashes-not-commits\n")
-                f.write("FORCE_PULL_REQUEST={0}\n".format(pr.number))
-                f.write("CMS_BOT_TEST_PRS={0}#{1}\n".format(repo.full_name, pr.number))
             return
 
         if pr.draft:

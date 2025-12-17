@@ -753,7 +753,7 @@ class TestProcessPr(Framework.TestCase):
             issue,
             dryRun=False,
             cmsbuild_user=self.repo_config.CMSBUILD_USER,
-            force=False,
+            force=True,
             enableTraceLog=enable_trace_log,
         )
         self.processPrData = actions

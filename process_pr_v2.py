@@ -252,9 +252,7 @@ BOT_CACHE_CHUNK_SIZE = 55000
 REACTION_PLUS_ONE = "+1"
 REACTION_MINUS_ONE = "-1"
 
-# Commit and file count thresholds
-TOO_MANY_COMMITS_WARN_THRESHOLD = 150  # Warning level
-TOO_MANY_COMMITS_FAIL_THRESHOLD = 240  # Hard block level (no override possible)
+# File count thresholds
 TOO_MANY_FILES_WARN_THRESHOLD = 1500  # Warning level
 TOO_MANY_FILES_FAIL_THRESHOLD = 3001  # Hard block level (no override possible)
 
@@ -1035,7 +1033,7 @@ def decompress_cache(data: str) -> str:
     return zlib.decompress(compressed).decode("utf-8")
 
 
-def load_cache_from_comments(comments: List[Any]) -> BotCache:
+def load_cache_from_comments(comments) -> BotCache:
     """
     Load bot cache from PR issue comments.
 
@@ -1045,7 +1043,7 @@ def load_cache_from_comments(comments: List[Any]) -> BotCache:
     Multiple comments may be used if data is large.
 
     Args:
-        comments: List of comment objects from the issue/PR
+        comments: Iterable of comment objects from the issue/PR (list or dict.values())
     """
     cache_parts = []
 
@@ -1085,9 +1083,7 @@ def load_cache_from_comments(comments: List[Any]) -> BotCache:
         return BotCache()
 
 
-def save_cache_to_comments(
-    issue, comments: List[Any], cache: BotCache, dry_run: bool = False
-) -> None:
+def save_cache_to_comments(issue, comments, cache: BotCache, dry_run: bool = False) -> None:
     """
     Save bot cache to PR issue comments.
 
@@ -1096,7 +1092,7 @@ def save_cache_to_comments(
 
     Args:
         issue: The issue/PR object (used for creating new comments)
-        comments: List of existing comment objects
+        comments: Iterable of existing comment objects (list or dict.values())
         cache: The cache to save
         dry_run: If True, don't actually save
     """
@@ -1487,8 +1483,8 @@ def get_signing_checks(context: "PRContext") -> SigningChecks:
                 fwports = forward_ports_map.GIT_REPO_FWPORTS.get("cmssw", {})
                 if target_branch in fwports.get(CMSSW_DEVEL_BRANCH, []):
                     needs_code_checks = True
-            except Exception:
-                pass
+            except (AttributeError, KeyError, TypeError) as e:
+                logger.debug(f"Could not check forward-ports map: {e}")
 
         if needs_code_checks:
             pre_checks.append("code-checks")
@@ -1611,7 +1607,7 @@ class CommandRegistry:
 
         Usage:
             @registry.command("approve", r"^\+1$|^\+(\w+)$", description="Approve PR")
-            def handle_approve(context, match, user, comment_id, timestamp) -> Optional[bool]:
+            def handle_approve(context, match, comment) -> Optional[bool]:
                 # ... handler logic ...
                 return True  # Success, False = failure, None = fallthrough
 
@@ -1696,7 +1692,7 @@ def command(
 
     Usage:
         @command("approve", r"^\+1$|^\+(\w+)$", description="Approve PR", pr_only=True)
-        def handle_approve(context, match, user, comment_id, timestamp) -> Optional[bool]:
+        def handle_approve(context, match, comment) -> Optional[bool]:
             return True  # Success, False = failure, None = fallthrough
     """
     return _global_registry.command(name, pattern, acl, description, pr_only, reset_on_push)
@@ -1816,7 +1812,8 @@ def should_ignore_issue(repo_config: types.ModuleType, repo: Any, issue: Any) ->
             first_line = issue.body.split("\n", 1)[0].strip()
             if first_line and RE_CMS_BOT_IGNORE.search(first_line):
                 return True
-        except Exception:
+        except (AttributeError, TypeError):
+            # issue.body may be None or not a string
             pass
 
     return False
@@ -1876,11 +1873,11 @@ class PRContext:
     is_pr: bool = True
 
     # Comments fetched once at the start of processing
-    comments: List[Any] = field(default_factory=list)
+    # Dict mapping comment_id -> comment object for O(1) lookups
+    comments: Dict[int, Any] = field(default_factory=dict)
 
-    # Commits fetched once at the start of processing (PRs only)
-    # Dict mapping commit SHA -> commit object
-    commits: Dict[str, Any] = field(default_factory=dict)
+    # Last commit (by date) - used for timestamp comparison and status creation
+    # We don't need all commits, just the latest one for reset_on_push logic
     _last_commit: Optional[Any] = field(default=None, repr=False)
 
     # Commit statuses cache for head commit (context -> status)
@@ -1898,7 +1895,7 @@ class PRContext:
     should_merge: bool = False
     should_reopen: bool = False  # Reopen the issue/PR
     must_close: bool = False  # PR should be closed (e.g., closed branch)
-    abort_tests: bool = False  # Abort pending tests
+    abort_comment: Optional[Any] = None  # Comment that requested abort (None = no abort)
     tests_to_run: List[Any] = field(default_factory=list)  # List of TestRequest objects
     pending_reactions: Dict[int, str] = field(default_factory=dict)  # comment_id -> reaction
     holds: List[Hold] = field(default_factory=list)  # Active holds on the PR
@@ -1929,11 +1926,8 @@ class PRContext:
 
     # Test overrides
     ignore_tests_rejected: Optional[str] = None  # Reason for ignoring test rejection
-    ignore_commit_count: bool = False  # Override commit count warning (+commit-count accepted)
     ignore_file_count: bool = False  # Override file count warning (+file-count accepted)
-    warned_too_many_commits: bool = False  # Bot has already warned about commits
     warned_too_many_files: bool = False  # Bot has already warned about files
-    blocked_by_commit_count: bool = False  # PR processing blocked by commit count
     blocked_by_file_count: bool = False  # PR processing blocked by file count
 
     # Backport info
@@ -2040,14 +2034,6 @@ class PRContext:
     @property
     def last_commit(self) -> Optional[Any]:
         """Get the last (most recent) commit in the PR."""
-        if not self.commits:
-            return None
-
-        if not self._last_commit:
-            self._last_commit = sorted(
-                self.commits.values(), key=lambda c: c.commit.committer.date
-            )[-1]
-
         return self._last_commit
 
     def get_commit_statuses(self) -> Dict[str, Any]:
@@ -2068,7 +2054,8 @@ class PRContext:
         sha = None
         try:
             sha = self.pr.head.sha if self.pr else None
-        except Exception:
+        except AttributeError:
+            # pr.head or pr.head.sha not available
             if self.last_commit:
                 sha = self.last_commit.sha
 
@@ -2077,9 +2064,9 @@ class PRContext:
 
         # Fetch combined status from API
         try:
-            # Use cached commit if available, otherwise fetch
-            if sha in self.commits:
-                commit = self.commits[sha]
+            # Use last_commit if it matches, otherwise fetch from API
+            if self.last_commit and self.last_commit.sha == sha:
+                commit = self.last_commit
             else:
                 commit = self.repo.get_commit(sha)
 
@@ -2144,7 +2131,8 @@ class PRContext:
         if sha is None:
             try:
                 sha = self.pr.head.sha if self.pr else None
-            except Exception:
+            except AttributeError:
+                # pr.head or pr.head.sha not available
                 if self.last_commit:
                     sha = self.last_commit.sha
 
@@ -2201,7 +2189,7 @@ def has_bot_comment(
         # Match either <!--key--> or <!--key:...-->
         search_pattern = None  # Will check both patterns
 
-    for comment in context.comments:
+    for comment in context.comments.values():
         if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
             body = comment.body or ""
             if search_pattern:
@@ -2381,9 +2369,9 @@ def flush_pending_statuses(context: PRContext) -> int:
             continue
 
         try:
-            # Get commit object - prefer cached, fallback to API
-            if sha in context.commits:
-                commit = context.commits[sha]
+            # Get commit object - use last_commit if SHA matches, otherwise fetch from API
+            if context.last_commit and context.last_commit.sha == sha:
+                commit = context.last_commit
             else:
                 commit = context.repo.get_commit(sha)
 
@@ -2423,10 +2411,11 @@ CATEGORY_PATTERN = r"[\w-]+"
     rf"^\+1$|^\+({CATEGORY_PATTERN})$",
     description="Approve for your L2 categories or specific category",
 )
-def handle_plus_one(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> Optional[bool]:
+def handle_plus_one(context: PRContext, match: re.Match, comment: Any) -> Optional[bool]:
     """Handle +1 or +<category> approval."""
+    user = comment.user.login
+    comment_id = comment.id
+    timestamp = get_comment_timestamp(comment)
     return _handle_approval(context, match, user, comment_id, timestamp, approved=True)
 
 
@@ -2435,10 +2424,11 @@ def handle_plus_one(
     rf"^-1$|^-({CATEGORY_PATTERN})$",
     description="Reject for your L2 categories or specific category",
 )
-def handle_minus_one(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> Optional[bool]:
+def handle_minus_one(context: PRContext, match: re.Match, comment: Any) -> Optional[bool]:
     """Handle -1 or -<category> rejection."""
+    user = comment.user.login
+    comment_id = comment.id
+    timestamp = get_comment_timestamp(comment)
     return _handle_approval(context, match, user, comment_id, timestamp, approved=False)
 
 
@@ -2576,9 +2566,7 @@ def _handle_approval(
     rf"^(?P<action>assign|unassign)(?: (?:from|package))? (?P<target>(?!from$|package$)(?:{CATEGORY_PATTERN}|[\w]+/[\w/,-]+)(?:,(?:{CATEGORY_PATTERN}|[\w]+/[\w/,-]+))*)$",
     description="Assign or unassign categories (directly or via package mapping)",
 )
-def handle_assign_unassign(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> Optional[bool]:
+def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) -> Optional[bool]:
     """
     Handle assign/unassign commands for categories.
 
@@ -2595,6 +2583,10 @@ def handle_assign_unassign(
     Multiple targets can be comma-separated.
     Package names contain '/' (e.g., Foo/Bar), category names don't.
     """
+    user = comment.user.login
+    comment_id = comment.id
+    timestamp = get_comment_timestamp(comment)
+
     action = match.group("action")  # "assign" or "unassign"
     target_str = match.group("target")
 
@@ -2731,9 +2723,7 @@ def handle_assign_unassign(
 
 
 @command("hold", r"^hold$", description="Place a hold to prevent automerge", pr_only=True)
-def handle_hold(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_hold(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle hold command - prevents automerge.
 
@@ -2742,6 +2732,10 @@ def handle_hold(
     - Release managers
     - PR hold managers (PR_HOLD_MANAGERS)
     """
+    user = comment.user.login
+    comment_id = comment.id
+    timestamp = get_comment_timestamp(comment)
+
     user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
 
     # Check if user is a release manager
@@ -2750,8 +2744,8 @@ def handle_hold(
         try:
             release_managers = get_release_managers(context.pr.base.ref)
             is_release_manager = user in release_managers
-        except Exception:
-            pass
+        except (AttributeError, KeyError, TypeError) as e:
+            logger.debug(f"Could not check release managers: {e}")
 
     # Check if user is a PR hold manager
     is_hold_manager = user in PR_HOLD_MANAGERS
@@ -2801,9 +2795,7 @@ def handle_hold(
     description="Remove hold (L2 for own category, ORP for all)",
     pr_only=True,
 )
-def handle_unhold(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_unhold(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle unhold command.
 
@@ -2812,6 +2804,9 @@ def handle_unhold(
     - Release managers can remove their own holds only
     - PR hold managers can remove their own holds only
     """
+    user = comment.user.login
+    timestamp = get_comment_timestamp(comment)
+
     user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
     is_orp = "orp" in [c.lower() for c in user_categories]
 
@@ -2837,8 +2832,8 @@ def handle_unhold(
             release_managers = get_release_managers(context.pr.base.ref)
             if user in release_managers:
                 removable_categories.add("release-manager")
-        except Exception:
-            pass
+        except (AttributeError, KeyError, TypeError) as e:
+            logger.debug(f"Could not check release managers: {e}")
 
     # Check if user is a PR hold manager
     if user in PR_HOLD_MANAGERS:
@@ -2874,10 +2869,9 @@ def handle_unhold(
 
 
 @command("merge", r"^merge$", description="Request merge of the PR", pr_only=True)
-def handle_merge(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_merge(context: PRContext, match: re.Match, comment: Any) -> bool:
     """Handle merge command."""
+    user = comment.user.login
     if not can_merge(context):
         logger.info("Merge conditions not met")
         context.messages.append("Cannot merge: PR is not ready for merge")
@@ -2891,15 +2885,14 @@ def handle_merge(
 
 
 @command("close", r"^close$", description="Close the PR/Issue")
-def handle_close(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_close(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle close command.
 
     Can be used by L2s, release managers, and issue trackers.
     Cancels any previous 'reopen' command.
     """
+    user = comment.user.login
     # ACL check would be done at command dispatch level
     context.must_close = True
     context.should_reopen = False  # Cancel any previous reopen
@@ -2908,15 +2901,14 @@ def handle_close(
 
 
 @command("reopen", r"^(?:re)?open$", description="Reopen the PR/Issue")
-def handle_reopen(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_reopen(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle open/reopen command.
 
     Can be used by L2s, release managers, and issue trackers.
     Cancels any previous 'close' command.
     """
+    user = comment.user.login
     context.should_reopen = True
     context.must_close = False  # Cancel any previous close
     logger.info(f"Reopen requested by {user}")
@@ -2976,61 +2968,34 @@ def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
     pr_only=True,
     reset_on_push=True,
 )
-def handle_abort(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_abort(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle abort/abort test command.
 
-    Aborts any pending tests for the PR.
-    Only takes effect if tests are actually running (not just pending/not started).
-    Also sets jenkins status to 'pending' with "Aborted, waiting for..." to prevent
-    continuously triggering abort command.
-
-    Exits early if jenkins status description already starts with "Aborted".
+    Stores the abort comment and cancels any pending build/test command.
+    Actual checks (whether tests are running, jenkins status, etc.) are deferred
+    to process_pending_build_test_commands() after all comments are processed.
     """
-    # Check if already aborted (to avoid continuously triggering abort)
-    jenkins_status = get_jenkins_status(context)
-    if jenkins_status:
-        description = jenkins_status.description or ""
-        if description.startswith("Aborted"):
-            logger.info(f"Ignoring abort from {user} - already aborted")
-            return False
+    user = comment.user.login
 
-    # Check if there are tests to abort (tests must be in pending state)
-    statuses = get_ci_test_statuses(context)
-    has_pending_tests = False
+    # Store abort comment (used later for jenkins status URL)
+    context.abort_comment = comment
 
-    for suffix, results in statuses.items():
-        for result in results:
-            if result.status == "pending":
-                has_pending_tests = True
-                break
-        if has_pending_tests:
-            break
-
-    if not has_pending_tests:
-        logger.info(f"Ignoring abort from {user} - no pending tests")
-        return False
-
-    context.abort_tests = True
-
-    # Set jenkins status to aborted to prevent re-triggering abort
-    set_jenkins_status_aborted(context)
+    # Cancel any pending build/test command
+    context.pending_build_test_command = None
 
     logger.info(f"Test abort requested by {user}")
     return True
 
 
 @command("urgent", r"^urgent$", description="Mark PR as urgent")
-def handle_urgent(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_urgent(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle urgent command.
 
     Can be used by L2s, release managers, or the PR author.
     """
+    user = comment.user.login
     context.pending_labels.add("urgent")
     logger.info(f"PR marked as urgent by {user}")
     return True
@@ -3041,9 +3006,7 @@ def handle_urgent(
     r"^backport (of )?#?(?P<pr_num>[1-9][0-9]*)$",
     description="Mark PR as backport of another PR",
 )
-def handle_backport(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_backport(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle backport [of] #<num> command.
 
@@ -3051,6 +3014,7 @@ def handle_backport(
     Updates the welcome message to include backport info.
     Adds 'backport' label, or 'backport-ok' if original PR is merged.
     """
+    user = comment.user.login
     pr_num_str = match.group("pr_num")
 
     # Validate PR number format (already validated by regex, but double-check)
@@ -3086,15 +3050,14 @@ def handle_backport(
     description="Grant test rights to a user",
     pr_only=True,
 )
-def handle_allow_test_rights(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_allow_test_rights(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle 'allow @<user> test rights' command.
 
     Can only be used by L2s and release managers.
     Grants the specified user permission to trigger tests.
     """
+    user = comment.user.login
     target_user = match.group("username")
     context.granted_test_rights.add(target_user)
     logger.info(f"Test rights granted to {target_user} by {user}")
@@ -3107,9 +3070,7 @@ def handle_allow_test_rights(
     description="Request code checks",
     pr_only=True,
 )
-def handle_code_checks(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_code_checks(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle code-checks command.
 
@@ -3123,6 +3084,7 @@ def handle_code_checks(
     - Cannot re-trigger while pending (code-checks already running)
     - Can re-trigger after completion (success or error) - resets status to pending
     """
+    user = comment.user.login
     tool_conf = match.group("tool_conf") if match.lastindex else None
     apply_patch = "apply patch" in (match.group(0) or "").lower()
 
@@ -3176,9 +3138,7 @@ def handle_code_checks(
     pr_only=True,
     reset_on_push=True,
 )
-def handle_ignore_tests_rejected(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_ignore_tests_rejected(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle 'ignore tests-rejected with <reason>' command.
 
@@ -3188,6 +3148,7 @@ def handle_ignore_tests_rejected(
     Only takes effect if tests are actually in rejected state.
     Adds tests-{reason} label to indicate the override.
     """
+    user = comment.user.login
     reason = match.group("reason")
 
     # Validate reason against TEST_IGNORE_REASON
@@ -3219,56 +3180,20 @@ def handle_ignore_tests_rejected(
 
 
 @command(
-    "commit_count_override",
-    r"^\+commit-count$",
-    acl=CMSSW_ISSUES_TRACKERS,
-    description="Ignore 'too many commits' warning",
-    pr_only=True,
-)
-def handle_commit_count_override(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
-    """
-    Handle +commit-count command.
-
-    Overrides the 'too many commits' warning. Only CMSSW_ISSUES_TRACKERS can use this.
-    Only works if commit count is below the FAIL threshold.
-    """
-    if not context.pr:
-        return False
-
-    commit_count = context.pr.commits
-    if commit_count >= TOO_MANY_COMMITS_FAIL_THRESHOLD:
-        context.messages.append(
-            f"Cannot override: commit count ({commit_count}) is at or above "
-            f"the hard limit ({TOO_MANY_COMMITS_FAIL_THRESHOLD})"
-        )
-        logger.warning(
-            f"Cannot override commit count: {commit_count} >= {TOO_MANY_COMMITS_FAIL_THRESHOLD}"
-        )
-        return False
-
-    context.ignore_commit_count = True
-    logger.info(f"Commit count warning overridden by {user}")
-    return True
-
-
-@command(
     "file_count_override",
     r"^\+file-count$",
     acl=CMSSW_ISSUES_TRACKERS,
     description="Ignore 'too many files' warning",
     pr_only=True,
 )
-def handle_file_count_override(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_file_count_override(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle +file-count command.
 
     Overrides the 'too many files' warning. Only CMSSW_ISSUES_TRACKERS can use this.
     Only works if file count is below the FAIL threshold.
     """
+    user = comment.user.login
     if not context.pr:
         return False
 
@@ -3293,9 +3218,7 @@ def handle_file_count_override(
     r"^type (?P<label>[\w-]+)$",
     description="Add a type label to the PR/Issue",
 )
-def handle_type(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_type(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle type <label> command.
 
@@ -3314,6 +3237,7 @@ def handle_type(
         type new-feature
         type documentation
     """
+    user = comment.user.login
     label = match.group("label")
 
     # Validate label is in TYPE_COMMANDS
@@ -3560,8 +3484,8 @@ def parse_test_parameters(comment_lines: List[str], repo) -> Dict[str, str]:
                     )
                     if new_param:
                         param_name = new_param
-                except Exception:
-                    pass
+                except (ValueError, TypeError, KeyError) as e:
+                    logger.debug(f"Check function {check_func_name} failed: {e}")
 
             matched_params[param_name] = value
             matched = True
@@ -3589,9 +3513,7 @@ def parse_test_parameters(comment_lines: List[str], repo) -> Dict[str, str]:
     description="Set test parameters (multi-line)",
     pr_only=True,
 )
-def handle_test_parameters(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_test_parameters(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle 'test parameters:' command.
 
@@ -3609,18 +3531,15 @@ def handle_test_parameters(
 
     Updates bot/<prId>/test_parameters commit status with the current params.
     """
-    # Get the full comment body and URL
-    comment_body = None
-    comment_url = None
-    for comment in context.comments:
-        if comment.id == comment_id:
-            comment_body = comment.body
-            comment_url = getattr(comment, "html_url", None)
-            break
-
-    if not comment_body:
+    user = comment.user.login
+    # Get the full comment body and URL from dict
+    comment = context.comments.get(comment_id)
+    if not comment:
         logger.warning(f"Could not find comment body for comment {comment_id}")
         return False
+
+    comment_body = comment.body
+    comment_url = getattr(comment, "html_url", None)
 
     # Split into lines
     lines = comment_body.split("\n")
@@ -3649,6 +3568,34 @@ def handle_test_parameters(
 
 
 @command(
+    "enable_tests",
+    rf"^enable (?P<tests>{MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]})$",
+    acl=is_valid_tester,
+    description="Enable specific bot tests",
+    pr_only=True,
+)
+def handle_enable_tests(context: PRContext, match: re.Match, comment: Any) -> bool:
+    """
+    Handle 'enable <tests>' command.
+
+    Enables specific bot tests. The tests value is normalized to uppercase.
+    Special value 'none' disables all bot tests.
+
+    Example:
+        enable gpu
+        enable none
+    """
+    user = comment.user.login
+    enable_tests, _ = check_enable_bot_tests(match.group("tests"))
+    if enable_tests == "NONE":
+        enable_tests = ""
+    context.test_params["ENABLE_BOT_TESTS"] = enable_tests
+
+    logger.info(f"Bot tests enabled by {user}: {enable_tests or '(none)'}")
+    return True
+
+
+@command(
     "build_test",
     r"^(build|test)\b",
     acl=is_valid_tester,
@@ -3656,37 +3603,36 @@ def handle_test_parameters(
     pr_only=True,
     reset_on_push=True,
 )
-def handle_build_test(
-    context: PRContext, match: re.Match, user: str, comment_id: int, timestamp: datetime
-) -> bool:
+def handle_build_test(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
-    Handle build/test command - collects for deferred processing.
+    Handle build/test command - validates parameters and stores for deferred processing.
 
     Commands are collected during comment processing and processed later by
     process_pending_build_test_commands() after all comments are seen.
 
-    For 'test': Last one wins (only the last test command is stored)
-    For 'build': Last one wins, skipped if comment already has +1 reaction from bot
+    This handler only validates command syntax. Actual checks (jenkins status,
+    signatures, etc.) are deferred to process_pending_build_test_commands().
 
     Syntax:
         build|test [workflows <wf_list>] [with <pr_list>] [for <queue>]
                    [using [full cmssw] [addpkg <pkg_list>]]
-
-    This command also updates the test_params_comment tracking for the
-    bot/<prId>/test_parameters status.
     """
+    user = comment.user.login
+    comment_id = comment.id
+    timestamp = get_comment_timestamp(comment)
+
     # Get the full command line from the comment
     first_line = match.group(0)
     comment_url = None
 
     # Try to get full first line from the actual comment
-    for comment in context.comments:
-        if comment.id == comment_id:
-            extracted, _ = extract_command_line(comment.body or "", context.cmsbuild_user)
-            first_line = extracted or first_line
-            comment_url = getattr(comment, "html_url", None)
-            break
+    comment_obj = context.comments.get(comment_id)
+    if comment_obj:
+        extracted, _ = extract_command_line(comment_obj.body or "", context.cmsbuild_user)
+        first_line = extracted or first_line
+        comment_url = getattr(comment_obj, "html_url", None)
 
+    # Parse and validate command syntax
     try:
         result = parse_test_cmd(first_line)
     except TestCmdParseError as e:
@@ -3699,15 +3645,12 @@ def handle_build_test(
     context.test_params_comment_url = comment_url
     context.test_params_errors = None  # Clear any previous errors
 
-    # For build commands, check if already processed (has +1 reaction from bot)
-    if result.verb == "build":
-        reactions = get_comment_reactions(context, comment_id)
-        if "+1" in reactions:
-            logger.debug(f"Build command (comment {comment_id}) already has +1, skipping")
-            return True  # Command was valid, but already processed
+    # Cancel any pending abort command
+    context.abort_comment = None
 
     # Store as pending build/test command (last one wins - build and test share same slot)
-    # This is because build and test write to the same properties file
+    if context.pending_build_test_command:
+        logger.info(f"Replacing old build/test command from comment {comment_id} by {user}")
     context.pending_build_test_command = (comment_id, user, timestamp, result)
     logger.debug(f"Stored {result.verb} command from {user} (comment {comment_id})")
 
@@ -3729,17 +3672,17 @@ def get_comment_reactions(context: PRContext, comment_id: int) -> List[str]:
         return []
 
     reactions = []
-    for comment in context.comments:
-        if comment.id == comment_id:
-            # Check if comment object has reactions
-            try:
-                comment_reactions = comment.get_reactions()
-                for reaction in comment_reactions:
-                    if reaction.user.login == context.cmsbuild_user:
-                        reactions.append(reaction.content)
-            except Exception:
-                pass
-            break
+    comment = context.comments.get(comment_id)
+    if comment:
+        # Check if comment object has reactions
+        try:
+            comment_reactions = comment.get_reactions()
+            for reaction in comment_reactions:
+                if reaction.user.login == context.cmsbuild_user:
+                    reactions.append(reaction.content)
+        except AttributeError:
+            # Comment object doesn't have get_reactions method or reaction structure differs
+            pass
 
     return reactions
 
@@ -3765,8 +3708,6 @@ def get_jenkins_status_url(context: PRContext) -> Optional[str]:
         return status.target_url
     return None
 
-    return None
-
 
 def get_comment_url(context: PRContext, comment_id: int) -> str:
     """
@@ -3789,22 +3730,48 @@ def get_comment_url(context: PRContext, comment_id: int) -> str:
 
 def process_pending_build_test_commands(context: PRContext) -> None:
     """
-    Process pending build/test command after all comments have been seen.
+    Process pending build/test/abort commands after all comments have been seen.
 
-    Rules:
-    - For 'test': Process if tests signature is "pending" and jenkins URL doesn't match.
-      Sets jenkins URL (tests-started label is handled by _get_tests_approval_state).
-    - For 'build': Process the command (reaction check already done in handler)
-    - Skip all if abort_tests is True (abort was requested)
+    This function performs all deferred checks that weren't done in command handlers:
+    - For abort: Check if tests are actually running, update jenkins status
+    - For build: Check if already processed (has +1 reaction)
+    - For test: Check jenkins URL to avoid duplicate triggers
 
     Note: build and test share same slot (last one wins) since they write to same file.
     """
-    # If abort was requested, skip all test/build commands
-    if context.abort_tests:
-        logger.info("Skipping pending build/test commands - abort was requested")
+    # Handle abort if requested (no pending build/test command means abort won)
+    if context.abort_comment:
+        # Check if already aborted
+        jenkins_status = get_jenkins_status(context)
+        if jenkins_status:
+            description = jenkins_status.description or ""
+            if description.startswith("Aborted"):
+                logger.info("Abort already processed - jenkins status shows Aborted")
+                context.abort_comment = None
+                return
+
+        # Check if there are tests to abort (tests must be in pending state)
+        statuses = get_ci_test_statuses(context)
+        has_pending_tests = False
+        for suffix, results in statuses.items():
+            for result in results:
+                if result.status == "pending":
+                    has_pending_tests = True
+                    break
+            if has_pending_tests:
+                break
+
+        if not has_pending_tests:
+            logger.info("Abort requested but no pending tests to abort")
+            return
+
+        # Set jenkins status to aborted with URL pointing to abort comment
+        abort_comment_url = getattr(context.abort_comment, "html_url", None) or ""
+        set_jenkins_status_aborted(context, abort_comment_url)
+        logger.info("Abort processed - jenkins status set to Aborted")
         return
 
-    # Process the pending command if present (last one wins between build/test)
+    # Process the pending build/test command if present
     if not context.pending_build_test_command:
         return
 
@@ -3812,31 +3779,24 @@ def process_pending_build_test_commands(context: PRContext) -> None:
     comment_url = get_comment_url(context, comment_id)
 
     if result.verb == "build":
-        # Build command - just execute it (reaction check already done in handler)
+        # Build command - check if already processed (has +1 reaction from bot)
+        reactions = get_comment_reactions(context, comment_id)
+        if "+1" in reactions:
+            logger.debug(f"Build command (comment {comment_id}) already has +1, skipping")
+            return
         _execute_build_test_command(context, comment_id, user, result)
     else:
-        # Test command - check jenkins status and tests state first
+        # Test command - check jenkins status URL to avoid duplicate triggers
         jenkins_url = get_jenkins_status_url(context)
 
-        # Check if jenkins status URL matches this comment's URL
         if jenkins_url and jenkins_url == comment_url:
             logger.info(
                 f"Skipping test command (comment {comment_id}) - jenkins status already set for this comment"
             )
             return
 
-        # Check tests signature - must be "pending" to trigger new tests
-        tests_state = _get_tests_approval_state(context)
-        if tests_state != ApprovalState.PENDING:
-            logger.info(
-                f"Skipping test command - tests signature is {tests_state.value}, not pending"
-            )
-            return
-
         if _execute_build_test_command(context, comment_id, user, result):
             # Update jenkins status URL to this comment's URL
-            # Note: tests-started label is handled automatically by _get_tests_approval_state
-            # which checks jenkins status description for "requested by"
             set_jenkins_status_url(context, comment_url, user, timestamp)
 
 
@@ -4014,7 +3974,7 @@ def set_jenkins_status_waiting(context: PRContext) -> bool:
         return False
 
 
-def set_jenkins_status_aborted(context: PRContext) -> bool:
+def set_jenkins_status_aborted(context: PRContext, url: str = "") -> bool:
     """
     Set the bot/{prId}/jenkins commit status to aborted.
 
@@ -4023,6 +3983,7 @@ def set_jenkins_status_aborted(context: PRContext) -> bool:
 
     Args:
         context: PR processing context
+        url: URL to set as target_url (typically the abort comment URL)
 
     Returns:
         True if status was queued successfully
@@ -4040,7 +4001,7 @@ def set_jenkins_status_aborted(context: PRContext) -> bool:
             state="pending",
             description="Aborted, waiting for authorized user to issue the test command.",
             context_name=status_context,
-            target_url="",
+            target_url=url,
             sha=head_sha,
         )
 
@@ -4299,7 +4260,8 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
             elif commit_ts:
                 # String timestamp
                 now = str(commit_ts)
-        except Exception:
+        except AttributeError:
+            # Commit structure may differ
             pass
 
     # Get old file version keys for comparison
@@ -4372,6 +4334,7 @@ def set_comment_reaction(
 
     Uses cache to avoid redundant API calls.
     Skips bot's own comments (bot shouldn't react to itself).
+    Always removes the opposite reaction if present (comment should have only one bot reaction).
 
     Args:
         context: PR processing context
@@ -4386,6 +4349,7 @@ def set_comment_reaction(
             return
 
     desired_reaction = REACTION_PLUS_ONE if success else REACTION_MINUS_ONE
+    opposite_reaction = REACTION_MINUS_ONE if success else REACTION_PLUS_ONE
     cached_reaction = context.cache.get_cached_reaction(comment_id)
 
     # If reaction already matches, no action needed
@@ -4398,19 +4362,24 @@ def set_comment_reaction(
         logger.info(f"[DRY RUN] Would set {desired_reaction} reaction on comment {comment_id}")
     else:
         try:
-            # Remove old reaction if different
-            if cached_reaction:
-                try:
-                    # PyGithub API for removing reactions
-                    for reaction in comment.get_reactions():
-                        if (
-                            reaction.user.login == context.cmsbuild_user
-                            and reaction.content == cached_reaction
+            # Remove any existing bot reactions (both old cached and opposite)
+            # This ensures comment only has one reaction from bot
+            try:
+                for reaction in comment.get_reactions():
+                    if reaction.user.login == context.cmsbuild_user:
+                        # Remove any bot reaction (cached or opposite)
+                        if reaction.content in (
+                            cached_reaction,
+                            opposite_reaction,
+                            desired_reaction,
                         ):
-                            reaction.delete()
-                            break
-                except Exception as e:
-                    logger.warning(f"Failed to remove old reaction: {e}")
+                            if reaction.content != desired_reaction:
+                                reaction.delete()
+                                logger.debug(
+                                    f"Removed {reaction.content} reaction from comment {comment_id}"
+                                )
+            except Exception as e:
+                logger.warning(f"Failed to remove old reaction: {e}")
 
             # Add new reaction
             comment.create_reaction(desired_reaction)
@@ -4521,8 +4490,8 @@ def get_latest_commit_timestamp(context: PRContext) -> Optional[datetime]:
                 if isinstance(commit_date, datetime)
                 else parse_timestamp(commit_date)
             )
-    except Exception:
-        pass
+    except (AttributeError, ValueError) as e:
+        logger.debug(f"Could not get commit timestamp: {e}")
 
     return None
 
@@ -4644,9 +4613,9 @@ def process_comment(context: PRContext, comment, use_cached: bool = False) -> No
         #   True  = success (stop processing)
         #   False = failure (stop processing)
         #   None  = doesn't apply, try next command (fallthrough)
-        logger.info(f"Trying command '{cmd.name}' from user {user}")
+        logger.info(f"Trying command '{cmd.name}' from user {user} (comment {comment_id})")
         try:
-            result = cmd.handler(context, match, user, comment_id, timestamp)
+            result = cmd.handler(context, match, comment)
         except Exception as e:
             logger.error(f"Command handler error: {e}")
             result = False
@@ -4671,35 +4640,31 @@ def process_comment(context: PRContext, comment, use_cached: bool = False) -> No
 
 def get_commit_timestamps(context: PRContext) -> List[datetime]:
     """
-    Get timestamps of all commits in the PR, sorted chronologically.
+    Get timestamp of the last commit in the PR.
 
-    Uses context.commits which should be populated before calling this function.
-    All returned timestamps are timezone-aware (UTC).
+    Since we only need to check if any commit is after a comment timestamp,
+    and the last commit (by date) must be >= all other commits, we only
+    need to track the last commit's timestamp.
 
     Returns:
-        List of commit timestamps (timezone-aware datetime objects)
+        List with single timestamp (for API compatibility), or empty if no commits
     """
-    if not context.commits:
+    if not context.last_commit:
         return []
 
-    timestamps = []
-    for commit in context.commits.values():
-        try:
-            commit_date = commit.commit.author.date
-            if commit_date:
-                if isinstance(commit_date, datetime):
-                    # PyGithub 1.56 returns naive datetimes - make them tz-aware
-                    timestamps.append(ensure_tz_aware(commit_date))
-                else:
-                    # Parse string timestamp
-                    parsed = parse_timestamp(commit_date)
-                    if parsed:
-                        timestamps.append(parsed)
-        except Exception as e:
-            logger.warning(f"Failed to get timestamp from commit: {e}")
+    try:
+        commit_date = context.last_commit.commit.author.date
+        if commit_date:
+            if isinstance(commit_date, datetime):
+                return [ensure_tz_aware(commit_date)]
+            else:
+                parsed = parse_timestamp(commit_date)
+                if parsed:
+                    return [parsed]
+    except Exception as e:
+        logger.warning(f"Failed to get timestamp from last commit: {e}")
 
-    timestamps.sort()
-    return timestamps
+    return []
 
 
 def has_commit_after(commit_timestamps: List[datetime], comment_timestamp: datetime) -> bool:
@@ -4735,7 +4700,7 @@ def process_all_comments(context: PRContext) -> None:
     """
     # Use comments from context (already fetched once)
     current_comments = context.comments
-    current_comment_ids = {str(c.id) for c in current_comments}
+    current_comment_ids = {str(cid) for cid in current_comments.keys()}
 
     # Get commit timestamps for locking logic (only for PRs)
     commit_timestamps = get_commit_timestamps(context) if context.is_pr else []
@@ -4775,7 +4740,7 @@ def process_all_comments(context: PRContext) -> None:
             del context.cache.emoji[comment_id]
 
     # Third pass: process current comments (sorted by ID for chronological order)
-    sorted_comments = sorted(current_comments, key=lambda c: c.id)
+    sorted_comments = sorted(current_comments.values(), key=lambda c: c.id)
 
     for comment in sorted_comments:
         comment_id = str(comment.id)
@@ -5260,7 +5225,7 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     Returns:
         Dict mapping suffix ("required" or "optional") to list of CITestResult
     """
-    if not context.pr or not context.commits:
+    if not context.pr or not context.last_commit:
         return {}
 
     # Get PR number for filtering statuses
@@ -5271,7 +5236,8 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     # Get the head commit SHA
     try:
         head_sha = context.pr.head.sha
-    except Exception:
+    except AttributeError:
+        # pr.head or pr.head.sha not available
         if context.last_commit:
             head_sha = context.last_commit.sha
         else:
@@ -6066,7 +6032,8 @@ def create_test_properties_file(
             try:
                 if not getattr(context.repo_config, "CMS_STANDARD_TESTS", True):
                     req_type = "user-tests"
-            except Exception:
+            except AttributeError:
+                # repo_config may not have this attribute
                 pass
 
     # Build filename
@@ -6079,7 +6046,8 @@ def create_test_properties_file(
         slave_label = getattr(context.repo_config, "JENKINS_SLAVE_LABEL", None)
         if slave_label:
             parameters["RUN_LABEL"] = slave_label
-    except Exception:
+    except AttributeError:
+        # repo_config may not have this attribute
         pass
 
     create_property_file(filename, parameters, context.dry_run)
@@ -6286,13 +6254,13 @@ def create_new_data_repo_properties(issue_number: int, dry_run: bool) -> None:
     create_property_file(filename, params, dry_run)
 
 
-def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[Dict[str, Any]]:
+def check_file_count(context: PRContext, dryRun: bool) -> Optional[Dict[str, Any]]:
     """
-    Check if PR has too many commits or files.
+    Check if PR has too many files.
 
     This function:
     1. Scans comments to detect if bot has already warned
-    2. Checks if +commit-count or +file-count override was given
+    2. Checks if +file-count override was given
     3. Posts warnings if needed
     4. Returns early result dict if PR should be blocked
 
@@ -6306,14 +6274,9 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
     if not context.pr:
         return None
 
-    commit_count = context.pr.commits
     file_count = context.pr.changed_files
 
     # Check if bot has already posted warnings (using markers)
-    if has_bot_comment(context, "too_many_commits_warn") or has_bot_comment(
-        context, "too_many_commits_fail"
-    ):
-        context.warned_too_many_commits = True
     if has_bot_comment(context, "too_many_files_warn") or has_bot_comment(
         context, "too_many_files_fail"
     ):
@@ -6321,70 +6284,6 @@ def check_commit_and_file_counts(context: PRContext, dryRun: bool) -> Optional[D
 
     # Format trackers for mention
     trackers_mention = ", ".join(format_mention(context, t) for t in sorted(CMSSW_ISSUES_TRACKERS))
-
-    # Check commit count
-    if commit_count >= TOO_MANY_COMMITS_WARN_THRESHOLD:
-        if commit_count >= TOO_MANY_COMMITS_FAIL_THRESHOLD:
-            # Hard block - no override possible
-            if not context.warned_too_many_commits:
-                msg = (
-                    f"This PR contains too many commits ({commit_count} >= "
-                    f"{TOO_MANY_COMMITS_FAIL_THRESHOLD}) and will not be processed.\n"
-                    "Please ensure you have selected the correct target branch and "
-                    "consider squashing unnecessary commits.\n"
-                    "The processing of this PR will resume once the commit count "
-                    "drops below the limit."
-                )
-                post_bot_comment(context, msg, "too_many_commits_fail")
-                logger.warning(f"PR blocked: too many commits ({commit_count})")
-
-            # Always block at FAIL threshold - cannot be overridden
-            context.blocked_by_commit_count = True
-            flush_pending_comments(context)  # Flush before early return
-            flush_pending_statuses(context)
-            return {
-                "pr_number": context.issue.number,
-                "is_pr": True,
-                "blocked": True,
-                "reason": f"Too many commits ({commit_count})",
-                "pr_state": None,
-                "categories": {},
-                "holds": [],
-                "labels": [],
-                "messages": [],
-                "tests_triggered": [],
-            }
-        else:
-            # Warning level - can be overridden
-            if not context.warned_too_many_commits and not context.ignore_commit_count:
-                msg = (
-                    f"This PR contains many commits ({commit_count} >= "
-                    f"{TOO_MANY_COMMITS_WARN_THRESHOLD}) and will not be processed. "
-                    "Please ensure you have selected the correct target branch and "
-                    "consider squashing unnecessary commits.\n"
-                    f"{trackers_mention}, to re-enable processing of this PR, "
-                    "you can write `+commit-count` in a comment. Thanks."
-                )
-                post_bot_comment(context, msg, "too_many_commits_warn")
-                logger.warning(f"PR warned: many commits ({commit_count})")
-
-            # Block if not overridden
-            if not context.ignore_commit_count:
-                context.blocked_by_commit_count = True
-                flush_pending_comments(context)  # Flush before early return
-                flush_pending_statuses(context)
-                return {
-                    "pr_number": context.issue.number,
-                    "is_pr": True,
-                    "blocked": True,
-                    "reason": f"Too many commits ({commit_count})",
-                    "pr_state": None,
-                    "categories": {},
-                    "holds": [],
-                    "labels": [],
-                    "messages": [],
-                    "tests_triggered": [],
-                }
 
     # Check file count (CMSSW repo only)
     if context.cmssw_repo and file_count >= TOO_MANY_FILES_WARN_THRESHOLD:
@@ -6747,7 +6646,7 @@ def check_for_new_commits(context: PRContext) -> None:
 
     # Check if there are commits newer than the last bot comment
     last_bot_comment_time: Optional[datetime] = None
-    for comment in context.comments:
+    for comment in context.comments.values():
         if context.cmsbuild_user and comment.user.login == context.cmsbuild_user:
             comment_time = get_comment_timestamp(comment)
             if last_bot_comment_time is None or comment_time > last_bot_comment_time:
@@ -6857,7 +6756,8 @@ def process_pr(
         except AttributeError:
             # Already a PullRequest object
             pr = issue
-        except Exception:
+        except Exception as e:
+            logger.debug(f"as_pull_request() failed, fetching PR: {e}")
             pr = repo.get_pull(issue.number)
 
         # Check for PR with no files changed
@@ -6900,26 +6800,28 @@ def process_pr(
         logger.debug("Has <notify></notify> tag, will omit @ in mentions")
 
     # Fetch all comments once and use throughout processing
-    comments = list(issue.get_comments())
+    # Store as dict keyed by comment_id for O(1) lookups
+    comments_list = list(issue.get_comments())
+    comments = {c.id: c for c in comments_list}
     logger.debug(f"Fetched {len(comments)} comments")
 
-    # Fetch commits once for PRs
-    commits_dict: Dict[str, Any] = {}
+    # Fetch head commit for PRs - used for reset_on_push logic and status creation
+    last_commit = None
     if is_pr and pr:
         try:
-            commits_list = list(pr.get_commits())
-            commits_dict = {c.sha: c for c in commits_list}
-            logger.debug(f"Fetched {len(commits_dict)} commits")
+            head_sha = pr.head.sha
+            last_commit = repo.get_commit(head_sha)
+            logger.debug(f"Fetched head commit {head_sha[:8]}")
         except Exception as e:
-            logger.warning(f"Failed to fetch commits: {e}")
+            logger.warning(f"Failed to fetch head commit: {e}")
 
     # Load cache from comments
-    cache = load_cache_from_comments(comments)
+    cache = load_cache_from_comments(comments_list)
 
     # Use global command registry
     command_registry = get_global_registry()
 
-    # Create context with comments and commits
+    # Create context with comments and last commit
     context = PRContext(
         repo_config=repo_config,
         gh=gh,
@@ -6932,8 +6834,8 @@ def process_pr(
         cmsbuild_user=cmsbuild_user,
         is_pr=is_pr,
         comments=comments,
-        commits=commits_dict,
     )
+    context._last_commit = last_commit
     context.notify_without_at = notify_without_at
 
     # Set repository info (these are stored, computed properties derive from them)
@@ -7060,8 +6962,8 @@ def process_pr(
                     context._pr_files_with_sha = files_with_sha
                     context._changed_files = chg_files
                     add_nonblocking_labels(chg_files, context.pending_labels)
-            except Exception:
-                pass
+            except (AttributeError, TypeError) as e:
+                logger.debug(f"Could not add non-blocking labels: {e}")
 
         # Build package categories and update signing categories (common to all repos)
         if context.packages:
@@ -7112,12 +7014,12 @@ def process_pr(
         # Update test_parameters commit status
         update_test_parameters_status(context)
 
-    # Check commit and file counts (for PRs only)
+    # Check file count (for PRs only)
     if is_pr and pr:
-        block_result = check_commit_and_file_counts(context, dryRun)
+        block_result = check_file_count(context, dryRun)
         if block_result:
             # Save cache before returning
-            save_cache_to_comments(issue, context.comments, cache, dryRun)
+            save_cache_to_comments(issue, context.comments.values(), cache, dryRun)
             return block_result
 
     # Update status (labels, etc.) for both PRs and Issues
@@ -7180,7 +7082,7 @@ def process_pr(
                     context.messages.append(f"Merge failed: {e}")
 
         # Handle abort tests
-        if context.abort_tests and context.create_test_property:
+        if context.abort_comment and context.create_test_property:
             logger.info("Creating abort test properties file")
             create_abort_properties(context)
 
@@ -7222,7 +7124,7 @@ def process_pr(
     flush_pending_statuses(context)
 
     # Save cache
-    save_cache_to_comments(issue, context.comments, cache, dryRun)
+    save_cache_to_comments(issue, context.comments.values(), cache, dryRun)
 
     # Generate status message (for both PRs and Issues)
     status_message = generate_status_message(context)
@@ -7259,6 +7161,7 @@ def process_pr(
         "labels": sorted(all_labels),
         "messages": context.messages,
         "status_message": status_message,
+        "test_params": context.test_params,
         "tests_triggered": [
             {
                 "verb": t.verb,
@@ -7268,6 +7171,7 @@ def process_pr(
                 "build_full": t.build_full,
                 "extra_packages": t.extra_packages,
                 "triggered_by": t.triggered_by,
+                "comment_id": t.comment_id,
             }
             for t in context.tests_to_run
         ],
@@ -7295,7 +7199,7 @@ def add_custom_command(
     Args:
         name: Command identifier
         pattern: Regex pattern to match
-        handler: Function(context, match, user, comment_id, timestamp) -> bool
+        handler: Function(context, match, comment) -> bool
         acl: Access control (list of users/categories or callback)
         description: Human-readable description
     """

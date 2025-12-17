@@ -39,11 +39,9 @@ from process_pr_v2 import (
     PRContext,
     TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
     TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
-    TOO_MANY_COMMITS_FAIL_THRESHOLD,
-    TOO_MANY_COMMITS_WARN_THRESHOLD,
     TOO_MANY_FILES_WARN_THRESHOLD,
     build_test_parameters,
-    check_commit_and_file_counts,
+    check_file_count,
     create_property_file,
     extract_command_line,
     format_mention,
@@ -5928,56 +5926,9 @@ class TestCommitAndFileCountChecks:
         context.ignore_file_count = False
         context.notify_without_at = False
 
-        result = check_commit_and_file_counts(context, dryRun=False)
+        result = check_file_count(context, dryRun=False)
 
         assert result is None  # Not blocked
-
-    def test_too_many_commits_blocks_pr(self):
-        """Test that PRs with too many commits are blocked."""
-        context = MagicMock(spec=PRContext)
-        context.pr = MagicMock()
-        context.pr.commits = TOO_MANY_COMMITS_WARN_THRESHOLD + 10
-        context.pr.changed_files = 50
-        context.issue = MagicMock()
-        context.issue.number = 1
-        context.comments = []
-        context.cmssw_repo = False
-        context.warned_too_many_commits = False
-        context.warned_too_many_files = False
-        context.ignore_commit_count = False
-        context.ignore_file_count = False
-        context.notify_without_at = False
-        context.posted_messages = set()
-        context.pending_bot_comments = []
-        context.pending_status_updates = []
-        context.cmsbuild_user = "cmsbuild"
-        context.dry_run = True
-
-        result = check_commit_and_file_counts(context, dryRun=False)
-
-        assert result is not None
-        assert result["blocked"] is True
-        assert "commits" in result["reason"].lower()
-
-    def test_commit_count_override_unblocks(self):
-        """Test that +commit-count override unblocks PR."""
-        context = MagicMock(spec=PRContext)
-        context.pr = MagicMock()
-        context.pr.commits = TOO_MANY_COMMITS_WARN_THRESHOLD + 10
-        context.pr.changed_files = 50
-        context.issue = MagicMock()
-        context.issue.number = 1
-        context.comments = []
-        context.cmssw_repo = False
-        context.warned_too_many_commits = True
-        context.warned_too_many_files = False
-        context.ignore_commit_count = True  # Override given
-        context.ignore_file_count = False
-        context.notify_without_at = False
-
-        result = check_commit_and_file_counts(context, dryRun=False)
-
-        assert result is None  # Not blocked due to override
 
     def test_too_many_files_blocks_cmssw_repo(self):
         """Test that PRs with too many files are blocked (CMSSW repo only)."""
@@ -6000,7 +5951,7 @@ class TestCommitAndFileCountChecks:
         context.cmsbuild_user = "cmsbuild"
         context.dry_run = True
 
-        result = check_commit_and_file_counts(context, dryRun=False)
+        result = check_file_count(context, dryRun=False)
 
         assert result is not None
         assert result["blocked"] is True
@@ -6022,36 +5973,9 @@ class TestCommitAndFileCountChecks:
         context.ignore_file_count = False
         context.notify_without_at = False
 
-        result = check_commit_and_file_counts(context, dryRun=False)
+        result = check_file_count(context, dryRun=False)
 
         assert result is None  # Not blocked for external repos
-
-    def test_fail_threshold_cannot_be_overridden(self):
-        """Test that counts at FAIL threshold cannot be overridden."""
-        context = MagicMock(spec=PRContext)
-        context.pr = MagicMock()
-        context.pr.commits = TOO_MANY_COMMITS_FAIL_THRESHOLD + 10
-        context.pr.changed_files = 50
-        context.issue = MagicMock()
-        context.issue.number = 1
-        context.comments = []
-        context.cmssw_repo = False
-        context.warned_too_many_commits = False
-        context.warned_too_many_files = False
-        context.ignore_commit_count = True  # Override attempted
-        context.ignore_file_count = False
-        context.notify_without_at = False
-        context.posted_messages = set()
-        context.pending_bot_comments = []
-        context.pending_status_updates = []
-        context.cmsbuild_user = "cmsbuild"
-        context.dry_run = True
-
-        result = check_commit_and_file_counts(context, dryRun=False)
-
-        # Still blocked even with override because at FAIL threshold
-        assert result is not None
-        assert result["blocked"] is True
 
 
 # =============================================================================
@@ -8695,12 +8619,6 @@ class TestOldTestForProcessPR:
     def test_invalid_type(self):
         self.runTest()
 
-    def test_many_commits_warn(self):
-        self.runTest(pr_id=18)
-
-    def test_many_commits_ok(self):
-        self.runTest(pr_id=18)
-
     def test_merge_pr(self):
         self.runTest(pr_id=36)
 
@@ -8712,9 +8630,6 @@ class TestOldTestForProcessPR:
 
     def test_orp_issue(self):
         self.runTest(pr_id=39)
-
-    def test_too_many_commits(self):
-        self.runTest(pr_id=18)
 
     def test_test_all_params(self):
         self.runTest(24)

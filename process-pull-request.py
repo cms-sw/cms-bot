@@ -13,7 +13,6 @@ from github_utils import (
     get_gh_token,
     enable_github_loggin,
 )
-from process_pr_v2 import process_pr
 
 setdefaulttimeout(120)
 import sys
@@ -81,6 +80,7 @@ def main():
         sys.path.insert(0, repo_dir)
 
     import repo_config
+    from process_pr_v2 import process_pr
 
     if not getattr(repo_config, "RUN_DEFAULT_CMS_BOT", True):
         return
@@ -99,7 +99,7 @@ def main():
         opts.dry_run,
         force=opts.force,
         loglevel="DEBUG" if opts.debug else "INFO",
-        cmsbuild_user="cmsbuild",
+        cmsbuild_user=repo_config.CMSBUILD_USER,
     )
 
     api_rate_limits(gh)

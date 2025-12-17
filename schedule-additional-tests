@@ -7,6 +7,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
   #Skip some tests which are run separately e.g. fwlie clang-analyzer (as part of static-cecks)
   [ "${x}" = "fwlite" ] && continue
   [ "${x}" = "clang-analyzer" ] && continue
+  [ "${x}" = "rntuple" ] && continue
 
   pfile="$WORKSPACE/auto-$x-properties"
   echo "Creating property file ${pfile}"

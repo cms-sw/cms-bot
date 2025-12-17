@@ -32,6 +32,7 @@ RELVAL_KEYS = {
     "TIMEOUT": [],
     "TRACE_FUNCTION": [],
 }
+RNTUPLE_RELVALS_FLAG="--use-rntuple"
 GPU_RELVALS_FLAGS = "-w gpu --gpu required"
 THREADED_ROOT = "NON_THREADED_CMSSW"
 THREADED_IBS = "NON_THREADED_CMSSW"
@@ -78,6 +79,8 @@ if (
     or ib_test_type.startswith("amd_")
 ):
     RELVAL_KEYS["WORKFLOWS"].append([".+", GPU_RELVALS_FLAGS])
+elif ib_test_type in ["rntuple"]:
+    RELVAL_KEYS["WORKFLOWS"].append([".+", RNTUPLE_RELVALS_FLAG])
 else:
     RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", GPU_RELVALS_FLAGS])
     RELVAL_KEYS["WORKFLOWS"].append(["_ROCM_", GPU_RELVALS_FLAGS])

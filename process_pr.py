@@ -615,6 +615,8 @@ def get_assign_categories(line, extra_labels):
 
 def ignore_issue(repo_config, repo, issue):
     ig_issues = getattr(repo_config, "IGNORE_ISSUES", {})
+    if not ig_issues and repo.full_name == CMSSW_REPO_NAME:
+        ig_issues = [n for n in os.getenv("IGNORE_CMSSW_ISSUES", "").split(" ") if n]
     if issue.number in ig_issues:
         return True
     if (repo.full_name in ig_issues) and (issue.number in ig_issues[repo.full_name]):

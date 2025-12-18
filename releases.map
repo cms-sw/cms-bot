@@ -4805,3 +4805,4 @@ architecture=el9_amd64_gcc11;label=CMSSW_13_0_24;type=Production;state=Announced
 architecture=el9_amd64_gcc13;label=CMSSW_16_0_0_pre4;type=Development;state=Announced;prodarch=0;default_micro_arch=x86-64-v3;
 architecture=el8_amd64_gcc13;label=CMSSW_16_0_0_pre4;type=Development;state=Announced;prodarch=1;default_micro_arch=x86-64-v3;
 architecture=el8_aarch64_gcc13;label=CMSSW_16_0_0_pre4;type=Development;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc13;label=CMSSW_16_0_0_pre4_FASTPU;type=Development;state=Announced;prodarch=1;default_micro_arch=x86-64-v3;

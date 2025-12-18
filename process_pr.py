@@ -618,7 +618,7 @@ def ignore_issue(repo_config, repo, issue):
     if repo.full_name == CMSSW_REPO_NAME:
         if not CMSSW_REPO_NAME in ig_issues:
             ig_issues[CMSSW_REPO_NAME] = []
-        for issue_num in [n for n in os.getenv("IGNORE_CMSSW_ISSUES", "").split(" ") if n]:
+        for issue_num in [int(n) for n in os.getenv("IGNORE_CMSSW_ISSUES", "").split(" ") if n]:
             ig_issues[CMSSW_REPO_NAME].append(issue_num)
     if issue.number in ig_issues:
         return True

@@ -215,6 +215,12 @@ if [ "$NVIDIA_VERSION" ]; then
   if [ "${gpu_type}" != "" ] ; then
     echo "DATA_NVIDIA_VERSION=$NVIDIA_VERSION"
     SLAVE_LABELS="${SLAVE_LABELS} cuda nvidia nvidia-$NVIDIA_VERSION nvidia_${gpu_type}"
+    case ${gpu_type} in
+      h100* ) nvidia_h100;;
+      t4*) nvidia_t4;;
+      l40s)  nvidia_l40s;;
+      * ) echo "Unknown GPU";;
+    esac
   fi
 fi
 

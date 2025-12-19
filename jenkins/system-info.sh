@@ -218,7 +218,7 @@ if [ "$NVIDIA_VERSION" ]; then
     case ${gpu_type} in
       h100* ) SLAVE_LABELS="${SLAVE_LABELS} nvidia_h100";;
       t4*)    SLAVE_LABELS="${SLAVE_LABELS} nvidia_t4";;
-      l40s)   SLAVE_LABELS="${SLAVE_LABELS} nvidia_l40s";;
+      l40s*)  SLAVE_LABELS="${SLAVE_LABELS} nvidia_l40s";;
       * ) echo "Unknown GPU";;
     esac
   fi

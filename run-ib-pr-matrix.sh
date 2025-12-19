@@ -92,7 +92,7 @@ pushd "$WORKSPACE/matrix-results"
   fi
   if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
     NJOBS=$(grep 'GPU no' $WORKSPACE/runTheMatrix.log | wc -l)
-    if [ $NJOBS -eq 1 ] ; then NJOBS=1 ; fi
+    if [ $NJOBS -eq 0 ] ; then NJOBS=1 ; fi
   fi
   rm -f $WORKSPACE/runTheMatrix.log
 

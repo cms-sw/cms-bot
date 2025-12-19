@@ -90,6 +90,10 @@ pushd "$WORKSPACE/matrix-results"
   if ! check_invalid_wf_lists "${MATRIX_ARGS}" ; then
     exit 1
   fi
+  if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
+    NJOBS=$(grep 'GPU no' $WORKSPACE/runTheMatrix.log | wc -l)
+    if [ $NJOBS -eq 1 ] ; then NJOBS=1 ; fi
+  fi
   rm -f $WORKSPACE/runTheMatrix.log
 
   [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"

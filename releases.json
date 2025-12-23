@@ -21617,6 +21617,18 @@
                 }
               ]
             }
+          ],
+          "CMSSW_16_0": [
+            {
+              "label": "CMSSW_16_0_0_pre4_G4VECGEOM",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
           ]
         },
         "PYTHON3": {

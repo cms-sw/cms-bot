@@ -27,6 +27,7 @@ REPO_HOOK_MAP.append(["cms-sw/xsecdb", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/web-confdb", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/RecoLuminosity-LumiDB", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/DQM-Integration", ["Jenkins_Github_Hook_Push"]])
+REPO_HOOK_MAP.append(["cms-sw/circles", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-data/.+", ["Jenkins_Github_Hook", "Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-externals/.+", ["Jenkins_Github_Hook", "Jenkins_Github_Hook_Push"]])
 

@@ -64,7 +64,8 @@
             {
                 "jobName": "build-any-ib",
                 "errorType": [
-                    "gitErrors"
+                    "gitErrors",
+                    "cmsPkgUpdateError"
                 ],
                 "maxTime": "18"
             },
@@ -233,6 +234,12 @@
                 ],
                 "action": "retryLate",
                 "allJobs": "true"
+            },
+            "cmsPkgUpdateError": {
+                "errorStr": [
+                    "ERROR: Error while executing cmspkg update"
+                ],
+                "action": "retryLate"
             },
             "busError": {
                 "errorStr": [

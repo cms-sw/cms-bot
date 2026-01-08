@@ -126,8 +126,8 @@ def fetch(url, content_type=ContentType.JSON, payload=None):
         logger.fatal(f"Request to {url} failed with error {e}")
         raise
     if response.status_code != 200:
-        logger.fatal(f"Request to {url} failed with code {response.status_code}")
-        raise RuntimeError()
+        logger.warning(f"Request to {url} failed with code {response.status_code}")
+        raise RuntimeError(f"Request to {url} failed with code {response.status_code}")
     content = response.content
     if payload is None:
         if content_type == ContentType.JSON:
@@ -163,7 +163,7 @@ def check_ib(data, compilation_only=False):
             bldFile = bld["file"].replace("/data/sdt", "")
             try:
                 summIO = io.BytesIO(fetch(bldFile, content_type=ContentType.BINARY))
-            except urllib.error.HTTPError:
+            except RuntimeError:
                 continue
 
             pklr = pickle.Unpickler(summIO)
@@ -232,7 +232,7 @@ def check_ib(data, compilation_only=False):
                                 f"{data['release_name']}/unitTestLogs/{pkg}",
                                 ContentType.JSON,
                             )
-                        except urllib.error.HTTPError:
+                        except RuntimeError:
                             utlData = {"show_controls": []}
 
                         for ctl in utlData["show_controls"]:
@@ -260,7 +260,7 @@ def check_ib(data, compilation_only=False):
                         f"{queue}.json",
                         ContentType.JSON,   
                     )
-                except urllib.error.HTTPError:
+                except RuntimeError:
                     rvData = []
 
                 for rvItem in rvData:
@@ -327,7 +327,7 @@ def get_ib_dates(cmssw_release):
 
     try:
         release_data = fetch("SDT/html/data/" + default_release + ".json")
-    except urllib.error.HTTPError:
+    except RuntimeError:
         print(f"!ERROR: Invalid release {default_release}!")
         exit(1)
 

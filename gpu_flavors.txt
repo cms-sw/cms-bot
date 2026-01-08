@@ -2,3 +2,4 @@ nvidia_t4
 nvidia_h100
 nvidia_l40s
 amd_w7900
+amd_mi300x

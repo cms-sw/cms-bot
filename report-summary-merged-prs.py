@@ -70,6 +70,7 @@ The schema of the dictionary is as folows:
    "cmsdistTags": {},
    "relvals": [],
    "gpu_relvals": [],
+   "other_relvals": [],
    "gpu_qa": [],
    "static_checks": "",
    "valgrind": "",
@@ -358,7 +359,7 @@ def analyze_tests_results(output, results, arch, type):
     parses the tests results for each file in output. It distinguishes if it is
     build, unit tests, relvals, or addon tests logs. The the result of the parsing
     is saved in the parameter results.
-    type can be 'relvals', 'utests', 'gpu_relvals', 'gpu_qa', 'addON', 'builds', 'fwlite'
+    type can be 'relvals', 'utests', 'gpu_relvals', 'gpu_qa', 'other_relvals', 'addON', 'builds', 'fwlite'
 
     schema of results:
     {
@@ -386,7 +387,7 @@ def analyze_tests_results(output, results, arch, type):
 
         details = {}
         passed = None
-        if type in ["relvals", "gpu_relvals"]:
+        if type in ["relvals", "gpu_relvals", "other_relvals"]:
             passed, details = get_results_one_relval_file(line)
             result_arch["done"] = False
             if exists(join(dirname(line), "done")) or exists(join(dirname(line), "all.pages")):
@@ -419,6 +420,11 @@ def analyze_tests_results(output, results, arch, type):
             idx = -5 if (type == "gpu_relvals") else -3
             if line_items[idx] == "gpu":
                 result_arch["gpu"] = line_items[idx + 1]
+        if type in ["other_relvals"]:
+            line_items = line.split("/")
+            idx = -5 if (type == "other_relvals") else -3
+            if line_items[idx] == "other":
+                result_arch["other"] = line_items[idx + 1]
 
         if rel_name not in results.keys():
             results[rel_name] = []
@@ -676,12 +682,13 @@ def execute_magic_command_find_results(type):
     Executes the a command to get the results for the relvals, unit tests,
     addon tests, and compitlation tests
     It saves the results in the parameter 'results'
-    type can be 'relvals', 'utests', 'gpu_relvals', 'gpu_qa', 'addON', 'builds'
+    type can be 'relvals', 'utests', 'gpu_relvals', 'gpu_qa', 'other_relvals', 'addON', 'builds'
     """
     ex_magix_comand_finf_setuls_dict = {
         "relvals": MAGIC_COMMAD_FIND_RESULTS_RELVALS,
         "utests": MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS,
         "gpu_relvals": MAGIC_COMMAD_FIND_RESULTS_RELVALS_GPU,
+        "other_relvals": MAGIC_COMMAD_FIND_RESULTS_RELVALS_OTHER,
         "gpu_qa": MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS_GPU,
         "addOn": MAGIC_COMMAND_FIND_RESULTS_ADDON,
         "builds": MAGIC_COMMAND_FIND_RESULTS_BUILD,
@@ -751,6 +758,12 @@ def print_results(results):
                 for res in comp["gpu_relvals"]
             ]
             print("\t" + "GPU RelVals:" + str(gpu_relvals_results))
+
+            other_relvals_results = [
+                res["arch"] + ":" + str(res["passed"]) + ":" + str(res["details"])
+                for res in comp["other_relvals"]
+            ]
+            print("\t" + "Other RelVals:" + str(other_relvals_results))
 
             utests_results = [
                 res["arch"] + ":" + str(res["passed"]) + ":" + str(res["details"])
@@ -881,6 +894,7 @@ def add_tests_to_results(
     invalid_includes,
     gpu_relvals_results,
     gpu_qa_results,
+    other_relvals_results,
 ):
     """
     merges the results of the tests with the structure of the IBs tags and the pull requests
@@ -891,6 +905,7 @@ def add_tests_to_results(
             rel_name = comp["compared_tags"].split("-->")[1]
             rvsres = relvals_results.get(rel_name)
             gpu_rvsres = gpu_relvals_results.get(rel_name)
+            other_rvsres = other_relvals_results.get(rel_name)
             utres = unit_tests.get(rel_name)
             gpu_utres = gpu_qa_results.get(rel_name)
             python3_res = python3_results.get(rel_name)
@@ -904,6 +919,7 @@ def add_tests_to_results(
             # for tests with arrays
             comp["relvals"] = rvsres if rvsres else []
             comp["gpu_relvals"] = gpu_rvsres if gpu_rvsres else []
+            comp["other_relvals"] = other_rvsres if other_rvsres else []
             comp["gpu_qa"] = gpu_utres if gpu_utres else []
             comp["utests"] = utres if utres else []
             comp["python3_tests"] = python3_res if python3_res else []
@@ -1621,6 +1637,11 @@ if __name__ == "__main__":
         + BUILD_LOG_DIR
         + '/ARCHITECTURE/www  -mindepth 8 -maxdepth 8 -path "*/gpu/*/pyRelValMatrixLogs/run/runall-report-step123-.log"'
     )
+    MAGIC_COMMAD_FIND_RESULTS_RELVALS_OTHER = (
+        "find "
+        + BUILD_LOG_DIR
+        + '/ARCHITECTURE/www  -mindepth 8 -maxdepth 8 -path "*/other/*/pyRelValMatrixLogs/run/runall-report-step123-.log"'
+    )
     MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS = (
         "find cms-sw.github.io/data/relvals/ -name '*EXCEPTIONS.json'"
     )
@@ -1995,6 +2016,7 @@ if __name__ == "__main__":
         execute_magic_command_find_results("invalid-includes"),
         execute_magic_command_find_results("gpu_relvals"),
         execute_magic_command_find_results("gpu_qa"),
+        execute_magic_command_find_results("other_relvals"),
     )
 
     ubsan_data = {}
@@ -2039,6 +2061,7 @@ if __name__ == "__main__":
             prod_ib_index["%s:%s" % (rq, res.get("ib_date"))] = res
 
     gpu_results = {}
+    other_results = {}
     for rx in results:
         for res in rx["comparisons"]:
             if not res.get("isIB", False):
@@ -2054,36 +2077,53 @@ if __name__ == "__main__":
             release_queuex = "_".join(release_queue_items[:3]) + "_X"
             gpu_qa = res.get("gpu_qa", [])
             gpu_relvals = res.get("gpu_relvals", [])
+            other_relvals = res.get("other_relvals", [])
             idx = "%s:%s" % (release_queuex, ib_date)
             if not idx in gpu_results:
                 gpu_results[idx] = {"qa": {}, "relvals": {}}
+            if not idx in other_results:
+                other_results[idx] = {"relvals": {}}
             for qa in gpu_qa:
                 if not "gpu" in qa:
                     continue
-                gpu_idx = "/".join([qa["gpu"]] + release_flavor + [qa["arch"]])
-                if not gpu_idx in gpu_results[idx]["qa"]:
-                    gpu_results[idx]["qa"][gpu_idx] = {}
+                idx1 = "/".join([qa["gpu"]] + release_flavor + [qa["arch"]])
+                if not idx1 in gpu_results[idx]["qa"]:
+                    gpu_results[idx]["qa"][idx1] = {}
                 for x in ["arch", "gpu", "details", "passed", "file"]:
-                    gpu_results[idx]["qa"][gpu_idx][x] = qa[x]
-                gpu_results[idx]["qa"][gpu_idx]["release_name"] = res["release_name"]
+                    gpu_results[idx]["qa"][idx1][x] = qa[x]
+                gpu_results[idx]["qa"][idx1]["release_name"] = res["release_name"]
             for qa in gpu_relvals:
                 if not "gpu" in qa:
                     continue
-                gpu_idx = "/".join([qa["gpu"]] + release_flavor + [qa["arch"]])
-                if not gpu_idx in gpu_results[idx]["relvals"]:
-                    gpu_results[idx]["relvals"][gpu_idx] = {}
+                idx1 = "/".join([qa["gpu"]] + release_flavor + [qa["arch"]])
+                if not idx1 in gpu_results[idx]["relvals"]:
+                    gpu_results[idx]["relvals"][idx1] = {}
                 for x in ["arch", "gpu", "details", "passed", "done", "file"]:
-                    gpu_results[idx]["relvals"][gpu_idx][x] = qa[x]
-                gpu_results[idx]["relvals"][gpu_idx]["release_name"] = res["release_name"]
+                    gpu_results[idx]["relvals"][idx1][x] = qa[x]
+                gpu_results[idx]["relvals"][idx1]["release_name"] = res["release_name"]
+            for qa in other_relvals:
+                if not "other" in qa:
+                    continue
+                idx1 = "/".join([qa["other"]] + release_flavor + [qa["arch"]])
+                if not idx1 in gpu_results[idx]["relvals"]:
+                    other_results[idx]["relvals"][idx1] = {}
+                for x in ["arch", "gpu", "details", "passed", "done", "file"]:
+                    other_results[idx]["relvals"][idx1][x] = qa[x]
+                other_results[idx]["relvals"][idx1]["release_name"] = res["release_name"]
 
     for idx in gpu_results.keys():
         if not idx in prod_ib_index:
             continue
         prod_ib_index[idx]["gpu_data"] = deepcopy(gpu_results[idx])
 
+    for idx in other_results.keys():
+        if not idx in prod_ib_index:
+            continue
+        prod_ib_index[idx]["other_data"] = deepcopy(other_results[idx])
+
     for rx in results:
         for res in rx["comparisons"]:
-            for x in ["gpu_qa", "gpu_relvals"]:
+            for x in ["gpu_qa", "gpu_relvals", "other_relvals"]:
                 if x in res:
                     del res[x]
 

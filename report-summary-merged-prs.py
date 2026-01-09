@@ -2114,12 +2114,14 @@ if __name__ == "__main__":
     for idx in gpu_results.keys():
         if not idx in prod_ib_index:
             continue
-        prod_ib_index[idx]["gpu_data"] = deepcopy(gpu_results[idx])
+        if [k for k in gpu_results[idx] if gpu_results[idx][k]]:
+            prod_ib_index[idx]["gpu_data"] = deepcopy(gpu_results[idx])
 
     for idx in other_results.keys():
         if not idx in prod_ib_index:
             continue
-        prod_ib_index[idx]["other_data"] = deepcopy(other_results[idx])
+        if [k for k in other_results[idx] if other_results[idx][k]]:
+            prod_ib_index[idx]["other_data"] = deepcopy(other_results[idx])
 
     for rx in results:
         for res in rx["comparisons"]:

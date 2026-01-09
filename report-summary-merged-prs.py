@@ -2107,7 +2107,7 @@ if __name__ == "__main__":
                 idx1 = "/".join([qa["other"]] + release_flavor + [qa["arch"]])
                 if not idx1 in gpu_results[idx]["relvals"]:
                     other_results[idx]["relvals"][idx1] = {}
-                for x in ["arch", "gpu", "details", "passed", "done", "file"]:
+                for x in ["arch", "other", "details", "passed", "done", "file"]:
                     other_results[idx]["relvals"][idx1][x] = qa[x]
                 other_results[idx]["relvals"][idx1]["release_name"] = res["release_name"]
 

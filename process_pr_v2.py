@@ -3123,7 +3123,9 @@ def handle_code_checks(context: PRContext, match: re.Match, comment: Any) -> boo
             return True
 
     # Notice: should never happen
-    if ensure_tz_aware(context.last_commit.committer.date) > ensure_tz_aware(comment.updated_at):
+    if ensure_tz_aware(context.last_commit.commit.committer.date) > ensure_tz_aware(
+        comment.updated_at
+    ):
         logger.info(
             f"Setting code-check params but not triggering checks: last_commit was after this comment"
         )
@@ -5829,7 +5831,7 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
     # Batch removals into a single call
     if (labels_to_remove or labels_to_add) and not context.dry_run:
         if not hasattr(context.issue, "_recorder"):
-            context.issue.set_labels(new_labels)
+            context.issue.set_labels(*new_labels)
 
     return old_labels, new_labels
 

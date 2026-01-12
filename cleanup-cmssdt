@@ -39,7 +39,7 @@ for type in "" ${EXTRA_RELVAL_TESTS} ; do
   done
 done
 
-JOBS_TO_KEEP=500
+JOBS_TO_KEEP=2000
 for dir in hlt-p2-timing ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"

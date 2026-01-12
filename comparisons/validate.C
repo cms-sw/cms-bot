@@ -17,7 +17,12 @@
 #include "TSQLResult.h"
 #include "TSQLRow.h"
 #include <cmath>
-#include <Eigen/Core>
+#ifdef __has_include
+  #if __has_include(<Eigen/Core>)
+    #include <Eigen/Core>
+  #endif
+#endif
+
 
 bool detailed = true;
 bool detailed1 = false;//higher level of detail

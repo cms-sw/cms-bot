@@ -57,7 +57,7 @@
             "filename": "trigger-tests-iarspider-cmssw-cmsdist-1.properties",
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmsdist#1",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO RNTUPLE",
                 "CONTEXT_PREFIX": "cms/1",
                 "BUILD_ONLY": false
             }

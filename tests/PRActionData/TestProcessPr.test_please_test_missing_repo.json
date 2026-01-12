@@ -29,7 +29,7 @@
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#46 cms-sw/cmssw#49212",
                 "RELEASE_FORMAT": "CMSSW_16_0_CLANG_X",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO RNTUPLE",
                 "BUILD_ONLY": false,
                 "CONTEXT_PREFIX": "cms/46"
             }

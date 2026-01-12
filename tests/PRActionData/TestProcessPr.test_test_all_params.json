@@ -66,7 +66,7 @@
                 "RELEASE_FORMAT": "CMSSW_12_6_X",
                 "ENABLE_BOT_TESTS": "GPU,THREADING,PROFILING,HIGH_STATS,NANO",
                 "ARCHITECTURE_FILTER": "slc6_amd64_gcc930",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO RNTUPLE",
                 "CONTEXT_PREFIX": "cms/24",
                 "BUILD_ONLY": false
             }

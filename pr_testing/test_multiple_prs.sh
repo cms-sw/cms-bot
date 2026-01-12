@@ -97,7 +97,7 @@ readarray -t ONDEMAND_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors_ondemand.txt
 ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
 
 [ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]')"
-EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | grep -v GPU | tr '\n' ' ')
+EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | grep -v RNTUPLE | grep -v GPU | tr '\n' ' ')
 # ---
 # doc: Input variable
 # PULL_REQUESTS   # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
@@ -1523,17 +1523,21 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     echo "RUN_THE_MATRIX_CMD_OPTS=${FULL_MATRIX_ARGS}" >> $WORKSPACE/run-relvals.prop
   fi
 
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
-    cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
-    echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
-    echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-    WF1=$(echo "${WF_COMMON}" | sed 's|;.*||')
-    WF2="$(get_pr_relval_args $DO_COMPARISON _THREADING | sed 's|.*;||')"
-    [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF2="${WF2};-l ${WORKFLOWS_PR_LABELS}"
-    WF2=$(echo "${WF2}" | sed 's|^;*||')
-    if [ "${WF2}" != "" ] ; then WF1="${WF1};${WF2}"; fi
-    echo "MATRIX_ARGS=${WF1}" >> $WORKSPACE/run-relvals-threading.prop
-  fi
+  for tn in threading rntuple ; do
+    uc_tn=$(echo $tn | tr a-z A-Z)
+    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${uc_tn}$" | wc -l) -gt 0 ] ; then
+      prop_file="$WORKSPACE/run-relvals-${tn}.prop"
+      cp $WORKSPACE/test-env.txt ${prop_file}
+      echo "DO_COMPARISON=false" >> ${prop_file}
+      echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> ${prop_file}
+      WF1=$(echo "${WF_COMMON}" | sed 's|;.*||')
+      WF2="$(get_pr_relval_args $DO_COMPARISON _${uc_tn} | sed 's|.*;||')"
+      [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF2="${WF2};-l ${WORKFLOWS_PR_LABELS}"
+      WF2=$(echo "${WF2}" | sed 's|^;*||')
+      if [ "${WF2}" != "" ] ; then WF1="${WF1};${WF2}"; fi
+      echo "MATRIX_ARGS=${WF1}" >> ${prop_file}
+    fi
+  done
   if $PRODUCTION_RELEASE ; then
     for ex_type in ${EXTRA_RELVALS_TESTS} ; do
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue

@@ -60,7 +60,7 @@
                 "DISABLE_POISON": "true",
                 "DOCKER_IMGAGE": "cmssw/cc7",
                 "RUN_ON_SLAVE": "cmssdt",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO RNTUPLE",
                 "BUILD_ONLY": false,
                 "ENABLE_BOT_TESTS": "GPU",
                 "SELECTED_GPU_TYPES": "nvidia_h100,amd_mi300x",

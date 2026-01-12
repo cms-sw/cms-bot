@@ -1,0 +1,24 @@
+{
+  "test_name": "test_assign_from_with_label",
+  "action_count": 2,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 27,
+        "labels": [
+          "hcal"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 27,
+        "body": "New categories assigned: xpog\n\nhqucms, vlimant you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2769330515-->"
+      }
+    }
+  ]
+}

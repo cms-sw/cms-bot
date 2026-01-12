@@ -1,0 +1,51 @@
+{
+  "id": 1,
+  "number": 1,
+  "title": "Test PR #1",
+  "body": "Test PR body",
+  "state": "open",
+  "merged": false,
+  "mergeable": true,
+  "head": {
+    "sha": "commit_sha_1",
+    "ref": "feature"
+  },
+  "base": {
+    "sha": "base123",
+    "ref": "master"
+  },
+  "user": {
+    "login": "testuser",
+    "id": 1
+  },
+  "files": [
+    {
+      "filename": "Package/Core/main.py",
+      "sha": "file_sha_core",
+      "status": "modified"
+    },
+    {
+      "filename": "Package/DQM/monitor.py",
+      "sha": "file_sha_dqm",
+      "status": "modified"
+    }
+  ],
+  "commits": [
+    {
+      "sha": "commit_sha_1",
+      "commit": {
+        "message": "Test commit",
+        "author": {
+          "date": "2025-12-12T11:00:00Z",
+          "name": "Author",
+          "email": "a@b.com"
+        },
+        "committer": {
+          "date": "2025-12-12T11:00:00Z",
+          "name": "Author",
+          "email": "a@b.com"
+        }
+      }
+    }
+  ]
+}

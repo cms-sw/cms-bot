@@ -1,0 +1,64 @@
+{
+  "test_name": "test_test_all_params",
+  "action_count": 6,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 24,
+        "labels": [
+          "code-checks-approved"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 24,
+        "labels": [
+          "code-checks-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 24,
+        "body": "Pull request #24 was updated. iarspider can you please check and sign again.\n\nmissirol this is something you requested to watch as well.\n<!--pr_updated:582713574410859096-->"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
+        "state": "pending",
+        "target_url": "",
+        "description": "code-checks pending",
+        "context": "cms/24/code-checks"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
+        "state": "success",
+        "target_url": "",
+        "description": "{\"ENABLE_BOT_TESTS\": \"GPU,THREADING,PROFILING,HIGH_STATS,NANO\"}",
+        "context": "bot/24/test_parameters"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2740051887,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2740055137\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2025-03-20T11:24:44+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"Validation/README::77764fb81876bf1924bd364f0683b4df078c3da8\":{\"cats\":[],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

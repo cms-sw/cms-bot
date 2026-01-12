@@ -1,0 +1,9515 @@
+#!/usr/bin/env python3
+"""
+PyTest tests for process_pr_v2 module.
+
+This test module provides:
+- Mock implementations of PyGithub classes that load state from JSON files
+- Recording mode to capture actions for later comparison
+- Comparison mode to verify actions match expected results
+
+Usage:
+    # Run tests in comparison mode (default)
+    pytest test_process_pr_v2.py
+
+    # Run tests in recording mode (saves actions to PRActionData/)
+    pytest test_process_pr_v2.py --record-actions
+
+    # Run a specific test
+    pytest test_process_pr_v2.py::test_basic_approval --record-actions
+"""
+
+import functools
+import json
+import os
+import sys
+import types
+from dataclasses import dataclass, field
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+from typing import Any, ClassVar, Dict, List, Optional, Union
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# =============================================================================
+# FROZEN TIME FOR DETERMINISTIC TESTS
+# =============================================================================
+
+# All tests use this frozen time to ensure deterministic results
+# Commit time is 1 hour before, comment time is at this time
+FROZEN_TIME = datetime(2025, 12, 12, 12, 0, 0, tzinfo=timezone.utc)
+FROZEN_COMMIT_TIME = FROZEN_TIME - timedelta(hours=1)  # 11:00:00
+FROZEN_COMMENT_TIME = FROZEN_TIME  # 12:00:00
+
+# Import the module under test
+from process_pr_v2 import (
+    PRContext,
+    TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
+    TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
+    TOO_MANY_FILES_WARN_THRESHOLD,
+    build_test_parameters,
+    check_file_count,
+    create_property_file,
+    extract_command_line,
+    format_mention,
+    init_l2_data,
+    is_valid_tester,
+    parse_test_cmd,
+    parse_test_parameters,
+    parse_timestamp,
+    preprocess_command,
+    process_pr,
+    should_ignore_issue,
+    should_notify_without_at,
+)
+
+# Import BUILD_REL for testing ignore logic
+try:
+    from cms_static import BUILD_REL
+except ImportError:
+    # Fallback pattern if cms_static not available: ^[Bb]uild[ ]+(CMSSW_[^ ]+)
+    BUILD_REL = r"^[Bb]uild[ ]+(CMSSW_[^ ]+)"
+
+# Replace fetch_pr_result with a dummy function that doesn't make network calls
+import process_pr_v2
+
+
+def _dummy_fetch_pr_result(url):
+    """Dummy fetch_pr_result for testing - returns success with test passed message."""
+    return 0, "+1\n\nTests passed"
+
+
+process_pr_v2.fetch_pr_result = _dummy_fetch_pr_result
+
+
+def create_mock_repo_config(**overrides) -> types.ModuleType:
+    """
+    Create a mock repo_config module for testing.
+
+    Args:
+        **overrides: Override any default configuration values
+
+    Returns:
+        A module-like object with configuration attributes
+    """
+    module = types.ModuleType("mock_repo_config")
+
+    # Default configuration
+    module.CONFIG_DIR = str(Path(__file__).parent)
+
+    # File ownership patterns -> L2 categories
+    module.FILE_OWNERS = {
+        r"^src/core/.*": ["core"],
+        r"^src/analysis/.*": ["analysis"],
+        r"^src/simulation/.*": ["simulation"],
+        r"^docs/.*": ["docs"],
+        r"^tests/.*": ["testing"],
+    }
+
+    # Package -> category mapping (for 'assign from' command)
+    module.PACKAGE_CATEGORIES = {
+        "numpy": "analysis",
+        "scipy": "analysis",
+        "matplotlib": "visualization",
+    }
+
+    # Automatically merge when fully signed
+    module.AUTOMERGE = False
+
+    # Apply overrides
+    for key, value in overrides.items():
+        setattr(module, key, value)
+
+    return module
+
+
+def setup_test_l2_data(user_categories: Dict[str, List[str]] = None) -> None:
+    """
+    Setup L2 data for testing by directly modifying the global _L2_DATA.
+
+    Args:
+        user_categories: Dict mapping username to list of categories
+    """
+    import process_pr_v2
+
+    if user_categories is None:
+        # Default test L2 data
+        user_categories = {
+            "alice": ["core", "analysis"],
+            "bob": ["simulation"],
+            "carol": ["docs", "testing"],
+            "dave": ["orp"],
+            "cmsbuild": ["tests", "code-checks"],
+        }
+
+    # Convert to L2 data format (list of periods)
+    l2_data = {}
+    for user, categories in user_categories.items():
+        l2_data[user] = [{"start_date": 0, "category": categories}]
+
+    process_pr_v2._L2_DATA = l2_data
+
+
+@pytest.fixture(autouse=True)
+def setup_l2_data():
+    """Fixture to setup L2 data before each test."""
+    setup_test_l2_data()
+    yield
+    # Cleanup after test
+    import process_pr_v2
+
+    process_pr_v2._L2_DATA = {}
+
+
+@pytest.fixture(autouse=True)
+def clear_mock_commit_statuses():
+    """Fixture to clear MockCommit shared statuses between tests."""
+    MockCommit._shared_statuses = {}
+    yield
+    MockCommit._shared_statuses = {}
+
+
+@pytest.fixture(autouse=True)
+def mock_cmssw_categories(monkeypatch):
+    """Mock CMSSW_CATEGORIES with test categories."""
+    test_categories = {
+        "core": ["Package/Core", "Package/Framework"],
+        "analysis": ["Package/Analysis", "numpy", "scipy"],
+        "simulation": ["Package/Simulation"],
+        "visualization": ["Package/Visualization", "matplotlib"],
+        "docs": ["Package/Docs"],
+        "testing": ["Package/Testing"],
+        "orp": [],
+        "tests": [],
+        "code-checks": [],
+        "reconstruction": ["Package/Reconstruction"],
+        "l1": ["Package/L1"],
+        "hlt": ["Package/HLT"],
+        "db": ["Package/DB"],
+        "dqm": ["Package/DQM"],
+        "generators": ["Package/Generators"],
+        "fastsim": ["Package/FastSim"],
+        "fullsim": ["Package/FullSim"],
+        "operations": ["Package/Operations"],
+        "pdmv": ["Package/PdmV"],
+        "upgrade": ["Package/Upgrade"],
+        "geometry": ["Package/Geometry"],
+        "alca": ["Package/Alca"],
+        "ml": ["Package/ML"],
+        "heterogeneous": ["Package/Heterogeneous"],
+        "tracking": ["Package/Tracking"],
+    }
+    monkeypatch.setattr("process_pr_v2.CMSSW_CATEGORIES", test_categories)
+    # Mock get_release_managers to accept any arguments
+    monkeypatch.setattr("process_pr_v2.get_release_managers", lambda *args: [])
+    # Mock GH_CMSSW_REPO to match our test repo name
+    monkeypatch.setattr("process_pr_v2.GH_CMSSW_REPO", "cmssw")
+    yield test_categories
+
+
+@pytest.fixture(autouse=True)
+def freeze_time(monkeypatch):
+    """
+    Freeze datetime.now() to FROZEN_TIME for deterministic tests.
+
+    This ensures that cache timestamps, comment processing, etc. all use
+    the same time, making test results reproducible.
+    """
+    import process_pr_v2
+
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            if tz is not None:
+                return FROZEN_TIME.astimezone(tz)
+            return FROZEN_TIME.replace(tzinfo=None)
+
+        @classmethod
+        def utcnow(cls):
+            return FROZEN_TIME.replace(tzinfo=None)
+
+    # Patch datetime in process_pr_v2 module
+    monkeypatch.setattr("process_pr_v2.datetime", FrozenDatetime)
+    yield FROZEN_TIME
+
+
+# =============================================================================
+# TEST CONFIGURATION
+# =============================================================================
+
+# Base directories for test data
+REPLAY_DATA_DIR = Path(__file__).parent / "ReplayData"
+ACTION_DATA_DIR = Path(__file__).parent / "PRActionData"
+
+
+# pytest_addoption and record_mode fixture are defined in conftest.py
+
+
+# =============================================================================
+# ACTION RECORDER
+# =============================================================================
+
+
+class ActionRecorder:
+    """
+    Records actions taken during PR processing for later verification.
+
+    Actions are recorded as a list of dictionaries with:
+    - action: The type of action (e.g., 'create_comment', 'add_label')
+    - timestamp: When the action occurred
+    - details: Action-specific data
+    """
+
+    def __init__(self, test_name: str, record_mode: bool = False):
+        self.test_name = test_name
+        self.record_mode = record_mode
+        self.actions: List[Dict[str, Any]] = []
+        self._action_counter = 0
+
+    def record(self, action: str, **details) -> None:
+        """Record an action."""
+        self._action_counter += 1
+        self.actions.append(
+            {
+                "sequence": self._action_counter,
+                "action": action,
+                "details": details,
+            }
+        )
+
+    def property_file_hook(self) -> List[Dict[str, Any]]:
+        """
+        Create a hook configuration for recording property file creation.
+
+        Returns a list suitable for use with FunctionHook.
+
+        Usage:
+            recorder = ActionRecorder("test_name", record_mode)
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(...)
+        """
+
+        # noinspection PyUnusedLocal
+        def on_create_property_file(filename, parameters, dry_run, res=None):
+            self.record("create_property_file", filename=filename, parameters=parameters)
+            return res
+
+        return [
+            {
+                "module_path": "process_pr_v2",
+                "class_name": None,
+                "function_name": "create_property_file",
+                "hook_function": on_create_property_file,
+                "call_original": False,
+            },
+        ]
+
+    def save(self) -> None:
+        """Save recorded actions to file."""
+        ACTION_DATA_DIR.mkdir(parents=True, exist_ok=True)
+        filepath = ACTION_DATA_DIR / f"{self.test_name}.json"
+
+        with open(filepath, "w") as f:
+            json.dump(
+                {
+                    "test_name": self.test_name,
+                    "action_count": len(self.actions),
+                    "actions": self.actions,
+                },
+                f,
+                indent=2,
+                default=str,
+            )
+
+        print(f"Saved {len(self.actions)} actions to {filepath}")
+
+    def load_expected(self) -> List[Dict[str, Any]]:
+        """Load expected actions from file."""
+        filepath = ACTION_DATA_DIR / f"{self.test_name}.json"
+
+        if not filepath.exists():
+            raise FileNotFoundError(
+                f"Expected action data not found: {filepath}\n"
+                f"Run with --record-actions to create it."
+            )
+
+        with open(filepath) as f:
+            data = json.load(f)
+
+        return data.get("actions", [])
+
+    @staticmethod
+    def _action_key(action: Dict[str, Any]) -> str:
+        """
+        Create a hashable key for an action for comparison.
+
+        The key is based on action type and sorted details.
+        """
+        details = action.get("details", {})
+        # Sort details for consistent comparison
+        sorted_details = tuple(sorted((k, str(v)) for k, v in details.items()))
+        return f"{action['action']}:{sorted_details}"
+
+    @staticmethod
+    def _actions_match(actual: Dict[str, Any], expected: Dict[str, Any]) -> bool:
+        """
+        Check if two actions match (same type and details).
+        """
+        if actual["action"] != expected["action"]:
+            return False
+
+        # Compare details
+        exp_details = expected.get("details", {})
+        act_details = actual.get("details", {})
+
+        for key, exp_value in exp_details.items():
+            actual_value = act_details.get(key)
+            if actual_value != exp_value:
+                return False
+
+        return True
+
+    def verify(self) -> None:
+        """
+        Verify recorded actions match expected (order-independent).
+
+        Actions are compared as sets - same actions must be present
+        but order doesn't matter.
+        """
+        expected = self.load_expected()
+
+        # Compare action counts
+        assert len(self.actions) == len(expected), (
+            f"Action count mismatch: got {len(self.actions)}, "
+            f"expected {len(expected)}\n"
+            f"Actual actions: {[a['action'] for a in self.actions]}\n"
+            f"Expected actions: {[a['action'] for a in expected]}"
+        )
+
+        # Build list of expected actions (mutable copy for matching)
+        remaining_expected = list(expected)
+        unmatched_actual = []
+
+        # Try to match each actual action to an expected action
+        for actual in self.actions:
+            matched = False
+            for i, exp in enumerate(remaining_expected):
+                if self._actions_match(actual, exp):
+                    remaining_expected.pop(i)
+                    matched = True
+                    break
+
+            if not matched:
+                unmatched_actual.append(actual)
+
+        # If there are unmatched actions, report them
+        if unmatched_actual or remaining_expected:
+            msg_parts = ["Action mismatch (order-independent comparison):"]
+
+            if unmatched_actual:
+                msg_parts.append(f"\nUnexpected actions ({len(unmatched_actual)}):")
+                for act in unmatched_actual:
+                    msg_parts.append(f"  - {act['action']}: {act.get('details', {})}")
+
+            if remaining_expected:
+                msg_parts.append(f"\nMissing expected actions ({len(remaining_expected)}):")
+                for exp in remaining_expected:
+                    msg_parts.append(f"  - {exp['action']}: {exp.get('details', {})}")
+
+            raise AssertionError("\n".join(msg_parts))
+
+
+def _hook_and_call_original(hook, original_function, call_original, *argsrgs, **kwargs):
+    """
+    Utility function for hooking into a function call.
+
+    Optionally calls the original function, then calls the hook with all
+    arguments plus the result.
+
+    Args:
+        hook: Hook function to call with (*argsrgs, **kwargs, res=result)
+        original_function: The original function being hooked
+        call_original: If True, call original function and pass result to hook
+        *argsrgs, **kwargs: Arguments passed to the function
+
+    Returns:
+        Result from hook function
+    """
+    if call_original:
+        res = original_function(*argsrgs, **kwargs)
+    else:
+        res = None
+
+    return hook(*argsrgs, **kwargs, res=res)
+
+
+class FunctionHook:
+    """
+    Context manager for hooking into functions using unittest.mock.patch.
+
+    Allows recording function calls without modifying production code.
+    Can optionally call the original function.
+
+    Usage:
+        recorder = ActionRecorder("test_name", record_mode)
+
+        def on_create_property_file(filename, parameters, dry_run, res=None):
+            recorder.record("create_property_file", filename=filename, parameters=parameters)
+            return res
+
+        hooks = [
+            {
+                "module_path": "process_pr_v2",
+                "class_name": None,
+                "function_name": "create_property_file",
+                "hook_function": on_create_property_file,
+                "call_original": False,
+            },
+        ]
+
+        with FunctionHook(hooks):
+            result = process_pr(...)
+    """
+
+    def __init__(self, hooks: List[Dict[str, Any]]):
+        """
+        Initialize function hooks.
+
+        Args:
+            hooks: List of hook configurations, each containing:
+                - module_path: Module path (e.g., "process_pr_v2")
+                - class_name: Class name if method, None for functions
+                - function_name: Name of function/method to hook
+                - hook_function: Callable with signature (*argsrgs, **kwargs, res=result)
+                - call_original: Whether to call original function
+        """
+        self.hooks = hooks
+        self.patchers = []
+        self.original_functions = {}
+
+    def __enter__(self):
+        import importlib
+
+        for config in self.hooks:
+            module_path = config["module_path"]
+            class_name = config.get("class_name")
+            function_name = config["function_name"]
+            hook_function = config["hook_function"]
+            call_original = config.get("call_original", False)
+
+            # Build the full path to patch
+            if class_name:
+                fn_to_patch = f"{module_path}.{class_name}.{function_name}"
+            else:
+                fn_to_patch = f"{module_path}.{function_name}"
+
+            # Get the original function
+            module = sys.modules.get(module_path)
+            if module is None:
+                module = importlib.import_module(module_path)
+
+            if class_name:
+                cls = getattr(module, class_name)
+                original_function = getattr(cls, function_name)
+            else:
+                original_function = getattr(module, function_name)
+
+            self.original_functions[fn_to_patch] = original_function
+
+            # Create side_effect that hooks into the call
+            side_effect = functools.partial(
+                _hook_and_call_original,
+                hook_function,
+                original_function,
+                call_original,
+            )
+
+            # Create and start the patcher
+            patcher = patch(fn_to_patch, side_effect=side_effect)
+            self.patchers.append(patcher)
+            patcher.start()
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Stop all patchers in reverse order
+        for patcher in reversed(self.patchers):
+            patcher.stop()
+        self.patchers.clear()
+        self.original_functions.clear()
+        return False
+
+
+# =============================================================================
+# MOCK PYGITHUB CLASSES
+# =============================================================================
+
+
+def load_json_data(test_name: str, class_name: str, obj_id: Union[int, str]) -> Dict[str, Any]:
+    """
+    Load mock data from JSON file.
+
+    Args:
+        test_name: Name of the test (subdirectory)
+        class_name: PyGithub class name
+        obj_id: Object identifier
+
+    Returns:
+        Dictionary with object data
+    """
+    filepath = REPLAY_DATA_DIR / test_name / f"{class_name}_{obj_id}.json"
+
+    if not filepath.exists():
+        # Return empty dict if file doesn't exist (allows partial mocking)
+        return {}
+
+    with open(filepath) as f:
+        return json.load(f)
+
+
+def save_json_data(
+    test_name: str, class_name: str, obj_id: Union[int, str], data: Dict[str, Any]
+) -> None:
+    """Save mock data to JSON file."""
+    dirpath = REPLAY_DATA_DIR / test_name
+    dirpath.mkdir(parents=True, exist_ok=True)
+
+    filepath = dirpath / f"{class_name}_{obj_id}.json"
+
+    with open(filepath, "w") as f:
+        json.dump(data, f, indent=2, default=str)
+
+
+@dataclass
+class MockNamedUser:
+    """Mock for github.NamedUser.NamedUser"""
+
+    login: str
+    id: int = 0
+    name: str = ""
+    email: str = ""
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockNamedUser":
+        return cls(
+            login=data.get("login", "unknown"),
+            id=data.get("id", 0),
+            name=data.get("name", ""),
+            email=data.get("email", ""),
+        )
+
+
+@dataclass
+class MockReaction:
+    """Mock for github.Reaction.Reaction"""
+
+    id: int
+    content: str
+    user: MockNamedUser
+    _recorder: ActionRecorder = field(default=None, repr=False)
+
+    def delete(self) -> None:
+        """Delete this reaction."""
+        if self._recorder:
+            self._recorder.record("delete_reaction", reaction_id=self.id, content=self.content)
+
+
+@dataclass
+class MockLabel:
+    """Mock for github.Label.Label"""
+
+    name: str
+    color: str = "000000"
+    description: str = ""
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockLabel":
+        return cls(
+            name=data.get("name", ""),
+            color=data.get("color", "000000"),
+            description=data.get("description", ""),
+        )
+
+
+@dataclass
+class MockMilestone:
+    """Mock for github.Milestone.Milestone"""
+
+    number: int
+    title: str
+    description: str = ""
+    state: str = "open"
+    due_on: Optional[datetime] = None
+    created_at: datetime = field(default_factory=lambda: FROZEN_TIME)
+    updated_at: datetime = field(default_factory=lambda: FROZEN_TIME)
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockMilestone":
+        return cls(
+            number=data.get("number", 1),
+            title=data.get("title", ""),
+            description=data.get("description", ""),
+            state=data.get("state", "open"),
+            due_on=parse_timestamp(data.get("due_on")) if data.get("due_on") else None,
+            created_at=parse_timestamp(data.get("created_at", FROZEN_TIME.isoformat())),
+            updated_at=parse_timestamp(data.get("updated_at", FROZEN_TIME.isoformat())),
+        )
+
+
+@dataclass
+class MockCommitStatus:
+    """Mock for github.CommitStatus.CommitStatus"""
+
+    state: str
+    context: str
+    description: str = ""
+    target_url: Optional[str] = None
+    created_at: datetime = field(default_factory=lambda: FROZEN_TIME)
+    updated_at: datetime = field(default_factory=lambda: FROZEN_TIME)
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockCommitStatus":
+        return cls(
+            state=data.get("state", "pending"),
+            context=data.get("context", ""),
+            description=data.get("description", ""),
+            target_url=data.get("target_url"),
+            created_at=parse_timestamp(data.get("created_at", FROZEN_TIME.isoformat())),
+            updated_at=parse_timestamp(data.get("updated_at", FROZEN_TIME.isoformat())),
+        )
+
+
+@dataclass
+class MockCommitCombinedStatus:
+    """Mock for github.CommitCombinedStatus.CommitCombinedStatus"""
+
+    state: str
+    statuses: List[MockCommitStatus] = field(default_factory=list)
+    total_count: int = 0
+    sha: str = ""
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockCommitCombinedStatus":
+        statuses = [MockCommitStatus.from_json(s) for s in data.get("statuses", [])]
+        return cls(
+            state=data.get("state", "pending"),
+            statuses=statuses,
+            total_count=data.get("total_count", len(statuses)),
+            sha=data.get("sha", ""),
+        )
+
+
+@dataclass
+class MockCommit:
+    """Mock for github.Commit.Commit"""
+
+    # Class-level storage for statuses, shared across all instances by SHA
+    # This ensures that create_status() on one instance is visible to get_statuses() on another
+    _shared_statuses: ClassVar[Dict[str, List["MockCommitStatus"]]] = {}
+
+    sha: str
+    message: str = ""
+    author: Optional[MockNamedUser] = None
+    committer: Optional[MockNamedUser] = None
+    _test_name: str = field(default="", repr=False)
+    _recorder: ActionRecorder = field(default=None, repr=False)
+
+    # Nested commit data (git commit vs GitHub commit)
+    @dataclass
+    class GitCommit:
+        message: str = ""
+
+        @dataclass
+        class GitAuthor:
+            date: datetime = field(default_factory=lambda: FROZEN_COMMIT_TIME)
+            name: str = ""
+            email: str = ""
+
+        author: "MockCommit.GitCommit.GitAuthor" = None
+        committer: "MockCommit.GitCommit.GitAuthor" = None
+
+        def __post_init__(self):
+            if self.author is None:
+                self.author = self.GitAuthor()
+            if self.committer is None:
+                self.committer = self.GitAuthor()
+
+    commit: GitCommit = None
+
+    def __post_init__(self):
+        if self.commit is None:
+            self.commit = self.GitCommit(message=self.message)
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockCommit":
+        commit_data = data.get("commit", {})
+        author_data = commit_data.get("author", {})
+        committer_data = commit_data.get("committer", {})
+
+        git_author = cls.GitCommit.GitAuthor(
+            date=parse_timestamp(author_data.get("date", FROZEN_COMMIT_TIME.isoformat())),
+            name=author_data.get("name", ""),
+            email=author_data.get("email", ""),
+        )
+
+        git_committer = cls.GitCommit.GitAuthor(
+            date=parse_timestamp(committer_data.get("date", FROZEN_COMMIT_TIME.isoformat())),
+            name=committer_data.get("name", ""),
+            email=committer_data.get("email", ""),
+        )
+
+        git_commit = cls.GitCommit(
+            message=commit_data.get("message", ""),
+            author=git_author,
+            committer=git_committer,
+        )
+
+        return cls(
+            sha=data.get("sha", ""),
+            message=commit_data.get("message", ""),
+            commit=git_commit,
+        )
+
+    @classmethod
+    def from_json_with_context(
+        cls, data: Dict[str, Any], test_name: str = "", recorder: ActionRecorder = None
+    ) -> "MockCommit":
+        """Create MockCommit with test context for get_statuses support."""
+        commit = cls.from_json(data)
+        commit._test_name = test_name
+        commit._recorder = recorder
+        return commit
+
+    def get_statuses(self) -> "MockPaginatedList":
+        """Get commit statuses, including any created during this test run."""
+        statuses = []
+
+        # First, load from file if available
+        try:
+            # Look for status file with this SHA
+            data_dir = REPLAY_DATA_DIR / self._test_name
+            for status_file in data_dir.glob(f"CommitCombinedStatus_*_{self.sha}.json"):
+                with open(status_file) as f:
+                    data = json.load(f)
+                statuses = [MockCommitStatus.from_json(s) for s in data.get("statuses", [])]
+                break
+        except Exception:
+            pass
+
+        # Then add any statuses created during this test run (from shared storage)
+        # (replacing any with the same context)
+        created_statuses = MockCommit._shared_statuses.get(self.sha, [])
+        existing_contexts = {s.context for s in created_statuses}
+        statuses = [s for s in statuses if s.context not in existing_contexts]
+        statuses.extend(created_statuses)
+
+        return MockPaginatedList(statuses)
+
+    def create_status(
+        self,
+        state: str,
+        target_url: str = None,
+        description: str = None,
+        context: str = None,
+    ) -> MockCommitStatus:
+        """Create a commit status."""
+        if self._recorder:
+            self._recorder.record(
+                "create_status",
+                sha=self.sha,
+                state=state,
+                target_url=target_url,
+                description=description,
+                context=context,
+            )
+
+        status = MockCommitStatus(
+            state=state,
+            description=description or "",
+            context=context or "",
+            target_url=target_url or "",
+        )
+
+        # Track this status in shared storage so get_statuses() on any instance can return it
+        # Replace any existing status with the same context
+        if self.sha not in MockCommit._shared_statuses:
+            MockCommit._shared_statuses[self.sha] = []
+        MockCommit._shared_statuses[self.sha] = [
+            s for s in MockCommit._shared_statuses[self.sha] if s.context != context
+        ]
+        MockCommit._shared_statuses[self.sha].append(status)
+
+        return status
+
+
+@dataclass
+class MockFile:
+    """Mock for github.File.File (PR file)"""
+
+    filename: str
+    sha: str
+    status: str = "modified"
+    additions: int = 0
+    deletions: int = 0
+    changes: int = 0
+    patch: str = ""
+    previous_filename: str = None
+
+    @classmethod
+    def from_json(cls, data: Dict[str, Any]) -> "MockFile":
+        return cls(
+            filename=data.get("filename", ""),
+            sha=data.get("sha", ""),
+            status=data.get("status", "modified"),
+            additions=data.get("additions", 0),
+            deletions=data.get("deletions", 0),
+            changes=data.get("changes", 0),
+            patch=data.get("patch", ""),
+            previous_filename=data.get("previous_filename"),
+        )
+
+
+@dataclass
+class MockIssueComment:
+    """Mock for github.IssueComment.IssueComment"""
+
+    id: int
+    body: str
+    user: MockNamedUser
+    created_at: datetime
+    updated_at: datetime = None
+    _recorder: ActionRecorder = field(default=None, repr=False)
+    _reactions: List[MockReaction] = field(default_factory=list, repr=False)
+
+    def __post_init__(self):
+        if self.updated_at is None:
+            self.updated_at = self.created_at
+
+    def edit(self, body: str) -> None:
+        """Edit the comment."""
+        if self._recorder:
+            self._recorder.record("edit_comment", comment_id=self.id, body=body)
+        self.body = body
+        self.updated_at = FROZEN_TIME
+
+    def delete(self) -> None:
+        """Delete the comment."""
+        if self._recorder:
+            self._recorder.record("delete_comment", comment_id=self.id)
+
+    def get_reactions(self) -> "MockPaginatedList":
+        """Get reactions on this comment."""
+        return MockPaginatedList(self._reactions)
+
+    def create_reaction(self, reaction_type: str) -> MockReaction:
+        """Create a reaction on this comment."""
+        if self._recorder:
+            self._recorder.record(
+                "create_reaction",
+                comment_id=self.id,
+                reaction=reaction_type,
+            )
+
+        reaction = MockReaction(
+            id=len(self._reactions) + 1,
+            content=reaction_type,
+            user=MockNamedUser(login="cmsbuild"),
+            _recorder=self._recorder,
+        )
+        self._reactions.append(reaction)
+        return reaction
+
+    @classmethod
+    def from_json(
+        cls, data: Dict[str, Any], recorder: ActionRecorder = None
+    ) -> "MockIssueComment":
+        user_data = data.get("user", {})
+
+        # Parse reactions from _reaction_data if present (for testing)
+        # Note: GitHub API's "reactions" field is just statistics, not individual reactions
+        # We use "_reaction_data" in test data to specify individual reactions
+        reactions = []
+        if "_reaction_data" in data:
+            for r in data["_reaction_data"]:
+                reactions.append(
+                    MockReaction(
+                        id=r.get("id", len(reactions) + 1),
+                        content=r.get("content", "+1"),
+                        user=MockNamedUser.from_json(r.get("user", {})),
+                        _recorder=recorder,
+                    )
+                )
+
+        return cls(
+            id=data.get("id", 0),
+            body=data.get("body", ""),
+            user=MockNamedUser.from_json(user_data),
+            created_at=parse_timestamp(data.get("created_at", FROZEN_COMMENT_TIME.isoformat())),
+            updated_at=(
+                parse_timestamp(data.get("updated_at", FROZEN_COMMENT_TIME.isoformat()))
+                if data.get("updated_at")
+                else None
+            ),
+            _recorder=recorder,
+            _reactions=reactions,
+        )
+
+
+class MockPaginatedList:
+    """Mock for github.PaginatedList.PaginatedList"""
+
+    def __init__(self, items: List[Any]):
+        self._items = items
+
+    def __iter__(self):
+        return iter(self._items)
+
+    def __len__(self):
+        return len(self._items)
+
+    def __getitem__(self, index):
+        return self._items[index]
+
+    @property
+    def reversed(self):
+        """Return reversed list (used for getting last commit)."""
+        return list(reversed(self._items))
+
+
+@dataclass
+class MockBranch:
+    """Mock for branch reference in PR"""
+
+    sha: str
+    ref: str = ""
+    label: str = ""
+
+
+class MockPullRequest:
+    """Mock for github.PullRequest.PullRequest"""
+
+    def __init__(
+        self,
+        test_name: str,
+        number: int,
+        recorder: ActionRecorder = None,
+    ):
+        self.milestone = None
+        self.test_name = test_name
+        self.number = number
+        self._recorder = recorder
+
+        # Load data from JSON
+        data = load_json_data(test_name, "PullRequest", number)
+
+        self.id = data.get("id", number)
+        self.title = data.get("title", f"PR #{number}")
+        self.body = data.get("body", "")
+        self.state = data.get("state", "open")
+        self.merged = data.get("merged", False)
+        self.mergeable = data.get("mergeable", True)
+        self.mergeable_state = data.get("mergeable_state", "clean")
+        self.draft = data.get("draft", False)
+
+        # Head and base refs
+        head_data = data.get("head", {})
+        base_data = data.get("base", {})
+
+        self.head = MockBranch(
+            sha=head_data.get("sha", "abc123"),
+            ref=head_data.get("ref", "feature-branch"),
+            label=head_data.get("label", "user:feature-branch"),
+        )
+
+        self.base = MockBranch(
+            sha=base_data.get("sha", "def456"),
+            ref=base_data.get("ref", "main"),
+            label=base_data.get("label", "repo:main"),
+        )
+
+        # User
+        user_data = data.get("user", {"login": "author"})
+        self.user = MockNamedUser.from_json(user_data)
+
+        # Load related data - commits_data is a list of commit objects
+        self._files = self._load_files(data.get("files", []))
+        commits_list = data.get("commits_list", data.get("commits", []))
+        self._commits = self._load_commits(commits_list if isinstance(commits_list, list) else [])
+
+        # commits property is an integer count (GitHub API)
+        self.commits = data.get("commits_count", len(self._commits))
+
+        # changed_files is an integer count (GitHub API)
+        self.changed_files = data.get("changed_files", len(self._files))
+
+    def _load_files(self, files_data: List[Dict]) -> List[MockFile]:
+        """Load PR files from data."""
+        if files_data:
+            return [MockFile.from_json(f) for f in files_data]
+
+        # Try loading from separate file
+        files_json = load_json_data(self.test_name, "PullRequestFiles", self.number)
+        if files_json and "files" in files_json:
+            return [MockFile.from_json(f) for f in files_json["files"]]
+
+        return []
+
+    def _load_commits(self, commits_data: List[Dict]) -> List[MockCommit]:
+        """Load PR commits from data."""
+        if commits_data:
+            return [
+                MockCommit.from_json_with_context(c, self.test_name, self._recorder)
+                for c in commits_data
+            ]
+
+        # Try loading from separate file
+        commits_json = load_json_data(self.test_name, "PullRequestCommits", self.number)
+        if commits_json and "commits" in commits_json:
+            return [
+                MockCommit.from_json_with_context(c, self.test_name, self._recorder)
+                for c in commits_json["commits"]
+            ]
+
+        return []
+
+    def get_files(self) -> MockPaginatedList:
+        """Get files changed in the PR."""
+        return MockPaginatedList(self._files)
+
+    def get_commits(self) -> MockPaginatedList:
+        """Get commits in the PR."""
+        return MockPaginatedList(self._commits)
+
+    # noinspection PyUnusedLocal
+    def merge(
+        self,
+        commit_message: str = None,
+        commit_title: str = None,
+        merge_method: str = "merge",
+        sha: str = None,
+    ) -> None:
+        """Merge the PR."""
+        if self._recorder:
+            self._recorder.record(
+                "merge_pr",
+                pr_number=self.number,
+                commit_message=commit_message,
+                commit_title=commit_title,
+                merge_method=merge_method,
+            )
+        self.merged = True
+        self.state = "closed"
+
+    def create_issue_comment(self, body: str) -> MockIssueComment:
+        """Create a comment on the PR."""
+        if self._recorder:
+            self._recorder.record(
+                "create_comment",
+                pr_number=self.number,
+                body=body,
+            )
+
+        return MockIssueComment(
+            id=999999,  # Fake ID for new comment
+            body=body,
+            user=MockNamedUser(login="cmsbuild"),
+            created_at=FROZEN_TIME,
+            _recorder=self._recorder,
+        )
+
+    def edit(
+        self,
+        state: str = None,
+        milestone: "MockMilestone" = None,
+        **kwargs,
+    ) -> None:
+        """Edit the PR (state, milestone, etc.)."""
+        if self._recorder:
+            record_data: Dict[str, Any] = {"pr_number": self.number}
+            if state is not None:
+                record_data["state"] = state
+            if milestone is not None:
+                record_data["milestone"] = milestone.title if milestone else None
+            record_data.update(kwargs)
+            self._recorder.record("edit_pr", **record_data)
+
+        if state is not None:
+            self.state = state
+        if milestone is not None:
+            self.milestone = milestone
+
+
+class MockIssue:
+    """Mock for github.Issue.Issue"""
+
+    def __init__(
+        self,
+        test_name: str,
+        number: int,
+        recorder: ActionRecorder = None,
+        is_issue: bool = None,  # If None, auto-detect from JSON data
+        comments_data: Optional[List[Dict]] = None,  # Optional inline comments data
+        state: str = None,  # Issue state: "open" or "closed"
+    ):
+        self.test_name = test_name
+        self.number = number
+        self._recorder = recorder
+
+        # Load data from JSON
+        data = load_json_data(test_name, "Issue", number)
+
+        # Auto-detect if this is an issue or PR based on 'pull_request' key in JSON
+        # If is_issue is explicitly provided, use that; otherwise check JSON data
+        if is_issue is not None:
+            self._is_issue = is_issue
+        else:
+            # GitHub API includes 'pull_request' key for PRs (even if just a URL object)
+            self._is_issue = "pull_request" not in data or data.get("pull_request") is None
+
+        self.id = data.get("id", number)
+        self.title = data.get("title", f"Issue #{number}")
+        self.body = data.get("body", "")
+        # Use explicit state parameter if provided, otherwise use JSON data
+        self.state = state if state is not None else data.get("state", "open")
+
+        # Timestamps - use parse_timestamp for consistency, default to FROZEN_TIME
+        created_at_str = data.get("created_at", FROZEN_TIME.isoformat())
+        self.created_at = parse_timestamp(created_at_str) or FROZEN_TIME
+
+        # User
+        user_data = data.get("user", {"login": "author"})
+        self.user = MockNamedUser.from_json(user_data)
+
+        # Labels
+        self._labels = [MockLabel.from_json(l) for l in data.get("labels", [])]
+
+        # Milestone
+        milestone_data = data.get("milestone")
+        if milestone_data and isinstance(milestone_data, dict):
+            self.milestone = MockMilestone.from_json(milestone_data)
+        else:
+            self.milestone = None
+
+        # Draft status (for PRs viewed as issues)
+        self.draft = data.get("draft", False)
+
+        # Comments - prefer inline data, then try loading from IssueComments file
+        # Note: data.get("comments") is an integer count in GitHub API, not a list
+        if comments_data is not None:
+            self._comments = self._load_comments(comments_data)
+        else:
+            # Load from separate IssueComments file
+            self._comments = self._load_comments(None)
+
+        # Associated PR (if this is a PR issue)
+        self._pull_request = None if self._is_issue else "pending"
+
+    def _load_comments(self, comments_data: Optional[List[Dict]]) -> List[MockIssueComment]:
+        """Load issue comments from data."""
+        if comments_data:
+            return [MockIssueComment.from_json(c, self._recorder) for c in comments_data]
+
+        # Try loading from separate file
+        comments_json = load_json_data(self.test_name, "IssueComments", self.number)
+        if comments_json and "comments" in comments_json:
+            return [
+                MockIssueComment.from_json(c, self._recorder) for c in comments_json["comments"]
+            ]
+
+        return []
+
+    def get_comments(self) -> MockPaginatedList:
+        """Get comments on the issue."""
+        return MockPaginatedList(self._comments)
+
+    def get_labels(self) -> MockPaginatedList:
+        """Get labels on the issue."""
+        return MockPaginatedList(self._labels)
+
+    def add_to_labels(self, *labels: str) -> None:
+        """Add labels to the issue."""
+        if self._recorder:
+            self._recorder.record(
+                "add_labels",
+                issue_number=self.number,
+                labels=sorted(labels),
+            )
+
+        for label_name in labels:
+            if not any(l.name == label_name for l in self._labels):
+                self._labels.append(MockLabel(name=label_name))
+
+    def remove_from_labels(self, *labels: str) -> None:
+        """Remove labels from the issue."""
+        if self._recorder:
+            self._recorder.record(
+                "remove_labels",
+                issue_number=self.number,
+                labels=sorted(labels),
+            )
+
+        for label in labels:
+            self._labels = [l for l in self._labels if l.name != label]
+
+    def create_comment(self, body: str) -> MockIssueComment:
+        """Create a comment on the issue."""
+        if self._recorder:
+            self._recorder.record(
+                "create_comment",
+                issue_number=self.number,
+                body=body,
+            )
+
+        comment = MockIssueComment(
+            id=len(self._comments) + 1000000,  # Fake ID for new comment
+            body=body,
+            user=MockNamedUser(login="cmsbuild"),
+            created_at=FROZEN_TIME,
+            _recorder=self._recorder,
+        )
+        self._comments.append(comment)
+        return comment
+
+    def edit(
+        self,
+        state: str = None,
+        milestone: "MockMilestone" = None,
+        **kwargs,
+    ) -> None:
+        """Edit the issue (state, milestone, etc.)."""
+        if self._recorder:
+            record_data: Dict[str, Any] = {"issue_number": self.number}
+            if state is not None:
+                record_data["state"] = state
+            if milestone is not None:
+                record_data["milestone"] = milestone.title if milestone else None
+            record_data.update(kwargs)
+            self._recorder.record("edit_issue", **record_data)
+
+        if state is not None:
+            self.state = state
+        if milestone is not None:
+            self.milestone = milestone
+
+    @property
+    def pull_request(self):
+        """Return pull request marker (used to detect if issue is a PR)."""
+        return self._pull_request
+
+    def as_pull_request(self) -> "MockPullRequest":
+        """Convert issue to pull request."""
+        if self._pull_request is None or self._pull_request == "pending":
+            self._pull_request = MockPullRequest(self.test_name, self.number, self._recorder)
+        return self._pull_request
+
+
+class MockRepository:
+    """Mock for github.Repository.Repository"""
+
+    def __init__(
+        self,
+        test_name: str,
+        full_name: str = "org/repo",
+        recorder: ActionRecorder = None,
+    ):
+        self.test_name = test_name
+        self.full_name = full_name
+        self._recorder = recorder
+
+        # Load data from JSON
+        data = load_json_data(test_name, "Repository", full_name.replace("/", "_"))
+
+        self.id = data.get("id", 12345)
+        self.name = data.get("name", full_name.split("/")[-1])
+        self.private = data.get("private", False)
+        self.default_branch = data.get("default_branch", "main")
+
+        # Owner is extracted from full_name (org/repo -> org)
+        org_name = full_name.split("/")[0]
+        owner_data = data.get("owner", {"login": org_name})
+        self.owner = MockNamedUser.from_json(owner_data)
+
+    def get_pull(self, number: int) -> MockPullRequest:
+        """Get a pull request by number."""
+        return MockPullRequest(self.test_name, number, self._recorder)
+
+    def get_issue(self, number: int) -> MockIssue:
+        """Get an issue by number."""
+        return MockIssue(self.test_name, number, self._recorder)
+
+    def get_milestone(self, number: int) -> MockMilestone:
+        """Get a milestone by number."""
+        # Try to load from Milestone file
+        data = load_json_data(
+            self.test_name, "Milestone", f"{self.full_name.replace('/', '_')}_{number}"
+        )
+        if data:
+            return MockMilestone.from_json(data)
+        # Return a default milestone
+        return MockMilestone(number=number, title=f"Milestone {number}")
+
+    def get_commit(self, sha: str) -> MockCommit:
+        """Get a commit by SHA."""
+        # Try to load from Commit file
+        data = load_json_data(
+            self.test_name, "Commit", f"{self.full_name.replace('/', '_')}_{sha}"
+        )
+        if data:
+            return MockCommit.from_json_with_context(data, self.test_name, self._recorder)
+        # Try GitCommit file
+        data = load_json_data(
+            self.test_name, "GitCommit", f"{self.full_name.replace('/', '_')}_{sha}"
+        )
+        if data:
+            return MockCommit.from_json_with_context(data, self.test_name, self._recorder)
+        # Return a default commit
+        commit = MockCommit(sha=sha)
+        commit._test_name = self.test_name
+        commit._recorder = self._recorder
+        return commit
+
+    def create_status(
+        self,
+        sha: str,
+        state: str,
+        target_url: str = None,
+        description: str = None,
+        context: str = None,
+    ) -> None:
+        """Create a commit status."""
+        if self._recorder:
+            self._recorder.record(
+                "create_status",
+                sha=sha,
+                state=state,
+                target_url=target_url,
+                description=description,
+                context=context,
+            )
+
+
+class MockGithub:
+    """Mock for github.Github"""
+
+    def __init__(self, test_name: str, recorder: ActionRecorder = None):
+        self.test_name = test_name
+        self._recorder = recorder
+
+    def get_repo(self, full_name: str) -> MockRepository:
+        """Get a repository by name."""
+        return MockRepository(self.test_name, full_name, self._recorder)
+
+
+# =============================================================================
+# TEST FIXTURES
+# =============================================================================
+
+
+@pytest.fixture
+def test_name(request):
+    """Get the current test name."""
+    return request.node.name
+
+
+@pytest.fixture
+def action_recorder(test_name, record_mode):
+    """Create an action recorder for the test."""
+    return ActionRecorder(test_name, record_mode)
+
+
+@pytest.fixture
+def mock_gh(test_name, action_recorder):
+    """Create a mock GitHub instance."""
+    return MockGithub(test_name, action_recorder)
+
+
+@pytest.fixture
+def mock_repo(test_name, action_recorder):
+    """Create a mock repository."""
+    return MockRepository(test_name, recorder=action_recorder)
+
+
+@pytest.fixture
+def mock_issue(test_name, action_recorder):
+    """Create a mock issue."""
+    return MockIssue(test_name, number=1, recorder=action_recorder)
+
+
+@pytest.fixture
+def repo_config():
+    """Get default repository configuration as a mock module."""
+    return create_mock_repo_config()
+
+
+# =============================================================================
+# HELPER FUNCTIONS FOR TEST DATA CREATION
+# =============================================================================
+
+
+def create_test_data_directory(test_name: str) -> Path:
+    """Create directory for test replay data."""
+    dirpath = REPLAY_DATA_DIR / test_name
+    dirpath.mkdir(parents=True, exist_ok=True)
+    return dirpath
+
+
+def create_basic_pr_data(
+    test_name: str,
+    pr_number: int = 1,
+    files: List[Dict] = None,
+    comments: List[Dict] = None,
+    commits: List[Dict] = None,
+    labels: List[str] = None,
+    base_ref: str = "main",
+    statuses: List[Dict] = None,
+) -> None:
+    """
+    Create basic test data files for a PR.
+
+    This is a helper for setting up test fixtures.
+
+    Args:
+        test_name: Name of the test (used for directory)
+        pr_number: PR number
+        files: List of file dicts with filename, sha, status
+        comments: List of comment dicts
+        commits: List of commit dicts
+        labels: List of label names
+        base_ref: Target branch name (default "main", use "master" for cms-sw/cmssw)
+        statuses: List of commit status dicts with context, state, description, target_url
+    """
+    create_test_data_directory(test_name)
+
+    # Use frozen timestamps to ensure deterministic tests
+    # Commits are 1 hour before FROZEN_TIME, comments are at FROZEN_TIME
+    commit_time = FROZEN_COMMIT_TIME
+    comment_time = FROZEN_COMMENT_TIME
+
+    # Default file - uses Package/Core to map to 'core' category via CMSSW_CATEGORIES
+    if files is None:
+        files = [
+            {
+                "filename": "Package/Core/main.py",
+                "sha": "abc123def456",
+                "status": "modified",
+            }
+        ]
+
+    # Default commit
+    if commits is None:
+        commits = [
+            {
+                "sha": "commit123",
+                "commit": {
+                    "message": "Test commit",
+                    "author": {
+                        "date": commit_time.isoformat().replace("+00:00", "Z"),
+                        "name": "Test Author",
+                        "email": "test@example.com",
+                    },
+                    "committer": {
+                        "date": commit_time.isoformat().replace("+00:00", "Z"),
+                        "name": "Test Committer",
+                        "email": "test@example.com",
+                    },
+                },
+            }
+        ]
+
+    # Default comments (empty)
+    if comments is None:
+        comments = []
+    else:
+        # Ensure all comments have timestamps at FROZEN_COMMENT_TIME
+        for comment in comments:
+            if "created_at" not in comment:
+                comment["created_at"] = comment_time.isoformat().replace("+00:00", "Z")
+
+    # Default labels (empty)
+    if labels is None:
+        labels = []
+
+    # Create PR data
+    pr_data = {
+        "id": pr_number,
+        "number": pr_number,
+        "title": f"Test PR #{pr_number}",
+        "body": "Test PR body",
+        "state": "open",
+        "merged": False,
+        "mergeable": True,
+        "head": {"sha": commits[-1]["sha"] if commits else "abc123", "ref": "feature"},
+        "base": {"sha": "base123", "ref": base_ref},
+        "user": {"login": "testuser", "id": 1},
+        "files": files,
+        "commits": commits,
+    }
+
+    save_json_data(test_name, "PullRequest", pr_number, pr_data)
+
+    # Create Issue data (for the PR)
+    # Note: In GitHub API, issue["comments"] is a count, not the actual comments
+    # Note: issue["pull_request"] indicates this Issue is associated with a PR
+    issue_data = {
+        "id": pr_number,
+        "number": pr_number,
+        "title": f"Test PR #{pr_number}",
+        "body": "Test PR body",
+        "state": "open",
+        "user": {"login": "testuser", "id": 1},
+        "labels": [{"name": l} for l in labels],
+        "comments": len(comments),  # Count, not the actual comments
+        "pull_request": {  # This indicates it's a PR, not a plain Issue
+            "url": f"https://api.github.com/repos/org/repo/pulls/{pr_number}",
+        },
+    }
+
+    save_json_data(test_name, "Issue", pr_number, issue_data)
+
+    # Save comments to separate IssueComments file
+    if comments:
+        save_json_data(test_name, "IssueComments", pr_number, {"comments": comments})
+
+    # Create Repository data
+    repo_data = {
+        "id": 12345,
+        "name": "repo",
+        "full_name": "org/repo",
+        "private": False,
+        "default_branch": "main",
+    }
+
+    save_json_data(test_name, "Repository", "org_repo", repo_data)
+
+    # Create CommitCombinedStatus data if statuses provided
+    if statuses and commits:
+        head_sha = commits[-1]["sha"]
+        status_data = {
+            "state": "pending",  # Overall state
+            "statuses": statuses,
+        }
+        save_json_data(test_name, "CommitCombinedStatus", f"org_repo_{head_sha}", status_data)
+
+
+# =============================================================================
+# TESTS
+# =============================================================================
+
+
+class TestBasicFunctionality:
+    """Tests for basic PR processing functionality."""
+
+    def test_new_pr_initialization(
+        self, mock_gh, mock_repo, mock_issue, repo_config, action_recorder, record_mode
+    ):
+        """Test that a new PR is properly initialized with pending status."""
+        # Setup: Create test data for a new PR with no comments
+        create_basic_pr_data(
+            "test_new_pr_initialization",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[],
+        )
+
+        # Recreate mocks with proper test name
+        recorder = ActionRecorder("test_new_pr_initialization", record_mode)
+        gh = MockGithub("test_new_pr_initialization", recorder)
+        repo = MockRepository("test_new_pr_initialization", recorder=recorder)
+        issue = MockIssue("test_new_pr_initialization", number=1, recorder=recorder)
+
+        # Execute
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Verify result structure
+        assert result["pr_number"] == 1
+        assert result["pr_state"] in ["tests-pending", "signatures-pending"]
+        assert "categories" in result
+
+        # Handle recording/comparison
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_basic_approval(self, repo_config, record_mode):
+        """Test that +1 approval from L2 member works correctly."""
+        # Setup: Create PR with an approval comment
+        create_basic_pr_data(
+            "test_basic_approval",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},  # alice is in 'core' team
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        # Create mocks
+        recorder = ActionRecorder("test_basic_approval", record_mode)
+        gh = MockGithub("test_basic_approval", recorder)
+        repo = MockRepository("test_basic_approval", recorder=recorder)
+        issue = MockIssue("test_basic_approval", number=1, recorder=recorder)
+
+        # Execute
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Verify
+        assert result["pr_number"] == 1
+
+        # Handle recording/comparison
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_category_specific_approval(self, repo_config, record_mode):
+        """Test approval for a specific category (+core)."""
+        create_basic_pr_data(
+            "test_category_specific_approval",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_category_specific_approval", record_mode)
+        gh = MockGithub("test_category_specific_approval", recorder)
+        repo = MockRepository("test_category_specific_approval", recorder=recorder)
+        issue = MockIssue("test_category_specific_approval", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_rejection(self, repo_config, record_mode):
+        """Test that -1 rejection works correctly."""
+        create_basic_pr_data(
+            "test_rejection",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "-1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_rejection", record_mode)
+        gh = MockGithub("test_rejection", recorder)
+        repo = MockRepository("test_rejection", recorder=recorder)
+        issue = MockIssue("test_rejection", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestHoldMechanism:
+    """Tests for the hold/unhold mechanism."""
+
+    def test_hold_command(self, repo_config, record_mode):
+        """Test that hold command prevents merge."""
+        create_basic_pr_data(
+            "test_hold_command",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "hold",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_hold_command", record_mode)
+        gh = MockGithub("test_hold_command", recorder)
+        repo = MockRepository("test_hold_command", recorder=recorder)
+        issue = MockIssue("test_hold_command", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert len(result["holds"]) > 0
+        assert result["can_merge"] is False
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_unhold_same_category(self, repo_config, record_mode):
+        """Test that L2 member can unhold their own category."""
+        create_basic_pr_data(
+            "test_unhold_same_category",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "hold",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "unhold",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_unhold_same_category", record_mode)
+        gh = MockGithub("test_unhold_same_category", recorder)
+        repo = MockRepository("test_unhold_same_category", recorder=recorder)
+        issue = MockIssue("test_unhold_same_category", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert len(result["holds"]) == 0
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_orp_unhold_all(self, repo_config, record_mode):
+        """Test that ORP can unhold all holds."""
+        create_basic_pr_data(
+            "test_orp_unhold_all",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "hold",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "hold",
+                    "user": {"login": "bob", "id": 3},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 102,
+                    "body": "unhold",
+                    "user": {"login": "dave", "id": 4},  # dave is ORP
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_orp_unhold_all", record_mode)
+        gh = MockGithub("test_orp_unhold_all", recorder)
+        repo = MockRepository("test_orp_unhold_all", recorder=recorder)
+        issue = MockIssue("test_orp_unhold_all", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert len(result["holds"]) == 0
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestAssignCommand:
+    """Tests for the assign command."""
+
+    def test_assign_category(self, repo_config, record_mode):
+        """Test assigning a new category."""
+        create_basic_pr_data(
+            "test_assign_category",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign visualization",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_assign_category", record_mode)
+        gh = MockGithub("test_assign_category", recorder)
+        repo = MockRepository("test_assign_category", recorder=recorder)
+        issue = MockIssue("test_assign_category", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert "visualization" in result["categories"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_assign_from_package(self, repo_config, record_mode):
+        """Test assigning category from package mapping."""
+        create_basic_pr_data(
+            "test_assign_from_package",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign from numpy",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_assign_from_package", record_mode)
+        gh = MockGithub("test_assign_from_package", recorder)
+        repo = MockRepository("test_assign_from_package", recorder=recorder)
+        issue = MockIssue("test_assign_from_package", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # numpy maps to 'analysis' category
+        assert "analysis" in result["categories"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestCommandPreprocessing:
+    """Tests for command preprocessing and parsing."""
+
+    def test_cmsbuild_prefix_removal(self, repo_config, record_mode):
+        """Test that @cmsbuild prefix is properly removed."""
+        create_basic_pr_data(
+            "test_cmsbuild_prefix_removal",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "@cmsbuild please +1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_cmsbuild_prefix_removal", record_mode)
+        gh = MockGithub("test_cmsbuild_prefix_removal", recorder)
+        repo = MockRepository("test_cmsbuild_prefix_removal", recorder=recorder)
+        issue = MockIssue("test_cmsbuild_prefix_removal", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_please_prefix_removal(self, repo_config, record_mode):
+        """Test that 'please' prefix is properly removed."""
+        # Create PR with code-checks approval (required for tests)
+        create_basic_pr_data(
+            "test_please_prefix_removal",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 10},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                },
+                {
+                    "id": 101,
+                    "body": "please test",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=1))
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_please_prefix_removal", record_mode)
+        gh = MockGithub("test_please_prefix_removal", recorder)
+        repo = MockRepository("test_please_prefix_removal", recorder=recorder)
+        issue = MockIssue("test_please_prefix_removal", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Check that a test was triggered (please prefix was removed)
+        assert len(result["tests_triggered"]) > 0
+        assert result["tests_triggered"][0]["verb"] == "test"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestMultipleFiles:
+    """Tests for PRs with multiple files."""
+
+    def test_multiple_files_multiple_categories(self, repo_config, record_mode):
+        """Test PR touching files in multiple L2 categories."""
+        create_basic_pr_data(
+            "test_multiple_files_multiple_categories",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_1",
+                    "status": "modified",
+                },
+                {
+                    "filename": "Package/Analysis/analyzer.py",
+                    "sha": "file_sha_2",
+                    "status": "modified",
+                },
+                {
+                    "filename": "docs/README.md",
+                    "sha": "file_sha_3",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},  # alice: core, analysis
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_multiple_files_multiple_categories", record_mode)
+        gh = MockGithub("test_multiple_files_multiple_categories", recorder)
+        repo = MockRepository("test_multiple_files_multiple_categories", recorder=recorder)
+        issue = MockIssue("test_multiple_files_multiple_categories", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Should have multiple categories
+        categories = result["categories"]
+        assert len(categories) >= 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestTestCommand:
+    """Tests for the test trigger command."""
+
+    def test_basic_test_trigger(self, repo_config, record_mode):
+        """Test basic test trigger command."""
+        # Create PR with code-checks approval (required for tests)
+        create_basic_pr_data(
+            "test_basic_test_trigger",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 10},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                },
+                {
+                    "id": 101,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=1))
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_basic_test_trigger", record_mode)
+        gh = MockGithub("test_basic_test_trigger", recorder)
+        repo = MockRepository("test_basic_test_trigger", recorder=recorder)
+        issue = MockIssue("test_basic_test_trigger", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        # Check that a test was triggered
+        assert len(result["tests_triggered"]) > 0
+        assert result["tests_triggered"][0]["verb"] == "test"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_with_params(self, repo_config, record_mode):
+        """Test trigger with parameters."""
+        # Create PR with code-checks approval (required for tests)
+        create_basic_pr_data(
+            "test_test_with_params",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 10},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                },
+                {
+                    "id": 101,
+                    "body": "test workflows 1.0,2.0",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=1))
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_with_params", record_mode)
+        gh = MockGithub("test_test_with_params", recorder)
+        repo = MockRepository("test_test_with_params", recorder=recorder)
+        issue = MockIssue("test_test_with_params", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Check that a test was triggered with workflows
+        assert len(result["tests_triggered"]) > 0
+        assert result["tests_triggered"][0]["verb"] == "test"
+        assert "1.0" in result["tests_triggered"][0]["workflows"]
+        assert "2.0" in result["tests_triggered"][0]["workflows"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestCacheManagement:
+    """Tests for cache storage and retrieval."""
+
+    def test_cache_creation(self, repo_config, record_mode):
+        """Test that cache is created in comments."""
+        create_basic_pr_data(
+            "test_cache_creation",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[],
+        )
+
+        recorder = ActionRecorder("test_cache_creation", record_mode)
+        gh = MockGithub("test_cache_creation", recorder)
+        repo = MockRepository("test_cache_creation", recorder=recorder)
+        issue = MockIssue("test_cache_creation", number=1, recorder=recorder)
+
+        # Run with dryRun=False to actually create cache (but still mock)
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,  # Still dry run to not actually post
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestMergeCommand:
+    """Tests for the merge command."""
+
+    def test_merge_when_ready(self, repo_config, record_mode):
+        """Test merge command when PR is ready."""
+        # Use default config - signing checks are determined by repo/branch
+        config = create_mock_repo_config()
+
+        create_basic_pr_data(
+            "test_merge_when_ready",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "merge",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_merge_when_ready", record_mode)
+        gh = MockGithub("test_merge_when_ready", recorder)
+        repo = MockRepository("test_merge_when_ready", recorder=recorder)
+        issue = MockIssue("test_merge_when_ready", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestBranchRewrite:
+    """Tests for handling branch rewrites (rebases, force-pushes)."""
+
+    def test_signature_invalidation_on_file_change(self, repo_config, record_mode):
+        """Test that signatures are invalidated when files change."""
+        # First create initial PR state with approval
+        create_basic_pr_data(
+            "test_signature_invalidation_on_file_change",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "new_file_sha_456",  # Different SHA simulates file change
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_signature_invalidation_on_file_change", record_mode)
+        gh = MockGithub("test_signature_invalidation_on_file_change", recorder)
+        repo = MockRepository("test_signature_invalidation_on_file_change", recorder=recorder)
+        issue = MockIssue(
+            "test_signature_invalidation_on_file_change", number=1, recorder=recorder
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestEdgeCases:
+    """Tests for edge cases and error handling."""
+
+    def test_empty_comment(self, repo_config, record_mode):
+        """Test handling of empty comments."""
+        create_basic_pr_data(
+            "test_empty_comment",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_empty_comment", record_mode)
+        gh = MockGithub("test_empty_comment", recorder)
+        repo = MockRepository("test_empty_comment", recorder=recorder)
+        issue = MockIssue("test_empty_comment", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_non_command_comment(self, repo_config, record_mode):
+        """Test that non-command comments are ignored."""
+        create_basic_pr_data(
+            "test_non_command_comment",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "This is just a regular comment, not a command.",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_non_command_comment", record_mode)
+        gh = MockGithub("test_non_command_comment", recorder)
+        repo = MockRepository("test_non_command_comment", recorder=recorder)
+        issue = MockIssue("test_non_command_comment", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # No tests should be triggered, no approvals processed
+        assert result["pr_number"] == 1
+        assert len(result["tests_triggered"]) == 0
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_bot_comment_ignored(self, repo_config, record_mode):
+        """Test that bot's own comments are ignored."""
+        create_basic_pr_data(
+            "test_bot_comment_ignored",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_bot_comment_ignored", record_mode)
+        gh = MockGithub("test_bot_comment_ignored", recorder)
+        repo = MockRepository("test_bot_comment_ignored", recorder=recorder)
+        issue = MockIssue("test_bot_comment_ignored", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_user_not_in_l2(self, repo_config, record_mode):
+        """Test approval from user not in any L2 team."""
+        create_basic_pr_data(
+            "test_user_not_in_l2",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "unknown_user", "id": 999},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_user_not_in_l2", record_mode)
+        gh = MockGithub("test_user_not_in_l2", recorder)
+        repo = MockRepository("test_user_not_in_l2", recorder=recorder)
+        issue = MockIssue("test_user_not_in_l2", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # User not in L2, so no approval should be recorded
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestBotMessageProcessing:
+    """Tests for processing bot's own messages (CI results, code-checks, etc.)."""
+
+    def test_bot_code_checks_pass(self, repo_config, record_mode):
+        """Test that +code-checks from bot sets commit status to success."""
+        create_basic_pr_data(
+            "test_bot_code_checks_pass",
+            pr_number=1,
+            base_ref="master",  # Must be master for code-checks to be a pre-check
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_bot_code_checks_pass", record_mode)
+        gh = MockGithub("test_bot_code_checks_pass", recorder)
+        repo = MockRepository(
+            "test_bot_code_checks_pass", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_bot_code_checks_pass", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify code-checks status was set to success
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_statuses = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_statuses) == 1
+        assert code_checks_statuses[0]["details"]["state"] == "success"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_bot_code_checks_fail(self, repo_config, record_mode):
+        """Test that -code-checks from bot sets commit status to error."""
+        create_basic_pr_data(
+            "test_bot_code_checks_fail",
+            pr_number=1,
+            base_ref="master",  # Must be master for code-checks to be a pre-check
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "-code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_bot_code_checks_fail", record_mode)
+        gh = MockGithub("test_bot_code_checks_fail", recorder)
+        repo = MockRepository(
+            "test_bot_code_checks_fail", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_bot_code_checks_fail", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify code-checks status was set to error
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_statuses = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_statuses) == 1
+        assert code_checks_statuses[0]["details"]["state"] == "error"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_bot_hold_command(self, repo_config, record_mode):
+        """Test that hold command from bot works (bot has L2 categories)."""
+        create_basic_pr_data(
+            "test_bot_hold_command",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "hold",
+                    "user": {"login": "cmsbuild", "id": 999},  # Bot's own comment
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_bot_hold_command", record_mode)
+        gh = MockGithub("test_bot_hold_command", recorder)
+        repo = MockRepository("test_bot_hold_command", recorder=recorder)
+        issue = MockIssue("test_bot_hold_command", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # Bot has L2 categories (tests, code-checks), so it can place holds
+        assert len(result["holds"]) > 0
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestBuildTestCommandParsing:
+    """Tests for build/test command parsing."""
+
+    def test_parse_simple_test(self):
+        """Test parsing simple 'test' command."""
+        result = parse_test_cmd("test")
+        assert result.verb == "test"
+        assert result.workflows == []
+        assert result.prs == []
+        assert result.queue == ""
+
+    def test_parse_simple_build(self):
+        """Test parsing simple 'build' command."""
+        result = parse_test_cmd("build")
+        assert result.verb == "build"
+
+    def test_parse_test_with_workflows(self):
+        """Test parsing 'test workflows 1.0,2.0,3.0'."""
+        result = parse_test_cmd("test workflows 1.0,2.0,3.0")
+        assert result.verb == "test"
+        assert result.workflows == ["1.0", "2.0", "3.0"]
+
+    def test_parse_test_with_workflow_singular(self):
+        """Test parsing 'test workflow 1.0'."""
+        result = parse_test_cmd("test workflow 1.0")
+        assert result.verb == "test"
+        assert result.workflows == ["1.0"]
+
+    def test_parse_test_with_prs(self):
+        """Test parsing 'test with cms-sw/cmssw#12345,#67890'."""
+        result = parse_test_cmd("test with cms-sw/cmssw#12345,#67890")
+        assert result.verb == "test"
+        assert result.prs == ["cms-sw/cmssw#12345", "#67890"]
+
+    def test_parse_test_with_queue(self):
+        """Test parsing 'test for el8_amd64_gcc12'."""
+        result = parse_test_cmd("test for el8_amd64_gcc12")
+        assert result.verb == "test"
+        assert result.queue == "el8_amd64_gcc12"
+
+    def test_parse_build_using_full_cmssw(self):
+        """Test parsing 'build using full cmssw'."""
+        result = parse_test_cmd("build using full cmssw")
+        assert result.verb == "build"
+        assert result.using is True
+        assert result.full == "cmssw"
+
+    def test_parse_test_using_addpkg(self):
+        """Test parsing 'test using addpkg RecoTracker/PixelSeeding'."""
+        result = parse_test_cmd("test using addpkg RecoTracker/PixelSeeding")
+        assert result.verb == "test"
+        assert result.using is True
+        assert result.addpkg == ["RecoTracker/PixelSeeding"]
+
+    def test_parse_test_using_cms_addpkg(self):
+        """Test parsing 'test using cms-addpkg Pkg1,Pkg2'."""
+        result = parse_test_cmd("test using cms-addpkg Pkg1,Pkg2")
+        assert result.verb == "test"
+        assert result.addpkg == ["Pkg1", "Pkg2"]
+
+    def test_parse_complex_command(self):
+        """Test parsing complex command with multiple options."""
+        result = parse_test_cmd(
+            "build workflows 1.0,2.0 with #123 for el8_amd64_gcc12 using full cmssw"
+        )
+        assert result.verb == "build"
+        assert result.workflows == ["1.0", "2.0"]
+        assert result.prs == ["#123"]
+        assert result.queue == "el8_amd64_gcc12"
+        assert result.full == "cmssw"
+
+    def test_parse_error_empty(self):
+        """Test that empty input raises error."""
+        with pytest.raises(CmdParseError):
+            parse_test_cmd("")
+
+    def test_parse_error_unknown_verb(self):
+        """Test that unknown verb raises error."""
+        with pytest.raises(CmdParseError):
+            parse_test_cmd("deploy")
+
+    def test_parse_error_duplicate_keyword(self):
+        """Test that duplicate keyword raises error."""
+        with pytest.raises(CmdParseError):
+            parse_test_cmd("test workflows 1.0 workflows 2.0")
+
+    def test_parse_error_missing_parameter(self):
+        """Test that missing parameter raises error."""
+        with pytest.raises(CmdParseError):
+            parse_test_cmd("test workflows")
+
+    def test_parse_error_empty_using(self):
+        """Test that empty using statement raises error."""
+        with pytest.raises(CmdParseError):
+            parse_test_cmd("test using")
+
+    def test_parse_error_full_without_using(self):
+        """Test that 'full' without 'using' raises error."""
+        with pytest.raises(CmdParseError):
+            parse_test_cmd("test full cmssw")
+
+
+class TestBuildTestCommand:
+    """Tests for build/test command execution."""
+
+    def test_build_command_basic(self, repo_config, record_mode):
+        """Test basic build command."""
+        # Use default config - signing checks determined by repo/branch
+        config = create_mock_repo_config()
+
+        create_basic_pr_data(
+            "test_build_command_basic",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "build",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_build_command_basic", record_mode)
+        gh = MockGithub("test_build_command_basic", recorder)
+        repo = MockRepository("test_build_command_basic", recorder=recorder)
+        issue = MockIssue("test_build_command_basic", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        assert len(result["tests_triggered"]) == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_command_with_workflows(self, repo_config, record_mode):
+        """Test test command with workflows parameter."""
+        config = create_mock_repo_config()
+
+        create_basic_pr_data(
+            "test_test_command_with_workflows",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test workflows 1.0,2.0,3.0",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_command_with_workflows", record_mode)
+        gh = MockGithub("test_test_command_with_workflows", recorder)
+        repo = MockRepository("test_test_command_with_workflows", recorder=recorder)
+        issue = MockIssue("test_test_command_with_workflows", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        assert len(result["tests_triggered"]) == 1
+        # Check that the test request has workflows
+        test_req = result["tests_triggered"][0]
+        assert "1.0" in test_req["workflows"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_blocked_by_missing_signature(self, repo_config, record_mode, monkeypatch):
+        """Test that test is blocked when required signature is missing."""
+        import process_pr_v2
+
+        # Mock forward_ports_map and CMSSW_DEVEL_BRANCH so code-checks is a pre-check
+        mock_fwports_module = types.ModuleType("forward_ports_map")
+        mock_fwports_module.GIT_REPO_FWPORTS = {"cmssw": {"CMSSW_14_1_X": []}}
+        monkeypatch.setattr(process_pr_v2, "forward_ports_map", mock_fwports_module)
+        monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
+
+        config = create_mock_repo_config()
+
+        create_basic_pr_data(
+            "test_test_blocked_by_missing_signature",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                }
+            ],
+            base_ref="master",  # Use master branch to get code-checks as pre-check
+        )
+
+        recorder = ActionRecorder("test_test_blocked_by_missing_signature", record_mode)
+        gh = MockGithub("test_test_blocked_by_missing_signature", recorder)
+        # Use cms-sw/cmssw on master to get code-checks as pre-check
+        repo = MockRepository(
+            "test_test_blocked_by_missing_signature", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_test_blocked_by_missing_signature", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # Test should NOT be triggered because code-checks is not approved
+        assert len(result["tests_triggered"]) == 0
+        # Should have a message about missing signature
+        assert any("code-checks" in msg for msg in result["messages"])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestPRDescriptionParsing:
+    """Tests for PR/Issue ignore logic and notification tags."""
+
+    @staticmethod
+    def _make_mock_issue(number=1, title="Test Issue", body=""):
+        """Create a mock issue for testing."""
+        issue = MagicMock()
+        issue.number = number
+        issue.title = title
+        issue.body = body
+        return issue
+
+    @staticmethod
+    def _make_mock_repo(full_name="cms-sw/cmssw"):
+        """Create a mock repo for testing."""
+        repo = MagicMock()
+        repo.full_name = full_name
+        return repo
+
+    def test_should_ignore_issue_with_cms_bot_tag(self):
+        """Test that <cmsbot></cmsbot> tag in body is detected."""
+        repo_config = create_mock_repo_config()
+        repo = self._make_mock_repo()
+
+        # Note: The actual tag is <cmsbot> not <cms-bot>
+        assert (
+            should_ignore_issue(repo_config, repo, self._make_mock_issue(body="<cmsbot></cmsbot>"))
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="<cmsbot> </cmsbot>")
+            )
+            is True
+        )
+        assert (
+            should_ignore_issue(repo_config, repo, self._make_mock_issue(body="<CMSBOT></CMSBOT>"))
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="  <cmsbot></cmsbot>  ")
+            )
+            is True
+        )
+
+    def test_should_not_ignore_issue_without_tag(self):
+        """Test that issues without the tag are not ignored."""
+        repo_config = create_mock_repo_config()
+        repo = self._make_mock_repo()
+
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(body="")) is False
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="Normal PR description")
+            )
+            is False
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="Fix bug in module\n\nDetails here")
+            )
+            is False
+        )
+
+    def test_should_not_ignore_issue_with_tag_not_on_first_line(self):
+        """Test that tag must be on first non-blank line."""
+        repo_config = create_mock_repo_config()
+        repo = self._make_mock_repo()
+
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="Some text\n<cms-bot></cms-bot>")
+            )
+            is False
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(body="\n\nSome text\n<cms-bot></cms-bot>")
+            )
+            is False
+        )
+
+    def test_should_ignore_issue_in_ignore_list(self):
+        """Test that issues in IGNORE_ISSUES are ignored."""
+        repo_config = create_mock_repo_config(IGNORE_ISSUES={42: True})
+        repo = self._make_mock_repo()
+
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=42)) is True
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=43)) is False
+
+    def test_should_ignore_issue_in_repo_specific_ignore_list(self):
+        """Test that issues in repo-specific IGNORE_ISSUES are ignored."""
+        repo_config = create_mock_repo_config(
+            IGNORE_ISSUES={"cms-sw/cmssw": {100: True, 101: True}}
+        )
+        repo = self._make_mock_repo(full_name="cms-sw/cmssw")
+        other_repo = self._make_mock_repo(full_name="cms-sw/cmsdist")
+
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=100)) is True
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=101)) is True
+        assert should_ignore_issue(repo_config, repo, self._make_mock_issue(number=102)) is False
+        # Same issue number in different repo should not be ignored
+        assert (
+            should_ignore_issue(repo_config, other_repo, self._make_mock_issue(number=100))
+            is False
+        )
+
+    def test_should_ignore_issue_with_build_rel_title(self):
+        """Test that issues with BUILD_REL pattern in title are ignored."""
+        repo_config = create_mock_repo_config()
+        repo = self._make_mock_repo()
+
+        # BUILD_REL pattern: ^[Bb]uild[ ]+(CMSSW_[^ ]+)
+        # Matches titles like "Build CMSSW_14_0_0" or "build CMSSW_14_0_0_pre1"
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="Build CMSSW_14_0_0")
+            )
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="build CMSSW_14_0_0_pre1")
+            )
+            is True
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="Build CMSSW_12_0_X")
+            )
+            is True
+        )
+
+        # Normal titles should not be ignored
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="Normal issue title")
+            )
+            is False
+        )
+        assert (
+            should_ignore_issue(repo_config, repo, self._make_mock_issue(title="Fix bug in Build"))
+            is False
+        )
+        assert (
+            should_ignore_issue(
+                repo_config, repo, self._make_mock_issue(title="Release CMSSW_14_0_0")
+            )
+            is False
+        )  # "Release" not "Build"
+
+    def test_should_notify_without_at(self):
+        """Test that <notify></notify> tag is detected."""
+        assert should_notify_without_at("<notify></notify>") is True
+        assert should_notify_without_at("<notify> </notify>") is True
+        assert should_notify_without_at("<NOTIFY></NOTIFY>") is True
+        assert should_notify_without_at("  <notify></notify>  ") is True
+
+    def test_should_notify_with_at(self):
+        """Test that PRs without notify tag use @ in mentions."""
+        assert should_notify_without_at("") is False
+        assert should_notify_without_at("Normal PR description") is False
+        assert should_notify_without_at("<notify>content</notify>") is False
+
+
+class TestPRIgnoreProcessing:
+    """Tests for PR ignore functionality via <cms-bot> tag."""
+
+    def test_pr_with_cms_bot_tag_skipped(self, repo_config, record_mode):
+        """Test that PR with <cmsbot></cmsbot> is skipped."""
+        create_basic_pr_data(
+            "test_pr_with_cms_bot_tag_skipped",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        # Modify Issue data to have cmsbot tag in body (should_ignore_issue reads issue.body)
+        issue_data_path = REPLAY_DATA_DIR / "test_pr_with_cms_bot_tag_skipped" / "Issue_1.json"
+        with open(issue_data_path, "r") as f:
+            issue_data = json.load(f)
+        issue_data["body"] = "<cmsbot></cmsbot>\nThis PR should be ignored"
+        with open(issue_data_path, "w") as f:
+            json.dump(issue_data, f, indent=2)
+
+        recorder = ActionRecorder("test_pr_with_cms_bot_tag_skipped", record_mode)
+        gh = MockGithub("test_pr_with_cms_bot_tag_skipped", recorder)
+        repo = MockRepository("test_pr_with_cms_bot_tag_skipped", recorder=recorder)
+        issue = MockIssue("test_pr_with_cms_bot_tag_skipped", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["skipped"] is True
+        assert result["reason"] == "ignored"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_pr_with_cms_bot_tag_processed_with_force(self, repo_config, record_mode):
+        """Test that PR with <cmsbot></cmsbot> is processed when force=True."""
+        create_basic_pr_data(
+            "test_pr_with_cms_bot_tag_processed_with_force",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[],
+        )
+
+        # Modify Issue data to have cmsbot tag in body
+        issue_data_path = (
+            REPLAY_DATA_DIR / "test_pr_with_cms_bot_tag_processed_with_force" / "Issue_1.json"
+        )
+        with open(issue_data_path, "r") as f:
+            issue_data = json.load(f)
+        issue_data["body"] = "<cmsbot></cmsbot>\nThis PR should be ignored"
+        with open(issue_data_path, "w") as f:
+            json.dump(issue_data, f, indent=2)
+
+        recorder = ActionRecorder("test_pr_with_cms_bot_tag_processed_with_force", record_mode)
+        gh = MockGithub("test_pr_with_cms_bot_tag_processed_with_force", recorder)
+        repo = MockRepository("test_pr_with_cms_bot_tag_processed_with_force", recorder=recorder)
+        issue = MockIssue(
+            "test_pr_with_cms_bot_tag_processed_with_force", number=1, recorder=recorder
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            force=True,  # Force processing
+            loglevel="DEBUG",
+        )
+
+        # Should NOT be skipped because force=True
+        assert result.get("skipped") is not True
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# NEW TESTS FOR RECENT FEATURES
+# =============================================================================
+
+
+class TestSignatureLocking:
+    """Tests for signature locking after commits."""
+
+    def test_signature_locked_after_commit(self, repo_config, record_mode):
+        """Test that signatures are locked after a commit is pushed."""
+        # Create PR with approval, then a commit after
+        create_basic_pr_data(
+            "test_signature_locked_after_commit",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T10:00:00Z",  # Comment at 10:00
+                }
+            ],
+            commits=[
+                {
+                    "sha": "commit_sha_1",
+                    "author": {"login": "author1", "date": "2024-01-01T09:00:00Z"},
+                    "committer": {"date": "2024-01-01T09:00:00Z"},
+                    "message": "Initial commit",
+                },
+                {
+                    "sha": "commit_sha_2",
+                    "author": {
+                        "login": "author1",
+                        "date": "2024-01-01T11:00:00Z",
+                    },  # After comment
+                    "committer": {"date": "2024-01-01T11:00:00Z"},
+                    "message": "Second commit",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_signature_locked_after_commit", record_mode)
+        gh = MockGithub("test_signature_locked_after_commit", recorder)
+        repo = MockRepository("test_signature_locked_after_commit", recorder=recorder)
+        issue = MockIssue("test_signature_locked_after_commit", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # The signature should be locked because commit happened after
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_signature_not_locked_before_commit(self, repo_config, record_mode):
+        """Test that signatures are not locked if no commit after."""
+        create_basic_pr_data(
+            "test_signature_not_locked_before_commit",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:00:00Z",  # Comment at 12:00
+                }
+            ],
+            commits=[
+                {
+                    "sha": "commit_sha_1",
+                    "author": {
+                        "login": "author1",
+                        "date": "2024-01-01T10:00:00Z",
+                    },  # Before comment
+                    "committer": {"date": "2024-01-01T10:00:00Z"},
+                    "message": "Initial commit",
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_signature_not_locked_before_commit", record_mode)
+        gh = MockGithub("test_signature_not_locked_before_commit", recorder)
+        repo = MockRepository("test_signature_not_locked_before_commit", recorder=recorder)
+        issue = MockIssue("test_signature_not_locked_before_commit", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestSquashSignatureHandling:
+    """
+    Tests for signature handling during squash operations.
+
+    When a PR is squashed (commit SHA changes), signatures should be:
+    - Clean squash (file SHAs unchanged): Keep L2 signatures, reset code-checks/tests
+    - Dirty squash (all file SHAs changed): Reset all signatures
+    - Mixed squash (some file SHAs changed): Reset only signatures for changed files
+
+    In all cases, code-checks and tests categories should be reset since they
+    depend on the commit SHA, not file content.
+    """
+
+    def test_clean_squash_preserves_l2_signatures(self, repo_config, record_mode):
+        """
+        Test clean squash: commit SHA changes but file SHAs stay the same.
+
+        Expected behavior:
+        - code-checks and tests signatures should be reset (commit changed)
+        - L2 signatures should be preserved (file content unchanged)
+        """
+        # First run: PR with approval
+        # alice owns core and analysis
+        # Files must match CMSSW_CATEGORIES packages: Package/Core -> core, Package/Analysis -> analysis
+        create_basic_pr_data(
+            "test_clean_squash_preserves_l2_signatures",
+            pr_number=1,
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "file_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "file_sha_222",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                # L2 approval for core category
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},  # alice owns core
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                # L2 approval for analysis category
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},  # alice owns analysis
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                # code-checks approval (bot signature)
+                {
+                    "id": 102,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 1},
+                    "created_at": "2024-01-01T12:02:00Z",
+                },
+            ],
+            commits=[
+                # Original commit
+                {
+                    "sha": "original_commit_sha",
+                    "commit": {
+                        "message": "Original commit",
+                        "author": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_clean_squash_preserves_l2_signatures", record_mode)
+        gh = MockGithub("test_clean_squash_preserves_l2_signatures", recorder)
+        repo = MockRepository("test_clean_squash_preserves_l2_signatures", recorder=recorder)
+        issue = MockIssue("test_clean_squash_preserves_l2_signatures", number=1, recorder=recorder)
+
+        # First run to establish signatures
+        result1 = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result1["pr_number"] == 1
+
+        # Now simulate clean squash: new commit SHA, same file SHAs
+        create_basic_pr_data(
+            "test_clean_squash_preserves_l2_signatures_after",
+            pr_number=1,
+            files=[
+                # Same file SHAs as before (clean squash)
+                {"filename": "Package/Core/main.py", "sha": "file_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "file_sha_222",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                # Same approvals
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                {
+                    "id": 102,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 1},
+                    "created_at": "2024-01-01T12:02:00Z",
+                },
+            ],
+            commits=[
+                # NEW commit SHA (squashed)
+                {
+                    "sha": "squashed_commit_sha_new",
+                    "commit": {
+                        "message": "Squashed commit",
+                        "author": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        # Reload for second run
+        recorder2 = ActionRecorder("test_clean_squash_preserves_l2_signatures_after", record_mode)
+        gh2 = MockGithub("test_clean_squash_preserves_l2_signatures_after", recorder2)
+        repo2 = MockRepository(
+            "test_clean_squash_preserves_l2_signatures_after", recorder=recorder2
+        )
+        issue2 = MockIssue(
+            "test_clean_squash_preserves_l2_signatures_after", number=1, recorder=recorder2
+        )
+
+        result2 = process_pr(
+            repo_config=repo_config,
+            gh=gh2,
+            repo=repo2,
+            issue=issue2,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result2["pr_number"] == 1
+        # L2 signatures (core, analysis) should still be valid
+        # code-checks should be reset (commit changed, bot signature depends on commit)
+
+        if record_mode:
+            recorder.save()
+            recorder2.save()
+        else:
+            recorder.verify()
+            recorder2.verify()
+
+    def test_dirty_squash_resets_all_l2_signatures(self, repo_config, record_mode):
+        """
+        Test dirty squash: commit SHA changes AND all file SHAs change.
+
+        Expected behavior:
+        - code-checks and tests signatures should be reset
+        - ALL L2 signatures should be reset (all files changed)
+        """
+        # First run: PR with approvals
+        # alice owns core and analysis
+        # Files must match CMSSW_CATEGORIES packages: Package/Core -> core, Package/Analysis -> analysis
+        create_basic_pr_data(
+            "test_dirty_squash_resets_all_l2_signatures",
+            pr_number=1,
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "old_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "old_sha_222",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},  # alice owns core
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},  # alice owns analysis
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+            ],
+            commits=[
+                {
+                    "sha": "original_commit",
+                    "commit": {
+                        "message": "Original",
+                        "author": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_dirty_squash_resets_all_l2_signatures", record_mode)
+        gh = MockGithub("test_dirty_squash_resets_all_l2_signatures", recorder)
+        repo = MockRepository("test_dirty_squash_resets_all_l2_signatures", recorder=recorder)
+        issue = MockIssue(
+            "test_dirty_squash_resets_all_l2_signatures", number=1, recorder=recorder
+        )
+
+        result1 = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result1["pr_number"] == 1
+
+        # Now simulate dirty squash: new commit SHA AND new file SHAs
+        # Include a cache comment from the first run with OLD signed_files
+        # Each signature only contains files for that specific category
+        cache_comment = {
+            "id": 999,
+            "body": 'cms-bot internal usage<!-- {"comments":{"100":{"cats":["core"],"ctype":"+1","first_line":"+1","signed_files":["Package/Core/main.py::old_sha_111"],"ts":"2024-01-01T12:00:00+00:00","user":"alice"},"101":{"cats":["analysis"],"ctype":"+1","first_line":"+1","signed_files":["Package/Analysis/data.py::old_sha_222"],"ts":"2024-01-01T12:01:00+00:00","user":"alice"}},"emoji":{"100":"+1","101":"+1"},"fv":{"Package/Core/main.py::old_sha_111":{"cats":["core"],"ts":"2024-01-01T10:00:00Z"},"Package/Analysis/data.py::old_sha_222":{"cats":["analysis"],"ts":"2024-01-01T10:00:00Z"}}} -->',
+            "user": {"login": "cmsbuild", "id": 999},
+            "created_at": "2024-01-01T13:00:00Z",
+        }
+
+        create_basic_pr_data(
+            "test_dirty_squash_resets_all_l2_signatures_after",
+            pr_number=1,
+            files=[
+                # ALL file SHAs changed (dirty squash)
+                {"filename": "Package/Core/main.py", "sha": "new_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "new_sha_222",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                # Same approvals (but they're now invalid because signed_files have old SHAs)
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                # Cache comment with OLD signed_files - this is key!
+                cache_comment,
+            ],
+            commits=[
+                {
+                    "sha": "squashed_dirty_commit",
+                    "commit": {
+                        "message": "Squashed with changes",
+                        "author": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder2 = ActionRecorder("test_dirty_squash_resets_all_l2_signatures_after", record_mode)
+        gh2 = MockGithub("test_dirty_squash_resets_all_l2_signatures_after", recorder2)
+        repo2 = MockRepository(
+            "test_dirty_squash_resets_all_l2_signatures_after", recorder=recorder2
+        )
+        issue2 = MockIssue(
+            "test_dirty_squash_resets_all_l2_signatures_after", number=1, recorder=recorder2
+        )
+
+        result2 = process_pr(
+            repo_config=repo_config,
+            gh=gh2,
+            repo=repo2,
+            issue=issue2,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result2["pr_number"] == 1
+        # ALL signatures should be reset - both core and analysis
+        # because all file SHAs changed (signed_files have old SHAs)
+        # Should NOT have fully-signed label
+        label_actions = [a for a in recorder2.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert "fully-signed" not in labels, "Should NOT be fully-signed after dirty squash"
+            assert "core-approved" not in labels, "core should NOT be approved after dirty squash"
+            assert (
+                "analysis-approved" not in labels
+            ), "analysis should NOT be approved after dirty squash"
+
+        if record_mode:
+            recorder.save()
+            recorder2.save()
+        else:
+            recorder.verify()
+            recorder2.verify()
+
+    def test_mixed_squash_resets_only_changed_file_signatures(self, repo_config, record_mode):
+        """
+        Test mixed squash: commit SHA changes, SOME file SHAs change.
+
+        Expected behavior:
+        - code-checks and tests signatures should be reset
+        - L2 signatures for unchanged files should be preserved
+        - L2 signatures for changed files should be reset
+        """
+        # First run: PR with approvals for multiple categories
+        # Using correct L2 users: alice=core/analysis, bob=simulation
+        # Files must match CMSSW_CATEGORIES packages
+        create_basic_pr_data(
+            "test_mixed_squash_resets_only_changed_file_signatures",
+            pr_number=1,
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "core_sha_111", "status": "modified"},
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "analysis_sha_222",
+                    "status": "modified",
+                },
+                {
+                    "filename": "Package/Simulation/sim.py",
+                    "sha": "sim_sha_333",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},  # alice owns core
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},  # alice owns analysis
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                {
+                    "id": 102,
+                    "body": "+simulation",
+                    "user": {"login": "bob", "id": 3},  # bob owns simulation
+                    "created_at": "2024-01-01T12:02:00Z",
+                },
+            ],
+            commits=[
+                {
+                    "sha": "original_mixed",
+                    "commit": {
+                        "message": "Original",
+                        "author": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T10:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder(
+            "test_mixed_squash_resets_only_changed_file_signatures", record_mode
+        )
+        gh = MockGithub("test_mixed_squash_resets_only_changed_file_signatures", recorder)
+        repo = MockRepository(
+            "test_mixed_squash_resets_only_changed_file_signatures", recorder=recorder
+        )
+        issue = MockIssue(
+            "test_mixed_squash_resets_only_changed_file_signatures", number=1, recorder=recorder
+        )
+
+        result1 = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result1["pr_number"] == 1
+
+        # Cache comment from first run with OLD signed_files
+        # Each signature only contains files for that specific category
+        # Core file will change, analysis and simulation will stay the same
+        cache_comment = {
+            "id": 999,
+            "body": 'cms-bot internal usage<!-- {"comments":{"100":{"cats":["core"],"ctype":"+1","first_line":"+1","signed_files":["Package/Core/main.py::core_sha_111"],"ts":"2024-01-01T12:00:00+00:00","user":"alice"},"101":{"cats":["analysis"],"ctype":"+1","first_line":"+1","signed_files":["Package/Analysis/data.py::analysis_sha_222"],"ts":"2024-01-01T12:01:00+00:00","user":"alice"},"102":{"cats":["simulation"],"ctype":"+1","first_line":"+1","signed_files":["Package/Simulation/sim.py::sim_sha_333"],"ts":"2024-01-01T12:02:00+00:00","user":"bob"}},"emoji":{"100":"+1","101":"+1","102":"+1"},"fv":{"Package/Core/main.py::core_sha_111":{"cats":["core"],"ts":"2024-01-01T10:00:00Z"},"Package/Analysis/data.py::analysis_sha_222":{"cats":["analysis"],"ts":"2024-01-01T10:00:00Z"},"Package/Simulation/sim.py::sim_sha_333":{"cats":["simulation"],"ts":"2024-01-01T10:00:00Z"}}} -->',
+            "user": {"login": "cmsbuild", "id": 999},
+            "created_at": "2024-01-01T13:00:00Z",
+        }
+
+        # Mixed squash: new commit SHA, only core file changed
+        create_basic_pr_data(
+            "test_mixed_squash_resets_only_changed_file_signatures_after",
+            pr_number=1,
+            files=[
+                # core file SHA changed
+                {"filename": "Package/Core/main.py", "sha": "core_sha_NEW", "status": "modified"},
+                # analysis file SHA unchanged
+                {
+                    "filename": "Package/Analysis/data.py",
+                    "sha": "analysis_sha_222",
+                    "status": "modified",
+                },
+                # simulation file SHA unchanged
+                {
+                    "filename": "Package/Simulation/sim.py",
+                    "sha": "sim_sha_333",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:00:00Z",
+                },
+                {
+                    "id": 101,
+                    "body": "+analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": "2024-01-01T12:01:00Z",
+                },
+                {
+                    "id": 102,
+                    "body": "+simulation",
+                    "user": {"login": "bob", "id": 3},
+                    "created_at": "2024-01-01T12:02:00Z",
+                },
+                # Cache comment with OLD signed_files - this is key!
+                cache_comment,
+            ],
+            commits=[
+                {
+                    "sha": "squashed_mixed_commit",
+                    "commit": {
+                        "message": "Squashed with partial changes",
+                        "author": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": "2024-01-01T14:00:00Z",
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder2 = ActionRecorder(
+            "test_mixed_squash_resets_only_changed_file_signatures_after", record_mode
+        )
+        gh2 = MockGithub("test_mixed_squash_resets_only_changed_file_signatures_after", recorder2)
+        repo2 = MockRepository(
+            "test_mixed_squash_resets_only_changed_file_signatures_after", recorder=recorder2
+        )
+        issue2 = MockIssue(
+            "test_mixed_squash_resets_only_changed_file_signatures_after",
+            number=1,
+            recorder=recorder2,
+        )
+
+        result2 = process_pr(
+            repo_config=repo_config,
+            gh=gh2,
+            repo=repo2,
+            issue=issue2,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result2["pr_number"] == 1
+        # core signature should be reset (file SHA changed)
+        # analysis and simulation signatures should be preserved (file SHAs unchanged)
+        label_actions = [a for a in recorder2.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            # core should NOT be approved (file changed)
+            assert "core-approved" not in labels, "core should NOT be approved after file change"
+            # analysis and simulation SHOULD be approved (files unchanged)
+            assert "analysis-approved" in labels, "analysis should be approved (unchanged)"
+            assert "simulation-approved" in labels, "simulation should be approved (unchanged)"
+            # Should NOT be fully-signed (core is pending)
+            assert "fully-signed" not in labels, "Should NOT be fully-signed"
+
+        if record_mode:
+            recorder.save()
+            recorder2.save()
+        else:
+            recorder.verify()
+            recorder2.verify()
+
+
+class TestL2MembershipChanges:
+    """Tests for signature preservation when L2 membership changes over time."""
+
+    def test_signature_preserved_when_l2_membership_changes(self, repo_config, record_mode):
+        """
+        Test that signatures are preserved when a user's L2 membership changes.
+
+        Scenario:
+        - PR touches files with categories core and dqm
+        - At time T1, Alice (who is core L2 at that time) signs with +1
+        - At time T2 (> T1), Alice (who is now dqm L2, no longer core) signs with +1
+
+        Expected:
+        - The core signature from T1 should be preserved (used Alice's L2 at T1)
+        - The dqm signature from T2 should also be recorded (using Alice's L2 at T2)
+        - Both categories should be approved
+        """
+        import process_pr_v2
+
+        # Set up time-based L2 data:
+        # - Before T_change: Alice is core L2
+        # - After T_change: Alice is dqm L2
+        t_change = FROZEN_COMMIT_TIME + timedelta(minutes=10)
+        t_change_epoch = t_change.timestamp()
+
+        l2_data = {
+            "alice": [
+                {
+                    "start_date": 0,
+                    "end_date": t_change_epoch,
+                    "category": ["core"],
+                },
+                {
+                    "start_date": t_change_epoch,
+                    "end_date": None,
+                    "category": ["dqm"],
+                },
+            ],
+            "cmsbuild": [{"start_date": 0, "category": ["tests", "code-checks"]}],
+        }
+        process_pr_v2._L2_DATA = l2_data
+
+        # T1: Alice signs while she's core L2 (before T_change)
+        t1 = t_change - timedelta(minutes=5)
+        # T2: Alice signs while she's dqm L2 (after T_change)
+        t2 = t_change + timedelta(minutes=5)
+
+        create_basic_pr_data(
+            "test_l2_membership_change",
+            pr_number=1,
+            files=[
+                # File in core category
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_core",
+                    "status": "modified",
+                },
+                # File in dqm category (Package/DQM matches dqm category)
+                {
+                    "filename": "Package/DQM/monitor.py",
+                    "sha": "file_sha_dqm",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                # At T1: Alice signs +1 (she's core L2 at this time)
+                {
+                    "id": 100,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": t1.isoformat().replace("+00:00", "Z"),
+                },
+                # At T2: Alice signs +1 again (she's now dqm L2)
+                {
+                    "id": 101,
+                    "body": "+1",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": t2.isoformat().replace("+00:00", "Z"),
+                },
+            ],
+            commits=[
+                {
+                    "sha": "commit_sha_1",
+                    "commit": {
+                        "message": "Test commit",
+                        "author": {
+                            "date": FROZEN_COMMIT_TIME.isoformat().replace("+00:00", "Z"),
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                        "committer": {
+                            "date": FROZEN_COMMIT_TIME.isoformat().replace("+00:00", "Z"),
+                            "name": "Author",
+                            "email": "a@b.com",
+                        },
+                    },
+                },
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_l2_membership_change", record_mode)
+        gh = MockGithub("test_l2_membership_change", recorder)
+        repo = MockRepository(
+            "test_l2_membership_change", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_l2_membership_change", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Both core and dqm should be approved
+        # - core: approved via Alice's +1 at T1 (when she was core L2)
+        # - dqm: approved via Alice's +1 at T2 (when she was dqm L2)
+        assert "core" in result["categories"], "core category should be present"
+        assert "dqm" in result["categories"], "dqm category should be present"
+        assert (
+            result["categories"]["core"]["state"] == "approved"
+        ), "core should be approved (Alice was core L2 at T1)"
+        assert (
+            result["categories"]["dqm"]["state"] == "approved"
+        ), "dqm should be approved (Alice was dqm L2 at T2)"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestUnassignCommand:
+    """Tests for unassign command."""
+
+    def test_unassign_category(self, repo_config, record_mode):
+        """Test unassign command removes category."""
+        create_basic_pr_data(
+            "test_unassign_category",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "unassign core",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_unassign_category", record_mode)
+        gh = MockGithub("test_unassign_category", recorder)
+        repo = MockRepository("test_unassign_category", recorder=recorder)
+        issue = MockIssue("test_unassign_category", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_unassign_invalid_category(self, repo_config, record_mode):
+        """Test unassign with invalid category fails gracefully."""
+        create_basic_pr_data(
+            "test_unassign_invalid_category",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "unassign nonexistent-category",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_unassign_invalid_category", record_mode)
+        gh = MockGithub("test_unassign_invalid_category", recorder)
+        repo = MockRepository("test_unassign_invalid_category", recorder=recorder)
+        issue = MockIssue("test_unassign_invalid_category", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # Should have error message about unknown category
+        assert any("nonexistent-category" in msg for msg in result["messages"])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestCommaSeparatedAssign:
+    """Tests for comma-separated assign/unassign commands."""
+
+    def test_assign_multiple_categories(self, repo_config, record_mode):
+        """Test assigning multiple categories at once."""
+        create_basic_pr_data(
+            "test_assign_multiple_categories",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign core,analysis,simulation",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_assign_multiple_categories", record_mode)
+        gh = MockGithub("test_assign_multiple_categories", recorder)
+        repo = MockRepository("test_assign_multiple_categories", recorder=recorder)
+        issue = MockIssue("test_assign_multiple_categories", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_unassign_multiple_categories(self, repo_config, record_mode):
+        """Test unassigning multiple categories at once."""
+        create_basic_pr_data(
+            "test_unassign_multiple_categories",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign core,analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "unassign core,analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_unassign_multiple_categories", record_mode)
+        gh = MockGithub("test_unassign_multiple_categories", recorder)
+        repo = MockRepository("test_unassign_multiple_categories", recorder=recorder)
+        issue = MockIssue("test_unassign_multiple_categories", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_assign_mixed_valid_invalid(self, repo_config, record_mode):
+        """Test assign with mix of valid and invalid categories."""
+        create_basic_pr_data(
+            "test_assign_mixed_valid_invalid",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign core,invalid_cat,analysis",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_assign_mixed_valid_invalid", record_mode)
+        gh = MockGithub("test_assign_mixed_valid_invalid", recorder)
+        repo = MockRepository("test_assign_mixed_valid_invalid", recorder=recorder)
+        issue = MockIssue("test_assign_mixed_valid_invalid", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # Should have error message about invalid category
+        assert any("invalid_cat" in msg for msg in result["messages"])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestIssueProcessing:
+    """Tests for Issue (non-PR) processing."""
+
+    def test_issue_skips_pr_only_commands(self, repo_config, record_mode):
+        """Test that PR-only commands are ignored for issues."""
+        create_basic_pr_data(
+            "test_issue_skips_pr_only_commands",
+            pr_number=1,
+            files=[],  # Issues don't have files
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+1",  # This is a PR-only command
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_issue_skips_pr_only_commands", record_mode)
+        gh = MockGithub("test_issue_skips_pr_only_commands", recorder)
+        repo = MockRepository("test_issue_skips_pr_only_commands", recorder=recorder)
+        issue = MockIssue(
+            "test_issue_skips_pr_only_commands", number=1, recorder=recorder, is_issue=True
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert result["is_pr"] is False
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestExtractCommandLine:
+    """Tests for extract_command_line function."""
+
+    def test_extract_simple(self):
+        """Test extracting simple commands."""
+        assert extract_command_line("+1") == ("+1", False)
+        assert extract_command_line("  +1  ") == ("+1", False)
+        assert extract_command_line("+1\nsome text") == ("+1", False)
+
+    def test_extract_with_prefix(self):
+        """Test extracting commands with @cmsbuild prefix."""
+        line, mentioned = extract_command_line("@cmsbuild +1")
+        assert line == "+1"
+        assert mentioned is True
+
+        line, mentioned = extract_command_line("@cmsbuild please +1")
+        assert line == "+1"
+        assert mentioned is True
+
+        line, mentioned = extract_command_line("please +1")
+        assert line == "+1"
+        assert mentioned is False
+
+    def test_extract_with_custom_bot_user(self):
+        """Test extracting commands with custom bot username."""
+        line, mentioned = extract_command_line("@mybot +1", cmsbuild_user="mybot")
+        assert line == "+1"
+        assert mentioned is True
+
+        line, mentioned = extract_command_line("@cmsbuild +1", cmsbuild_user="mybot")
+        assert line == "@cmsbuild +1"  # Not stripped because different bot name
+        assert mentioned is False
+
+    def test_extract_empty(self):
+        """Test extracting from empty/whitespace content."""
+        assert extract_command_line("") == (None, False)
+        assert extract_command_line("   ") == (None, False)
+        assert extract_command_line("\n\n\n") == (None, False)
+
+    def test_extract_preserves_command(self):
+        """Test that command content is preserved."""
+        assert extract_command_line("test workflows 1.0,2.0") == ("test workflows 1.0,2.0", False)
+        assert extract_command_line("assign core,analysis") == ("assign core,analysis", False)
+
+
+class TestHyphenatedCategories:
+    """Tests for hyphenated category names like code-checks."""
+
+    @pytest.fixture(autouse=True)
+    def mock_signing_checks(self, monkeypatch):
+        """Mock forward_ports_map and CMSSW_DEVEL_BRANCH for code-checks tests."""
+        import process_pr_v2
+
+        # Mock forward_ports_map
+        mock_fwports_module = types.ModuleType("forward_ports_map")
+        mock_fwports_module.GIT_REPO_FWPORTS = {
+            "cmssw": {
+                "CMSSW_14_1_X": ["CMSSW_14_0_X"],
+            }
+        }
+        monkeypatch.setattr(process_pr_v2, "forward_ports_map", mock_fwports_module)
+
+        # Mock CMSSW_DEVEL_BRANCH
+        monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
+
+        # Mock GH_CMSSW_REPO to match our test repo name
+        monkeypatch.setattr(process_pr_v2, "GH_CMSSW_REPO", "cmssw")
+
+    def test_plus_code_checks_queues_status(self, repo_config, record_mode):
+        """
+        Test +code-checks approval command queues commit status update.
+
+        First run: Process +code-checks comment, verify status is queued.
+        """
+        create_basic_pr_data(
+            "test_plus_code_checks_queues_status",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                }
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_plus_code_checks_queues_status", record_mode)
+        gh = MockGithub("test_plus_code_checks_queues_status", recorder)
+        repo = MockRepository(
+            "test_plus_code_checks_queues_status", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_plus_code_checks_queues_status", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify that a create_status action was recorded for code-checks
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_status = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_status) > 0, "Should have queued code-checks status"
+        assert code_checks_status[0]["details"]["state"] == "success"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_plus_code_checks_approved_on_second_run(self, repo_config, record_mode):
+        """
+        Test +code-checks results in approved state on second run.
+
+        Second run: With code-checks status already set to success,
+        verify category state is approved.
+        """
+        create_basic_pr_data(
+            "test_plus_code_checks_approved_on_second_run",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+            base_ref="master",
+            # Simulate second run: status already set from first run
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "success",
+                    "description": "See details",
+                    "target_url": "",
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_plus_code_checks_approved_on_second_run", record_mode)
+        gh = MockGithub("test_plus_code_checks_approved_on_second_run", recorder)
+        repo = MockRepository(
+            "test_plus_code_checks_approved_on_second_run",
+            full_name="cms-sw/cmssw",
+            recorder=recorder,
+        )
+        issue = MockIssue(
+            "test_plus_code_checks_approved_on_second_run", number=1, recorder=recorder
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # The code-checks category should be approved (from commit status)
+        assert "code-checks" in result["categories"]
+        assert result["categories"]["code-checks"]["state"] == "approved"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_minus_code_checks_queues_status(self, repo_config, record_mode):
+        """
+        Test -code-checks rejection command queues commit status update.
+
+        First run: Process -code-checks comment, verify status is queued.
+        """
+        create_basic_pr_data(
+            "test_minus_code_checks_queues_status",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "-code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                }
+            ],
+            base_ref="master",
+        )
+
+        recorder = ActionRecorder("test_minus_code_checks_queues_status", record_mode)
+        gh = MockGithub("test_minus_code_checks_queues_status", recorder)
+        repo = MockRepository(
+            "test_minus_code_checks_queues_status", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_minus_code_checks_queues_status", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify that a create_status action was recorded for code-checks with error state
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_status = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_status) > 0, "Should have queued code-checks status"
+        assert code_checks_status[0]["details"]["state"] == "error"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_minus_code_checks_rejected_on_second_run(self, repo_config, record_mode):
+        """
+        Test -code-checks results in rejected state on second run.
+
+        Second run: With code-checks status already set to error,
+        verify category state is rejected.
+        """
+        create_basic_pr_data(
+            "test_minus_code_checks_rejected_on_second_run",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "-code-checks",
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                }
+            ],
+            base_ref="master",
+            # Simulate second run: status already set from first run
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "error",
+                    "description": "See details",
+                    "target_url": "",
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_minus_code_checks_rejected_on_second_run", record_mode)
+        gh = MockGithub("test_minus_code_checks_rejected_on_second_run", recorder)
+        repo = MockRepository(
+            "test_minus_code_checks_rejected_on_second_run",
+            full_name="cms-sw/cmssw",
+            recorder=recorder,
+        )
+        issue = MockIssue(
+            "test_minus_code_checks_rejected_on_second_run", number=1, recorder=recorder
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # The code-checks category should be rejected (from commit status)
+        assert "code-checks" in result["categories"]
+        assert result["categories"]["code-checks"]["state"] == "rejected"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_assign_category_with_hyphen(self, repo_config, record_mode):
+        """Test assign command with hyphenated category."""
+        create_basic_pr_data(
+            "test_assign_category_with_hyphen",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "assign code-checks,l1-trigger",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_assign_category_with_hyphen", record_mode)
+        gh = MockGithub("test_assign_category_with_hyphen", recorder)
+        repo = MockRepository("test_assign_category_with_hyphen", recorder=recorder)
+        issue = MockIssue("test_assign_category_with_hyphen", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TYPE COMMAND TESTS
+# =============================================================================
+
+
+class TestTypeCommand:
+    """Test the type <label> command."""
+
+    @pytest.fixture
+    def repo_config(self):
+        """Create a mock repo config with minimal settings."""
+        return create_mock_repo_config()
+
+    @pytest.fixture
+    def record_mode(self, request):
+        """Check if we're in record mode."""
+        return request.config.getoption("--record-actions", default=False)
+
+    def test_type_command_adds_label(self, repo_config, record_mode, monkeypatch):
+        """Test that type command adds a label to pending_labels."""
+        # Mock TYPE_COMMANDS
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "new-feature": ["#00ff00", "(?:new-)?(?:feature|idea)", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_type_command_adds_label",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type bug-fix",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_type_command_adds_label", record_mode)
+        gh = MockGithub("test_type_command_adds_label", recorder)
+        repo = MockRepository("test_type_command_adds_label", recorder=recorder)
+        issue = MockIssue("test_type_command_adds_label", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "bug-fix" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_type_label_replaces_previous(self, repo_config, record_mode, monkeypatch):
+        """Test that 'type' labels replace each other (only last one applies)."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "new-feature": ["#00ff00", "(?:new-)?(?:feature|idea)", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_type_label_replaces_previous",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type bug-fix",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "type new-feature",
+                    "user": {"login": "bob", "id": 3},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_type_label_replaces_previous", record_mode)
+        gh = MockGithub("test_type_label_replaces_previous", recorder)
+        repo = MockRepository("test_type_label_replaces_previous", recorder=recorder)
+        issue = MockIssue("test_type_label_replaces_previous", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # Only the last 'type' label should be present
+        assert "new-feature" in result["labels"]
+        assert "bug-fix" not in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_mtype_labels_accumulate(self, repo_config, record_mode, monkeypatch):
+        """Test that 'mtype' labels accumulate (multiple can coexist)."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+            "root": ["#00ff00", "root", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_mtype_labels_accumulate",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type documentation",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "type root",
+                    "user": {"login": "bob", "id": 3},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_mtype_labels_accumulate", record_mode)
+        gh = MockGithub("test_mtype_labels_accumulate", recorder)
+        repo = MockRepository("test_mtype_labels_accumulate", recorder=recorder)
+        issue = MockIssue("test_mtype_labels_accumulate", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # Both mtype labels should be present
+        assert "documentation" in result["labels"]
+        assert "root" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_invalid_type_label(self, repo_config, record_mode, monkeypatch):
+        """Test that invalid type labels are rejected."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_invalid_type_label",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type invalid-label",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_invalid_type_label", record_mode)
+        gh = MockGithub("test_invalid_type_label", recorder)
+        repo = MockRepository("test_invalid_type_label", recorder=recorder)
+        issue = MockIssue("test_invalid_type_label", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "invalid-label" not in result["labels"]
+        # Should have an error message
+        assert any("Invalid type label" in msg for msg in result["messages"])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_type_and_mtype_together(self, repo_config, record_mode, monkeypatch):
+        """Test type and mtype labels can coexist."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_type_and_mtype_together",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type bug-fix",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "type documentation",
+                    "user": {"login": "bob", "id": 3},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_type_and_mtype_together", record_mode)
+        gh = MockGithub("test_type_and_mtype_together", recorder)
+        repo = MockRepository("test_type_and_mtype_together", recorder=recorder)
+        issue = MockIssue("test_type_and_mtype_together", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # Both type and mtype labels should be present
+        assert "bug-fix" in result["labels"]
+        assert "documentation" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_comma_separated_labels(self, repo_config, record_mode, monkeypatch):
+        """Test that comma-separated labels are all added."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+            "root": ["#00ff00", "root", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_comma_separated_labels",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type documentation,root",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_comma_separated_labels", record_mode)
+        gh = MockGithub("test_comma_separated_labels", recorder)
+        repo = MockRepository("test_comma_separated_labels", recorder=recorder)
+        issue = MockIssue("test_comma_separated_labels", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "documentation" in result["labels"]
+        assert "root" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_plus_prefix_adds_label(self, repo_config, record_mode, monkeypatch):
+        """Test that + prefix adds a label (same as no prefix)."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_plus_prefix_adds_label",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type +bug-fix",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_plus_prefix_adds_label", record_mode)
+        gh = MockGithub("test_plus_prefix_adds_label", recorder)
+        repo = MockRepository("test_plus_prefix_adds_label", recorder=recorder)
+        issue = MockIssue("test_plus_prefix_adds_label", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "bug-fix" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_minus_prefix_removes_label(self, repo_config, record_mode, monkeypatch):
+        """Test that - prefix removes an existing label."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_minus_prefix_removes_label",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type -bug-fix",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+            labels=["bug-fix"],  # Pre-existing label to remove
+        )
+
+        recorder = ActionRecorder("test_minus_prefix_removes_label", record_mode)
+        gh = MockGithub("test_minus_prefix_removes_label", recorder)
+        repo = MockRepository("test_minus_prefix_removes_label", recorder=recorder)
+        issue = MockIssue("test_minus_prefix_removes_label", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "bug-fix" not in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_mixed_add_remove_labels(self, repo_config, record_mode, monkeypatch):
+        """Test adding and removing labels in the same command."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "new-feature": ["#00ff00", "(?:new-)?(?:feature|idea)", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_mixed_add_remove_labels",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type +new-feature,-bug-fix,documentation",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+            labels=["bug-fix"],  # Pre-existing label to remove
+        )
+
+        recorder = ActionRecorder("test_mixed_add_remove_labels", record_mode)
+        gh = MockGithub("test_mixed_add_remove_labels", recorder)
+        repo = MockRepository("test_mixed_add_remove_labels", recorder=recorder)
+        issue = MockIssue("test_mixed_add_remove_labels", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "new-feature" in result["labels"]
+        assert "documentation" in result["labels"]
+        assert "bug-fix" not in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_add_then_remove_same_label(self, repo_config, record_mode, monkeypatch):
+        """Test that adding then removing the same label results in removal."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_add_then_remove_same_label",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type bug-fix",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "type -bug-fix",
+                    "user": {"login": "bob", "id": 3},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_add_then_remove_same_label", record_mode)
+        gh = MockGithub("test_add_then_remove_same_label", recorder)
+        repo = MockRepository("test_add_then_remove_same_label", recorder=recorder)
+        issue = MockIssue("test_add_then_remove_same_label", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "bug-fix" not in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_remove_then_add_same_label(self, repo_config, record_mode, monkeypatch):
+        """Test that removing then adding the same label results in addition."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_remove_then_add_same_label",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type -bug-fix",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "type bug-fix",
+                    "user": {"login": "bob", "id": 3},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+            labels=["bug-fix"],  # Pre-existing label
+        )
+
+        recorder = ActionRecorder("test_remove_then_add_same_label", record_mode)
+        gh = MockGithub("test_remove_then_add_same_label", recorder)
+        repo = MockRepository("test_remove_then_add_same_label", recorder=recorder)
+        issue = MockIssue("test_remove_then_add_same_label", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "bug-fix" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_invalid_label_in_comma_list(self, repo_config, record_mode, monkeypatch):
+        """Test that invalid label in comma list fails the entire command."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", "bug(?:-?fix)?", "type"],
+            "documentation": ["#0000ff", "doc(?:umentation)?", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            "test_invalid_label_in_comma_list",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type bug-fix,invalid-label,documentation",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_invalid_label_in_comma_list", record_mode)
+        gh = MockGithub("test_invalid_label_in_comma_list", recorder)
+        repo = MockRepository("test_invalid_label_in_comma_list", recorder=recorder)
+        issue = MockIssue("test_invalid_label_in_comma_list", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # None of the labels should be added due to the error
+        assert "bug-fix" not in result["labels"]
+        assert "documentation" not in result["labels"]
+        # Should have an error message
+        assert any("Invalid type label" in msg for msg in result["messages"])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST DEDUPLICATION
+# =============================================================================
+
+
+class TestTestDeduplication:
+    """Test that duplicate test requests are deduplicated."""
+
+    @pytest.fixture
+    def repo_config(self):
+        """Create a mock repo config."""
+        return create_mock_repo_config()
+
+    @pytest.fixture
+    def record_mode(self, request):
+        """Check if we're in record mode."""
+        return request.config.getoption("--record-actions", default=False)
+
+    def test_duplicate_test_commands_deduplicated(self, repo_config, record_mode):
+        """Test that multiple test commands result in only the last one being processed."""
+        create_basic_pr_data(
+            "test_duplicate_test_commands_deduplicated",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                },
+                {
+                    "id": 101,
+                    "body": "test",
+                    "user": {"login": "bob", "id": 3},
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_duplicate_test_commands_deduplicated", record_mode)
+        gh = MockGithub("test_duplicate_test_commands_deduplicated", recorder)
+        repo = MockRepository("test_duplicate_test_commands_deduplicated", recorder=recorder)
+        issue = MockIssue("test_duplicate_test_commands_deduplicated", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Only the last test should be triggered (last one wins)
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["verb"] == "test"
+        # The last test command was from bob
+        assert result["tests_triggered"][0]["triggered_by"] == "bob"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_build_then_test_last_one_wins(self, repo_config, record_mode):
+        """Test that build then test results in only test being processed (last one wins)."""
+        create_basic_pr_data(
+            "test_build_then_test_last_one_wins",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "build",
+                    "user": {"login": "alice", "id": 2},
+                },
+                {
+                    "id": 101,
+                    "body": "test",
+                    "user": {"login": "bob", "id": 3},
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_build_then_test_last_one_wins", record_mode)
+        gh = MockGithub("test_build_then_test_last_one_wins", recorder)
+        repo = MockRepository("test_build_then_test_last_one_wins", recorder=recorder)
+        issue = MockIssue("test_build_then_test_last_one_wins", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Only test should be triggered (last one wins - build and test share same slot)
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["verb"] == "test"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_then_build_last_one_wins(self, repo_config, record_mode):
+        """Test that test then build results in only build being processed (last one wins)."""
+        create_basic_pr_data(
+            "test_test_then_build_last_one_wins",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                },
+                {
+                    "id": 101,
+                    "body": "build",
+                    "user": {"login": "bob", "id": 3},
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_then_build_last_one_wins", record_mode)
+        gh = MockGithub("test_test_then_build_last_one_wins", recorder)
+        repo = MockRepository("test_test_then_build_last_one_wins", recorder=recorder)
+        issue = MockIssue("test_test_then_build_last_one_wins", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Only build should be triggered (last one wins - build and test share same slot)
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["verb"] == "build"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_different_workflows_last_one_wins(self, repo_config, record_mode):
+        """Test that only the last test command is processed (last one wins)."""
+        create_basic_pr_data(
+            "test_different_workflows_last_one_wins",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test workflows 1.0",
+                    "user": {"login": "alice", "id": 2},
+                },
+                {
+                    "id": 101,
+                    "body": "test workflows 2.0",
+                    "user": {"login": "bob", "id": 3},
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_different_workflows_last_one_wins", record_mode)
+        gh = MockGithub("test_different_workflows_last_one_wins", recorder)
+        repo = MockRepository("test_different_workflows_last_one_wins", recorder=recorder)
+        issue = MockIssue("test_different_workflows_last_one_wins", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Only the last test should be triggered (last one wins)
+        assert len(result["tests_triggered"]) == 1
+        # Should have workflow 2.0 from the last comment
+        assert "2.0" in result["tests_triggered"][0]["workflows"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_same_workflows_different_order_last_wins(self, repo_config, record_mode):
+        """Test that same workflows in different order - last one wins (by triggered_by user)."""
+        create_basic_pr_data(
+            "test_same_workflows_different_order_last_wins",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test workflows 1.0,2.0",
+                    "user": {"login": "alice", "id": 2},
+                },
+                {
+                    "id": 101,
+                    "body": "test workflows 2.0,1.0",
+                    "user": {"login": "bob", "id": 3},
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_same_workflows_different_order_last_wins", record_mode)
+        gh = MockGithub("test_same_workflows_different_order_last_wins", recorder)
+        repo = MockRepository("test_same_workflows_different_order_last_wins", recorder=recorder)
+        issue = MockIssue(
+            "test_same_workflows_different_order_last_wins", number=1, recorder=recorder
+        )
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Only one test should be triggered (last one wins)
+        assert len(result["tests_triggered"]) == 1
+        # Workflows are normalized (sorted), so both "1.0,2.0" and "2.0,1.0" become "1.0,2.0"
+        assert result["tests_triggered"][0]["workflows"] == "1.0,2.0"
+        # Last command was from bob
+        assert result["tests_triggered"][0]["triggered_by"] == "bob"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_build_skipped_if_has_bot_reaction(self, repo_config, record_mode):
+        """Test that build command is skipped if comment has +1 from bot."""
+        create_basic_pr_data(
+            "test_build_skipped_if_has_bot_reaction",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "build",
+                    "user": {"login": "alice", "id": 2},
+                    "_reaction_data": [{"user": {"login": "cmsbuild"}, "content": "+1"}],
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_build_skipped_if_has_bot_reaction", record_mode)
+        gh = MockGithub("test_build_skipped_if_has_bot_reaction", recorder)
+        repo = MockRepository("test_build_skipped_if_has_bot_reaction", recorder=recorder)
+        issue = MockIssue("test_build_skipped_if_has_bot_reaction", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Build should NOT be triggered because it already has +1 from bot
+        assert len(result["tests_triggered"]) == 0
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_build_processed_if_no_bot_reaction(self, repo_config, record_mode):
+        """Test that build command is processed if no +1 from bot."""
+        create_basic_pr_data(
+            "test_build_processed_if_no_bot_reaction",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "build",
+                    "user": {"login": "alice", "id": 2},
+                    # No reactions
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_build_processed_if_no_bot_reaction", record_mode)
+        gh = MockGithub("test_build_processed_if_no_bot_reaction", recorder)
+        repo = MockRepository("test_build_processed_if_no_bot_reaction", recorder=recorder)
+        issue = MockIssue("test_build_processed_if_no_bot_reaction", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Build should be triggered
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["verb"] == "build"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_skipped_if_jenkins_status_matches(self, repo_config, record_mode):
+        """Test that test command is skipped if jenkins status URL matches comment URL."""
+        create_basic_pr_data(
+            "test_test_skipped_if_jenkins_status_matches",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_skipped_if_jenkins_status_matches", record_mode)
+        gh = MockGithub("test_test_skipped_if_jenkins_status_matches", recorder)
+        repo = MockRepository("test_test_skipped_if_jenkins_status_matches", recorder=recorder)
+        issue = MockIssue(
+            "test_test_skipped_if_jenkins_status_matches", number=1, recorder=recorder
+        )
+
+        # Mock get_jenkins_status_url to return the comment URL
+        # URL format: https://github.com/{org}/{repo}/pull/{pr_number}#issuecomment-{comment_id}
+        comment_url = "https://github.com/org/repo/pull/1#issuecomment-100"
+
+        import process_pr_v2
+
+        original_get_jenkins_status_url = process_pr_v2.get_jenkins_status_url
+        process_pr_v2.get_jenkins_status_url = lambda ctx: comment_url
+
+        try:
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="cmsbuild",
+                    loglevel="DEBUG",
+                )
+
+            assert result["pr_number"] == 1
+            # Test should NOT be triggered because jenkins status URL matches
+            assert len(result["tests_triggered"]) == 0
+        finally:
+            process_pr_v2.get_jenkins_status_url = original_get_jenkins_status_url
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_processed_if_no_jenkins_status(self, repo_config, record_mode):
+        """Test that test command is processed if jenkins status doesn't exist."""
+        create_basic_pr_data(
+            "test_test_processed_if_no_jenkins_status",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_processed_if_no_jenkins_status", record_mode)
+        gh = MockGithub("test_test_processed_if_no_jenkins_status", recorder)
+        repo = MockRepository("test_test_processed_if_no_jenkins_status", recorder=recorder)
+        issue = MockIssue("test_test_processed_if_no_jenkins_status", number=1, recorder=recorder)
+
+        # Mock get_jenkins_status_url to return None (no status)
+        import process_pr_v2
+
+        original_get_jenkins_status_url = process_pr_v2.get_jenkins_status_url
+        process_pr_v2.get_jenkins_status_url = lambda ctx: None
+
+        try:
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="cmsbuild",
+                    loglevel="DEBUG",
+                )
+
+            assert result["pr_number"] == 1
+            # Test should be triggered
+            assert len(result["tests_triggered"]) == 1
+            assert result["tests_triggered"][0]["verb"] == "test"
+        finally:
+            process_pr_v2.get_jenkins_status_url = original_get_jenkins_status_url
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_test_processed_if_jenkins_status_different(self, repo_config, record_mode):
+        """Test that test command is processed if jenkins status URL differs from comment URL."""
+        create_basic_pr_data(
+            "test_test_processed_if_jenkins_status_different",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test",
+                    "user": {"login": "alice", "id": 2},
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_test_processed_if_jenkins_status_different", record_mode)
+        gh = MockGithub("test_test_processed_if_jenkins_status_different", recorder)
+        repo = MockRepository("test_test_processed_if_jenkins_status_different", recorder=recorder)
+        issue = MockIssue(
+            "test_test_processed_if_jenkins_status_different", number=1, recorder=recorder
+        )
+
+        # Mock get_jenkins_status_url to return a different URL
+        old_comment_url = (
+            "https://github.com/cms-sw/cmssw/pull/1#issuecomment-99"  # Different comment
+        )
+
+        import process_pr_v2
+
+        original_get_jenkins_status_url = process_pr_v2.get_jenkins_status_url
+        process_pr_v2.get_jenkins_status_url = lambda ctx: old_comment_url
+
+        try:
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="cmsbuild",
+                    loglevel="DEBUG",
+                )
+
+            assert result["pr_number"] == 1
+            # Test should be triggered because jenkins URL is for a different comment
+            assert len(result["tests_triggered"]) == 1
+            assert result["tests_triggered"][0]["verb"] == "test"
+        finally:
+            process_pr_v2.get_jenkins_status_url = original_get_jenkins_status_url
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: TEST PARAMETERS COMMAND
+# =============================================================================
+
+
+class TestTestParametersCommand:
+    """Tests for the 'test parameters:' multiline command."""
+
+    def test_parse_test_parameters_basic(self):
+        """Test basic parameter parsing."""
+        lines = [
+            "test parameters:",
+            "- workflows = 1.0,2.0,3.0",
+            "- pull_requests = #1234,#5678",
+        ]
+
+        # Create a mock repo
+        mock_repo = MagicMock()
+        mock_repo.full_name = "cms-sw/cmssw"
+
+        result = parse_test_parameters(lines, mock_repo)
+
+        assert "errors" not in result
+        assert "MATRIX_EXTRAS" in result
+        assert "PULL_REQUESTS" in result
+
+    def test_parse_test_parameters_with_list_markers(self):
+        """Test that list markers (- and *) are properly stripped."""
+        lines = [
+            "test parameters:",
+            "- full_cmssw = true",
+            "* dry_run = false",
+        ]
+
+        mock_repo = MagicMock()
+        mock_repo.full_name = "cms-sw/cmssw"
+
+        result = parse_test_parameters(lines, mock_repo)
+
+        assert "errors" not in result
+        assert result.get("BUILD_FULL_CMSSW") == "true"
+        assert result.get("DRY_RUN") == "false"
+
+    def test_parse_test_parameters_invalid_key(self):
+        """Test that invalid keys are reported as errors."""
+        lines = [
+            "test parameters:",
+            "- invalid_key = some_value",
+        ]
+
+        mock_repo = MagicMock()
+        mock_repo.full_name = "cms-sw/cmssw"
+
+        result = parse_test_parameters(lines, mock_repo)
+
+        assert "errors" in result
+        assert "key:" in result["errors"]
+
+    def test_parse_test_parameters_invalid_format(self):
+        """Test that lines without = are reported as format errors."""
+        lines = [
+            "test parameters:",
+            "- this line has no equals sign",
+        ]
+
+        mock_repo = MagicMock()
+        mock_repo.full_name = "cms-sw/cmssw"
+
+        result = parse_test_parameters(lines, mock_repo)
+
+        assert "errors" in result
+        assert "format:" in result["errors"]
+
+    def test_parse_test_parameters_release_format(self):
+        """Test release format with architecture."""
+        lines = [
+            "test parameters:",
+            "- release = CMSSW_14_0_X/el8_amd64_gcc12",
+        ]
+
+        mock_repo = MagicMock()
+        mock_repo.full_name = "cms-sw/cmssw"
+
+        result = parse_test_parameters(lines, mock_repo)
+
+        assert "errors" not in result
+        # check_release_format extracts architecture
+        assert "ARCHITECTURE_FILTER" in result
+
+
+# =============================================================================
+# TEST: TEST PARAMETERS OVERRIDE BEHAVIOR
+# =============================================================================
+
+
+class TestTestParametersOverride:
+    """
+    Tests for verifying that 'please test/build' command parameters override
+    'test parameters:' defaults, but only for that specific command.
+
+    The expected behavior is:
+    1. 'test parameters:' sets default values for subsequent test/build commands
+    2. Parameters in 'please test/build' commands override these defaults
+    3. The override only applies to that specific command
+    4. Subsequent commands without explicit params use the defaults again
+
+    Parameters that can be set via 'test parameters:' and overridden:
+    - workflows -> MATRIX_EXTRAS
+    - pull_requests -> PULL_REQUESTS
+    - architecture/release -> RELEASE_FORMAT / ARCHITECTURE_FILTER
+    - full_cmssw -> BUILD_FULL_CMSSW
+    - addpkg -> EXTRA_CMSSW_PACKAGES
+    """
+
+    def test_architecture_override(self):
+        """
+        Test that 'for <arch>' in command overrides architecture from test parameters.
+
+        Scenario:
+        - test parameters: architecture = el9_amd64_gcc14
+        - please build -> uses el9_amd64_gcc14
+        - please build for el8_aarch64_gcc13 -> uses el8_aarch64_gcc13
+        - please test -> uses el9_amd64_gcc14 again
+        """
+        # Setup context with test_params from 'test parameters:' command
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        # Simulates: test parameters:\n- architecture = el9_amd64_gcc14
+        context.test_params = {"ARCHITECTURE_FILTER": "el9_amd64_gcc14"}
+
+        # Case 1: 'please build' (no override) - should use test_params default
+        request_no_override = BuildTestRequest(
+            verb="build",
+            workflows="",
+            prs=[],
+            queue="",  # No queue specified
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params1 = build_test_parameters(context, request_no_override)
+        assert (
+            params1.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+        ), "Without override, should use test_params architecture"
+
+        # Case 2: 'please build for el8_aarch64_gcc13' - should override
+        request_with_override = BuildTestRequest(
+            verb="build",
+            workflows="",
+            prs=[],
+            queue="el8_aarch64_gcc13",  # Override architecture
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1002,
+        )
+        params2 = build_test_parameters(context, request_with_override)
+        assert (
+            params2.get("ARCHITECTURE_FILTER") == "el8_aarch64_gcc13"
+        ), "With 'for <arch>', should override test_params architecture"
+
+        # Case 3: 'please test' (no override) - should use test_params default again
+        request_test_no_override = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="",  # No queue specified
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1003,
+        )
+        params3 = build_test_parameters(context, request_test_no_override)
+        assert (
+            params3.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+        ), "Subsequent command without override should use test_params again"
+
+    def test_release_queue_override(self):
+        """
+        Test that 'for <release>' in command overrides release from test parameters.
+
+        Scenario:
+        - test parameters: release = CMSSW_14_0_X
+        - please test -> uses CMSSW_14_0_X
+        - please test for CMSSW_14_1_X -> uses CMSSW_14_1_X
+        - please build -> uses CMSSW_14_0_X again
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {"RELEASE_FORMAT": "CMSSW_14_0_X"}
+
+        # Case 1: No override
+        request1 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params1 = build_test_parameters(context, request1)
+        assert params1.get("RELEASE_FORMAT") == "CMSSW_14_0_X"
+
+        # Case 2: Override with different release
+        request2 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="CMSSW_14_1_X",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1002,
+        )
+        params2 = build_test_parameters(context, request2)
+        assert params2.get("RELEASE_FORMAT") == "CMSSW_14_1_X"
+
+        # Case 3: Back to default
+        request3 = BuildTestRequest(
+            verb="build",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1003,
+        )
+        params3 = build_test_parameters(context, request3)
+        assert params3.get("RELEASE_FORMAT") == "CMSSW_14_0_X"
+
+    def test_release_with_architecture_override(self):
+        """
+        Test that 'for <release>/<arch>' overrides both release and architecture.
+
+        Scenario:
+        - test parameters: release = CMSSW_14_0_X/el8_amd64_gcc12
+        - please test for CMSSW_14_1_X/el9_amd64_gcc14 -> overrides both
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {
+            "RELEASE_FORMAT": "CMSSW_14_0_X",
+            "ARCHITECTURE_FILTER": "el8_amd64_gcc12",
+        }
+
+        # Override both
+        request = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="CMSSW_14_1_X/el9_amd64_gcc14",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params = build_test_parameters(context, request)
+        assert params.get("RELEASE_FORMAT") == "CMSSW_14_1_X"
+        assert params.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+
+    def test_workflows_override(self):
+        """
+        Test that 'workflows <list>' in command overrides workflows from test parameters.
+
+        Scenario:
+        - test parameters: workflows = 1.0,2.0
+        - please test -> uses 1.0,2.0
+        - please test workflows 3.0,4.0 -> uses 3.0,4.0
+        - please build -> uses 1.0,2.0 again
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {"MATRIX_EXTRAS": "1.0,2.0"}
+
+        # Case 1: No override - test_params should be passed through
+        request1 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params1 = build_test_parameters(context, request1)
+        assert params1.get("MATRIX_EXTRAS") == "1.0,2.0"
+
+        # Case 2: Override with different workflows
+        request2 = BuildTestRequest(
+            verb="test",
+            workflows="3.0,4.0",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1002,
+        )
+        params2 = build_test_parameters(context, request2)
+        assert params2.get("MATRIX_EXTRAS") == "3.0,4.0"
+
+        # Case 3: Back to default
+        request3 = BuildTestRequest(
+            verb="build",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1003,
+        )
+        params3 = build_test_parameters(context, request3)
+        assert params3.get("MATRIX_EXTRAS") == "1.0,2.0"
+
+    def test_pull_requests_override(self):
+        """
+        Test that 'with <pr_list>' in command adds to (doesn't replace) test parameters PRs.
+
+        Note: PRs are additive - the current PR is always included, plus any from
+        test_params, plus any from the command.
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {"PULL_REQUESTS": "cms-sw/cmsdist#100"}
+
+        # Case 1: No additional PRs in command
+        request1 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params1 = build_test_parameters(context, request1)
+        # Should include current PR
+        assert "cms-sw/cmssw#1234" in params1.get("PULL_REQUESTS", "")
+        # test_params PULL_REQUESTS is copied but overwritten by the PR list construction
+        # The current implementation overwrites PULL_REQUESTS entirely
+
+        # Case 2: Additional PRs in command
+        request2 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=["cms-sw/cmsdist#200"],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1002,
+        )
+        params2 = build_test_parameters(context, request2)
+        assert "cms-sw/cmssw#1234" in params2.get("PULL_REQUESTS", "")
+        assert "cms-sw/cmsdist#200" in params2.get("PULL_REQUESTS", "")
+
+    def test_full_cmssw_override(self):
+        """
+        Test that 'using full cmssw' in command overrides full_cmssw from test parameters.
+
+        Scenario:
+        - test parameters: full_cmssw = true
+        - please test -> uses full cmssw
+        - please test using full cmssw -> explicitly uses full cmssw
+        - Command cannot "un-set" full_cmssw, only set it
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {"BUILD_FULL_CMSSW": "true"}
+
+        # Case 1: No override - inherits from test_params
+        request1 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,  # Not specified in command
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params1 = build_test_parameters(context, request1)
+        assert params1.get("BUILD_FULL_CMSSW") == "true"
+
+        # Case 2: Explicitly set in command (redundant but valid)
+        request2 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=True,  # Explicit in command
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1002,
+        )
+        params2 = build_test_parameters(context, request2)
+        assert params2.get("BUILD_FULL_CMSSW") == "true"
+
+    def test_addpkg_override(self):
+        """
+        Test that 'using addpkg <list>' in command overrides addpkg from test parameters.
+
+        Scenario:
+        - test parameters: addpkg = Package/Core
+        - please test -> uses Package/Core
+        - please test using addpkg Package/Analysis -> uses Package/Analysis
+        - please build -> uses Package/Core again
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {"EXTRA_CMSSW_PACKAGES": "Package/Core"}
+
+        # Case 1: No override
+        request1 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params1 = build_test_parameters(context, request1)
+        assert params1.get("EXTRA_CMSSW_PACKAGES") == "Package/Core"
+
+        # Case 2: Override
+        request2 = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="Package/Analysis",
+            triggered_by="alice",
+            comment_id=1002,
+        )
+        params2 = build_test_parameters(context, request2)
+        assert params2.get("EXTRA_CMSSW_PACKAGES") == "Package/Analysis"
+
+        # Case 3: Back to default
+        request3 = BuildTestRequest(
+            verb="build",
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1003,
+        )
+        params3 = build_test_parameters(context, request3)
+        assert params3.get("EXTRA_CMSSW_PACKAGES") == "Package/Core"
+
+    def test_multiple_parameters_override(self):
+        """
+        Test that multiple parameters can be overridden simultaneously.
+
+        Scenario:
+        - test parameters: architecture = el8_amd64_gcc12, workflows = 1.0
+        - please test for el9_amd64_gcc14 workflows 2.0,3.0 -> overrides both
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {
+            "ARCHITECTURE_FILTER": "el8_amd64_gcc12",
+            "MATRIX_EXTRAS": "1.0",
+        }
+
+        # Override both parameters
+        request = BuildTestRequest(
+            verb="test",
+            workflows="2.0,3.0",
+            prs=[],
+            queue="el9_amd64_gcc14",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params = build_test_parameters(context, request)
+        assert params.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+        assert params.get("MATRIX_EXTRAS") == "2.0,3.0"
+
+    def test_partial_override_preserves_other_params(self):
+        """
+        Test that overriding one parameter preserves other test_params.
+
+        Scenario:
+        - test parameters: architecture = el8_amd64_gcc12, workflows = 1.0, dry_run = true
+        - please test for el9_amd64_gcc14 -> overrides arch, keeps workflows and dry_run
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {
+            "ARCHITECTURE_FILTER": "el8_amd64_gcc12",
+            "MATRIX_EXTRAS": "1.0",
+            "DRY_RUN": "true",
+        }
+
+        # Override only architecture
+        request = BuildTestRequest(
+            verb="test",
+            workflows="",  # Not specified - should keep test_params value
+            prs=[],
+            queue="el9_amd64_gcc14",  # Override
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params = build_test_parameters(context, request)
+        assert (
+            params.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+        ), "Specified param should be overridden"
+        assert (
+            params.get("MATRIX_EXTRAS") == "1.0"
+        ), "Unspecified param should be preserved from test_params"
+        assert params.get("DRY_RUN") == "true", "Other test_params should be preserved"
+
+    def test_empty_test_params(self):
+        """
+        Test behavior when no test parameters are set.
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {}  # No test parameters set
+
+        # Command with parameters
+        request = BuildTestRequest(
+            verb="test",
+            workflows="1.0,2.0",
+            prs=[],
+            queue="el9_amd64_gcc14",
+            build_full=True,
+            extra_packages="Package/Core",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        params = build_test_parameters(context, request)
+        assert params.get("MATRIX_EXTRAS") == "1.0,2.0"
+        assert params.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+        assert params.get("BUILD_FULL_CMSSW") == "true"
+        assert params.get("EXTRA_CMSSW_PACKAGES") == "Package/Core"
+
+    def test_build_vs_test_verb_difference(self):
+        """
+        Test that build and test verbs both respect test_params overrides,
+        but build sets BUILD_ONLY flag.
+        """
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {"ARCHITECTURE_FILTER": "el8_amd64_gcc12"}
+
+        # Build command
+        build_request = BuildTestRequest(
+            verb="build",
+            workflows="",
+            prs=[],
+            queue="el9_amd64_gcc14",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1001,
+        )
+        build_params = build_test_parameters(context, build_request)
+        assert build_params.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+        assert build_params.get("BUILD_ONLY") == "true"
+        assert "build" in build_params.get("CONTEXT_PREFIX", "")
+
+        # Test command with same override
+        test_request = BuildTestRequest(
+            verb="test",
+            workflows="",
+            prs=[],
+            queue="el9_amd64_gcc14",
+            build_full=False,
+            extra_packages="",
+            triggered_by="alice",
+            comment_id=1002,
+        )
+        test_params = build_test_parameters(context, test_request)
+        assert test_params.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+        assert test_params.get("BUILD_ONLY") is None
+        assert "build" not in test_params.get("CONTEXT_PREFIX", "")
+
+
+# =============================================================================
+# TEST: VALID TESTER ACL
+# =============================================================================
+
+
+class TestValidTesterACL:
+    """Tests for the is_valid_tester ACL function."""
+
+    def test_trigger_pr_tests_user_is_valid(self, monkeypatch):
+        """Test that users in TRIGGER_PR_TESTS are valid testers."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["test_user"])
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.base.ref = "master"
+        context.repo_org = "cms-sw"
+        context.repo_config = MagicMock()
+        context.granted_test_rights = set()
+
+        # Mock get_release_managers to return empty
+        monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
+        # Mock get_user_l2_categories to return empty
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: [])
+
+        assert is_valid_tester(context, "test_user", FROZEN_TIME)
+
+    def test_release_manager_is_valid(self, monkeypatch):
+        """Test that release managers are valid testers."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
+        monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: ["release_mgr"])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: [])
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.base.ref = "master"
+        context.repo_org = "cms-sw"
+        context.granted_test_rights = set()
+
+        assert is_valid_tester(context, "release_mgr", FROZEN_TIME)
+
+    def test_l2_signer_is_valid(self, monkeypatch):
+        """Test that L2 signers are valid testers."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
+        monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: ["core"])
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.base.ref = "master"
+        context.repo_org = "cms-sw"
+        context.repo_config = MagicMock()
+        context.granted_test_rights = set()
+
+        assert is_valid_tester(context, "l2_user", FROZEN_TIME)
+
+    def test_granted_test_rights_is_valid(self, monkeypatch):
+        """Test that users with granted test rights are valid testers."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
+        monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: [])
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.base.ref = "master"
+        context.repo_org = "cms-sw"
+        context.repo_config = MagicMock()
+        context.granted_test_rights = {"granted_user"}
+
+        assert is_valid_tester(context, "granted_user", FROZEN_TIME)
+
+    def test_random_user_not_valid(self, monkeypatch):
+        """Test that random users are not valid testers."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
+        monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *argsrgs: [])
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.base.ref = "master"
+        context.repo_org = "cms-sw"
+        context.repo_config = MagicMock()
+        context.granted_test_rights = set()
+
+        assert not is_valid_tester(context, "random_user", FROZEN_TIME)
+
+    def test_repo_org_is_valid(self, monkeypatch):
+        """Test that the repo organization is a valid tester."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
+        monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *argsrgs: [])
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.base.ref = "master"
+        context.repo_org = "cms-sw"
+        context.granted_test_rights = set()
+
+        assert is_valid_tester(context, "cms-sw", FROZEN_TIME)
+
+
+# =============================================================================
+# TEST: COMMIT AND FILE COUNT CHECKS
+# =============================================================================
+
+
+class TestCommitAndFileCountChecks:
+    """Tests for file count threshold checks."""
+
+    def test_normal_pr_not_blocked(self):
+        """Test that PRs with normal file count are not blocked."""
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.changed_files = 50
+        context.issue = MagicMock()
+        context.issue.number = 1
+        context.comments = {}  # Dict, not list
+        context.cmssw_repo = True
+        context.warned_too_many_files = False
+        context.ignore_file_count = False
+        context.notify_without_at = False
+
+        result = check_file_count(context, dryRun=False)
+
+        assert result is None  # Not blocked
+
+    def test_too_many_files_blocks_cmssw_repo(self):
+        """Test that PRs with too many files are blocked (CMSSW repo only)."""
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.changed_files = TOO_MANY_FILES_WARN_THRESHOLD + 100
+        context.issue = MagicMock()
+        context.issue.number = 1
+        context.comments = {}  # Dict, not list
+        context.cmssw_repo = True  # Only blocks for CMSSW repo
+        context.warned_too_many_files = False
+        context.ignore_file_count = False
+        context.notify_without_at = False
+        context.posted_messages = set()
+        context.pending_bot_comments = []
+        context.pending_status_updates = []
+        context.cmsbuild_user = "cmsbuild"
+        context.dry_run = True
+
+        result = check_file_count(context, dryRun=False)
+
+        assert result is not None
+        assert result["blocked"] is True
+        assert "files" in result["reason"].lower()
+
+    def test_too_many_files_not_blocked_external_repo(self):
+        """Test that file count doesn't block external repos."""
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.changed_files = TOO_MANY_FILES_WARN_THRESHOLD + 100
+        context.issue = MagicMock()
+        context.issue.number = 1
+        context.comments = {}  # Dict, not list
+        context.cmssw_repo = False  # External repo
+        context.warned_too_many_files = False
+        context.ignore_file_count = False
+        context.notify_without_at = False
+
+        result = check_file_count(context, dryRun=False)
+
+        assert result is None  # Not blocked for external repos
+
+
+# =============================================================================
+# TEST: CLOSE AND REOPEN COMMANDS
+# =============================================================================
+
+
+class TestCloseReopenCommands:
+    """Tests for close and reopen commands."""
+
+    def test_close_command(self, record_mode):
+        """Test that close command sets must_close."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        recorder = ActionRecorder("test_close_command", record_mode)
+        gh = MockGithub("test_close_command", recorder)
+        repo = MockRepository("test_close_command", recorder=recorder)
+        issue = MockIssue(
+            "test_close_command",
+            number=1,
+            recorder=recorder,
+            comments_data=[
+                {
+                    "id": 1001,
+                    "user": {"login": "l2_user"},
+                    "body": "close",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # The close command should have been processed
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_reopen_command(self, record_mode):
+        """Test that reopen command reopens a closed issue/PR."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        recorder = ActionRecorder("test_reopen_command", record_mode)
+        gh = MockGithub("test_reopen_command", recorder)
+        repo = MockRepository("test_reopen_command", recorder=recorder)
+        issue = MockIssue(
+            "test_reopen_command",
+            number=1,
+            recorder=recorder,
+            state="closed",  # Must be closed for reopen to take effect
+            comments_data=[
+                {
+                    "id": 1001,
+                    "user": {"login": "l2_user"},
+                    "body": "reopen",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify issue was reopened
+        edit_actions = [a for a in recorder.actions if a["action"] == "edit_issue"]
+        reopen_actions = [a for a in edit_actions if a.get("details", {}).get("state") == "open"]
+        assert len(reopen_actions) == 1, "Should have reopened the issue"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: ABORT COMMAND
+# =============================================================================
+
+
+class TestAbortCommand:
+    """Tests for abort test command."""
+
+    def test_abort_command(self, record_mode, monkeypatch):
+        """Test that abort command creates abort properties file when tests are running."""
+        # Make the user a valid tester
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Create test data with running tests:
+        # - jenkins status with "requested by" (indicates test was triggered)
+        # - CI test status with "pending" state (indicates test is running)
+        create_basic_pr_data(
+            "test_abort_command",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "abort",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=5))
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                },
+            ],
+            statuses=[
+                {
+                    "context": "bot/1/jenkins",
+                    "state": "success",
+                    "description": "Tests requested by tester at {0}.".format(
+                        FROZEN_COMMENT_TIME.isoformat().replace("T", " ").replace("+00:00", " UTC")
+                    ),
+                    "target_url": "https://example.com/comment/1000",
+                },
+                {
+                    "context": "cms/1/el8_amd64_gcc12/required",
+                    "state": "pending",
+                    "description": "Tests running",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_abort_command", record_mode)
+        gh = MockGithub("test_abort_command", recorder)
+        repo = MockRepository("test_abort_command", recorder=recorder)
+        issue = MockIssue("test_abort_command", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify abort properties file was created
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        abort_props = [a for a in prop_actions if "abort" in a.get("details", {}).get("filename")]
+        assert len(abort_props) == 1, "Should have created abort properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_abort_ignored_when_no_pending_tests(self, record_mode, monkeypatch):
+        """Test that abort command is ignored when no tests are pending."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Create test data with completed tests (no pending)
+        create_basic_pr_data(
+            "test_abort_ignored_no_pending",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "abort",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            statuses=[
+                {
+                    "context": "bot/1/jenkins",
+                    "state": "success",
+                    "description": "Tests requested by tester at 2024-01-15 10:00:00 UTC.",
+                    "target_url": "https://example.com/comment/1000",
+                },
+                {
+                    "context": "cms/1/el8_amd64_gcc12/required",
+                    "state": "success",  # Tests completed, not pending
+                    "description": "Tests passed",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_abort_ignored_no_pending", record_mode)
+        gh = MockGithub("test_abort_ignored_no_pending", recorder)
+        repo = MockRepository("test_abort_ignored_no_pending", recorder=recorder)
+        issue = MockIssue("test_abort_ignored_no_pending", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify NO abort properties file was created
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        abort_props = [a for a in prop_actions if "abort" in a.get("details", {}).get("filename")]
+        assert len(abort_props) == 0, "Should NOT have created abort properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_abort_ignored_when_already_aborted(self, record_mode, monkeypatch):
+        """Test that abort command is ignored when already aborted."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Create test data with already aborted status
+        create_basic_pr_data(
+            "test_abort_ignored_already_aborted",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "abort",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            statuses=[
+                {
+                    "context": "bot/1/jenkins",
+                    "state": "pending",
+                    "description": "Aborted, waiting for authorized user to issue the test command.",
+                    "target_url": "",
+                },
+                {
+                    "context": "cms/1/el8_amd64_gcc12/required",
+                    "state": "pending",
+                    "description": "Tests running",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_abort_ignored_already_aborted", record_mode)
+        gh = MockGithub("test_abort_ignored_already_aborted", recorder)
+        repo = MockRepository("test_abort_ignored_already_aborted", recorder=recorder)
+        issue = MockIssue("test_abort_ignored_already_aborted", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify NO abort properties file was created
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        abort_props = [a for a in prop_actions if "abort" in a.get("details", {}).get("filename")]
+        assert len(abort_props) == 0, "Should NOT have created abort properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: URGENT AND BACKPORT COMMANDS
+# =============================================================================
+
+
+class TestUrgentBackportCommands:
+    """Tests for urgent and backport commands."""
+
+    def test_urgent_command_adds_label(self, record_mode):
+        """Test that urgent command adds the urgent label."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        recorder = ActionRecorder("test_urgent_command", record_mode)
+        gh = MockGithub("test_urgent_command", recorder)
+        repo = MockRepository("test_urgent_command", recorder=recorder)
+        issue = MockIssue(
+            "test_urgent_command",
+            number=1,
+            recorder=recorder,
+            comments_data=[
+                {
+                    "id": 1001,
+                    "user": {"login": "l2_user"},
+                    "body": "urgent",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # Check that urgent label was added
+        assert "urgent" in result.get("labels", [])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_backport_command_adds_label(self, record_mode):
+        """Test that backport command adds the backport label."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        recorder = ActionRecorder("test_backport_command", record_mode)
+        gh = MockGithub("test_backport_command", recorder)
+        repo = MockRepository("test_backport_command", recorder=recorder)
+        issue = MockIssue(
+            "test_backport_command",
+            number=1,
+            recorder=recorder,
+            comments_data=[
+                {
+                    "id": 1001,
+                    "user": {"login": "l2_user"},
+                    "body": "backport of #5678",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        assert "backport" in result.get("labels", [])
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: ALLOW TEST RIGHTS COMMAND
+# =============================================================================
+
+
+class TestAllowTestRightsCommand:
+    """Tests for 'allow @user test rights' command."""
+
+    def test_allow_test_rights_grants_access(self, record_mode):
+        """Test that allow test rights command grants test access."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        recorder = ActionRecorder("test_allow_test_rights", record_mode)
+        gh = MockGithub("test_allow_test_rights", recorder)
+        repo = MockRepository("test_allow_test_rights", recorder=recorder)
+        issue = MockIssue(
+            "test_allow_test_rights",
+            number=1,
+            recorder=recorder,
+            comments_data=[
+                {
+                    "id": 1001,
+                    "user": {"login": "l2_user"},  # L2 user can grant rights
+                    "body": "allow @newuser test rights",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: CODE CHECKS COMMAND
+# =============================================================================
+
+
+class TestCodeChecksCommand:
+    """Tests for code-checks command."""
+
+    def test_code_checks_retrigger_after_success(self, record_mode):
+        """Test code-checks command re-triggers after previous success and resets status."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Must use cms-sw/cmssw repo and master branch for code-checks to be a pre-check
+        # Set initial code-checks status to success (completed) - allows re-trigger
+        create_basic_pr_data(
+            "test_code_checks_basic",
+            pr_number=1,
+            base_ref="master",
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "contributor"},
+                    "body": "code-checks",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "success",
+                    "description": "Passed",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_code_checks_basic", record_mode)
+        gh = MockGithub("test_code_checks_basic", recorder)
+        repo = MockRepository(
+            "test_code_checks_basic", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_code_checks_basic", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify code-checks property file was created (re-triggered)
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        code_checks_props = [
+            a for a in prop_actions if "code-checks" in a.get("details", {}).get("filename", "")
+        ]
+        assert len(code_checks_props) == 1, "Should have created code-checks properties file"
+
+        # Verify status was reset to pending
+        status_actions = [a for a in recorder.actions if a["action"] == "create_status"]
+        code_checks_status = [
+            a for a in status_actions if "code-checks" in a.get("details", {}).get("context", "")
+        ]
+        assert len(code_checks_status) >= 1, "Should have reset code-checks status"
+        # The last status update should be pending (reset)
+        assert code_checks_status[-1]["details"]["state"] == "pending"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_code_checks_with_tool_conf(self, record_mode):
+        """Test code-checks with tool configuration re-triggers after previous success."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set initial code-checks status to success (completed) - allows re-trigger
+        create_basic_pr_data(
+            "test_code_checks_with_tool",
+            pr_number=1,
+            base_ref="master",
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "contributor"},
+                    "body": "code-checks with cms.week0.PR_abc12345/some-config",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "success",
+                    "description": "Passed",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_code_checks_with_tool", record_mode)
+        gh = MockGithub("test_code_checks_with_tool", recorder)
+        repo = MockRepository(
+            "test_code_checks_with_tool", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_code_checks_with_tool", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify code-checks property file was created with tool config
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        code_checks_props = [
+            a for a in prop_actions if "code-checks" in a.get("details", {}).get("filename", "")
+        ]
+        assert len(code_checks_props) == 1, "Should have created code-checks properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_code_checks_skipped_when_pending(self, record_mode):
+        """Test code-checks command is skipped when already pending (running)."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set initial code-checks status to pending (running) - should skip
+        create_basic_pr_data(
+            "test_code_checks_skipped_pending",
+            pr_number=1,
+            base_ref="master",
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "contributor"},
+                    "body": "code-checks",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "pending",
+                    "description": "Running",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_code_checks_skipped_pending", record_mode)
+        gh = MockGithub("test_code_checks_skipped_pending", recorder)
+        repo = MockRepository(
+            "test_code_checks_skipped_pending", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_code_checks_skipped_pending", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify NO code-checks property file was created (skipped because pending)
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        code_checks_props = [
+            a for a in prop_actions if "code-checks" in a.get("details", {}).get("filename", "")
+        ]
+        assert len(code_checks_props) == 0, "Should NOT have created code-checks properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: IGNORE TESTS REJECTED COMMAND
+# =============================================================================
+
+
+class TestIgnoreTestsRejectedCommand:
+    """Tests for 'ignore tests-rejected with <reason>' command."""
+
+    def test_ignore_tests_rejected_manual_override(self, record_mode, monkeypatch):
+        """Test ignore tests-rejected with manual-override reason when tests are failing."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set up PR with tests in failed state
+        create_basic_pr_data(
+            "test_ignore_tests_rejected",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "ignore tests-rejected with manual-override",
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+            # Tests are in failed (error) state - required for ignore command to work
+            statuses=[
+                {
+                    "context": "cms/1/relval/required",
+                    "state": "error",
+                    "description": "Tests failed",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_ignore_tests_rejected", record_mode)
+        gh = MockGithub("test_ignore_tests_rejected", recorder)
+        repo = MockRepository("test_ignore_tests_rejected", recorder=recorder)
+        issue = MockIssue("test_ignore_tests_rejected", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify tests-manual-override label was added
+        label_actions = [a for a in recorder.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert "tests-manual-override" in labels, "Should have tests-manual-override label"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_ignore_tests_rejected_ib_failure(self, record_mode, monkeypatch):
+        """Test ignore tests-rejected with ib-failure reason when tests are failing."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set up PR with tests in failed state
+        create_basic_pr_data(
+            "test_ignore_tests_ib_failure",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "ignore tests-rejected with ib-failure",
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+            # Tests are in failed (error) state - required for ignore command to work
+            statuses=[
+                {
+                    "context": "cms/1/relval/required",
+                    "state": "error",
+                    "description": "Tests failed",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_ignore_tests_ib_failure", record_mode)
+        gh = MockGithub("test_ignore_tests_ib_failure", recorder)
+        repo = MockRepository("test_ignore_tests_ib_failure", recorder=recorder)
+        issue = MockIssue("test_ignore_tests_ib_failure", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify tests-ib-failure label was added
+        label_actions = [a for a in recorder.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert "tests-ib-failure" in labels, "Should have tests-ib-failure label"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_ignore_tests_rejected_no_effect_when_tests_passing(self, record_mode, monkeypatch):
+        """Test ignore tests-rejected has no effect when tests are passing."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set up PR with tests in success state
+        create_basic_pr_data(
+            "test_ignore_tests_no_effect",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "ignore tests-rejected with manual-override",
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+            # Tests are passing - ignore command should have no effect
+            statuses=[
+                {
+                    "context": "cms/1/relval/required",
+                    "state": "success",
+                    "description": "Tests passed",
+                    "target_url": "",
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_ignore_tests_no_effect", record_mode)
+        gh = MockGithub("test_ignore_tests_no_effect", recorder)
+        repo = MockRepository("test_ignore_tests_no_effect", recorder=recorder)
+        issue = MockIssue("test_ignore_tests_no_effect", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify tests-manual-override label was NOT added (tests weren't failing)
+        label_actions = [a for a in recorder.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert (
+                "tests-manual-override" not in labels
+            ), "Should NOT have tests-manual-override label"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_ignore_tests_rejected_no_effect_when_no_tests(self, record_mode, monkeypatch):
+        """Test ignore tests-rejected has no effect when no tests have run."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set up PR with no test statuses
+        create_basic_pr_data(
+            "test_ignore_tests_no_tests",
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "ignore tests-rejected with manual-override",
+                    "created_at": "2024-01-15T12:00:00Z",
+                },
+            ],
+            # No test statuses - ignore command should have no effect
+            statuses=[],
+        )
+
+        recorder = ActionRecorder("test_ignore_tests_no_tests", record_mode)
+        gh = MockGithub("test_ignore_tests_no_tests", recorder)
+        repo = MockRepository("test_ignore_tests_no_tests", recorder=recorder)
+        issue = MockIssue("test_ignore_tests_no_tests", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        # Verify tests-manual-override label was NOT added (no tests ran)
+        label_actions = [a for a in recorder.actions if a["action"] == "add_labels"]
+        if label_actions:
+            labels = label_actions[0].get("details", {}).get("labels", [])
+            assert (
+                "tests-manual-override" not in labels
+            ), "Should NOT have tests-manual-override label"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: PROPERTIES FILE CREATION
+# =============================================================================
+
+
+class TestPropertiesFileCreation:
+    """Tests for properties file creation functions."""
+
+    def test_create_property_file_dry_run(self, tmp_path):
+        """Test that dry run doesn't create file."""
+        filename = str(tmp_path / "test.properties")
+        params = {"KEY1": "value1", "KEY2": "value2"}
+
+        create_property_file(filename, params, dry_run=True)
+
+        assert not os.path.exists(filename)
+
+    def test_create_property_file_actual(self, tmp_path):
+        """Test actual file creation."""
+        filename = str(tmp_path / "test.properties")
+        params = {"KEY1": "value1", "KEY2": "value2"}
+
+        create_property_file(filename, params, dry_run=False)
+
+        assert os.path.exists(filename)
+        with open(filename) as f:
+            content = f.read()
+        assert "KEY1=value1" in content
+        assert "KEY2=value2" in content
+
+    def test_build_test_parameters(self):
+        """Test building test parameters from request."""
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {"EXISTING_PARAM": "existing_value"}
+
+        test_request = BuildTestRequest(
+            verb="test",
+            workflows="1.0,2.0",
+            prs=["cms-sw/cmsdist#100"],
+            queue="CMSSW_14_0_X",
+            build_full=True,
+            extra_packages="Package/SubPkg",
+            triggered_by="user",
+            comment_id=1001,
+        )
+
+        params = build_test_parameters(context, test_request)
+
+        assert "cms-sw/cmssw#1234" in params["PULL_REQUESTS"]
+        assert "cms-sw/cmsdist#100" in params["PULL_REQUESTS"]
+        assert params["MATRIX_EXTRAS"] == "1.0,2.0"
+        assert params["RELEASE_FORMAT"] == "CMSSW_14_0_X"
+        assert params["BUILD_FULL_CMSSW"] == "true"
+        assert params["EXTRA_CMSSW_PACKAGES"] == "Package/SubPkg"
+        assert params["EXISTING_PARAM"] == "existing_value"
+
+    def test_build_test_parameters_build_only(self):
+        """Test that build verb sets BUILD_ONLY flag."""
+        context = MagicMock(spec=PRContext)
+        context.repo_org = "cms-sw"
+        context.repo_name = "cmssw"
+        context.issue = MagicMock()
+        context.issue.number = 1234
+        context.test_params = {}
+
+        test_request = BuildTestRequest(
+            verb="build",  # build, not test
+            workflows="",
+            prs=[],
+            queue="",
+            build_full=False,
+            extra_packages="",
+            triggered_by="user",
+            comment_id=1001,
+        )
+
+        params = build_test_parameters(context, test_request)
+
+        assert params.get("BUILD_ONLY") == "true"
+
+
+# =============================================================================
+# TEST: COMMAND PREPROCESSING
+# =============================================================================
+
+
+class TestCommandPreprocessingWhitespace:
+    """Tests for command preprocessing whitespace handling."""
+
+    def test_multiple_spaces_collapsed(self):
+        """Test that multiple spaces are collapsed to single space."""
+        result, mentioned = preprocess_command("test   parameters")
+        assert result == "test parameters"
+        assert "  " not in result
+        assert mentioned is False
+
+    def test_tabs_converted_to_space(self):
+        """Test that tabs are converted to spaces."""
+        result, mentioned = preprocess_command("test\tparameters")
+        assert result == "test parameters"
+        assert mentioned is False
+
+    def test_leading_trailing_whitespace_stripped(self):
+        """Test that leading/trailing whitespace is stripped."""
+        result, mentioned = preprocess_command("  +1  ")
+        assert result == "+1"
+        assert mentioned is False
+
+    def test_spaces_around_commas_removed(self):
+        """Test that spaces around commas are removed."""
+        result, mentioned = preprocess_command("assign cat1 , cat2 , cat3")
+        assert result == "assign cat1,cat2,cat3"
+        assert mentioned is False
+
+    def test_cmsbuild_prefix_removed(self):
+        """Test that @cmsbuild prefix is removed."""
+        result, mentioned = preprocess_command("@cmsbuild please +1")
+        assert result == "+1"
+        assert mentioned is True
+
+    def test_please_prefix_removed(self):
+        """Test that 'please' prefix is removed."""
+        result, mentioned = preprocess_command("please test")
+        assert result == "test"
+        assert mentioned is False
+
+    def test_custom_bot_user_prefix(self):
+        """Test that custom bot user prefix is removed and detected."""
+        result, mentioned = preprocess_command("@mybot +1", cmsbuild_user="mybot")
+        assert result == "+1"
+        assert mentioned is True
+
+        result, mentioned = preprocess_command("mybot please test", cmsbuild_user="mybot")
+        assert result == "test"
+        assert mentioned is True
+
+
+class TestBotMentionReaction:
+    """Tests for bot mention reaction behavior."""
+
+    def test_bot_mention_invalid_command_gets_minus_one(self, repo_config, record_mode):
+        """Test that mentioning bot with invalid command gets -1 reaction."""
+        # Use timestamp after the default commit time
+
+        create_basic_pr_data(
+            "test_bot_mention_invalid_command",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "@cmsbuild invalidcommand",  # Mention bot with invalid command
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_bot_mention_invalid_command", record_mode)
+        gh = MockGithub("test_bot_mention_invalid_command", recorder)
+        repo = MockRepository("test_bot_mention_invalid_command", recorder=recorder)
+        issue = MockIssue("test_bot_mention_invalid_command", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # The bot should have queued a -1 reaction for the invalid command
+        # (In dry run mode, reactions are just logged)
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_no_bot_mention_invalid_command_no_reaction(self, repo_config, record_mode):
+        """Test that invalid command without bot mention doesn't get reaction."""
+        # Use timestamp after the default commit time
+
+        create_basic_pr_data(
+            "test_no_bot_mention_invalid_command",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "invalidcommand",  # No bot mention
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat().replace("+00:00", "Z"),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_no_bot_mention_invalid_command", record_mode)
+        gh = MockGithub("test_no_bot_mention_invalid_command", recorder)
+        repo = MockRepository("test_no_bot_mention_invalid_command", recorder=recorder)
+        issue = MockIssue("test_no_bot_mention_invalid_command", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # No reaction should be set for invalid command without bot mention
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: DRAFT PR HANDLING
+# =============================================================================
+
+
+class TestDraftPRHandling:
+    """Tests for draft PR handling."""
+
+    def test_format_mention_with_notify_without_at(self):
+        """Test that notify_without_at=True suppresses @-mentions."""
+        context = MagicMock(spec=PRContext)
+        context.notify_without_at = True
+
+        result = format_mention(context, "testuser")
+        assert result == "testuser"
+        assert "@" not in result
+
+    def test_format_mention_default_has_at(self):
+        """Test that default (notify_without_at=False) has @-mentions."""
+        context = MagicMock(spec=PRContext)
+        context.notify_without_at = False
+
+        result = format_mention(context, "testuser")
+        assert result == "@testuser"
+
+    def test_format_mention_force_at_overrides(self):
+        """Test that force_at=True overrides notify_without_at."""
+        context = MagicMock(spec=PRContext)
+        context.notify_without_at = True
+
+        result = format_mention(context, "testuser", force_at=True)
+        assert result == "@testuser"
+
+
+# =============================================================================
+# TEST: WELCOME MESSAGE
+# =============================================================================
+
+
+class TestWelcomeMessage:
+    """Tests for welcome message generation."""
+
+    def test_welcome_message_contains_author(self, record_mode):
+        """Test that welcome message contains author mention."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        recorder = ActionRecorder("test_welcome_message_author", record_mode)
+        gh = MockGithub("test_welcome_message_author", recorder)
+        repo = MockRepository("test_welcome_message_author", recorder=recorder)
+        issue = MockIssue(
+            "test_welcome_message_author",
+            number=1,
+            recorder=recorder,
+            comments_data=[],  # No existing comments
+        )
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: CI TEST STATUS
+# =============================================================================
+
+
+class TestCITestStatus:
+    """Tests for CI test status detection."""
+
+    def test_get_ci_test_statuses_no_pr(self):
+        """Test get_ci_test_statuses with no PR."""
+        from process_pr_v2 import get_ci_test_statuses
+
+        context = MagicMock(spec=PRContext)
+        context.pr = None
+        context.commits = {}
+        context.issue = None
+
+        result = get_ci_test_statuses(context)
+        assert result == {}
+
+    def test_get_ci_test_statuses_no_commits(self):
+        """Test get_ci_test_statuses with no commits."""
+        from process_pr_v2 import get_ci_test_statuses
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.commits = {}
+        context.pr.head.sha = "abc123"
+        context.issue = MagicMock()
+        context.issue.number = 10246
+        context.get_commit_statuses.return_value = {}
+
+        result = get_ci_test_statuses(context)
+        assert result == {}
+
+    def test_get_ci_test_statuses_with_required(self):
+        """Test get_ci_test_statuses with required test status."""
+        from process_pr_v2 import get_ci_test_statuses
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = {"abc123": MagicMock(sha="abc123")}
+        context.issue = MagicMock()
+        context.issue.number = 10246
+
+        # Create mock statuses
+        status1 = MagicMock()
+        status1.context = "cms/10246/el8_amd64_gcc12/required"
+        status1.state = "success"
+        status1.description = "Build successful"
+        status1.target_url = "http://example.com/build"
+
+        context.get_commit_statuses.return_value = {status1.context: status1}
+
+        result = get_ci_test_statuses(context)
+        assert "required" in result
+        assert len(result["required"]) == 1
+        assert result["required"][0].context == "cms/10246/el8_amd64_gcc12/required"
+
+    def test_get_ci_test_statuses_with_optional(self):
+        """Test get_ci_test_statuses with optional test status."""
+        from process_pr_v2 import get_ci_test_statuses
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = {"abc123": MagicMock(sha="abc123")}
+        context.issue = MagicMock()
+        context.issue.number = 10246
+
+        # Create mock statuses
+        status1 = MagicMock()
+        status1.context = "cms/10246/el8_amd64_gcc12/optional"
+        status1.state = "pending"
+        status1.description = "Running tests"
+        status1.target_url = "http://example.com/relvals"
+
+        context.get_commit_statuses.return_value = {status1.context: status1}
+
+        result = get_ci_test_statuses(context)
+        assert "optional" in result
+        assert len(result["optional"]) == 1
+        assert result["optional"][0].is_optional is True
+
+    def test_get_ci_test_statuses_with_flavor(self):
+        """Test get_ci_test_statuses with flavor in context."""
+        from process_pr_v2 import get_ci_test_statuses
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = {"abc123": MagicMock(sha="abc123")}
+        context.issue = MagicMock()
+        context.issue.number = 10246
+
+        # Create mock statuses with flavor
+        status1 = MagicMock()
+        status1.context = "cms/10246/ROOT638/el8_amd64_gcc13/required"
+        status1.state = "success"
+        status1.description = "Tests passed"
+        status1.target_url = "http://example.com/tests"
+
+        context.get_commit_statuses.return_value = {status1.context: status1}
+
+        result = get_ci_test_statuses(context)
+        assert "required" in result
+        assert len(result["required"]) == 1
+        assert result["required"][0].context == "cms/10246/ROOT638/el8_amd64_gcc13/required"
+
+    def test_get_ci_test_statuses_filters_by_pr_id(self):
+        """Test that get_ci_test_statuses only returns statuses for current PR."""
+        from process_pr_v2 import get_ci_test_statuses
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = {"abc123": MagicMock(sha="abc123")}
+        context.issue = MagicMock()
+        context.issue.number = 10246  # Current PR is 10246
+
+        # Create mock statuses - one for current PR, one for different PR
+        status1 = MagicMock()
+        status1.context = "cms/10246/el8_amd64_gcc12/required"  # Current PR
+        status1.state = "success"
+        status1.description = "Build successful"
+        status1.target_url = "http://example.com/build"
+
+        status2 = MagicMock()
+        status2.context = "cms/99999/el8_amd64_gcc12/required"  # Different PR
+        status2.state = "error"
+        status2.description = "Build failed"
+        status2.target_url = "http://example.com/build2"
+
+        context.get_commit_statuses.return_value = {
+            status1.context: status1,
+            status2.context: status2,
+        }
+
+        result = get_ci_test_statuses(context)
+        # Should only have the status for PR 10246
+        assert "required" in result
+        assert len(result["required"]) == 1
+        assert result["required"][0].context == "cms/10246/el8_amd64_gcc12/required"
+
+    def test_check_ci_test_completion_pending(self):
+        """Test check_ci_test_completion with pending tests."""
+        from process_pr_v2 import check_ci_test_completion
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = {"abc123": MagicMock(sha="abc123")}
+        context.issue = MagicMock()
+        context.issue.number = 10246
+
+        # Create mock statuses with pending state
+        status1 = MagicMock()
+        status1.context = "cms/10246/el8_amd64_gcc12/required"
+        status1.state = "pending"
+        status1.description = "Running"
+        status1.target_url = None
+
+        context.get_commit_statuses.return_value = {status1.context: status1}
+
+        result = check_ci_test_completion(context)
+        # Pending tests should return None or empty dict
+        assert result is None or "required" not in result
+
+    def test_check_ci_test_completion_success(self):
+        """Test check_ci_test_completion with successful tests."""
+        from process_pr_v2 import check_ci_test_completion
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = {"abc123": MagicMock(sha="abc123")}
+        context.issue = MagicMock()
+        context.issue.number = 10246
+
+        # Create mock statuses with success state
+        status1 = MagicMock()
+        status1.context = "cms/10246/el8_amd64_gcc12/required"
+        status1.state = "success"
+        status1.description = "Finished"
+        status1.target_url = "http://example.com/build"
+
+        context.get_commit_statuses.return_value = {status1.context: status1}
+
+        result = check_ci_test_completion(context)
+        assert result is not None
+        assert result.get("required") == "success"
+
+    def test_check_ci_test_completion_error(self):
+        """Test check_ci_test_completion with failed tests."""
+        from process_pr_v2 import check_ci_test_completion
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.commits = {"abc123": MagicMock(sha="abc123")}
+        context.issue = MagicMock()
+        context.issue.number = 10246
+
+        # Create mock statuses with error state
+        status1 = MagicMock()
+        status1.context = "cms/10246/el8_amd64_gcc12/required"
+        status1.state = "error"
+        status1.description = "Build failed"
+        status1.target_url = "http://example.com/build"
+
+        context.get_commit_statuses.return_value = {status1.context: status1}
+
+        result = check_ci_test_completion(context)
+        assert result is not None
+        assert result.get("required") == "error"
+
+
+class TestTestsApprovalLabels:
+    """Tests for tests-approved/tests-rejected/tests-pending labels based on CI status."""
+
+    @staticmethod
+    def _create_context_with_statuses(statuses_data, pr_number=10246):
+        """Helper to create a context with mock commit statuses."""
+        from process_pr_v2 import PRContext, BotCache
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.pr.merged = False
+        context.commits = {"abc123": MagicMock(sha="abc123")}
+        context.is_pr = True
+        context.cache = BotCache()
+        context.signing_categories = {"tests", "core"}
+        context.ignore_tests_rejected = None
+        context.issue = MagicMock()
+        context.issue.number = pr_number
+        context.pending_status_updates = {}  # Empty dict for pending updates
+
+        # Create mock statuses as dict
+        mock_statuses = {}
+        for ctx, state, desc in statuses_data:
+            status = MagicMock()
+            status.context = ctx
+            status.state = state
+            status.description = desc
+            status.target_url = "http://example.com/results"
+            mock_statuses[ctx] = status
+
+        context.get_commit_statuses.return_value = mock_statuses
+
+        return context
+
+    def test_tests_approved_when_required_success(self):
+        """Test that tests category is approved when required tests succeed."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_tests_rejected_when_required_error(self):
+        """Test that tests category is rejected when required tests fail."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "error", "Build failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.REJECTED
+
+    def test_tests_pending_when_required_pending(self):
+        """Test that tests category is pending when required tests are running."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "pending", "Running"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.PENDING
+
+    def test_tests_approved_when_only_optional_success(self):
+        """Test that tests category is approved when only optional tests succeed."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/optional", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_tests_pending_when_optional_error(self):
+        """Test that tests category stays pending (not rejected) when optional tests fail."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/optional", "error", "Tests failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        # Optional test failures don't cause rejection, just stay pending
+        assert result == ApprovalState.PENDING
+
+    def test_required_takes_precedence_over_optional(self):
+        """Test that required test results take precedence over optional."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        # Required success + optional error = approved (required wins)
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el8_amd64_gcc13/optional", "error", "Failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_required_error_overrides_optional_success(self):
+        """Test that required error overrides optional success."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        # Required error + optional success = rejected
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "error", "Build failed"),
+                ("cms/10246/el8_amd64_gcc13/optional", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.REJECTED
+
+    def test_ignore_tests_rejected_overrides_failure(self):
+        """Test that ignore_tests_rejected flag overrides test failure."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "error", "Build failed"),
+            ]
+        )
+        context.ignore_tests_rejected = "known-issue"
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_multiple_required_all_success(self):
+        """Test that all required tests must succeed."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el9_amd64_gcc13/required", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+    def test_multiple_required_one_pending(self):
+        """Test that one pending required test means overall pending."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el9_amd64_gcc13/required", "pending", "Running"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.PENDING
+
+    def test_multiple_required_one_error(self):
+        """Test that one failed required test means overall rejected."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el9_amd64_gcc13/required", "error", "Failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.REJECTED
+
+    def test_with_flavor_in_context(self):
+        """Test status parsing with flavor component."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/ROOT638/el8_amd64_gcc13/required", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
+
+
+class TestTestResultPostingDeduplication:
+    """Tests for test result posting deduplication logic."""
+
+    @staticmethod
+    def _create_context_with_statuses(statuses_data, pr_number=10246):
+        """Helper to create context with statuses and controlled tests state."""
+        from process_pr_v2 import PRContext, BotCache
+
+        context = MagicMock(spec=PRContext)
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123def456"
+        context.pr.merged = False
+        context.commits = {"abc123def456": MagicMock(sha="abc123def456")}
+        context.is_pr = True
+        context.cache = BotCache()
+        context.signing_categories = {"tests"}
+        context.ignore_tests_rejected = None
+        context.dryRun = False
+        context.posted_messages = {}
+        context.issue = MagicMock()
+        context.issue.number = pr_number
+        context._commit_statuses = None
+
+        # Create mock statuses as dict
+        mock_statuses = {}
+        for ctx, state, desc, url in statuses_data:
+            status = MagicMock()
+            status.context = ctx
+            status.state = state
+            status.description = desc
+            status.target_url = url
+            mock_statuses[ctx] = status
+
+        context.get_commit_statuses.return_value = mock_statuses
+
+        return context
+
+    def test_should_not_post_if_description_is_finished(self):
+        """Test that results are not posted if description starts with 'Finished'."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Finished: tests passed",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    mock_fetch.return_value = (0, "Test results here")
+                    process_ci_test_results(context)
+
+                    # Should NOT post because description starts with "Finished"
+                    mock_post.assert_not_called()
+
+    def test_should_not_post_if_tests_pending(self):
+        """Test that results are not posted if tests category is still pending."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "pending",
+                    "Running tests",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.PENDING
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    mock_fetch.return_value = (0, "Test results here")
+                    process_ci_test_results(context)
+
+                    # Should NOT post because tests are still pending
+                    mock_post.assert_not_called()
+
+    def test_posts_when_tests_approved_and_not_finished(self):
+        """Test that results are posted when tests approved and not yet finished."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Tests passed",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results here")
+                        process_ci_test_results(context)
+
+                        # Should post +1 and mark as finished
+                        mock_post.assert_called_once()
+                        call_args = mock_post.call_args
+                        assert "+1" in call_args[0][1]
+                        mock_mark.assert_called_once()
+
+    def test_posts_minus_one_when_tests_rejected(self):
+        """Test that -1 is posted when tests are rejected."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "error",
+                    "Build failed",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.REJECTED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Error details here")
+                        process_ci_test_results(context)
+
+                        mock_post.assert_called_once()
+                        call_args = mock_post.call_args
+                        assert "-1" in call_args[0][1]
+                        # Status should also be marked as finished
+                        mock_mark.assert_called_once()
+
+    def test_marks_status_as_finished_after_posting(self):
+        """Test that status is marked as 'Finished' after posting results."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results")
+                        process_ci_test_results(context)
+
+                        # Verify post_bot_comment was called
+                        mock_post.assert_called_once()
+
+                        # Verify _mark_status_as_finished was called with correct args
+                        mock_mark.assert_called_once_with(
+                            context,
+                            "cms/10246/el8_amd64_gcc12/required",
+                            "success",
+                            "http://example.com/SDT/jenkins-artifacts/123",
+                        )
+
+    def test_second_run_skips_finished_status(self):
+        """Test that second run skips status already marked as Finished."""
+        from process_pr_v2 import process_ci_test_results
+
+        # First run: description is "Tests OK"
+        context1 = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        # Second run: description is "Finished" (set by first run)
+        context2 = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Finished",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results")
+
+                        # First run should post
+                        process_ci_test_results(context1)
+                        assert mock_post.call_count == 1
+                        assert mock_mark.call_count == 1
+
+                        # Reset mocks
+                        mock_post.reset_mock()
+                        mock_mark.reset_mock()
+
+                        # Second run should skip (description is "Finished")
+                        process_ci_test_results(context2)
+                        mock_post.assert_not_called()
+                        mock_mark.assert_not_called()
+
+    def test_processes_multiple_statuses(self):
+        """Test that multiple statuses are processed independently."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+                (
+                    "cms/10246/el9_amd64_gcc13/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/456",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results")
+                        process_ci_test_results(context)
+
+                        # Both statuses should be processed
+                        assert mock_post.call_count == 2
+                        assert mock_mark.call_count == 2
+
+    def test_skips_one_finished_processes_other(self):
+        """Test that finished status is skipped while unfinished is processed."""
+        from process_pr_v2 import process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                # This one is already finished - skip
+                (
+                    "cms/10246/el8_amd64_gcc12/required",
+                    "success",
+                    "Finished",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+                # This one is not finished - process
+                (
+                    "cms/10246/el9_amd64_gcc13/required",
+                    "success",
+                    "Tests OK",
+                    "http://example.com/SDT/jenkins-artifacts/456",
+                ),
+            ]
+        )
+
+        with patch("process_pr_v2._get_tests_approval_state") as mock_state:
+            from process_pr_v2 import ApprovalState
+
+            mock_state.return_value = ApprovalState.APPROVED
+
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    with patch("process_pr_v2._mark_status_as_finished") as mock_mark:
+                        mock_fetch.return_value = (0, "Test results")
+                        process_ci_test_results(context)
+
+                        # Only one should be processed
+                        assert mock_post.call_count == 1
+                        assert mock_mark.call_count == 1
+                        # Check it was the second one
+                        mock_mark.assert_called_with(
+                            context,
+                            "cms/10246/el9_amd64_gcc13/required",
+                            "success",
+                            "http://example.com/SDT/jenkins-artifacts/456",
+                        )
+
+
+class TestMarkStatusAsFinished:
+    """Tests for _mark_status_as_finished function."""
+
+    def test_queues_status_update(self):
+        """Test that status update is queued (not called directly)."""
+        from process_pr_v2 import _mark_status_as_finished
+
+        context = MagicMock()
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.pending_status_updates = []
+
+        _mark_status_as_finished(
+            context, "cms/10246/el8/required", "success", "http://example.com"
+        )
+
+        # Should queue status update via queue_status_update
+        context.queue_status_update.assert_called_once_with(
+            state="success",
+            description="Finished",
+            context_name="cms/10246/el8/required",
+            target_url="http://example.com",
+            sha="abc123",
+        )
+
+    def test_updates_status_to_finished(self):
+        """Test that status is queued with 'Finished' description."""
+        from process_pr_v2 import _mark_status_as_finished
+
+        context = MagicMock()
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+
+        _mark_status_as_finished(
+            context, "cms/10246/el8_amd64_gcc12/required", "success", "http://example.com/results"
+        )
+
+        context.queue_status_update.assert_called_once_with(
+            state="success",
+            description="Finished",
+            context_name="cms/10246/el8_amd64_gcc12/required",
+            target_url="http://example.com/results",
+            sha="abc123",
+        )
+
+    def test_maps_error_to_failure(self):
+        """Test that 'error' state is mapped to 'failure' for GitHub."""
+        from process_pr_v2 import _mark_status_as_finished
+
+        context = MagicMock()
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+
+        _mark_status_as_finished(
+            context,
+            "cms/10246/el8_amd64_gcc12/required",
+            "error",  # Our internal state
+            "http://example.com/results",
+        )
+
+        # Should map to "failure" for GitHub
+        context.queue_status_update.assert_called_once_with(
+            state="failure",
+            description="Finished",
+            context_name="cms/10246/el8_amd64_gcc12/required",
+            target_url="http://example.com/results",
+            sha="abc123",
+        )
+
+    def test_handles_exception_gracefully(self):
+        """Test that exceptions are handled without crashing."""
+        from process_pr_v2 import _mark_status_as_finished
+
+        context = MagicMock()
+        context.pr = MagicMock()
+        context.pr.head.sha = "abc123"
+        context.queue_status_update.side_effect = Exception("Queue error")
+
+        # Should not raise, just log warning
+        _mark_status_as_finished(
+            context, "cms/10246/el8_amd64_gcc12/required", "success", "http://example.com/results"
+        )
+
+
+# =============================================================================
+# TESTS FOR get_signing_checks FUNCTION
+# =============================================================================
+
+
+class TestGetSigningChecks:
+    """Tests for the get_signing_checks function."""
+
+    @pytest.fixture(autouse=True)
+    def mock_forward_ports(self, monkeypatch):
+        """Mock forward_ports_map and CMSSW_DEVEL_BRANCH for all tests in this class."""
+        import process_pr_v2
+
+        # Mock forward_ports_map
+        mock_fwports_module = types.ModuleType("forward_ports_map")
+        mock_fwports_module.GIT_REPO_FWPORTS = {
+            "cmssw": {
+                "CMSSW_14_1_X": ["CMSSW_14_0_X", "CMSSW_13_3_X"],
+            }
+        }
+        monkeypatch.setattr(process_pr_v2, "forward_ports_map", mock_fwports_module)
+
+        # Mock CMSSW_DEVEL_BRANCH
+        monkeypatch.setattr(process_pr_v2, "CMSSW_DEVEL_BRANCH", "CMSSW_14_1_X")
+
+    @staticmethod
+    def _make_mock_context(repo_name: str, repo_org: str, target_branch: str):
+        """Create a mock PRContext with repo info."""
+        context = MagicMock()
+        context.repo_name = repo_name
+        context.repo_org = repo_org
+        context.target_branch = target_branch
+
+        # Set up derived properties
+        context.cmssw_repo = repo_name == "cmssw"
+        context.cmsdist_repo = repo_name == "cmsdist"
+        context.cms_repo = repo_org in ["cms-sw", "cms-data", "cms-externals"]
+        context.repo_full_name = f"{repo_org}/{repo_name}"
+
+        return context
+
+    def test_cmssw_master_branch(self):
+        """Test checks for cms-sw/cmssw on master branch."""
+        from process_pr_v2 import get_signing_checks
+
+        context = self._make_mock_context("cmssw", "cms-sw", "master")
+        result = get_signing_checks(context)
+
+        # Master branch should have code-checks as pre-check
+        assert "code-checks" in result.pre_checks
+        # Should have orp and tests as extra checks
+        assert "orp" in result.extra_checks
+        assert "tests" in result.extra_checks
+        # Should NOT have externals
+        assert "externals" not in result.extra_checks
+
+    def test_cmssw_other_branch(self):
+        """Test checks for cms-sw/cmssw on non-master, non-forward-port branch."""
+        from process_pr_v2 import get_signing_checks
+
+        # Use a branch that is NOT in the forward-ports list
+        context = self._make_mock_context("cmssw", "cms-sw", "CMSSW_12_0_X")
+        result = get_signing_checks(context)
+
+        # Non-forward-port branch should NOT have code-checks
+        assert "code-checks" not in result.pre_checks
+        # Should have orp and tests as extra checks
+        assert "orp" in result.extra_checks
+        assert "tests" in result.extra_checks
+        # Should NOT have externals
+        assert "externals" not in result.extra_checks
+
+    def test_cmssw_forward_port_branch(self):
+        """Test checks for cms-sw/cmssw on a forward-port branch."""
+        from process_pr_v2 import get_signing_checks
+
+        # CMSSW_14_0_X is in the forward-ports list for CMSSW_14_1_X (devel branch)
+        context = self._make_mock_context("cmssw", "cms-sw", "CMSSW_14_0_X")
+        result = get_signing_checks(context)
+
+        # Forward-port branch SHOULD have code-checks (like master)
+        assert "code-checks" in result.pre_checks
+        # Should have orp and tests as extra checks
+        assert "orp" in result.extra_checks
+        assert "tests" in result.extra_checks
+        # Should NOT have externals
+        assert "externals" not in result.extra_checks
+
+    def test_cmsdist(self):
+        """Test checks for cms-sw/cmsdist."""
+        from process_pr_v2 import get_signing_checks
+
+        context = self._make_mock_context("cmsdist", "cms-sw", "IB/CMSSW_14_0_X/master")
+        result = get_signing_checks(context)
+
+        # Should NOT have code-checks
+        assert "code-checks" not in result.pre_checks
+        assert len(result.pre_checks) == 0
+        # Should have orp and externals as extra checks
+        assert "orp" in result.extra_checks
+        assert "externals" in result.extra_checks
+
+    def test_cms_data_repo(self):
+        """Test checks for cms-data/* repositories."""
+        from process_pr_v2 import get_signing_checks
+
+        context = self._make_mock_context(
+            "RecoEgamma-ElectronIdentification", "cms-data", "master"
+        )
+        result = get_signing_checks(context)
+
+        # Should NOT have code-checks
+        assert "code-checks" not in result.pre_checks
+        # Should have orp and externals as extra checks
+        assert "orp" in result.extra_checks
+        assert "externals" in result.extra_checks
+
+    def test_cms_externals_repo(self):
+        """Test checks for cms-externals/* repositories."""
+        from process_pr_v2 import get_signing_checks
+
+        context = self._make_mock_context("coral", "cms-externals", "master")
+        result = get_signing_checks(context)
+
+        # Should NOT have code-checks
+        assert "code-checks" not in result.pre_checks
+        # Should have orp and externals as extra checks
+        assert "orp" in result.extra_checks
+        assert "externals" in result.extra_checks
+
+    def test_non_cms_repo(self):
+        """Test checks for non-CMS repositories."""
+        from process_pr_v2 import get_signing_checks
+
+        context = self._make_mock_context("some-repo", "some-org", "main")
+        result = get_signing_checks(context)
+
+        # Should NOT have code-checks, orp, or externals
+        assert "code-checks" not in result.pre_checks
+        assert "orp" not in result.extra_checks
+        assert "externals" not in result.extra_checks
+        # Should only have tests
+        assert "tests" in result.extra_checks
+
+
+# =============================================================================
+# TESTS FOR UNASSIGN BEHAVIOR (ONLY MANUALLY ASSIGNED CATEGORIES)
+# =============================================================================
+
+
+class TestUnassignManuallyAssignedOnly:
+    """Tests for unassign command that only removes manually assigned categories."""
+
+    def test_unassign_manually_assigned_category(self):
+        """Test that unassign removes manually assigned categories."""
+        from process_pr_v2 import handle_assign_unassign, PRContext
+
+        # Create mock context
+        context = MagicMock(spec=PRContext)
+        context.signing_categories = set()
+        context.manually_assigned_categories = set()
+        context.messages = []
+        context.repo_config = MagicMock()
+        context.is_pr = True
+        context.comments = {}
+
+        # Mock a valid match for assign
+        assign_match = MagicMock()
+        assign_match.group = lambda x: {"action": "assign", "target": "core"}[x]
+
+        # Create mock comment
+        mock_comment = MagicMock()
+        mock_comment.user.login = "user1"
+        mock_comment.id = 1
+        mock_comment.created_at = FROZEN_TIME
+
+        # Assign a category
+        with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
+            with patch("process_pr_v2.get_category_l2s", return_value=[]):
+                with patch("process_pr_v2.post_bot_comment"):
+                    handle_assign_unassign(context, assign_match, mock_comment)
+
+        assert "core" in context.signing_categories
+        assert "core" in context.manually_assigned_categories
+
+        # Now unassign
+        unassign_match = MagicMock()
+        unassign_match.group = lambda x: {"action": "unassign", "target": "core"}[x]
+
+        mock_comment2 = MagicMock()
+        mock_comment2.user.login = "user1"
+        mock_comment2.id = 2
+        mock_comment2.created_at = FROZEN_TIME
+
+        with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
+            result = handle_assign_unassign(context, unassign_match, mock_comment2)
+
+        assert result is True
+        assert "core" not in context.signing_categories
+        assert "core" not in context.manually_assigned_categories
+
+    def test_unassign_non_manually_assigned_category_fails(self):
+        """Test that unassign fails for categories not manually assigned."""
+        from process_pr_v2 import handle_assign_unassign, PRContext
+
+        # Create mock context with a category that was NOT manually assigned
+        context = MagicMock(spec=PRContext)
+        context.signing_categories = {"core"}  # Present in signing_categories
+        context.manually_assigned_categories = set()  # But NOT in manually_assigned
+        context.messages = []
+        context.repo_config = MagicMock()
+        context.is_pr = True
+        context.comments = {}
+
+        # Try to unassign
+        unassign_match = MagicMock()
+        unassign_match.group = lambda x: {"action": "unassign", "target": "core"}[x]
+
+        mock_comment = MagicMock()
+        mock_comment.user.login = "user1"
+        mock_comment.id = 1
+        mock_comment.created_at = FROZEN_TIME
+
+        with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
+            result = handle_assign_unassign(context, unassign_match, mock_comment)
+
+        # Should fail
+        assert result is False
+        # Category should still be in signing_categories
+        assert "core" in context.signing_categories
+        # Should have error message
+        assert any("not manually assigned" in msg for msg in context.messages)
+
+    def test_unassign_mixed_categories(self):
+        """Test unassign with mix of manually and non-manually assigned categories."""
+        from process_pr_v2 import handle_assign_unassign, PRContext
+
+        # Create mock context with both types of categories
+        context = MagicMock(spec=PRContext)
+        context.signing_categories = {"core", "analysis"}
+        context.manually_assigned_categories = {"analysis"}  # Only analysis was manually assigned
+        context.messages = []
+        context.repo_config = MagicMock()
+        context.is_pr = True
+        context.comments = {}
+
+        # Try to unassign both
+        unassign_match = MagicMock()
+        unassign_match.group = lambda x: {"action": "unassign", "target": "core,analysis"}[x]
+
+        mock_comment = MagicMock()
+        mock_comment.user.login = "user1"
+        mock_comment.id = 1
+        mock_comment.created_at = FROZEN_TIME
+
+        with patch("process_pr_v2.CMSSW_CATEGORIES", {"core": [], "analysis": []}):
+            result = handle_assign_unassign(context, unassign_match, mock_comment)
+
+        # Should succeed (at least one category was unassigned)
+        assert result is True
+        # analysis should be removed (was manually assigned)
+        assert "analysis" not in context.signing_categories
+        assert "analysis" not in context.manually_assigned_categories
+        # core should still be there (was not manually assigned)
+        assert "core" in context.signing_categories
+        # Should have warning about core
+        assert any("not manually assigned" in msg for msg in context.messages)
+
+
+# =============================================================================
+# CONFTEST HOOK FOR PYTEST OPTIONS
+# =============================================================================
+
+# This needs to be in conftest.py for pytest to pick it up, but we include
+# it here for convenience when running the file directly
+
+
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line("markers", "record_actions: mark test to record actions")
+
+
+# =============================================================================
+# INTEGRATION TEST SUPPORT
+# =============================================================================
+
+
+class IntegrationTestHelper:
+    """
+    Helper for integration tests that need custom repo_config and related modules.
+
+    This class manages the sys.path and sys.modules to allow tests to use
+    custom versions of repo_config, releases, categories, milestones, etc.
+    from a specific directory.
+
+    Usage:
+        helper = IntegrationTestHelper("/path/to/repo/config/dir")
+        helper.setup()
+
+        # Now import process_pr_v2 - it will use the custom modules
+        from process_pr_v2 import process_pr
+        repo_config = helper.get_repo_config()
+
+        # Run your test...
+        result = process_pr(repo_config=repo_config, ...)
+
+        helper.teardown()
+
+    Or as a context manager:
+        with IntegrationTestHelper("/path/to/repo/config/dir") as helper:
+            from process_pr_v2 import process_pr
+            repo_config = helper.get_repo_config()
+            ...
+    """
+
+    # Modules that should be loaded from the custom directory
+    MANAGED_MODULES = [
+        "repo_config",
+        "releases",
+        "milestones",
+        "categories",
+        "categories_map",
+        "forward_ports_map",
+    ]
+
+    def __init__(self, config_dir: Path):
+        """
+        Initialize the helper.
+
+        Args:
+            config_dir: Path to directory containing repo_config.py and related modules
+        """
+        self.config_dir = str(config_dir.resolve())
+        self._saved_path = None
+        self._saved_modules = {}
+        self._active = False
+
+    def setup(self) -> None:
+        """Set up the custom module path and clear cached modules."""
+        if self._active:
+            return
+
+        # Verify directory exists
+        if not os.path.isdir(self.config_dir):
+            raise ValueError(f"Config directory does not exist: {self.config_dir}")
+
+        # Save current state
+        self._saved_path = sys.path.copy()
+
+        # Save and remove managed modules from sys.modules
+        for mod_name in self.MANAGED_MODULES:
+            if mod_name in sys.modules:
+                self._saved_modules[mod_name] = sys.modules.pop(mod_name)
+
+        # Also remove process_pr_v2 so it reimports the modules
+        if "process_pr_v2" in sys.modules:
+            self._saved_modules["process_pr_v2"] = sys.modules.pop("process_pr_v2")
+
+        # Insert custom path at front
+        sys.path.insert(0, self.config_dir)
+
+        self._active = True
+
+    def teardown(self) -> None:
+        """Restore original module path and modules."""
+        if not self._active:
+            return
+
+        # Remove managed modules loaded from custom path
+        for mod_name in self.MANAGED_MODULES + ["process_pr_v2"]:
+            if mod_name in sys.modules:
+                del sys.modules[mod_name]
+
+        # Restore saved modules
+        sys.modules.update(self._saved_modules)
+        self._saved_modules.clear()
+
+        # Restore original path
+        if self._saved_path is not None:
+            sys.path = self._saved_path
+            self._saved_path = None
+
+        self._active = False
+
+    def get_repo_config(self) -> types.ModuleType:
+        """
+        Get the repo_config module from the custom directory.
+
+        Returns:
+            The repo_config module
+        """
+        if not self._active:
+            raise RuntimeError("IntegrationTestHelper not set up. Call setup() first.")
+
+        import repo_config
+
+        return repo_config
+
+    def __enter__(self) -> "IntegrationTestHelper":
+        self.setup()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.teardown()
+
+
+@pytest.fixture
+def integration_test_helper():
+    """
+    Pytest fixture for integration tests with custom repo_config.
+
+    Usage:
+        def test_something(integration_test_helper):
+            config_dir = "/path/to/custom/repo/config"
+            with IntegrationTestHelper(config_dir) as helper:
+                repo_config = helper.get_repo_config()
+                # ... run test with custom repo_config
+    """
+    # This fixture just provides the class - tests instantiate with their own path
+    return IntegrationTestHelper
+
+
+REPO_CONFIG_ROOT = Path(__file__).parent.parent / "repos"
+
+
+class TestOldTestForProcessPR:
+    """Integration tests using custom repo_config from test fixtures."""
+
+    @staticmethod
+    def get_repo_config_dir(repo: str):
+        repo = repo.replace("-", "_")
+        data = repo.split("/", 2)
+        assert len(data) == 2
+        owner, repo = data
+        return REPO_CONFIG_ROOT / owner / repo
+
+    @pytest.fixture(autouse=True)
+    def setup_fixtures(self, test_name, mock_gh, record_mode, integration_test_helper):
+        """Automatically inject fixtures as instance attributes."""
+        self.test_name = test_name
+        self.mock_gh = mock_gh
+        self.record_mode = record_mode
+        self.integration_test_helper = integration_test_helper
+
+    def runTest(self, pr_id=17, repo="iarspider-cmssw/cmssw"):
+        global ACTION_DATA_DIR, REPLAY_DATA_DIR
+        old_action_dir = ACTION_DATA_DIR
+        old_replay_dir = REPLAY_DATA_DIR
+        ACTION_DATA_DIR = Path(__file__).parent / "PRActionData_integration"
+        REPLAY_DATA_DIR = Path(__file__).parent / "ReplayData_integration"
+        repo_config_dir = TestOldTestForProcessPR.get_repo_config_dir(repo)
+        with self.integration_test_helper(repo_config_dir) as helper:
+            from process_pr_v2 import process_pr
+
+            repo_config = helper.get_repo_config()
+
+            recorder = ActionRecorder(self.test_name, self.record_mode)
+            gh = MockGithub(self.test_name, recorder)
+            repo = gh.get_repo(repo)
+            issue = repo.get_issue(pr_id)
+
+            with FunctionHook(recorder.property_file_hook()):
+                result = process_pr(
+                    repo_config=repo_config,
+                    gh=gh,
+                    repo=repo,
+                    issue=issue,
+                    dryRun=False,
+                    cmsbuild_user="iarspider",
+                    loglevel="DEBUG",
+                )
+
+            from pprint import pprint
+
+            pprint(result)
+
+            if self.record_mode:
+                recorder.save()
+            else:
+                recorder.verify()
+
+        ACTION_DATA_DIR = old_action_dir
+        REPLAY_DATA_DIR = old_replay_dir
+        return result
+
+    def test_abort(self):
+        self.runTest(17)
+
+    def test_ack_many_files(self):
+        self.runTest(38)
+
+    def test_assign(self):
+        self.runTest(17)
+
+    def test_assign_from(self):
+        self.runTest(27)
+
+    def test_assign_from_invalid(self):
+        self.runTest(27)
+
+    def test_assign_from_with_label(self):
+        self.runTest(27)
+
+    def test_backport(self):
+        self.runTest(26)
+
+    def test_backport_already_seen(self):
+        self.runTest(26)
+
+    def test_backport_ok(self):
+        ret = self.runTest(pr_id=9)
+        assert "backport-ok" in ret["labels"]
+
+    def test_build_only(self):
+        self.runTest(40)
+
+    def test_close(self):
+        self.runTest()
+
+    def test_cmsdist_start_tests(self):
+        self.runTest(1, "iarspider-cmssw/cmsdist")
+
+    def test_code_check_approved(self):
+        self.runTest()
+
+    def test_code_checks_with(self):
+        self.runTest(25)
+
+    def test_create_repo(self):
+        self.runTest(30)
+
+    def test_draft_pr_opened(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_assign(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_updated(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_start_test(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_ready(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_ask_ready(self):
+        self.runTest(pr_id=21)
+
+    def test_draft_pr_fully_signed(self):
+        self.runTest(pr_id=21)
+
+    def test_empty_pr(self):
+        self.runTest(pr_id=33)
+
+    def test_enable_none(self):
+        self.runTest(pr_id=9)
+
+    def test_grant(self):
+        self.runTest(pr_id=25)
+
+    def test_hold(self):
+        self.runTest()
+
+    def test_ignore_rejected_invalid(self):
+        self.runTest(pr_id=25)
+
+    def test_ignore_rejected_valid(self):
+        self.runTest(pr_id=25)
+
+    def test_invalid_test_params(self):
+        self.runTest(pr_id=25)
+
+    def test_invalid_type(self):
+        self.runTest()
+
+    def test_merge_pr(self):
+        self.runTest(pr_id=36)
+
+    def test_new_issue(self):
+        self.runTest(pr_id=27)
+
+    def test_new_pr(self):
+        self.runTest()
+
+    def test_orp_issue(self):
+        self.runTest(pr_id=39)
+
+    def test_test_all_params(self):
+        self.runTest(24)
+
+
+# =============================================================================
+# MAIN ENTRY POINT
+# =============================================================================
+
+
+if __name__ == "__main__":
+    # Allow running directly for debugging
+    import sys
+
+    # Check for --record-actions flag
+    record = "--record-actions" in sys.argv
+
+    # Run pytest
+    clargs = [__file__, "-v"]
+    if record:
+        clargs.append("--record-actions")
+
+    pytest.main(clargs)

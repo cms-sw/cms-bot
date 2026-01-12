@@ -1,0 +1,63 @@
+{
+  "test_name": "test_assign",
+  "action_count": 6,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 17,
+        "labels": [
+          "code-checks-approved"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 17,
+        "labels": [
+          "code-checks-pending",
+          "db-pending",
+          "dqm-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 17,
+        "body": "Pull request #17 was updated. Dr15Jones, iarspider, makortel, smuzaffar can you please check and sign again.\n\nThe following packages are now also affected:\n- Utilities/ReleaseScripts (**core**)\n\nDr15Jones, makortel, smuzaffar can you please review and sign?\n\nwddgit this is something you requested to watch as well.\n<!--pr_updated:959450163873476575-->"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 17,
+        "body": "New categories assigned: dqm, db\n\nantoniovagnerini, consuegs, francescobrivio, nothingface0, perrotta, rvenditti, saumyaphor4252, syuvivida, tjavaid you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2056796593-->"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
+        "state": "pending",
+        "target_url": "",
+        "description": "code-checks pending",
+        "context": "cms/17/code-checks"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2045163329,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2045177271\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-04-09T13:25:57+00:00\",\"user\":\"iarspider\"},\"2049242908\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+core\",\"locked\":true,\"signed_files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml::commit::2a9454e30606\"],\"ts\":\"2024-04-11T09:00:53Z\",\"user\":\"iarspider\"},\"2049536405\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-04-11T11:58:16+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2049242908\":\"+1\",\"2049536626\":\"+1\",\"2056736344\":\"+1\",\"2056739513\":\"+1\",\"2056740892\":\"+1\"},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::b7c92bc217e16ec20cba26fbb2f2c5308e3f7f93\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

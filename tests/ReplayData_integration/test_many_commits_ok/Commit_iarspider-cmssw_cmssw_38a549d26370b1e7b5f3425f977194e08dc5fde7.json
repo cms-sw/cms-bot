@@ -1,0 +1,98 @@
+{
+  "sha": "38a549d26370b1e7b5f3425f977194e08dc5fde7",
+  "node_id": "C_kwDOF83__NoAKDM4YTU0OWQyNjM3MGIxZTdiNWYzNDI1Zjk3NzE5NGUwOGRjNWZkZTc",
+  "commit": {
+    "author": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:00Z"
+    },
+    "committer": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:00Z"
+    },
+    "message": "Dummy commit",
+    "tree": {
+      "sha": "3daa68b7261760f3b8aaf2219a2dab2e735dc3b7",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/3daa68b7261760f3b8aaf2219a2dab2e735dc3b7"
+    },
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/38a549d26370b1e7b5f3425f977194e08dc5fde7",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null
+    }
+  },
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/38a549d26370b1e7b5f3425f977194e08dc5fde7",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/38a549d26370b1e7b5f3425f977194e08dc5fde7",
+  "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/38a549d26370b1e7b5f3425f977194e08dc5fde7/comments",
+  "author": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "35bb64a0679da9b688f184f5b90fbccca98b8cf0",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/35bb64a0679da9b688f184f5b90fbccca98b8cf0",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/35bb64a0679da9b688f184f5b90fbccca98b8cf0"
+    }
+  ],
+  "stats": {
+    "total": 1,
+    "additions": 1,
+    "deletions": 0
+  },
+  "files": [
+    {
+      "sha": "871c1f4bc1e38c61f1385a1d43c0688cd82c17e3",
+      "filename": "Alignment/CommonAlignmentAlgorithm/python/SiPixelLorentzAngleCalibration_cff.py",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/38a549d26370b1e7b5f3425f977194e08dc5fde7/Alignment%2FCommonAlignmentAlgorithm%2Fpython%2FSiPixelLorentzAngleCalibration_cff.py",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/38a549d26370b1e7b5f3425f977194e08dc5fde7/Alignment%2FCommonAlignmentAlgorithm%2Fpython%2FSiPixelLorentzAngleCalibration_cff.py",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Alignment%2FCommonAlignmentAlgorithm%2Fpython%2FSiPixelLorentzAngleCalibration_cff.py?ref=38a549d26370b1e7b5f3425f977194e08dc5fde7",
+      "patch": "@@ -22,3 +22,4 @@\n     # one directly uses the unlabelled version, i.e. \"\"\n     lorentzAngleLabel = cms.string(\"fromAlignment\"),\n     )\n+# dummy dummy"
+    }
+  ]
+}

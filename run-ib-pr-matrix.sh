@@ -69,7 +69,7 @@ pushd "$WORKSPACE/matrix-results"
   case "${TEST_FLAVOR}" in
     high_stats ) CMD_OPTS="-n 500" ; MATRIX_ARGS="-i all ${MATRIX_ARGS}" ;;
     threading )  MATRIX_ARGS="-i all -t 4 ${MATRIX_ARGS}" ; let NJOBS=(${NJOBS}/4)+1 ;;
-    rntuple )    MATRIX_ARGS="--use-rntuple" ;;
+    rntuple )    MATRIX_ARGS="--use-rntuple ${MATRIX_ARGS}" ;;
     nano )       MATRIX_ARGS="-w nano -i all ${MATRIX_ARGS}" ;;
     input )      MATRIX_ARGS="-i all --maxSteps=2 ${MATRIX_ARGS}" ; CMD_OPTS="-n 1 --prefix ${CMS_BOT_DIR}/pr_testing/retry-command.sh" ; export CMS_BOT_RETRY_COUNT=3 ;;
     * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then

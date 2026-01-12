@@ -7345,7 +7345,7 @@ class TestCodeChecksCommand:
                     "id": 1001,
                     "user": {"login": "contributor"},
                     "body": "code-checks",
-                    "created_at": "2024-01-15T12:00:00Z",
+                    "created_at": FROZEN_COMMENT_TIME,
                 },
             ],
             statuses=[
@@ -7354,6 +7354,7 @@ class TestCodeChecksCommand:
                     "state": "success",
                     "description": "Passed",
                     "target_url": "",
+                    "updated_at": FROZEN_COMMIT_TIME,
                 },
             ],
         )
@@ -7414,7 +7415,7 @@ class TestCodeChecksCommand:
                     "id": 1001,
                     "user": {"login": "contributor"},
                     "body": "code-checks with cms.week0.PR_abc12345/some-config",
-                    "created_at": "2024-01-15T12:00:00Z",
+                    "created_at": FROZEN_COMMENT_TIME,
                 },
             ],
             statuses=[
@@ -7423,6 +7424,7 @@ class TestCodeChecksCommand:
                     "state": "success",
                     "description": "Passed",
                     "target_url": "",
+                    "updated_at": FROZEN_COMMIT_TIME,
                 },
             ],
         )

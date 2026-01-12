@@ -7518,6 +7518,67 @@ class TestCodeChecksCommand:
         else:
             recorder.verify()
 
+    def test_code_checks_skipped_for_old_comment(self, record_mode):
+        """Test code-checks command is skipped if commit status was updated after the comment."""
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        # Set initial code-checks status to pending (running) - should skip
+        create_basic_pr_data(
+            "test_code_checks_skipped_for_old_comment",
+            pr_number=1,
+            base_ref="master",
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "contributor"},
+                    "body": "code-checks",
+                    "created_at": FROZEN_COMMENT_TIME,
+                },
+            ],
+            statuses=[
+                {
+                    "context": "cms/1/code-checks",
+                    "state": "success",
+                    "description": "Success",
+                    "target_url": "",
+                    "updated_at": FROZEN_COMMENT_TIME + timedelta(seconds=5 * 60),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder("test_code_checks_skipped_for_old_comment", record_mode)
+        gh = MockGithub("test_code_checks_skipped_for_old_comment", recorder)
+        repo = MockRepository(
+            "test_code_checks_skipped_for_old_comment", full_name="cms-sw/cmssw", recorder=recorder
+        )
+        issue = MockIssue("test_code_checks_skipped_for_old_comment", number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Verify NO code-checks property file was created (skipped because pending)
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        code_checks_props = [
+            a for a in prop_actions if "code-checks" in a.get("details", {}).get("filename", "")
+        ]
+        assert len(code_checks_props) == 0, "Should NOT have created code-checks properties file"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
 
 # =============================================================================
 # TEST: IGNORE TESTS REJECTED COMMAND

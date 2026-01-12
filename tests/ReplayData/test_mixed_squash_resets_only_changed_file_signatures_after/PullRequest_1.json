@@ -1,0 +1,56 @@
+{
+  "id": 1,
+  "number": 1,
+  "title": "Test PR #1",
+  "body": "Test PR body",
+  "state": "open",
+  "merged": false,
+  "mergeable": true,
+  "head": {
+    "sha": "squashed_mixed_commit",
+    "ref": "feature"
+  },
+  "base": {
+    "sha": "base123",
+    "ref": "master"
+  },
+  "user": {
+    "login": "testuser",
+    "id": 1
+  },
+  "files": [
+    {
+      "filename": "Package/Core/main.py",
+      "sha": "core_sha_NEW",
+      "status": "modified"
+    },
+    {
+      "filename": "Package/Analysis/data.py",
+      "sha": "analysis_sha_222",
+      "status": "modified"
+    },
+    {
+      "filename": "Package/Simulation/sim.py",
+      "sha": "sim_sha_333",
+      "status": "modified"
+    }
+  ],
+  "commits": [
+    {
+      "sha": "squashed_mixed_commit",
+      "commit": {
+        "message": "Squashed with partial changes",
+        "author": {
+          "date": "2024-01-01T14:00:00Z",
+          "name": "Author",
+          "email": "a@b.com"
+        },
+        "committer": {
+          "date": "2024-01-01T14:00:00Z",
+          "name": "Author",
+          "email": "a@b.com"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "test_name": "test_backport_already_seen",
+  "action_count": 5,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 26,
+        "labels": [
+          "code-checks-approved"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 26,
+        "labels": [
+          "code-checks-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 26,
+        "body": "Pull request #26 was updated. iarspider can you please check and sign again.\n<!--pr_updated:417027950274148737-->"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "551c95f59caff42369887b5fee86583fe2bff161",
+        "state": "pending",
+        "target_url": "",
+        "description": "code-checks pending",
+        "context": "cms/26/code-checks"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2761389356,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2761373098\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2025-03-28T13:30:18+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2761370733\":\"+1\"},\"fv\":{\"README::131bcdaf098c6224cd0a7e3771661b9ba99eaa04\":{\"cats\":[],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

@@ -83,6 +83,7 @@ def _dummy_fetch_pr_result(url):
 
 
 process_pr_v2.fetch_pr_result = _dummy_fetch_pr_result
+process_pr_v2.CMSSW_DEVEL_BRANCH = "CMSSW_16_0_X"
 
 
 def create_mock_repo_config(**overrides) -> types.ModuleType:

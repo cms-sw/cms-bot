@@ -69,7 +69,7 @@
             "filename": "trigger-tests-iarspider-cmssw-cmssw-21.properties",
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#21",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO RNTUPLE",
                 "CONTEXT_PREFIX": "cms/21",
                 "BUILD_ONLY": false
             }

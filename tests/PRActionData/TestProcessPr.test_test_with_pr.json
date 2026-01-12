@@ -62,7 +62,7 @@
             "data": {
                 "PULL_REQUESTS": "iarspider-cmssw/cmssw#24 cms-sw/cmssw#543210",
                 "ENABLE_BOT_TESTS": "GPU,THREADING,PROFILING,HIGH_STATS,NANO",
-                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO RNTUPLE",
                 "CONTEXT_PREFIX": "cms/24",
                 "BUILD_ONLY": false
             }

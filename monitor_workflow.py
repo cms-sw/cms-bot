@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 from os import system, getpid
 from sys import argv, exit
-from time import sleep, time, monotonic
 import psutil
 from threading import Thread
 import subprocess
 from json import dump
+from time import sleep, time
+
+try:
+    from time import monotonic  # Python ≥ 3.3
+except ImportError:
+    monotonic = time
 
 SAMPLE_INTERVAL = 1.0
 cpu_times = {}

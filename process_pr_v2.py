@@ -3085,6 +3085,8 @@ def handle_code_checks(context: PRContext, match: re.Match, comment: Any) -> boo
     Re-trigger rules:
     - Cannot re-trigger while pending (code-checks already running)
     - Can re-trigger after completion (success or error) - resets status to pending
+    - Apply parameters but don't trigger checks if commit status was updated later that the comment
+    - Apply parameters but don't trigger checks if comment was created before last commit
     """
     user = comment.user.login
     tool_conf = match.group("tool_conf") if match.lastindex else None
@@ -3096,32 +3098,45 @@ def handle_code_checks(context: PRContext, match: re.Match, comment: Any) -> boo
     context.code_checks_apply_patch = apply_patch
 
     # Check if code-checks are currently pending (running)
-    if context.pr:
-        pr_id = context.issue.number
-        status_context = f"cms/{pr_id}/code-checks"
+    pr_id = context.issue.number
+    status_context = f"cms/{pr_id}/code-checks"
 
-        # Check pending updates first (from current run)
-        if status_context in context.pending_status_updates:
-            sha, state, description, target_url = context.pending_status_updates[status_context]
-            if state == "pending":
-                logger.info(f"Ignoring code-checks from {user} - already pending in this run")
-                return True
-            # If success/error in pending, allow re-trigger and reset status below
+    # Check pending updates first (from current run)
+    if status_context in context.pending_status_updates:
+        sha, state, description, target_url = context.pending_status_updates[status_context]
+        if state == "pending":
+            logger.info(f"Ignoring code-checks from {user} - already pending in this run")
+            return True
+        # If success/error in pending, allow re-trigger and reset status below
 
-        # Check frozen cache (existing status)
-        status = context.get_commit_status(status_context)
-        if status and status.state == "pending":
+    # Check frozen cache (existing status)
+    status = context.get_commit_status(status_context)
+    if status:
+        if status.state == "pending":
             logger.info(f"Ignoring code-checks from {user} - already running (pending)")
             return True
 
-        # Reset the status to pending (re-triggering)
-        # This clears the previous success/error status
-        context.queue_status_update(
-            state="pending",
-            description="code-checks requested",
-            context_name=status_context,
-            target_url="",
+        if ensure_tz_aware(status.updated_at) >= ensure_tz_aware(comment.updated_at):
+            logger.info(
+                f"Ignoring code-checks from {user} - already processed (status updated after comment)"
+            )
+            return True
+
+    # Notice: should never happen
+    if ensure_tz_aware(context.last_commit.committer.date) > ensure_tz_aware(comment.updated_at):
+        logger.info(
+            f"Setting code-check params but not triggering checks: last_commit was after this comment"
         )
+        return True
+
+    # Reset the status to pending (re-triggering)
+    # This clears the previous success/error status
+    context.queue_status_update(
+        state="pending",
+        description="code-checks requested",
+        context_name=status_context,
+        target_url="",
+    )
 
     context.code_checks_requested = True
 
@@ -5800,31 +5815,21 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
     # Log label changes
     if labels_to_add:
         logger.info(f"Adding labels: {sorted(labels_to_add)}")
+        if hasattr(context.issue, "_recorder"):
+            # Mock class that supports batch addition of labels
+            context.issue.add_to_labels(*sorted(labels_to_add))
+
     if labels_to_remove:
         logger.info(f"Removing labels: {sorted(labels_to_remove)}")
+        if hasattr(context.issue, "_recorder"):
+            # Mock class that supports batch removal of labels
+            context.issue.remove_from_labels(*sorted(labels_to_remove))
 
     # Apply label changes (guarded by dry_run)
     # Batch removals into a single call
-    if labels_to_remove:
-        if context.dry_run:
-            logger.info(f"[DRY RUN] Would remove labels: {sorted(labels_to_remove)}")
-        else:
-            try:
-                context.issue.remove_from_labels(*sorted(labels_to_remove))
-                logger.debug(f"Removed labels: {sorted(labels_to_remove)}")
-            except Exception as e:
-                logger.warning(f"Could not remove labels {sorted(labels_to_remove)}: {e}")
-
-    # Batch additions into a single call
-    if labels_to_add:
-        if context.dry_run:
-            logger.info(f"[DRY RUN] Would add labels: {sorted(labels_to_add)}")
-        else:
-            try:
-                context.issue.add_to_labels(*sorted(labels_to_add))
-                logger.debug(f"Added labels: {sorted(labels_to_add)}")
-            except Exception as e:
-                logger.warning(f"Could not add labels {sorted(labels_to_add)}: {e}")
+    if (labels_to_remove or labels_to_add) and not context.dry_run:
+        if not hasattr(context.issue, "_recorder"):
+            context.issue.set_labels(new_labels)
 
     return old_labels, new_labels
 

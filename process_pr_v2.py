@@ -6201,13 +6201,13 @@ def trigger_pending_pre_checks(context: PRContext) -> None:
     cms_status_prefix = f"cms/{pr_id}"
 
     # Get current commit statuses (frozen from start of processing)
-    statuses = context.get_commit_statuses()
+    # statuses = context.get_commit_statuses()
 
     for pre_check in signing_checks.pre_checks:
         status_context = f"{cms_status_prefix}/{pre_check}"
 
         # Skip if status already exists in frozen cache (check was triggered before this run)
-        if status_context in statuses:
+        if context.get_commit_status(status_context):
             logger.debug(f"Pre-check {pre_check} already has status, skipping auto-trigger")
             continue
 
@@ -6695,41 +6695,9 @@ def check_for_new_commits(context: PRContext) -> None:
             if commit_time > last_bot_comment_time:
                 logger.info(f"New commit detected: {latest_sha[:8]}")
 
-                # Reset pre-check statuses to pending on new commits
-                reset_pre_check_statuses(context)
-
                 post_pr_updated_message(context, latest_sha)
         except Exception as e:
             logger.warning(f"Could not compare commit times: {e}")
-
-
-def reset_pre_check_statuses(context: PRContext) -> None:
-    """
-    Reset pre-check statuses to pending when new commits are pushed.
-
-    This ensures that pre-checks must be re-signed after each push.
-
-    Args:
-        context: PR processing context
-    """
-    if not context.pr or not context.is_pr:
-        return
-
-    signing_checks = context.get_signing_checks_for_pr()
-    if not signing_checks.pre_checks:
-        return
-
-    pr_id = context.issue.number
-
-    for pre_check in signing_checks.pre_checks:
-        status_context = f"cms/{pr_id}/{pre_check}"
-        context.queue_status_update(
-            state="pending",
-            description=f"{pre_check} pending",
-            context_name=status_context,
-            target_url="",
-        )
-        logger.info(f"Reset pre-check status {pre_check} to pending")
 
 
 # =============================================================================

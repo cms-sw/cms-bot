@@ -1,29 +1,9 @@
 {
   "test_name": "test_code_checks_with",
-  "action_count": 5,
+  "action_count": 2,
   "actions": [
     {
       "sequence": 1,
-      "action": "remove_labels",
-      "details": {
-        "issue_number": 25,
-        "labels": [
-          "code-checks-approved"
-        ]
-      }
-    },
-    {
-      "sequence": 2,
-      "action": "add_labels",
-      "details": {
-        "issue_number": 25,
-        "labels": [
-          "code-checks-pending"
-        ]
-      }
-    },
-    {
-      "sequence": 3,
       "action": "create_comment",
       "details": {
         "issue_number": 25,
@@ -31,18 +11,7 @@
       }
     },
     {
-      "sequence": 4,
-      "action": "create_status",
-      "details": {
-        "sha": "ceea69106c5e0e17c03c87c13bdf187f03214fec",
-        "state": "pending",
-        "target_url": "",
-        "description": "code-checks pending",
-        "context": "cms/25/code-checks"
-      }
-    },
-    {
-      "sequence": 5,
+      "sequence": 2,
       "action": "edit_comment",
       "details": {
         "comment_id": 2801536138,

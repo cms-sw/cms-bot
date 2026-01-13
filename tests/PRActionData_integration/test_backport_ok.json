@@ -1,6 +1,6 @@
 {
   "test_name": "test_backport_ok",
-  "action_count": 6,
+  "action_count": 5,
   "actions": [
     {
       "sequence": 1,
@@ -27,23 +27,12 @@
         "sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
         "state": "pending",
         "target_url": "",
-        "description": "code-checks pending",
-        "context": "cms/9/code-checks"
-      }
-    },
-    {
-      "sequence": 4,
-      "action": "create_status",
-      "details": {
-        "sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
-        "state": "pending",
-        "target_url": "",
         "description": "Waiting for authorized user to issue the test command.",
         "context": "bot/9/jenkins"
       }
     },
     {
-      "sequence": 5,
+      "sequence": 4,
       "action": "create_status",
       "details": {
         "sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
@@ -54,7 +43,7 @@
       }
     },
     {
-      "sequence": 6,
+      "sequence": 5,
       "action": "edit_comment",
       "details": {
         "comment_id": 1852047910,

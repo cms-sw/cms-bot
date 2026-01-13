@@ -1,26 +1,24 @@
 {
   "test_name": "test_merge_pr",
-  "action_count": 6,
+  "action_count": 5,
   "actions": [
     {
       "sequence": 1,
-      "action": "remove_labels",
+      "action": "add_labels",
       "details": {
         "issue_number": 36,
         "labels": [
-          "code-checks-approved",
-          "orp-pending"
+          "orp-approved"
         ]
       }
     },
     {
       "sequence": 2,
-      "action": "add_labels",
+      "action": "remove_labels",
       "details": {
         "issue_number": 36,
         "labels": [
-          "code-checks-pending",
-          "orp-approved"
+          "orp-pending"
         ]
       }
     },
@@ -44,17 +42,6 @@
     },
     {
       "sequence": 5,
-      "action": "create_status",
-      "details": {
-        "sha": "eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48",
-        "state": "pending",
-        "target_url": "",
-        "description": "code-checks pending",
-        "context": "cms/36/code-checks"
-      }
-    },
-    {
-      "sequence": 6,
       "action": "edit_comment",
       "details": {
         "comment_id": 2838541870,

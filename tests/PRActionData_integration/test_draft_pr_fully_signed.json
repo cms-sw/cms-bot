@@ -4,21 +4,21 @@
   "actions": [
     {
       "sequence": 1,
-      "action": "remove_labels",
-      "details": {
-        "issue_number": 21,
-        "labels": [
-          "fully-signed-draft"
-        ]
-      }
-    },
-    {
-      "sequence": 2,
       "action": "add_labels",
       "details": {
         "issue_number": 21,
         "labels": [
           "fully-signed"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 21,
+        "labels": [
+          "fully-signed-draft"
         ]
       }
     },

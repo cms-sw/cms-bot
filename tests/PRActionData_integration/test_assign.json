@@ -1,31 +1,20 @@
 {
   "test_name": "test_assign",
-  "action_count": 6,
+  "action_count": 4,
   "actions": [
     {
       "sequence": 1,
-      "action": "remove_labels",
-      "details": {
-        "issue_number": 17,
-        "labels": [
-          "code-checks-approved"
-        ]
-      }
-    },
-    {
-      "sequence": 2,
       "action": "add_labels",
       "details": {
         "issue_number": 17,
         "labels": [
-          "code-checks-pending",
           "db-pending",
           "dqm-pending"
         ]
       }
     },
     {
-      "sequence": 3,
+      "sequence": 2,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -33,7 +22,7 @@
       }
     },
     {
-      "sequence": 4,
+      "sequence": 3,
       "action": "create_comment",
       "details": {
         "issue_number": 17,
@@ -41,18 +30,7 @@
       }
     },
     {
-      "sequence": 5,
-      "action": "create_status",
-      "details": {
-        "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
-        "state": "pending",
-        "target_url": "",
-        "description": "code-checks pending",
-        "context": "cms/17/code-checks"
-      }
-    },
-    {
-      "sequence": 6,
+      "sequence": 4,
       "action": "edit_comment",
       "details": {
         "comment_id": 2045163329,

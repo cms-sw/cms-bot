@@ -8,7 +8,7 @@ from json import dump
 from time import sleep, time
 
 try:
-    from time import monotonic  # Python ≥ 3.3
+    from time import monotonic
 except ImportError:
     monotonic = time
 

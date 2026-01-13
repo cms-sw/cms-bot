@@ -24,6 +24,7 @@ from json import load as json_load
 from os import getenv as os_getenv
 from os.path import dirname, exists, join
 from subprocess import getstatusoutput
+from time import sleep
 from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
 import yaml
@@ -38,6 +39,7 @@ from categories import (
     PR_HOLD_MANAGERS,
     EXTERNAL_REPOS,
 )
+from github_utils import api_rate_limits
 
 # Import CMSSW_LABELS for auto-labeling based on file patterns
 try:
@@ -6838,6 +6840,7 @@ def process_pr(
     # Fetch all comments once and use throughout processing
     # Store as dict keyed by comment_id for O(1) lookups
     comments_list = list(issue.get_comments())
+    api_rate_limits(gh)
     comments = {c.id: c for c in comments_list}
     logger.debug(f"Fetched {len(comments)} comments")
 
@@ -6956,6 +6959,7 @@ def process_pr(
 
             # Fetch PR files once and cache both formats
             files_with_sha, chg_files = get_pr_files_info(pr)
+            api_rate_limits(gh)
             context._pr_files_with_sha = files_with_sha
             context._changed_files = chg_files
             context.packages = set(file_to_package(repo_config, f) for f in chg_files)
@@ -6997,6 +7001,7 @@ def process_pr(
             try:
                 if getattr(repo_config, "NONBLOCKING_LABELS", False):
                     files_with_sha, chg_files = get_pr_files_info(pr)
+                    api_rate_limits(gh)
                     context._pr_files_with_sha = files_with_sha
                     context._changed_files = chg_files
                     add_nonblocking_labels(chg_files, context.pending_labels)
@@ -7062,6 +7067,7 @@ def process_pr(
 
     # Update status (labels, etc.) for both PRs and Issues
     old_labels, new_labels = update_pr_status(context)
+    api_rate_limits(gh)
 
     # Post fully signed messages if state changed
     post_fully_signed_messages(context, old_labels, new_labels)
@@ -7157,9 +7163,11 @@ def process_pr(
 
     # Flush all pending bot comments
     flush_pending_comments(context)
+    api_rate_limits(gh)
 
     # Flush all pending commit status updates
     flush_pending_statuses(context)
+    api_rate_limits(gh)
 
     # Save cache
     save_cache_to_comments(issue, context.comments.values(), cache, dryRun)

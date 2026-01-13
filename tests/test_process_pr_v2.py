@@ -1403,6 +1403,14 @@ class MockGithub:
         """Get a repository by name."""
         return MockRepository(self.test_name, full_name, self._recorder)
 
+    def get_rate_limit(self):
+        """Dummy function"""
+        return
+
+    # No rate limiting in mock
+    rate_limiting = (500, 500)
+    rate_limiting_resettime = int(FROZEN_TIME.timestamp())
+
 
 # =============================================================================
 # TEST FIXTURES

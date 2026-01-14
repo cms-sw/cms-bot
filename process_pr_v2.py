@@ -3070,7 +3070,7 @@ def handle_allow_test_rights(context: PRContext, match: re.Match, comment: Any) 
 
 @command(
     "code_checks",
-    r"^code-checks( with (?P<tool_conf>\S+))?( and apply patch)?$",
+    r"^code-checks(?: with (?P<with>cms.week[0-9].PR_[0-9a-f]{8}/\S+))?(?P<apply> and apply patch)?$",
     description="Request code checks",
     pr_only=True,
 )
@@ -3091,12 +3091,12 @@ def handle_code_checks(context: PRContext, match: re.Match, comment: Any) -> boo
     - Apply parameters but don't trigger checks if comment was created before last commit
     """
     user = comment.user.login
-    tool_conf = match.group("tool_conf") if match.lastindex else None
-    apply_patch = "apply patch" in (match.group(0) or "").lower()
+    with_tool_conf = match.group("with")
+    apply_patch = bool(match.group("apply"))
 
     # Always store parameters - they affect ALL triggers (including auto-trigger)
     # Last command wins (comments processed chronologically)
-    context.code_checks_tool_conf = tool_conf
+    context.code_checks_tool_conf = with_tool_conf
     context.code_checks_apply_patch = apply_patch
 
     # Check if code-checks are currently pending (running)
@@ -3146,7 +3146,7 @@ def handle_code_checks(context: PRContext, match: re.Match, comment: Any) -> boo
 
     logger.info(
         f"Code checks requested by {user}"
-        + (f" with {tool_conf}" if tool_conf else "")
+        + (f" with {with_tool_conf}" if with_tool_conf else "")
         + (" (apply patch)" if apply_patch else "")
     )
     return True

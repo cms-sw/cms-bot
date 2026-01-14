@@ -28,6 +28,7 @@ from time import sleep
 from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
 import yaml
+from github.IssueComment import IssueComment
 
 import forward_ports_map
 from categories import (
@@ -4384,7 +4385,7 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
 
 def set_comment_reaction(
     context: PRContext,
-    comment,
+    comment: IssueComment,
     comment_id: int,
     success: bool,
 ) -> None:
@@ -4433,7 +4434,8 @@ def set_comment_reaction(
                             desired_reaction,
                         ):
                             if reaction.content != desired_reaction:
-                                reaction.delete()
+                                # reaction.delete()
+                                comment.delete_reaction(reaction.id)
                                 logger.debug(
                                     f"Removed {reaction.content} reaction from comment {comment_id}"
                                 )

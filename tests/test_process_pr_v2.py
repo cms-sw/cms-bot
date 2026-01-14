@@ -613,9 +613,8 @@ class MockReaction:
     _recorder: ActionRecorder = field(default=None, repr=False)
 
     def delete(self) -> None:
-        """Delete this reaction."""
-        if self._recorder:
-            self._recorder.record("delete_reaction", reaction_id=self.id, content=self.content)
+        """DEPRECATED: Delete this reaction."""
+        raise RuntimeError("Reaction.delete is depreacted!")
 
 
 @dataclass
@@ -922,6 +921,10 @@ class MockIssueComment:
         )
         self._reactions.append(reaction)
         return reaction
+
+    def delete_reaction(self, reaction_id: int):
+        if self._recorder:
+            self._recorder.record("delete_reaction", reaction_id=reaction_id)
 
     @classmethod
     def from_json(

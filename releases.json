@@ -35925,6 +35925,17 @@
                 }
               ]
             }
+          ],
+          "CMSSW_16_1": [
+            {
+              "label": "CMSSW_16_1_0_pre1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
+            }
           ]
         },
         "Geant4102": {

@@ -298,19 +298,25 @@ def read_material_budget_log_file(unit_tests_file):
 # reads maxmem comparison error files
 #
 def read_maxmem_comparison_file(unit_tests_file):
-    errors_found = ""
+    errors_found = set()
     err_cnt = 0
     for line in openlog(unit_tests_file):
         if "exceeds" in line.lower():
             err_cnt += 1
-            errors_found += " - " + line.split(":")[1:] + "\n"
-
+            message_line = ("-",)
+            message_line += tuple(line.split(":", 1)[-1].strip().split(" "))
+            message_line += ("\n",)
+            errors_found.add(message_line)
     if err_cnt > 0:
         message = (
             "\n## Max Memory Comparisons exceeding threshold\n\n"
-            "@cms-sw/core-l2 , I found %s workflow step(s) with memory usage exceeding the error threshold:\n\n%s"
-            % (err_cnt, errors_found)
+            "@cms-sw/core-l2 , I found %s workflow step(s) with memory usage exceeding the error threshold:\n"
+            % err_cnt
         )
+        message += ("<details>\n<summary>Expand to see workflows ...</summary>\n\n")
+        for message_line in sorted(errors_found, key=lambda s:  float(s[2].split("_")[0])):
+            message += " ".join(message_line)
+        message += "</details>\n\n"
         send_message_pr(message)
 
 

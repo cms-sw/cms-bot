@@ -1,0 +1,86 @@
+{
+  "commits": [
+    {
+      "sha": "06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+      "node_id": "C_kwDOF83__NoAKDA2MzM2Yzg4ODRiY2ZiYzUxNmNjNjlmZDk5YjBhMTYxYmIzYTE0ZDU",
+      "commit": {
+        "author": {
+          "name": "Ivan Razumov",
+          "email": "iarspider@gmail.com",
+          "date": "2025-05-12T13:24:00Z"
+        },
+        "committer": {
+          "name": "Ivan Razumov",
+          "email": "iarspider@gmail.com",
+          "date": "2025-05-12T13:24:00Z"
+        },
+        "message": "Test build-only mode",
+        "tree": {
+          "sha": "3979aa5da6ddff57ac4d56461294a8b240495dd9",
+          "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/3979aa5da6ddff57ac4d56461294a8b240495dd9"
+        },
+        "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+        "comment_count": 0,
+        "verification": {
+          "verified": false,
+          "reason": "unsigned",
+          "signature": null,
+          "payload": null,
+          "verified_at": null
+        }
+      },
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+      "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/06336c8884bcfbc516cc69fd99b0a161bb3a14d5/comments",
+      "author": {
+        "login": "iarspider",
+        "id": 636602,
+        "node_id": "MDQ6VXNlcjYzNjYwMg==",
+        "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/iarspider",
+        "html_url": "https://github.com/iarspider",
+        "followers_url": "https://api.github.com/users/iarspider/followers",
+        "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+        "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+        "organizations_url": "https://api.github.com/users/iarspider/orgs",
+        "repos_url": "https://api.github.com/users/iarspider/repos",
+        "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/iarspider/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "committer": {
+        "login": "iarspider",
+        "id": 636602,
+        "node_id": "MDQ6VXNlcjYzNjYwMg==",
+        "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/iarspider",
+        "html_url": "https://github.com/iarspider",
+        "followers_url": "https://api.github.com/users/iarspider/followers",
+        "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+        "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+        "organizations_url": "https://api.github.com/users/iarspider/orgs",
+        "repos_url": "https://api.github.com/users/iarspider/repos",
+        "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/iarspider/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "parents": [
+        {
+          "sha": "12e5a7e8dfef4fd31862ff6a3cfe36bdb440f552",
+          "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/12e5a7e8dfef4fd31862ff6a3cfe36bdb440f552",
+          "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/12e5a7e8dfef4fd31862ff6a3cfe36bdb440f552"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "test_name": "test_draft_pr_assign",
+  "action_count": 3,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 21,
+        "labels": [
+          "l1-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 21,
+        "body": "New categories assigned: l1\n\n@aloeliger, @epalencia you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2523442237-->"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2523322081,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

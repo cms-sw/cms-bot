@@ -3,7 +3,8 @@ name: Test changes to process_pr.py
 on:
   push:
     paths:
-    - process_pr.py
+    - process_pr_v2.py
+    - tests/test_process_pr_v2.py
     - .github/workflows/test-process-pr.yaml
 
 jobs:
@@ -11,24 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: MathRobin/timezone-action@v1.1
         with:
           timezoneLinux: 'Europe/Paris'
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: PyGithub/PyGithub
-          ref: v1.56
-          path: tmp
-          sparse-checkout: tests/Framework.py
-          sparse-checkout-cone-mode: false
-      - run: mv tmp/tests/Framework.py tests/
-      - run: |
-          cd tests
-          patch -p0 < Framework.patch
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
@@ -39,7 +29,4 @@ jobs:
           pip install -r tests/test-requirements.txt
       - name: Test with pytest
         run: |
-          pytest -v -s tests/test_process_pr.py --auth_with_token
-      - name: Test regexes
-        run: |
-          pytest -v tests/test_regexes.py
+          pytest -v -s tests/test_process_pr_v2.py

@@ -1,0 +1,98 @@
+{
+  "sha": "cf8a20fe025a120a38033327b45213f75a30ebaf",
+  "node_id": "C_kwDOF83__NoAKGNmOGEyMGZlMDI1YTEyMGEzODAzMzMyN2I0NTIxM2Y3NWEzMGViYWY",
+  "commit": {
+    "author": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:11Z"
+    },
+    "committer": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:11Z"
+    },
+    "message": "Dummy commit",
+    "tree": {
+      "sha": "486c6fb99b1cc8dc4c6f5767d126eb13aad872ed",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/486c6fb99b1cc8dc4c6f5767d126eb13aad872ed"
+    },
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/cf8a20fe025a120a38033327b45213f75a30ebaf",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null
+    }
+  },
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/cf8a20fe025a120a38033327b45213f75a30ebaf",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/cf8a20fe025a120a38033327b45213f75a30ebaf",
+  "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/cf8a20fe025a120a38033327b45213f75a30ebaf/comments",
+  "author": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "02440e727939b320077b2552cd1e2819122762e6",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/02440e727939b320077b2552cd1e2819122762e6",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/02440e727939b320077b2552cd1e2819122762e6"
+    }
+  ],
+  "stats": {
+    "total": 1,
+    "additions": 1,
+    "deletions": 0
+  },
+  "files": [
+    {
+      "sha": "8a212b2ed5c0c0c3b8892798e7b36cc1b7073a53",
+      "filename": "Alignment/CommonAlignmentProducer/python/AlignmentProducerAsAnalyzer_cff.py",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/cf8a20fe025a120a38033327b45213f75a30ebaf/Alignment%2FCommonAlignmentProducer%2Fpython%2FAlignmentProducerAsAnalyzer_cff.py",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/cf8a20fe025a120a38033327b45213f75a30ebaf/Alignment%2FCommonAlignmentProducer%2Fpython%2FAlignmentProducerAsAnalyzer_cff.py",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Alignment%2FCommonAlignmentProducer%2Fpython%2FAlignmentProducerAsAnalyzer_cff.py?ref=cf8a20fe025a120a38033327b45213f75a30ebaf",
+      "patch": "@@ -88,3 +88,4 @@\n import   Geometry.GEMGeometryBuilder.gemGeometryDB_cfi\n GEMGeometryAlignmentProducerAsAnalyzer = Geometry.GEMGeometryBuilder.gemGeometryDB_cfi.GEMGeometryESModule.clone()\n GEMGeometryAlignmentProducerAsAnalyzer.appendToDataLabel = 'idealForAlignmentProducerBase'\n+# dummy dummy"
+    }
+  ]
+}

@@ -1014,9 +1014,12 @@ def enable_github_loggin():
             # Walk the call stack to find the first frame outside of PyGithub
             for frame_info in inspect.stack():
                 filename = frame_info.filename
-                if "site-packages/github/" not in filename.replace(
-                    "\\", "/"
-                ) and "PyGithub/github/" not in filename.replace("\\", "/"):
+                if (
+                    "site-packages/github/" not in filename.replace("\\", "/")
+                    and "PyGithub/github/" not in filename.replace("\\", "/")
+                    and "github_utils" not in filename
+                    and "__init__" not in filename
+                ):
                     record.filename = os.path.basename(filename)
                     record.lineno = frame_info.lineno
                     break

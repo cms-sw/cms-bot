@@ -1,0 +1,35 @@
+{
+  "sha": "eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48",
+  "node_id": "C_kwDOF83__NoAKGViNDEzY2U4ZTBiMzM5ODVkMzQyNWQ5Mzg0YmI4ZDVkNGFiMGNlNDg",
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48",
+  "author": {
+    "name": "iarspider",
+    "email": "iarspider@gmail.com",
+    "date": "2025-04-29T11:53:09Z"
+  },
+  "committer": {
+    "name": "GitHub",
+    "email": "noreply@github.com",
+    "date": "2025-04-29T11:53:09Z"
+  },
+  "tree": {
+    "sha": "4a322db47945a7175275a57b1099b237d630a23f",
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/4a322db47945a7175275a57b1099b237d630a23f"
+  },
+  "message": "Revert \"Test merge command\"",
+  "parents": [
+    {
+      "sha": "05991ff49c6779cd862cf5bb81763ba394b60684",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/05991ff49c6779cd862cf5bb81763ba394b60684",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/05991ff49c6779cd862cf5bb81763ba394b60684"
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "reason": "valid",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJoEL2lCRC1aQ7uu5UhlAAAf5QQAJwm0JLhjogRoe1eIwk4dskh\nN+TSWp9KZf8fW6NaWyQDCE6xFGxCITKIT+pr7g1y09pYuyQGfJ3DQyspYQQkOrsG\nXz50IIypZAnPsLc+Xc3qeBvRvOqNg4Xz+PhGGxXWAh1+q3zgnMS6rO8B2Om1/nqW\nSJ7h8w0cArgUzmlS5OCGVLefcD/5/3NdAOwPTb/LAp6VTbewGMtHZQuIS4kQ4iEa\nvOiiCgsH84OEHNDSXpbYZwWFPWNbl9CeyZOrc/p3M2R4SDrJiixBFYD7VbrgXuGp\ni6Kr/IxSetgqhfCOiU/zvq1UapDL2w4mE7hoIcc3gtVDp8LQrcrkOHDiTsyhZPN2\nnRZUbQEZ9j9QJznFVTwmAifERAXF+fanUBHeUzprHrNC/QjFD/OzZbC6N4IuOOEG\nbv2PgPe7HQO1+3OQDTa5zZnpse7BmkUgUOyxue54d1M0uy9wF50R/8lXNJsmXOKB\ny36wZIi5urrAMqwXz7KiWlfR/1eRmzYR8zPyFLYwx1G4zyoGGt1fT5KKtEng6Llz\nntelG/SLNOdC/VoSOnxp9ZmuzWvS/YFvtdCGCO2X43MKhAWJ0wd/YOVsHcrRotAw\nGS+vi2xQC0RPqsua4KGl9nS0TJw7s+pB2kfH/HytnMK1PXBsLJBs9ysbT1BTHE3l\n5o2J66iRKhb4g1ZnG96W\n=dkEF\n-----END PGP SIGNATURE-----\n",
+    "payload": "tree 4a322db47945a7175275a57b1099b237d630a23f\nparent 05991ff49c6779cd862cf5bb81763ba394b60684\nauthor iarspider <iarspider@gmail.com> 1745927589 +0200\ncommitter GitHub <noreply@github.com> 1745927589 +0200\n\nRevert \"Test merge command\"\n",
+    "verified_at": "2025-04-29T11:53:12Z"
+  }
+}

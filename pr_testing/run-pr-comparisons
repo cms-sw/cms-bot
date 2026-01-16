@@ -310,13 +310,13 @@ done
 mkdir -p $WORKSPACE/testsResults
 $CMS_BOT_DIR/comparisons/compare-maxmem-summary.py -i $MAXMEM_COMPARISON_OUTPUT_DIR -f '*.json' -F html -o $MAXMEM_COMPARISON_OUTPUT_DIR/maxmem_summary.html -u $JENKINS_ARTIFACTS_URL/$PR_BASELINE_DIR >$MAXMEM_COMPARISON_OUTPUT_DIR/maxmem_summary.log 2>&1 || true
 if grep "Error:" $MAXMEM_COMPARISON_OUTPUT_DIR/*.err >$MAXMEM_COMPARISON_OUTPUT_DIR/maxmem_summary.log 2>/dev/null; then
-  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,${UC_TEST_FLAVOR} max memory used comparison failed,See failed results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison/maxmem_summary.html" >> ${RESULTS_FILE}
+  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used comparison failed ${UC_TEST_FLAVOR} ,See failed results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison/maxmem_summary.html" >> ${RESULTS_FILE}
   REPORT_FILE=$WORKSPACE/testsResults/$(get_result_file_name "maxmem" "${TEST_FLAVOR}" "")
   touch $REPORT_FILE
   ${CMS_BOT_DIR}/report-pull-request-results PARSE_MAXMEM_FAIL --no-post --unit-tests-file $MAXMEM_COMPARISON_OUTPUT_DIR/maxmem_summary.log --report-file ${REPORT_FILE} --report-url ${PR_RESULT_URL} || true
   ${CMS_BOT_DIR}/report-pull-request-results PARSE_MAXMEM_FAIL --unit-tests-file $MAXMEM_COMPARISON_OUTPUT_DIR/maxmem_summary.log --report-file ${REPORT_FILE} --report-url ${PR_RESULT_URL} || true
 else
-  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison/maxmem_summary.html" >> ${RESULTS_FILE}
+  echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used comparison ${UC_TEST_FLAVOR},See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison/maxmem_summary.html" >> ${RESULTS_FILE}
 fi
 
 # --------------------------------------------------------------------------

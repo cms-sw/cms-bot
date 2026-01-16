@@ -315,6 +315,7 @@ if grep "Error:" $MAXMEM_COMPARISON_OUTPUT_DIR/*.err >$MAXMEM_COMPARISON_OUTPUT_
   touch $REPORT_FILE
   ${CMS_BOT_DIR}/report-pull-request-results PARSE_MAXMEM_FAIL --no-post --unit-tests-file $MAXMEM_COMPARISON_OUTPUT_DIR/maxmem_summary.log --report-file ${REPORT_FILE} --report-url ${PR_RESULT_URL} || true
   ${CMS_BOT_DIR}/report-pull-request-results PARSE_MAXMEM_FAIL --unit-tests-file $MAXMEM_COMPARISON_OUTPUT_DIR/maxmem_summary.log --report-file ${REPORT_FILE} --report-url ${PR_RESULT_URL} || true
+  sed -i "s|Max Memory Comparisons exceeding threshold|Max Memory Comparisons exceeding threshold ${UC_TEST_FLAVOR}|g" ${REPORT_FILE}
 else
   echo "MAXMEM_COMPARISON${TEST_FLAVOR_STR};OK,max memory used comparison ${UC_TEST_FLAVOR},See results,/SDT/jenkins-artifacts/$COMP_UPLOAD_DIR/maxmem-comparison/maxmem_summary.html" >> ${RESULTS_FILE}
 fi

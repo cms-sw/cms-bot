@@ -313,8 +313,8 @@ def read_maxmem_comparison_file(unit_tests_file):
             "@cms-sw/core-l2 , I found %s workflow step(s) with memory usage exceeding the error threshold:\n"
             % err_cnt
         )
-        message += ("<details>\n<summary>Expand to see workflows ...</summary>\n\n")
-        for message_line in sorted(errors_found, key=lambda s:  float(s[2].split("_")[0])):
+        message += "<details>\n<summary>Expand to see workflows ...</summary>\n\n"
+        for message_line in sorted(errors_found, key=lambda s: float(s[2].split("_")[0])):
             message += " ".join(message_line)
         message += "</details>\n\n"
         send_message_pr(message)

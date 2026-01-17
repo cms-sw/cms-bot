@@ -304,11 +304,9 @@ pushd compareProducts
       for stype in "" "_inMINIAOD" ; do
         fA=$(find $WORKSPACE/data/PR-$PR_NUM/${wf}_* -name ${step}${stype}.root -o -name ${step}${stype}.rntpl -type f | grep "/${step}.")
         fB=$(find $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_* -name ${step}${stype}.root -o -name ${step}${stype}.rntpl -type f | grep "/${step}.")
-        if [ "${stype}" == "" ] ; then
-          ./compareProducts.sh "$fA" "$fB" _ 100 10 > $WORKSPACE/upload/products_AOD.log || true
-        elif [ "${stype}" == "" ] ; then
-          ./compareProducts.sh "$fA" "$fB" _ 100 10 > $WORKSPACE/upload/products_MINIAOD.log || true
-        fi
+        aod_log="${stype}"
+        [ "${stype}" == "" ] && aod_log="_AOD"
+        ./compareProducts.sh "$fA" "$fB" _ 100 10 > ${WORKSPACE}/upload/products${aod_log}.log || true
       done
     done
   done

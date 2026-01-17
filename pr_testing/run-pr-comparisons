@@ -81,7 +81,14 @@ rm -f $WORKSPACE/ALL_DONE
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$CMSSW_VERSION; fi
 if [ "$REAL_ARCH" = "" ] ; then REAL_ARCH="${RELVAL_REAL_ARCH}"; fi
 PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
-BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix${TEST_FLAVOR}-results
+if [ "${BASELINE_TEST_FLAVOR}" == "" ] ; then
+  BASELINE_TEST_FLAVOR="${TEST_FLAVOR}"
+  case "${TEST_FLAVOR}" in
+    rntuple ) BASELINE_TEST_FLAVOR="";;
+    * ) ;;
+  esac
+fi
+BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix${BASELINE_TEST_FLAVOR}-results
 PR_BASELINE_JOBDIR=pull-request-integration/${UPLOAD_UNIQ_ID}
 PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix${UC_TEST_FLAVOR}-results
 JENKINS_ARTIFACTS_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts"
@@ -155,11 +162,19 @@ echo "Done Downloading `date`"
 ${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 
 set +x
-for r in $(find $WORKSPACE/data/PR-${PR_NUM} -name 'step*.root' -type f | grep -v 'inDQM.root') ; do
+for r in $(find $WORKSPACE/data/PR-${PR_NUM} -name 'step*.root' -o -name 'step*.rntpl' -type f | grep -v 'inDQM.root') ; do
   while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
   echo "Running edmEventSize and edmProvDump: $r"
-  (edmEventSize -v $r > $r.edmEventSize || true) &
-  (edmProvDump     $r > $r.edmProvDump  || true) &
+  case $r in
+    *.rntpl )
+      (edmRNTupleTempStorage --average $r > $r.edmEventSize || true) &
+      (edmRNTupleTempProvDump          $r > $r.edmProvDump  || true) &
+      ;;
+    *.root )
+      (edmEventSize -v $r > $r.edmEventSize || true) &
+      (edmProvDump     $r > $r.edmProvDump  || true) &
+      ;;
+  esac
 done
 set -x
 jobs
@@ -281,12 +296,22 @@ fi
 
 echo "DQM_PID: ${DQM_PID}"
 #Run product size comparison script for Phase2 workflow
-mkdir compareProducts && pushd compareProducts
+mkdir compareProducts
+pushd compareProducts
   cp $CMS_BOT_DIR/comparisons/compareProducts.* ./
-  ./compareProducts.sh $WORKSPACE/data/PR-$PR_NUM/136.874_*/step3.root $WORKSPACE/data/$COMPARISON_RELEASE/136.874_*/step3.root _ 100 10 > products_AOD.log || true
-  ./compareProducts.sh $WORKSPACE/data/PR-$PR_NUM/136.874_*/step3_inMINIAOD.root $WORKSPACE/data/$COMPARISON_RELEASE/136.874_*/step3_inMINIAOD.root _ 100 10 > products_MINIAOD.log || true
-  mv products_AOD.log $WORKSPACE/upload/products_AOD.log
-  mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
+  for wf in 136.874 ; do
+    for step in step3 ; do
+      for stype in "" "_inMINIAOD" ; do
+        fA=$(find $WORKSPACE/data/PR-$PR_NUM/${wf}_* -name ${step}${stype}.root -o -name ${step}${stype}.rntpl -type f | grep "/${step}.")
+        fB=$(find $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_* -name ${step}${stype}.root -o -name ${step}${stype}.rntpl -type f | grep "/${step}.")
+        if [ "${stype}" == "" ] ; then
+          ./compareProducts.sh "$fA" "$fB" _ 100 10 > $WORKSPACE/upload/products_AOD.log || true
+        elif [ "${stype}" == "" ] ; then
+          ./compareProducts.sh "$fA" "$fB" _ 100 10 > $WORKSPACE/upload/products_MINIAOD.log || true
+        fi
+      done
+    done
+  done
 popd
 
 set +x

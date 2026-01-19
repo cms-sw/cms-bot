@@ -6,11 +6,10 @@ TARGET="${1-cmsbuild@lxplus.cern.ch}"
 LABELS=$(grep '<label>' ${HOME}/nodes/${NODE_NAME}/config.xml | tr '<>' ' ')
 GRID_ID=$(echo "${LABELS}"     | grep -o "gridid-\w*\.0"                  | awk 'BEGIN {FS="-";} { print $2 }')
 SCHEDD_NAME=$(echo "${LABELS}" | grep -o "schedulername-\w*\.*\w*\.*\w*"  | awk 'BEGIN {FS="-";} { print $2 }')
+JRE_VERSION="$(echo ${LABELS} | tr ' ' '\n' | grep '^java-[0-9]0-9]$' | sed 's|^java-||')"
 JAVA="java"
-if [ "$(echo ${LABELS} | grep -o 'java-17')" = "java-17" ] ; then
-  JAVA="/etc/alternatives/jre_17/bin/java"
-elif [ "$(echo ${LABELS} | grep -o 'java-11')" = "java-11" ] ; then
-  JAVA="/etc/alternatives/jre_11/bin/java"
+if [ $(echo ${LABELS} | tr ' ' '\n' | grep '^java-default$' | wc -l) -eq 0 ] ; then
+  [ "${JRE_VERSION}" != "" ] && JAVA="/etc/alternatives/jre_${JRE_VERSION}/bin/java"
 fi
 
 export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')

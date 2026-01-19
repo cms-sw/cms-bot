@@ -103,7 +103,7 @@ echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
 if [ "${JAVA_CMD}" = "java" ] ; then
-  for java_ver in 21 17 ; do
+  for java_ver in 25 21 17 ; do
     JCMD="/etc/alternatives/jre_${java_ver}/bin/java"
     if [ ! -e "${JCMD}" ] ; then
       JCMD=$(ls -d /usr/lib/jvm/jdk-${java_ver}.*/bin/java 2>/dev/null || true)

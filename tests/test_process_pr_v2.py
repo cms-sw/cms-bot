@@ -6171,6 +6171,70 @@ class TestTestParametersCommand:
         assert "MATRIX_EXTRAS" in result
         assert "PULL_REQUESTS" in result
 
+    def test_parse_test_parameters_empty(self):
+        """Test parsting empty parameters."""
+        lines = [
+            "test parameters:",
+        ]
+
+        # Create a mock repo
+        mock_repo = MagicMock()
+        mock_repo.full_name = "cms-sw/cmssw"
+
+        result = parse_test_parameters(lines, mock_repo)
+
+        assert {} == result
+
+    def test_empty_test_parameters_resets(
+        self, test_name, mock_gh, mock_repo, mock_issue, repo_config, action_recorder, record_mode
+    ):
+        """Test that empty "test parameters" command resets all test params"""
+        # Setup: Create test data for a new PR with no comments
+        create_basic_pr_data(
+            test_name,
+            pr_number=1,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test parameters:\r\n- workflow = 1.0",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "test parameters:",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(hours=1)).isoformat(),
+                },
+            ],
+        )
+
+        # Recreate mocks with proper test name
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        # Execute
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Verify result structure
+        assert result["test_params"] == {}
+
+        # Handle recording/comparison
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
     def test_parse_test_parameters_with_list_markers(self):
         """Test that list markers (- and *) are properly stripped."""
         lines = [

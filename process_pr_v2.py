@@ -3626,8 +3626,11 @@ def handle_test_parameters(context: PRContext, match: re.Match, comment: Any) ->
     # Clear any previous errors
     context.test_params_errors = None
 
-    # Store parameters in context for later use
-    context.test_params.update(params)
+    # Store parameters in context for later use; reset parameters if no parameters were passed
+    if params:
+        context.test_params.update(params)
+    else:
+        context.test_params = {}
 
     logger.info(f"Test parameters set by {user}: {params}")
     return True

@@ -41,6 +41,7 @@ TYPE_COMMANDS = {
         "performance|improvements|performance-improvements",
         "mtype",
     ],
+    "evolution": [LABEL_COLORS["info"], "evo(?:lution)?", "mtype"],
     "ngt": [LABEL_COLORS["performance"], "ngt", "mtype"],
 }
 

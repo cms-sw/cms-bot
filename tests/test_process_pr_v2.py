@@ -2006,6 +2006,50 @@ class TestAssignCommand:
         else:
             recorder.verify()
 
+    def test_assign_category_ignorecase(self, repo_config, record_mode):
+        """Test that assign command's verb is case-insensitive"""
+        create_basic_pr_data(
+            "test_assign_category_ignorecase",
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "Assign visualization",
+                    "user": {"login": "alice", "id": 2},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                }
+            ],
+        )
+
+        recorder = ActionRecorder("test_assign_category_ignorecase", record_mode)
+        gh = MockGithub("test_assign_category_ignorecase", recorder)
+        repo = MockRepository("test_assign_category_ignorecase", recorder=recorder)
+        issue = MockIssue("test_assign_category_ignorecase", number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert "visualization" in result["categories"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
     def test_assign_from_package(self, repo_config, record_mode):
         """Test assigning category from package mapping."""
         create_basic_pr_data(

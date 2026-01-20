@@ -2592,7 +2592,7 @@ def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) ->
     comment_id = comment.id
     timestamp = get_comment_timestamp(comment)
 
-    action = match.group("action")  # "assign" or "unassign"
+    action = match.group("action").lower()  # "assign" or "unassign"
     target_str = match.group("target")
 
     # Split targets by comma

@@ -29,10 +29,8 @@ def diff_from(metrics, data, data_total, dest, dest_total, res):
 
 
 if len(sys.argv) == 1:
-    print(
-        """Usage: resources-diff.py IB_FILE PR_FILE
-Diff the content of two "resources.json" files and print the result to standard output."""
-    )
+    print("""Usage: resources-diff.py IB_FILE PR_FILE
+Diff the content of two "resources.json" files and print the result to standard output.""")
     sys.exit(1)
 
 with open(sys.argv[1]) as f:

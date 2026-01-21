@@ -11,5 +11,5 @@ if __name__ == "__main__":
         l = l.strip(";")
         for p in l.split(";"):
             assert "=" in p
-            (key, value) = p.split("=")
+            key, value = p.split("=")
             assert re.match(KEYS_RE, key)

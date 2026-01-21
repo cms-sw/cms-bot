@@ -99,24 +99,18 @@ def grep(filename, pattern, verbose=False):
                     return True
 
 
-query_running_builds = (
-    """{
+query_running_builds = """{
 "query": {"bool": {"must": {"query_string": {"query": "job_status:Running AND jenkins_server:%s", "default_operator": "AND"}}}},
 "from": 0,
 "size": 10000
-}"""
-    % JENKINS_PREFIX
-)
+}""" % JENKINS_PREFIX
 
 # Query job with in_queue=1
-query_inqueue1 = (
-    """{
+query_inqueue1 = """{
 "query": {"bool": {"must": {"query_string": {"query": "in_queue: 1 AND start_time: 0 AND jenkins_server: %s", "default_operator": "AND"}}}},
 "from": 0,
 "size": 10000
-}"""
-    % JENKINS_PREFIX
-)
+}""" % JENKINS_PREFIX
 
 # Query jobs with in_queue=0
 query_inqueue0 = """{

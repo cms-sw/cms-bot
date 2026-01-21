@@ -3,6 +3,7 @@
 Script to compare the content of edm::TriggerResults collections in EDM files across multiple workflows
  - CMSSW dependencies: edmDumpEventContent, hltDiff
 """
+
 from __future__ import print_function
 import argparse
 import os

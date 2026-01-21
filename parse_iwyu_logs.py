@@ -9,8 +9,7 @@ excludes = 0
 pkg_name = "/".join(sys.argv[1].split("/")[-3:-1])
 files = 0
 splitline = sys.argv[2] + "/src/"
-print(
-    """<!DOCTYPE html>
+print("""<!DOCTYPE html>
 <html>
 <head>
 <style>
@@ -23,8 +22,7 @@ th, td {
     text-align: left;
 }
 </style>
-</head>"""
-)
+</head>""")
 print("<a href=" + '"' + sys.argv[1].split("/")[-1] + '"' + ">" + "Access BuildLog" + "</a><br/>")
 print('<table  align="center">')
 lines_seen = set()

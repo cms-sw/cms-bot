@@ -332,7 +332,7 @@ if __name__ == "__main__":
         # steps to it.
         for workflow, info in workflows.items():
             for step in info["steps"]:
-                (h, errorTitle, errorMessage) = understandError(name, t, p, info)
+                h, errorTitle, errorMessage = understandError(name, t, p, info)
                 if not h in validErrorReport:
                     validErrorReport[h] = {
                         "queue": t,

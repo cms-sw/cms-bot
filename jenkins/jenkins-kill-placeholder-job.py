@@ -3,6 +3,7 @@
 This job will check if there are queued jobs for jenkins slaves with 'condor' label and how many.
 Then it will kill needed amount of placeholder jobs.
 """
+
 from pprint import pprint
 import re, sys
 from os.path import dirname, abspath, join, exists

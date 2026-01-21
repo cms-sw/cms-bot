@@ -2,6 +2,7 @@
 """
 Returns top commit of a PR (mostly used to comments)
 """
+
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from socket import setdefaulttimeout

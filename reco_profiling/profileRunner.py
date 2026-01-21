@@ -256,9 +256,7 @@ do
    echo "attempt $n"
    {} && break
    n=$((n+1))
-done""".format(
-        cmd
-    )
+done""".format(cmd)
     return s
 
 
@@ -266,9 +264,7 @@ def echoBefore(cmd, msg):
     s = """
 echo "{}"
 {}
-""".format(
-        msg, cmd
-    )
+""".format(msg, cmd)
     return s
 
 

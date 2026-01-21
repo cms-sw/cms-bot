@@ -2,6 +2,7 @@
 """
 Script to summarise the outputs of compare-maxmem.py
 """
+
 from __future__ import print_function
 import argparse
 import os

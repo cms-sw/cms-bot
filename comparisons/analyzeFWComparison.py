@@ -46,7 +46,7 @@ if __name__ == "__main__":
         help="Generate the thresholds for the relmon comparisons",
         default=False,
     )
-    (options, args) = parser.parse_args()
+    options, args = parser.parse_args()
 
     # -----------------------------------------------------------------------------------
     # ---- Review of arguments

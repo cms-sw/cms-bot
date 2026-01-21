@@ -7,7 +7,7 @@ from optparse import OptionParser
 
 usage = "usage: %prog [options] message"
 parser = OptionParser(usage)
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 if len(args) != 1:
     parser.error("You must supply a message.")
 

@@ -6,7 +6,6 @@ import datetime
 
 import helpers
 
-
 email_addresses = "cms-sdt-logs@cern.ch"
 
 html_file_path = os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-web-info.json"

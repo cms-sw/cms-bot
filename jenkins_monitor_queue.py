@@ -12,23 +12,17 @@ try:
 except:
     JENKINS_PREFIX = "jenkins"
 
-query_pending_builds = (
-    """{
+query_pending_builds = """{
 "query": {"bool": {"must": {"query_string": {"query": "_index:cmssdt-jenkins-queue-* AND in_queue:1 AND jenkins_server:%s", "default_operator": "AND"}}}},
 "from": 0,
 "size": 10000
-}"""
-    % JENKINS_PREFIX
-)
+}""" % JENKINS_PREFIX
 
-query_offline_nodes = (
-    """{
+query_offline_nodes = """{
 "query": {"bool": {"must": {"query_string": {"query": "jenkins_server:%s", "default_operator": "AND"}}}},
 "from": 0,
 "size": 10000
-}"""
-    % JENKINS_PREFIX
-)
+}""" % JENKINS_PREFIX
 
 
 queue_index = "cmssdt-jenkins-offline-nodes"

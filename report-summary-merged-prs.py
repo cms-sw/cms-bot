@@ -2,6 +2,7 @@
 """
 This script generates json file (like CMSSW_10_0_X.json) which is then used to render cmssdt ib page.
 """
+
 from __future__ import print_function
 from optparse import OptionParser
 import subprocess
@@ -47,7 +48,7 @@ parser.add_option(
     default=False,
 )
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 """
 -----------------------------------------------------------------------------------

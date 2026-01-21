@@ -98,7 +98,7 @@ parser.add_option(
     default="",
 )
 
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
 
 def openlog(log, mode="r"):

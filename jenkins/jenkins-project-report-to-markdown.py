@@ -4,6 +4,7 @@ File       : jenkins-project-report-to-markdown.py
 Author     : Zygimantas Matonis
 Description: This script will generate markdown files from Jenkins project reports
 """
+
 import json
 import os
 import re
@@ -106,9 +107,7 @@ def write_markdown_file(view_data_dict, all_project_dict, markdown_output_dir):
 
 ---
 
-""".format(
-                cron_message
-            )
+""".format(cron_message)
             output_f.write(periodic_builds_message)
 
 
@@ -119,9 +118,7 @@ def write_readme(markdown_output_dir):
 This is automatically generated documentation of Jenkins jobs. **All changes in this directory will be overwritten 
 by scheduled job.** In oder to update the documentation, edit project description in Jenkins instead.
 
-""".format(
-        project_report_section_name
-    )
+""".format(project_report_section_name)
     with open(markdown_output_dir + "/README.md", "w") as output_f:
         output_f.write(readme_message)
 

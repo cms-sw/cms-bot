@@ -27,7 +27,6 @@ parents = defaultdict(list)
 import json
 import time
 
-
 try:
     fd = open("/tmp/report_gen.txt")
     txt = fd.read()

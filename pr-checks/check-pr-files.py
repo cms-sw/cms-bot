@@ -36,7 +36,7 @@ def check_commits_files(repo, pr, detail=False):
             print(o)
             return all_ok
         for l in [re.sub("\\s+", " ", x.strip()) for x in o.split("\n") if x.strip()]:
-            (t, f) = l.split(" ")
+            t, f = l.split(" ")
             if not f in data:
                 data[f] = []
                 details[f] = {}

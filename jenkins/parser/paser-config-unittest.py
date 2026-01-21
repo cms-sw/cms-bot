@@ -4,7 +4,6 @@ import re
 from subprocess import getstatusoutput
 import time
 
-
 jobs_config_path = "jenkins/parser/jobs-config.json"
 error_types = []
 

@@ -447,7 +447,7 @@ if run in ["all", "JR"]:
             json.dump([nDiff, nAll, nOK], f)
     else:
         with open("comparison-JR.json") as f:
-            (nDiff, nAll, nOK) = json.load(f)
+            nDiff, nAll, nOK = json.load(f)
     print("SUMMARY Reco comparison results:", nDiff, "differences found in the comparisons")
     if nAll != nOK:
         print("SUMMARY Reco comparison had ", nAll - nOK, "failed jobs")

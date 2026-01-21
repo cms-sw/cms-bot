@@ -180,7 +180,7 @@ if __name__ == "__main__":
     parser.add_option(
         "--procs", dest="procs", default=None, type=int, help="number of processes to run"
     )
-    (options, args) = parser.parse_args()
+    options, args = parser.parse_args()
 
     if not compile_lib():
         sys.exit()

@@ -7,7 +7,7 @@ from optparse import OptionParser
 
 usage = "usage: %prog [options] list_of_files.txt"
 parser = OptionParser(usage)
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 if len(args) != 1:
     parser.error("You must supply a file with a list of files to check")
 

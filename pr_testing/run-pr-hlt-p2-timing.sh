@@ -23,7 +23,32 @@ popd
 # Upload results
 source $WORKSPACE/cms-bot/jenkins-artifacts
 touch ${RESULTS_DIR}/11-hlt-p2-timing-report.res ${RESULTS_DIR}/11-hlt-p2-timing-failed.res
-if [ -f $WORKSPACE/rundir/Phase2Timing_resources.json ] ; then
+
+required_files=(
+    "$WORKSPACE/rundir/Phase2Timing_resources.json"
+)
+
+if [ "$CMSSW_VERSION_NUMBER" -ge 1501 ]; then
+    required_files+=(
+        "$WORKSPACE/rundir/Phase2Timing_resources_NGT.json"
+    )
+fi
+
+if [ "$CMSSW_VERSION_NUMBER" -ge 1600 ]; then
+    required_files+=(
+        "$WORKSPACE/rundir/Phase2Timing_resources_OnCPU.json"
+    )
+fi
+
+missing=0
+for f in "${required_files[@]}"; do
+    if [ ! -f "$f" ]; then
+        echo "ERROR: Missing required file: $f" >> ${WORKSPACE}/hlt-p2-timing.log
+        missing=1
+    fi
+done
+
+if [ $missing -eq 0 ]; then
   CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${CMSSW_VERSION}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
   echo "HLT_P2_TIMING;SUCCESS,HLT Phase 2 timing Test,See Chart,${CHART_URL}" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   echo -e "**HLT P2 Timing**: [chart](${CHART_URL})" > ${RESULTS_DIR}/11-hlt-p2-timing-report.res

@@ -46,7 +46,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   fi
 
   pushd $WORKSPACE/$CMSSW_VERSION/ || true
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*step*.json' ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name '*step*_cpu.resources.json' ) ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true

@@ -51,6 +51,7 @@ done
 if [ $missing -eq 0 ]; then
   CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${CMSSW_VERSION}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
   echo "HLT_P2_TIMING;SUCCESS,HLT Phase 2 timing Test,See Chart,${CHART_URL}" >> ${RESULTS_DIR}/hlt-p2-timing.txt
+  echo "HLT_P2_TIMING_LOG;OK,HLT Phase 2 timing Test Log,See Logs,hlt-p2-timing.log" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   echo -e "**HLT P2 Timing**: [chart](${CHART_URL})" > ${RESULTS_DIR}/11-hlt-p2-timing-report.res
 
   mv $WORKSPACE/rundir/Phase2Timing*.json $WORKSPACE/json_upload

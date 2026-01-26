@@ -2,6 +2,17 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
+
+CMSSW_VERSION_NUMBER=$CMSSW_VERSION
+[ "${CMSSW_VERSION_NUMBER}" != "" ] || CMSSW_VERSION_NUMBER=${RELEASE_FORMAT}
+CMSSW_MAJOR=0
+CMSSW_MINOR=0
+if [ "${CMSSW_VERSION_NUMBER}" != "" ] ; then
+  CMSSW_MAJOR=$(echo ${CMSSW_VERSION_NUMBER} | cut -d_ -f2)
+  CMSSW_MINOR=$(echo ${CMSSW_VERSION_NUMBER} | cut -d_ -f3)
+fi
+export CMSSW_VERSION_NUMBER=$(echo x0${CMSSW_MAJOR}x0${CMSSW_MINOR} | sed -r -e 's|x[0]*([0-9][0-9])|\1|g;s|^0||')
+
 if [ "$WORKSPACE" = "" ] ; then export WORKSPACE=$(/bin/pwd -P) ; fi
 source ${CMS_BOT_DIR}/cmsrep.sh
 source ${PR_TESTING_DIR}/_helper_functions.sh

@@ -1,0 +1,46 @@
+{
+  "test_name": "test_dirty_squash_resets_all_l2_signatures_after",
+  "action_count": 4,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "analysis-pending",
+          "core-pending",
+          "pending-signatures",
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "A new Pull Request was created by  @testuser.\n\n@Dr15Jones, @makortel, @smuzaffar, @tvami can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_status",
+      "details": {
+        "sha": "squashed_dirty_commit",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/1/jenkins"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 999,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"locked\":true,\"signed_files\":[\"Package/Core/main.py::old_sha_111\"],\"ts\":\"2024-01-01T12:00:00+00:00\",\"user\":\"alice\"},\"101\":{\"cats\":[\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"locked\":true,\"signed_files\":[\"Package/Analysis/data.py::old_sha_222\"],\"ts\":\"2024-01-01T12:01:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Analysis/data.py::new_sha_222\":{\"cats\":[\"analysis\"],\"ts\":\"2025-12-12T11:00:00Z\"},\"Package/Analysis/data.py::old_sha_222\":{\"cats\":[\"analysis\"],\"ts\":\"2024-01-01T10:00:00Z\"},\"Package/Core/main.py::new_sha_111\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"},\"Package/Core/main.py::old_sha_111\":{\"cats\":[\"core\"],\"ts\":\"2024-01-01T10:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

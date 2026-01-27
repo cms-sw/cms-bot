@@ -38,6 +38,7 @@ DISABLE_DEBUG="$3"
 CMSSW_VERSION="$4"
 GCC_PATH="$5"
 SKIP_BOOTSTRAP="$6"
+CMSBUILD_OPTS="$7"
 BS_OPTS="--no-bootstrap"
 if [ "${REPO}" = "" ] ; then REPO="test_boot_$ARCH" ; fi
 #test cmsrep connection
@@ -49,7 +50,7 @@ fi
 [ "${GCC_PATH}" != "" ] || GCC_PATH="NO_GCC_PATH"
 
 if [ -e "$HOME/bin/nproc" ] ; then export PATH="${HOME}/bin:${PATH}" ; fi
-cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc)"
+cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc) ${CMSBUILD_OPTS}"
 
 mkdir -p upload
 if ! $SKIP_BOOTSTRAP ; then

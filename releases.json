@@ -16896,6 +16896,15 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_13_2_15_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc11",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_13_3": [

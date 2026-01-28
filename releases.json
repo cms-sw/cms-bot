@@ -29796,6 +29796,10 @@
                 {
                   "architecture": "el9_amd64_gcc11",
                   "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc11",
+                  "prodarch": 0
                 }
               ]
             }

@@ -92,8 +92,8 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
 [ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
-readarray -t REQUIRED_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
-readarray -t ONDEMAND_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors_ondemand.txt
+readarray -t REQUIRED_GPU_TYPES < <(tr -d '\r' < "${CMS_BOT_DIR}/gpu_flavors.txt")
+readarray -t ONDEMAND_GPU_TYPES < <(tr -d '\r' < "${CMS_BOT_DIR}/gpu_flavors_ondemand.txt")
 ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
 
 [ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]')"

@@ -4818,3 +4818,4 @@ architecture=el9_amd64_gcc11;label=CMSSW_13_2_15_patch1;type=Production;state=An
 architecture=slc7_amd64_gcc11;label=CMSSW_13_2_15_patch1;type=Production;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc11;label=CMSSW_13_2_15_patch1;type=Production;state=Announced;prodarch=1;
 architecture=el8_amd64_gcc11;label=CMSSW_13_2_15_HLT_patch1;type=Production;state=Announced;prodarch=1;
+architecture=el9_amd64_gcc12;label=CMSSW_14_1_9_patch1;type=Production;state=Announced;prodarch=0;

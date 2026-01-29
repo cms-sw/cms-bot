@@ -211,7 +211,13 @@ summaryLines += [
     "</tr>",
 ]
 
-for item in sorted(datamapres.items(), key=lambda x: x[1]["added construction diff"]+x[1]["added event diff"]+x[1]["added event setup diff"], reverse=True):
+for item in sorted(
+    datamapres.items(),
+    key=lambda x: x[1]["added construction diff"]
+    + x[1]["added event diff"]
+    + x[1]["added event setup diff"],
+    reverse=True
+):
     key = item[1]["label"] + "|" + item[1]["type"] + "|" + item[1]["record"]
     if not key == "||":
         moduleib = datamapib[key]
@@ -219,9 +225,21 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["added construction di
         moduleres = datamapres[key]
         cellString = '<td align="right" '
         color = ""
-        added_total_pr = modulepr.get("added event setup", 0)+modulepr.get("added event", 0)+modulepr.get("added construction", 0)
-        added_total_ib = moduleib.get("added event setup", 0)+moduleib.get("added event", 0)+moduleib.get("added construction", 0)
-        added_total_diff = moduleres.get("added event setup diff", 0)+moduleres.get("added event diff", 0)+moduleres.get("added construction diff", 0)
+        added_total_pr = (
+            modulepr.get("added event setup", 0)
+            + modulepr.get("added event", 0)
+            + modulepr.get("added construction", 0)
+        )
+        added_total_ib = (
+            moduleib.get("added event setup", 0)
+            + moduleib.get("added event", 0)
+            + moduleib.get("added construction", 0)
+        )
+        added_total_diff = (
+            moduleres.get("added event setup diff", 0)
+            + moduleres.get("added event diff", 0)
+            + moduleres.get("added construction diff", 0)
+        )
         if added_total_diff > threshold:
             color = 'bgcolor="orange"'
         if added_total_diff > error_threshold:
@@ -254,7 +272,8 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["added construction di
                 modulepr["added event setup"],
                 moduleres["added event setup diff"],
             ),
-            cellString + "%0.2f<br> %0.2f<br> %0.2f</td>"
+            cellString
+            + "%0.2f<br> %0.2f<br> %0.2f</td>"
             % (
                 added_total_ib,
                 added_total_pr,
@@ -276,9 +295,15 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["added construction di
             ),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (
-                moduleib["nAlloc event setup"] + moduleib["nAlloc event"] + moduleib["nAlloc construction"],
-                modulepr["nAlloc event setup"] + modulepr["nAlloc event"] + modulepr["nAlloc construction"],
-                moduleres["nAlloc event setup diff"] + moduleres["nAlloc event diff"] + moduleres["nAlloc construction diff"],
+                moduleib["nAlloc event setup"]
+                + moduleib["nAlloc event"]
+                + moduleib["nAlloc construction"],
+                modulepr["nAlloc event setup"]
+                + modulepr["nAlloc event"]
+                + modulepr["nAlloc construction"],
+                moduleres["nAlloc event setup diff"]
+                + moduleres["nAlloc event diff"]
+                + moduleres["nAlloc construction diff"],
             ),
             "<td>%i<br>%i<br>%i</td>"
             % (moduleib["transitions"], modulepr["transitions"], moduleres["transitions"]),

@@ -129,8 +129,8 @@ datamapres = {
     for module in results["modules"]
 }
 
-threshold = 5.0
-error_threshold = 20.0
+threshold = 5000.0
+error_threshold = 20000.0
 
 
 summaryLines = []
@@ -141,13 +141,13 @@ summaryLines += [
     "<style> th, td {padding: 15px;}</style></head>",
     "<body><h3>ModuleAllocMonitor Resources Difference</h3><table>",
     '</table><table><tr><td bgcolor="orange">',
-    "warn threshold %0.2f" % threshold,
+    "warn threshold %0.2f kB" % threshold,
     '</td></tr><tr><td bgcolor="red">',
-    "error threshold %0.2f" % error_threshold,
+    "error threshold %0.2f kB" % error_threshold,
     '</td></tr><tr><td bgcolor="green">',
-    "warn threshold -%0.2f" % threshold,
+    "warn threshold -%0.2f kB" % threshold,
     '</td></tr><tr><td bgcolor="cyan">',
-    "warn threshold -%0.2f" % error_threshold,
+    "warn threshold -%0.2f kB" % error_threshold,
     "</td></tr>",
     "<tr><td>metric:<BR>&lt;baseline&gt;<BR>&lt;pull request&gt;<BR>&lt;PR - baseline&gt; </td>",
     "</tr></table>",
@@ -199,41 +199,42 @@ summaryLines += [
     ),
     "</tr></table>",
     '<table><tr><td align="center">Module label<BR>Module type<BR>Module record</td>',
-    '<td align="center">added construction</td>',
-    '<td align="center">percentage total<br>added construction</td>',
-    '<td align="center">added event</td>',
-    '<td align="center">percentage total<br>added event</td>',
-    '<td align="center">added event setup</td>',
-    '<td align="center">percentage total<br>added event setup</td>',
+    '<td align="center">added construction (kB)</td>',
+    '<td align="center">added event (kB)</td>',
+    '<td align="center">added event setup (kB)</td>',
+    '<td align="center">added total (kB)</td>',
     '<td align="center">nAlloc construction</td>',
     '<td align="center">nAlloc event</td>',
     '<td align="center">nAlloc event setup</td>',
+    '<td align="center">nAlloc total</td>',
     '<td align="center">transitions</td>',
     "</tr>",
 ]
 
-
-for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], reverse=True):
+for item in sorted(datamapres.items(), key=lambda x: x[1]["added construction diff"]+x[1]["added event diff"]+x[1]["added event setup diff"], reverse=True):
     key = item[1]["label"] + "|" + item[1]["type"] + "|" + item[1]["record"]
-    if not key == "|":
+    if not key == "||":
         moduleib = datamapib[key]
         modulepr = datamappr[key]
         moduleres = datamapres[key]
         cellString = '<td align="right" '
         color = ""
-        if moduleres["added event setup frac diff"] > threshold:
+        added_total_pr = modulepr.get("added event setup", 0)+modulepr.get("added event", 0)+modulepr.get("added construction", 0)
+        added_total_ib = moduleib.get("added event setup", 0)+moduleib.get("added event", 0)+moduleib.get("added construction", 0)
+        added_total_diff = moduleres.get("added event setup diff", 0)+moduleres.get("added event diff", 0)+moduleres.get("added construction diff", 0)
+        if added_total_diff > threshold:
             color = 'bgcolor="orange"'
-        if moduleres["added event setup frac diff"] > error_threshold:
+        if added_total_diff > error_threshold:
             color = 'bgcolor="red"'
-        if moduleres["added event setup frac diff"] < -1.0 * threshold:
+        if added_total_diff < -1.0 * threshold:
             color = 'bgcolor="cyan"'
-        if moduleres["added event setup frac diff"] < -1.0 * error_threshold:
+        if added_total_diff < -1.0 * error_threshold:
             color = 'bgcolor="green"'
         cellString += color
         cellString += ">"
         summaryLines += [
             "<tr>",
-            "<td> %s<BR>%s<BR> %s</td>"
+            "<td>%s<BR>%s<BR> %s</td>"
             % (moduleres["label"], moduleres["type"], moduleres["record"]),
             '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
@@ -241,24 +242,11 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], revers
                 modulepr["added construction"],
                 moduleres["added construction diff"],
             ),
-            '<td align="right"> %0.2f%%<br> %0.2f%%<br> %0.2f%%</td>'
-            % (
-                moduleib["added construction frac"],
-                modulepr["added construction frac"],
-                moduleres["added construction frac diff"],
-            ),
             '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
                 moduleib["added event"],
                 modulepr["added event"],
                 moduleres["added event diff"],
-            ),
-            cellString
-            + "%0.2f%%<br> %0.2f%%<br> %0.2f%%</td>"
-            % (
-                moduleib["added event frac"],
-                modulepr["added event frac"],
-                moduleres["added event frac diff"],
             ),
             '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
@@ -266,12 +254,11 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], revers
                 modulepr["added event setup"],
                 moduleres["added event setup diff"],
             ),
-            cellString
-            + "%0.2f%%<br> %0.2f%%<br> %0.2f%%</td>"
+            cellString + "%0.2f<br> %0.2f<br> %0.2f</td>"
             % (
-                moduleib["added event setup frac"],
-                modulepr["added event setup frac"],
-                moduleres["added event setup frac diff"],
+                added_total_ib,
+                added_total_pr,
+                added_total_diff,
             ),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (
@@ -286,6 +273,12 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], revers
                 moduleib["nAlloc event setup"],
                 modulepr["nAlloc event setup"],
                 moduleres["nAlloc event setup diff"],
+            ),
+            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            % (
+                moduleib["nAlloc event setup"] + moduleib["nAlloc event"] + moduleib["nAlloc construction"],
+                modulepr["nAlloc event setup"] + modulepr["nAlloc event"] + modulepr["nAlloc construction"],
+                moduleres["nAlloc event setup diff"] + moduleres["nAlloc event diff"] + moduleres["nAlloc construction diff"],
             ),
             "<td>%i<br>%i<br>%i</td>"
             % (moduleib["transitions"], modulepr["transitions"], moduleres["transitions"]),

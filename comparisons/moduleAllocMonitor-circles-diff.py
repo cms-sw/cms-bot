@@ -273,11 +273,11 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], revers
                 modulepr["added event setup frac"],
                 moduleres["added event setup frac diff"],
             ),
-           '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (
                 moduleib["nAlloc construction"],
                 modulepr["nAlloc construction"],
-                moduleres["nAlloc construction diff"]
+                moduleres["nAlloc construction diff"],
             ),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (moduleib["nAlloc event"], modulepr["nAlloc event"], moduleres["nAlloc event diff"]),
@@ -285,7 +285,7 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], revers
             % (
                 moduleib["nAlloc event setup"],
                 modulepr["nAlloc event setup"],
-                moduleres["nAlloc event setup diff"]
+                moduleres["nAlloc event setup diff"],
             ),
             "<td>%i<br>%i<br>%i</td>"
             % (moduleib["transitions"], modulepr["transitions"], moduleres["transitions"]),

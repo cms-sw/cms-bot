@@ -1528,7 +1528,14 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${uc_tn}$" | wc -l) -gt 0 ] ; then
       prop_file="$WORKSPACE/run-relvals-${tn}.prop"
       cp $WORKSPACE/test-env.txt ${prop_file}
-      echo "DO_COMPARISON=false" >> ${prop_file}
+      if [ "${tn}" == "rntuple" ] ; then
+        echo "DO_COMPARISON=$DO_COMPARISON" >> ${prop_file}
+        echo "COMPARISON_REL=${COMPARISON_REL}" >> ${prop_file}
+        echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> ${prop_file}
+        echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> ${prop_file}
+      else
+        echo "DO_COMPARISON=false" >> ${prop_file}
+      fi
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> ${prop_file}
       WF1=$(echo "${WF_COMMON}" | sed 's|;.*||')
       WF2="$(get_pr_relval_args $DO_COMPARISON _${uc_tn} | sed 's|.*;||')"

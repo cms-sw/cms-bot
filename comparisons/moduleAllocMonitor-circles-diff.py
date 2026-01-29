@@ -145,14 +145,11 @@ summaryLines += [
     "<table>",
     '<tr><td align="center">Type<BR>Label</td>',
     '<td align="center">added construction</td>',
-    '<td align="center">percentage total<br>added construction</td>',
     '<td align="center">added event</td>',
-    '<td align="center">percentage total<br>added event</td>',
     '<td align="center">added event setup</td>',
-    '<td align="center">percentage total<br>added event setup</td>',
+    '<td align="center">nAlloc construction</td>',
     '<td align="center">nAlloc event</td>',
-    '<td align="center">percentage total<br>nAlloc event</td>',
-    '<td align="center">transitions</td>',
+    '<td align="center">nAlloc event setup</td>',
     "</tr>",
     "<td>%s<BR>%s</td>" % (prdata["total"]["type"], prdata["total"]["label"]),
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
@@ -176,6 +173,12 @@ summaryLines += [
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
+        ibdata["total"]["nAlloc construction"],
+        prdata["total"]["nAlloc construction"],
+        results["total"]["nAlloc construction diff"],
+    ),
+    '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+    % (
         ibdata["total"]["nAlloc event"],
         prdata["total"]["nAlloc event"],
         results["total"]["nAlloc event diff"],
@@ -194,8 +197,9 @@ summaryLines += [
     '<td align="center">percentage total<br>added event</td>',
     '<td align="center">added event setup</td>',
     '<td align="center">percentage total<br>added event setup</td>',
+    '<td align="center">nAlloc construction</td>',
     '<td align="center">nAlloc event</td>',
-    '<td align="center">percentage total<br>nAlloc event</td>',
+    '<td align="center">nAlloc event setup</td>',
     '<td align="center">transitions</td>',
     "</tr>",
 ]
@@ -260,6 +264,8 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], revers
                 modulepr["added event setup frac"],
                 moduleres["added event setup frac diff"],
             ),
+           '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            % (moduleib["nAlloc construction"], modulepr["nAlloc construction"], moduleres["nAlloc construction diff"]),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (moduleib["nAlloc event"], modulepr["nAlloc event"], moduleres["nAlloc event diff"]),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'

@@ -216,7 +216,7 @@ for item in sorted(
     key=lambda x: x[1]["added construction diff"]
     + x[1]["added event diff"]
     + x[1]["added event setup diff"],
-    reverse=True
+    reverse=True,
 ):
     key = item[1]["label"] + "|" + item[1]["type"] + "|" + item[1]["record"]
     if not key == "||":

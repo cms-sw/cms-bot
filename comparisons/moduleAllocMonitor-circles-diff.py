@@ -252,7 +252,7 @@ for item in sorted(
         cellString += ">"
         summaryLines += [
             "<tr>",
-            "<td>%s<BR>%s<BR> %s</td>"
+            '<td align="center">%s<BR>%s<BR> %s</td>'
             % (moduleres["label"], moduleres["type"], moduleres["record"]),
             '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (

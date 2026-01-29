@@ -15,7 +15,7 @@ def diff_from(metrics, data, data_total, dest, dest_total, res):
         pdkey = "%s pdiff" % metric
         res[pdkey] = pdmetric
         fkey = "%s frac" % metric
-        fdest = 100 * dest[metric] / dest_total[metric] if dest_total[metric] != 0 else 0.0 
+        fdest = 100 * dest[metric] / dest_total[metric] if dest_total[metric] != 0 else 0.0
         dest[fkey] = fdest
         fdata = 100 * data[metric] / data_total[metric] if data_total[metric] != 0 else 0.0
         data[fkey] = fdata
@@ -44,7 +44,10 @@ for resource in ibdata["resources"]:
         for key in resource:
             metrics.append(key)
 
-datamapib = {module["label"] + "|" + module["type"] + "|" + module["record"]: module for module in ibdata["modules"]}
+datamapib = {
+    module["label"] + "|" + module["type"] + "|" + module["record"]: module
+    for module in ibdata["modules"]
+}
 
 datacumulsib = {}
 for module in ibdata["modules"]:
@@ -66,7 +69,10 @@ if ibdata["resources"] != prdata["resources"]:
     print("Error: input files describe different metrics")
     sys.exit(1)
 
-datamappr = {module["label"] + "|" + module["type"] + "|" + module["record"]: module for module in prdata["modules"]}
+datamappr = {
+    module["label"] + "|" + module["type"] + "|" + module["record"]: module
+    for module in prdata["modules"]
+}
 
 datacumulspr = {}
 for module in prdata["modules"]:
@@ -81,7 +87,7 @@ for module in prdata["modules"]:
         for metric in metrics:
             datacumul[metric] = module[metric]
         datacumulspr[module["type"]] = datacumul
-#print(datacumulspr)
+# print(datacumulspr)
 
 if ibdata["total"]["label"] != prdata["total"]["label"]:
     print("Warning: input files describe different process names")
@@ -118,7 +124,10 @@ for module in prdata["modules"]:
         diff_from(metrics, datamapib[key], ibdata["total"], module, prdata["total"], result)
         results["modules"].append(result)
 
-datamapres = {module["label"] + "|" + module["type"] + "|" + module["record"]: module for module in results["modules"]}
+datamapres = {
+    module["label"] + "|" + module["type"] + "|" + module["record"]: module
+    for module in results["modules"]
+}
 
 threshold = 5.0
 error_threshold = 20.0
@@ -158,7 +167,6 @@ summaryLines += [
         prdata["total"]["added construction"],
         results["total"]["added construction diff"],
     ),
-
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
         ibdata["total"]["added event"],
@@ -225,7 +233,8 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], revers
         cellString += ">"
         summaryLines += [
             "<tr>",
-            "<td> %s<BR>%s<BR> %s</td>" % (moduleres["label"], moduleres["type"], moduleres["record"]),
+            "<td> %s<BR>%s<BR> %s</td>"
+            % (moduleres["label"], moduleres["type"], moduleres["record"]),
             '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
                 moduleib["added construction"],
@@ -265,11 +274,19 @@ for item in sorted(datamapres.items(), key=lambda x: x[1]["transitions"], revers
                 moduleres["added event setup frac diff"],
             ),
            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (moduleib["nAlloc construction"], modulepr["nAlloc construction"], moduleres["nAlloc construction diff"]),
+            % (
+                moduleib["nAlloc construction"],
+                modulepr["nAlloc construction"],
+                moduleres["nAlloc construction diff"]
+            ),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (moduleib["nAlloc event"], modulepr["nAlloc event"], moduleres["nAlloc event diff"]),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (moduleib["nAlloc event setup"], modulepr["nAlloc event setup"], moduleres["nAlloc event setup diff"]),
+            % (
+                moduleib["nAlloc event setup"],
+                modulepr["nAlloc event setup"],
+                moduleres["nAlloc event setup diff"]
+            ),
             "<td>%i<br>%i<br>%i</td>"
             % (moduleib["transitions"], modulepr["transitions"], moduleres["transitions"]),
             "</tr>",

@@ -41,7 +41,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 17,
-        "body": "A new Pull Request was created by  @iarspider for master.\n\nIt involves the following packages:\n\n- Utilities/ReleaseScripts (**core**)\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign? Thanks.\n@wddgit this is something you requested to watch as well.\n@iarspider you are the release manager for this.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+        "body": "A new Pull Request was created by  @iarspider for master.\n\nIt involves the following packages:\n\n- Utilities/ReleaseScripts (**core**)\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign? Thanks.\n@wddgit this is something you requested to watch as well.\n@iarspider you are the release manager for this.\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
       }
     },
     {

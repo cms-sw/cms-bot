@@ -1,17 +1,9 @@
 {
   "test_name": "test_user_not_in_l2",
-  "action_count": 5,
+  "action_count": 4,
   "actions": [
     {
       "sequence": 1,
-      "action": "create_reaction",
-      "details": {
-        "comment_id": 100,
-        "reaction": "-1"
-      }
-    },
-    {
-      "sequence": 2,
       "action": "add_labels",
       "details": {
         "issue_number": 1,
@@ -23,15 +15,15 @@
       }
     },
     {
-      "sequence": 3,
+      "sequence": 2,
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "A new Pull Request was created by  @testuser.\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
+        "body": "A new Pull Request was created by  @testuser.\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
       }
     },
     {
-      "sequence": 4,
+      "sequence": 3,
       "action": "create_status",
       "details": {
         "sha": "commit123",
@@ -42,11 +34,11 @@
       }
     },
     {
-      "sequence": 5,
+      "sequence": 4,
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"100\":\"-1\"},\"fv\":{\"Package/Core/main.py::file_sha_123\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"Package/Core/main.py::file_sha_123\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
       }
     }
   ]

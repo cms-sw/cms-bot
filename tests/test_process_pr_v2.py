@@ -1157,6 +1157,7 @@ class MockIssue:
         is_issue: bool = None,  # If None, auto-detect from JSON data
         comments_data: Optional[List[Dict]] = None,  # Optional inline comments data
         state: str = None,  # Issue state: "open" or "closed"
+        login: str = "author",
     ):
         self.test_name = test_name
         self.number = number
@@ -1184,7 +1185,7 @@ class MockIssue:
         self.created_at = parse_timestamp(created_at_str) or FROZEN_TIME
 
         # User
-        user_data = data.get("user", {"login": "author"})
+        user_data = data.get("user", {"login": login})
         self.user = MockNamedUser.from_json(user_data)
 
         # Labels
@@ -1477,6 +1478,7 @@ def create_basic_pr_data(
     labels: List[str] = None,
     base_ref: str = "main",
     statuses: List[Dict] = None,
+    login: str = "testuser",
 ) -> None:
     """
     Create basic test data files for a PR.
@@ -1492,6 +1494,7 @@ def create_basic_pr_data(
         labels: List of label names
         base_ref: Target branch name (default "main", use "master" for cms-sw/cmssw)
         statuses: List of commit status dicts with context, state, description, target_url
+        login: Name of Issue/PR author (default "testuser")
     """
     create_test_data_directory(test_name)
 
@@ -1555,7 +1558,7 @@ def create_basic_pr_data(
         "mergeable": True,
         "head": {"sha": commits[-1]["sha"] if commits else "abc123", "ref": "feature"},
         "base": {"sha": "base123", "ref": base_ref},
-        "user": {"login": "testuser", "id": 1},
+        "user": {"login": login, "id": 1},
         "files": files,
         "commits": commits,
     }
@@ -1571,7 +1574,7 @@ def create_basic_pr_data(
         "title": f"Test PR #{pr_number}",
         "body": "Test PR body",
         "state": "open",
-        "user": {"login": "testuser", "id": 1},
+        "user": {"login": login, "id": 1},
         "labels": [{"name": l} for l in labels],
         "comments": len(comments),  # Count, not the actual comments
         "pull_request": {  # This indicates it's a PR, not a plain Issue
@@ -2701,7 +2704,8 @@ class TestEdgeCases:
         )
 
         # User not in L2, so no approval should be recorded
-        assert result["pr_number"] == 1
+        assert result["pr_state"] == "signatures-pending"
+        assert result["categories"]["core"]["state"] == "pending"
 
         if record_mode:
             recorder.save()
@@ -3463,7 +3467,9 @@ class TestSignatureLocking:
         recorder = ActionRecorder("test_signature_locked_after_commit", record_mode)
         gh = MockGithub("test_signature_locked_after_commit", recorder)
         repo = MockRepository("test_signature_locked_after_commit", recorder=recorder)
-        issue = MockIssue("test_signature_locked_after_commit", number=1, recorder=recorder)
+        issue = MockIssue(
+            "test_signature_locked_after_commit", number=1, recorder=recorder, login="alice"
+        )
 
         result = process_pr(
             repo_config=repo_config,
@@ -6860,7 +6866,8 @@ class TestValidTesterACL:
         # Mock get_user_l2_categories to return empty
         monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: [])
 
-        assert is_valid_tester(context, "test_user", FROZEN_TIME)
+        user = process_pr_v2.CommandUser("test_user", context, FROZEN_TIME)
+        assert is_valid_tester(user)
 
     def test_release_manager_is_valid(self, monkeypatch):
         """Test that release managers are valid testers."""
@@ -6874,7 +6881,8 @@ class TestValidTesterACL:
         context.repo_org = "cms-sw"
         context.granted_test_rights = set()
 
-        assert is_valid_tester(context, "release_mgr", FROZEN_TIME)
+        user = process_pr_v2.CommandUser("release_mgr", context, FROZEN_TIME)
+        assert is_valid_tester(user)
 
     def test_l2_signer_is_valid(self, monkeypatch):
         """Test that L2 signers are valid testers."""
@@ -6889,7 +6897,8 @@ class TestValidTesterACL:
         context.repo_config = MagicMock()
         context.granted_test_rights = set()
 
-        assert is_valid_tester(context, "l2_user", FROZEN_TIME)
+        user = process_pr_v2.CommandUser("l2_user", context, FROZEN_TIME)
+        assert is_valid_tester(user)
 
     def test_granted_test_rights_is_valid(self, monkeypatch):
         """Test that users with granted test rights are valid testers."""
@@ -6904,7 +6913,8 @@ class TestValidTesterACL:
         context.repo_config = MagicMock()
         context.granted_test_rights = {"granted_user"}
 
-        assert is_valid_tester(context, "granted_user", FROZEN_TIME)
+        user = process_pr_v2.CommandUser("granted_user", context, FROZEN_TIME)
+        assert is_valid_tester(user)
 
     def test_random_user_not_valid(self, monkeypatch):
         """Test that random users are not valid testers."""
@@ -6919,7 +6929,8 @@ class TestValidTesterACL:
         context.repo_config = MagicMock()
         context.granted_test_rights = set()
 
-        assert not is_valid_tester(context, "random_user", FROZEN_TIME)
+        user = process_pr_v2.CommandUser("random_user", context, FROZEN_TIME)
+        assert not is_valid_tester(user)
 
     def test_repo_org_is_valid(self, monkeypatch):
         """Test that the repo organization is a valid tester."""
@@ -6933,7 +6944,8 @@ class TestValidTesterACL:
         context.repo_org = "cms-sw"
         context.granted_test_rights = set()
 
-        assert is_valid_tester(context, "cms-sw", FROZEN_TIME)
+        user = process_pr_v2.CommandUser("cms-sw", context, FROZEN_TIME)
+        assert is_valid_tester(user)
 
 
 # =============================================================================
@@ -7011,10 +7023,12 @@ class TestCommitAndFileCountChecks:
 class TestCloseReopenCommands:
     """Tests for close and reopen commands."""
 
-    def test_close_command(self, record_mode):
+    def test_close_command(self, record_mode, monkeypatch):
         """Test that close command sets must_close."""
         repo_config = create_mock_repo_config()
+        # init_l2_data(repo_config, False)
         init_l2_data(repo_config)
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: ["core"])
 
         recorder = ActionRecorder("test_close_command", record_mode)
         gh = MockGithub("test_close_command", recorder)
@@ -7051,10 +7065,11 @@ class TestCloseReopenCommands:
         else:
             recorder.verify()
 
-    def test_reopen_command(self, record_mode):
+    def test_reopen_command(self, record_mode, monkeypatch):
         """Test that reopen command reopens a closed issue/PR."""
         repo_config = create_mock_repo_config()
         init_l2_data(repo_config)
+        monkeypatch.setattr("process_pr_v2.CommandUser.is_release_manager", True)
 
         recorder = ActionRecorder("test_reopen_command", record_mode)
         gh = MockGithub("test_reopen_command", recorder)
@@ -7330,6 +7345,7 @@ class TestUrgentBackportCommands:
                     "created_at": "2024-01-15T12:00:00Z",
                 },
             ],
+            login="l2_user",
         )
 
         result = process_pr(
@@ -7371,6 +7387,7 @@ class TestUrgentBackportCommands:
                     "created_at": "2024-01-15T12:00:00Z",
                 },
             ],
+            login="l2_user",
         )
 
         result = process_pr(
@@ -7476,6 +7493,7 @@ class TestCodeChecksCommand:
                     "updated_at": FROZEN_COMMIT_TIME,
                 },
             ],
+            login="contributor",
         )
 
         recorder = ActionRecorder("test_code_checks_basic", record_mode)
@@ -7483,7 +7501,9 @@ class TestCodeChecksCommand:
         repo = MockRepository(
             "test_code_checks_basic", full_name="cms-sw/cmssw", recorder=recorder
         )
-        issue = MockIssue("test_code_checks_basic", number=1, recorder=recorder)
+        issue = MockIssue(
+            "test_code_checks_basic", number=1, recorder=recorder, login="contributor"
+        )
 
         with FunctionHook(recorder.property_file_hook()):
             result = process_pr(
@@ -7546,6 +7566,7 @@ class TestCodeChecksCommand:
                     "updated_at": FROZEN_COMMIT_TIME,
                 },
             ],
+            login="contributor",
         )
 
         recorder = ActionRecorder("test_code_checks_with_tool", record_mode)
@@ -7606,6 +7627,7 @@ class TestCodeChecksCommand:
                     "target_url": "",
                 },
             ],
+            login="contributor",
         )
 
         recorder = ActionRecorder("test_code_checks_skipped_pending", record_mode)
@@ -7667,6 +7689,7 @@ class TestCodeChecksCommand:
                     "updated_at": FROZEN_COMMENT_TIME + timedelta(seconds=5 * 60),
                 },
             ],
+            login="contributor",
         )
 
         recorder = ActionRecorder("test_code_checks_skipped_for_old_comment", record_mode)

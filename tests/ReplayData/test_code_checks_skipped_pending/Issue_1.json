@@ -5,7 +5,7 @@
   "body": "Test PR body",
   "state": "open",
   "user": {
-    "login": "testuser",
+    "login": "contributor",
     "id": 1
   },
   "labels": [],

@@ -24,7 +24,6 @@ from json import load as json_load
 from os import getenv as os_getenv
 from os.path import dirname, exists, join
 from subprocess import getstatusoutput
-from time import sleep
 from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
 
 import yaml
@@ -106,6 +105,7 @@ CMSSW_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 # =============================================================================
 
 
+# noinspection PyUnresolvedReferences
 def addLoggingLevel(levelName, levelNum, methodName=None):
     """
     Comprehensively adds a new logging level to the `logging` module and the
@@ -213,6 +213,7 @@ if APPLY_PYGITHUB_PATCHES:
             )
 
         # Patch the statuses property on CommitCombinedStatus
+        # noinspection PyPropertyAccess
         github.CommitCombinedStatus.CommitCombinedStatus.statuses = property(_patched_statuses)
         logger.debug("Applied PyGithub CommitCombinedStatus.statuses patch")
 
@@ -570,7 +571,6 @@ def init_l2_data(
 def get_watchers(
     context: "PRContext",
     changed_files: List[str],
-    timestamp: datetime,
 ) -> Set[str]:
     """
     Get watchers for the PR based on changed files and categories.
@@ -581,7 +581,6 @@ def get_watchers(
     Args:
         context: PR processing context
         changed_files: List of files changed in the PR
-        timestamp: Timestamp for lookups
 
     Returns:
         Set of usernames who should be notified
@@ -1018,6 +1017,57 @@ class TestRequest:
         sorted_prs = ",".join(sorted(self.prs)) if self.prs else ""
         sorted_workflows = ",".join(sorted(self.workflows.split(","))) if self.workflows else ""
         return f"{self.verb}|{sorted_workflows}|{sorted_prs}|{self.queue}|{self.build_full}|{self.extra_packages}"
+
+
+@dataclass
+class CommandUser:
+    login: str
+    context: "PRContext"
+    timestamp: datetime
+
+    @property
+    def is_valid_commenter(self) -> bool:
+        return (
+            (self.login in TRIGGER_PR_TESTS + [self.context.repo_org])
+            or (len(self.user_categories) > 0)
+            or self.is_release_manager
+        )
+
+    @property
+    def is_release_manager(self) -> bool:
+        result = False
+        if self.context.pr:
+            try:
+                release_managers = get_release_managers(self.context.pr.base.ref)
+                result = self.login in release_managers
+            except (AttributeError, KeyError, TypeError) as ex:
+                logger.debug(f"Could not check release managers: {ex}")
+
+        return result
+
+    @property
+    def user_categories(self) -> list[str]:
+        return get_user_l2_categories(self.context.repo_config, self.login, self.timestamp)
+
+    @property
+    def is_issue_tracker(self) -> bool:
+        return self.login in CMSSW_ISSUES_TRACKERS
+
+    @property
+    def is_orp(self) -> bool:
+        return self.login in CMSSW_ORP
+
+    @property
+    def is_pr_hold_manager(self) -> bool:
+        return self.login in PR_HOLD_MANAGERS
+
+    @property
+    def is_requestor(self) -> bool:
+        return self.login == self.context.issue.user.login
+
+    @property
+    def is_cmsbuild_user(self) -> bool:
+        return self.login == self.context.cmsbuild_user
 
 
 # =============================================================================
@@ -1488,8 +1538,6 @@ def get_signing_checks(context: "PRContext") -> SigningChecks:
     is_cms_org = context.cms_repo
     is_cms_data = repo_org == "cms-data"
     is_cms_externals = repo_org == "cms-externals"
-    is_cms_data = repo_org == "cms-data"
-    is_cms_externals = repo_org == "cms-externals"
 
     if is_cmssw:
         # cms-sw/cmssw repository
@@ -1653,23 +1701,6 @@ class CommandRegistry:
 
         return decorator
 
-    def find_command(self, text: str, is_pr: bool = True) -> Optional[Tuple[Command, re.Match]]:
-        """
-        Find a command matching the given text.
-
-        DEPRECATED: Use find_commands() for fallthrough support.
-
-        Args:
-            text: Command text to match
-            is_pr: True if this is a PR, False if it's an Issue
-
-        Returns:
-            Tuple of (Command, Match) or None
-        """
-        for cmd, match in self.find_commands(text, is_pr):
-            return cmd, match
-        return None
-
     def find_commands(
         self, text: str, is_pr: bool = True
     ) -> Generator[Tuple[Command, re.Match], None, None]:
@@ -1686,13 +1717,13 @@ class CommandRegistry:
         Yields:
             Tuple of (Command, Match) for each matching command
         """
-        for cmd in self.commands:
+        for command in self.commands:
             # Skip PR-only commands when processing issues
-            if cmd.pr_only and not is_pr:
+            if command.pr_only and not is_pr:
                 continue
-            match = cmd.pattern.match(text)
+            match = command.pattern.match(text)
             if match:
-                yield cmd, match
+                yield command, match
 
 
 # Global command registry - commands register themselves via decorators
@@ -1702,7 +1733,7 @@ _global_registry = CommandRegistry()
 def command(
     name: str,
     pattern: str,
-    acl: Optional[Union[Iterable[str], Callable[..., bool]]] = None,
+    acl: Optional[Union[Iterable[str], Callable[[CommandUser], bool]]] = None,
     description: str = "",
     pr_only: bool = False,
     reset_on_push: bool = False,
@@ -2415,6 +2446,7 @@ CATEGORY_PATTERN = r"[\w-]+"
     "approve",
     rf"^\+1$|^\+({CATEGORY_PATTERN})$",
     description="Approve for your L2 categories or specific category",
+    acl=lambda u: bool(u.user_categories),
 )
 def handle_plus_one(context: PRContext, match: re.Match, comment: Any) -> Optional[bool]:
     """Handle +1 or +<category> approval."""
@@ -2428,6 +2460,7 @@ def handle_plus_one(context: PRContext, match: re.Match, comment: Any) -> Option
     "reject",
     rf"^-1$|^-({CATEGORY_PATTERN})$",
     description="Reject for your L2 categories or specific category",
+    acl=lambda u: bool(u.user_categories),
 )
 def handle_minus_one(context: PRContext, match: re.Match, comment: Any) -> Optional[bool]:
     """Handle -1 or -<category> rejection."""
@@ -2570,6 +2603,7 @@ def _handle_approval(
     "assign_unassign",
     rf"^(?P<action>assign|unassign)(?: (?:from|package))? (?P<target>(?!from$|package$)(?:{CATEGORY_PATTERN}|[\w]+/[\w/,-]+)(?:,(?:{CATEGORY_PATTERN}|[\w]+/[\w/,-]+))*)$",
     description="Assign or unassign categories (directly or via package mapping)",
+    acl=lambda u: bool(u.user_categories) or u.is_issue_tracker,
 )
 def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) -> Optional[bool]:
     """
@@ -2727,7 +2761,13 @@ def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) ->
         return True
 
 
-@command("hold", r"^hold$", description="Place a hold to prevent automerge", pr_only=True)
+@command(
+    "hold",
+    r"^hold$",
+    description="Place a hold to prevent automerge",
+    pr_only=True,
+    acl=lambda u: u.is_release_manager or u.is_pr_hold_manager or bool(u.user_categories),
+)
 def handle_hold(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle hold command - prevents automerge.
@@ -2799,6 +2839,9 @@ def handle_hold(context: PRContext, match: re.Match, comment: Any) -> bool:
     r"^unhold$",
     description="Remove hold (L2 for own category, ORP for all)",
     pr_only=True,
+    acl=lambda u: (
+        u.is_orp or bool(u.user_categories) or u.is_release_manager or u.is_pr_hold_manager
+    ),
 )
 def handle_unhold(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
@@ -2873,7 +2916,13 @@ def handle_unhold(context: PRContext, match: re.Match, comment: Any) -> bool:
         return False
 
 
-@command("merge", r"^merge$", description="Request merge of the PR", pr_only=True)
+@command(
+    "merge",
+    r"^merge$",
+    description="Request merge of the PR",
+    pr_only=True,
+    acl=lambda u: u.is_release_manager or u.is_orp,
+)
 def handle_merge(context: PRContext, match: re.Match, comment: Any) -> bool:
     """Handle merge command."""
     user = comment.user.login
@@ -2889,7 +2938,14 @@ def handle_merge(context: PRContext, match: re.Match, comment: Any) -> bool:
     return True
 
 
-@command("close", r"^close$", description="Close the PR/Issue")
+@command(
+    "close",
+    r"^close$",
+    description="Close the PR/Issue",
+    acl=lambda u: bool(u.user_categories)
+    or u.is_release_manager
+    or (u.is_issue_tracker and not u.context.pr),
+)
 def handle_close(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle close command.
@@ -2905,7 +2961,14 @@ def handle_close(context: PRContext, match: re.Match, comment: Any) -> bool:
     return True
 
 
-@command("reopen", r"^(?:re)?open$", description="Reopen the PR/Issue")
+@command(
+    "reopen",
+    r"^(?:re)?open$",
+    description="Reopen the PR/Issue",
+    acl=lambda u: bool(u.user_categories)
+    or u.is_release_manager
+    or (u.is_issue_tracker and not u.context.pr),
+)
 def handle_reopen(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle open/reopen command.
@@ -2920,7 +2983,7 @@ def handle_reopen(context: PRContext, match: re.Match, comment: Any) -> bool:
     return True
 
 
-def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
+def is_valid_tester(user: CommandUser) -> bool:
     """
     Check if a user is allowed to trigger tests.
 
@@ -2932,37 +2995,19 @@ def is_valid_tester(context: PRContext, user: str, timestamp: datetime) -> bool:
     5. User has been granted test rights via 'allow @user test rights'
 
     Args:
-        context: PR processing context
         user: Username to check
-        timestamp: Timestamp for L2 membership check
 
     Returns:
         True if user can trigger tests
     """
-    # Check if user is in TRIGGER_PR_TESTS
-    if user in TRIGGER_PR_TESTS:
-        return True
-
-    # Check if user is a release manager
-    if context.pr:
-        release_managers = get_release_managers(context.pr.base.ref)
-        if user in release_managers:
-            return True
-
-    # Check if user is the repo organization
-    if user == context.repo_org:
-        return True
-
-    # Check if user has L2 categories
-    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
-    if user_categories:
-        return True
-
-    # Check if user has been granted test rights
-    if user in context.granted_test_rights:
-        return True
-
-    return False
+    return (
+        user.login in TRIGGER_PR_TESTS  # Check if user is in TRIGGER_PR_TESTS
+        or user.is_release_manager  # Check if user is a release manager
+        or user.login == user.context.repo_org  # Check if user is the repo organization
+        or bool(user.user_categories)  # Check if user has L2 categories
+        or user.login
+        in user.context.granted_test_rights  # Check if user has been granted test rights
+    )
 
 
 @command(
@@ -2993,7 +3038,12 @@ def handle_abort(context: PRContext, match: re.Match, comment: Any) -> bool:
     return True
 
 
-@command("urgent", r"^urgent$", description="Mark PR as urgent")
+@command(
+    "urgent",
+    r"^urgent$",
+    description="Mark PR as urgent",
+    acl=lambda u: bool(u.user_categories) or u.is_release_manager or u.is_requestor,
+)
 def handle_urgent(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle urgent command.
@@ -3010,6 +3060,7 @@ def handle_urgent(context: PRContext, match: re.Match, comment: Any) -> bool:
     "backport",
     r"^backport (of )?#?(?P<pr_num>[1-9][0-9]*)$",
     description="Mark PR as backport of another PR",
+    acl=lambda u: bool(u.user_categories) or u.is_release_manager or u.is_requestor,
 )
 def handle_backport(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
@@ -3054,6 +3105,7 @@ def handle_backport(context: PRContext, match: re.Match, comment: Any) -> bool:
     r"^allow @(?P<username>[^ ]+) test rights$",
     description="Grant test rights to a user",
     pr_only=True,
+    acl=lambda u: bool(u.user_categories) or u.is_release_manager,
 )
 def handle_allow_test_rights(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
@@ -3063,10 +3115,30 @@ def handle_allow_test_rights(context: PRContext, match: re.Match, comment: Any) 
     Grants the specified user permission to trigger tests.
     """
     user = comment.user.login
-    target_user = match.group("username")
-    context.granted_test_rights.add(target_user)
-    logger.info(f"Test rights granted to {target_user} by {user}")
-    return True
+    timestamp = get_comment_timestamp(comment)
+
+    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
+
+    # Check if user is a release manager
+    is_release_manager = False
+    if context.pr:
+        try:
+            release_managers = get_release_managers(context.pr.base.ref)
+            is_release_manager = user in release_managers
+        except (AttributeError, KeyError, TypeError) as e:
+            logger.debug(f"Could not check release managers: {e}")
+
+    if user_categories or is_release_manager:
+        target_user = match.group("username")
+        context.granted_test_rights.add(target_user)
+        logger.info(f"Test rights granted to {target_user} by {user}")
+        context.pending_labels.add(f"allow {user}")
+        return True
+    else:
+        logger.info(
+            f"User {user} cannot grant test rights (no L2 categories, not release manager)"
+        )
+        return False
 
 
 @command(
@@ -3239,6 +3311,7 @@ def handle_file_count_override(context: PRContext, match: re.Match, comment: Any
     "type",
     r"^type (?P<labels>[-+]?[\w-]+(,[-+]?[\w-]+)*)$",
     description="Add/remove type labels on the PR/Issue",
+    acl=lambda u: bool(u.user_categories) or u.is_release_manager or u.is_requestor,
 )
 def handle_type(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
@@ -4481,7 +4554,7 @@ def ensure_tz_aware(dt: datetime) -> datetime:
     return dt
 
 
-def parse_timestamp(ts: str) -> Optional[datetime]:
+def parse_timestamp(ts: Union[str, datetime]) -> Optional[datetime]:
     """
     Parse an ISO format timestamp string to timezone-aware datetime.
 
@@ -4508,22 +4581,22 @@ def get_comment_timestamp(comment) -> datetime:
 
 
 def check_command_acl(
-    context: PRContext, command: Command, user: str, timestamp: datetime
+    context: PRContext, command: Command, user: CommandUser, timestamp: datetime
 ) -> bool:
     """Check if user has permission to run a command."""
     if command.acl is None:
         return True
 
     if callable(command.acl):
-        return command.acl(context, user, timestamp)
+        return command.acl(user)
 
     # acl is an Iterable[str] - check if user is in allowlist or has required L2 membership
     acl_items = list(command.acl)  # Convert to list for iteration
-    if user in acl_items:
+    if user.login in acl_items:
         return True
 
     # Check if user has required L2 membership
-    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
+    user_categories = user.user_categories
     for required in acl_items:
         if required in user_categories:
             return True
@@ -4630,10 +4703,19 @@ def process_comment(context: PRContext, comment, use_cached: bool = False) -> No
     if not command_line:
         return
 
-    user = comment.user.login
+    user = CommandUser(
+        login=comment.user.login, context=context, timestamp=get_comment_timestamp(comment)
+    )
     timestamp = get_comment_timestamp(comment)
+
+    if not (user.is_valid_commenter or user.is_requestor):
+        logger.info(
+            f"Not processing comment {comment.id}: not a valid commenter and not a requestor"
+        )
+        return
+
     comment_id = comment.id
-    is_bot = context.cmsbuild_user and user == context.cmsbuild_user
+    is_bot = context.cmsbuild_user and user.is_cmsbuild_user
 
     # Try each matching command until one handles it (returns True or False)
     command_handled = False
@@ -4646,7 +4728,7 @@ def process_comment(context: PRContext, comment, use_cached: bool = False) -> No
                     timestamp=timestamp.isoformat() if timestamp else "",
                     first_line=command_line,
                     ctype=cmd.name,
-                    user=user,
+                    user=user.login,
                     locked=True,  # Mark as locked so it won't be re-processed
                 )
             logger.debug(
@@ -4657,7 +4739,7 @@ def process_comment(context: PRContext, comment, use_cached: bool = False) -> No
 
         # Check ACL
         if not check_command_acl(context, cmd, user, timestamp):
-            logger.info(f"User {user} not authorized for command: {cmd.name}")
+            logger.info(f"User {user.login} not authorized for command: {cmd.name}")
             # Set -1 reaction for unauthorized (skip if re-processing cached)
             if not use_cached:
                 set_comment_reaction(context, comment, comment_id, success=False)
@@ -4668,7 +4750,7 @@ def process_comment(context: PRContext, comment, use_cached: bool = False) -> No
         #   True  = success (stop processing)
         #   False = failure (stop processing)
         #   None  = doesn't apply, try next command (fallthrough)
-        logger.info(f"Trying command '{cmd.name}' from user {user} (comment {comment_id})")
+        logger.info(f"Trying command '{cmd.name}' from user {user.login} (comment {comment_id})")
         try:
             result = cmd.handler(context, match, comment)
         except Exception as e:
@@ -5875,7 +5957,7 @@ def get_fully_signed_message(context: PRContext) -> str:
         dev_release_relval = f" and once validation in the development release cycle {CMSSW_DEVEL_BRANCH} is complete"
 
     # Determine auto-merge message
-    auto_merge_msg = ""
+    auto_merge_msg = "This pull request will be automatically merged."
     managers = get_release_managers(branch)
     managers_str = (
         ", ".join(format_mention(context, m) for m in managers)
@@ -5901,9 +5983,6 @@ def get_fully_signed_message(context: PRContext) -> str:
             f"This pull request will now be reviewed by the release team before it's merged. "
             f"{managers_str} (and backports should be raised in the release meeting by the corresponding L2)"
         )
-    else:
-        # Can be auto-merged
-        auto_merge_msg = "This pull request will be automatically merged."
 
     # Build the message
     message = (
@@ -6456,7 +6535,7 @@ def post_welcome_message(context: PRContext) -> None:
         )
     else:
         # Simple message for non-CMSSW repos or issues
-        commands_url = "http://cms-sw.github.io/cms-bot-cmssw-issues.html"
+        commands_url = "https://cms-sw.github.io/cms-bot-cmssw-issues.html"
         msg = (
             f"{msg_prefix} {format_mention(context, author)}.\n\n"
             f"{l2_mentions} can you please review it and eventually sign/assign? Thanks.\n"
@@ -6555,7 +6634,7 @@ def _build_cmssw_welcome_message(
         release_managers_msg = f"{rm_mentions} you are the release manager for this.\n"
 
     # Build the full message
-    commands_url = "http://cms-sw.github.io/cms-bot-cmssw-cmds.html"
+    commands_url = "https://cms-sw.github.io/cms-bot-cmssw-cmds.html"
     msg = (
         f"{NEW_PR_PREFIX} {format_mention(context, author)} for {branch}.\n\n"
         f"It involves the following packages:\n\n"
@@ -7003,7 +7082,7 @@ def process_pr(
 
         # Load watchers based on changed files and categories
         if chg_files:
-            context.watchers = get_watchers(context, chg_files, datetime.now(tz=timezone.utc))
+            context.watchers = get_watchers(context, chg_files)
 
         # Update file states (sets current_file_versions)
         changed_files, new_categories = update_file_states(context)

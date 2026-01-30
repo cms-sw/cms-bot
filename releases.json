@@ -32038,6 +32038,17 @@
                 }
               ]
             }
+          ],
+          "CMSSW_16_0": [
+            {
+              "label": "CMSSW_16_0_0",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
+            }
           ]
         },
         "SLHC": {

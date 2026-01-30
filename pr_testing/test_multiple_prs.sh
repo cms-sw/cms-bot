@@ -340,11 +340,6 @@ fi
 WORKFLOWS_PR_LABELS=""
 scram -a $SCRAM_ARCH project $CMSSW_IB
 if $DO_COMPARISON ; then
-  CMS_BOT_TEST_BRANCH=""
-  if [[ "$PULL_REQUEST" == cms-sw/cms-bot#* ]]; then
-    PR_METADATA_PATH=$(get_cached_GH_JSON $PULL_REQUEST)
-    CMS_BOT_TEST_BRANCH=$(${CMSBOT_PYTHON_CMD} -c "import json,sys,codecs;obj=json.load(codecs.open('${PR_METADATA_PATH}',encoding='utf-8',errors='ignore'));print(obj['head']['ref'])")
-  fi
   mkdir $WORKSPACE/ib-baseline-tests
   pushd $WORKSPACE/ib-baseline-tests
     COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
@@ -355,9 +350,7 @@ if $DO_COMPARISON ; then
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
     echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
     echo "PRODUCTION_RELEASE=true"       >> run-baseline-${BUILD_ID}-01.default
-    if [ -n $CMS_BOT_TEST_BRANCH ]; then
-      echo "CMS_BOT_BRANCH=$CMS_BOT_TEST_BRANCH" >> run-baseline-${BUILD_ID}-01.default
-    fi
+    echo "PULL_REQUESTS=${PULL_REQUESTS}" >> run-baseline-${BUILD_ID}-01.default
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default

@@ -350,7 +350,7 @@ if $DO_COMPARISON ; then
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
     echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
     echo "PRODUCTION_RELEASE=true"       >> run-baseline-${BUILD_ID}-01.default
-    echo "PULL_REQUESTS=${PULL_REQUEST}" >> run-baseline-${BUILD_ID}-01.default
+    echo "PULL_REQUESTS=${PULL_REQUESTS}" >> run-baseline-${BUILD_ID}-01.default
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default

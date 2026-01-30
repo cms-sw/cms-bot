@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "sha": "8ed570cb4abbaa9315646f00a9e6368601f4bff9",
+      "filename": "Alignment/OfflineValidation/BuildFile.xml",
+      "status": "modified",
+      "additions": 0,
+      "deletions": 1,
+      "changes": 1,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48/Alignment%2FOfflineValidation%2FBuildFile.xml",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48/Alignment%2FOfflineValidation%2FBuildFile.xml",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Alignment%2FOfflineValidation%2FBuildFile.xml?ref=eb413ce8e0b33985d3425d9384bb8d5d4ab0ce48",
+      "patch": "@@ -31,4 +31,3 @@\n <export>\n   <lib name=\"1\"/>\n </export>\n-<!-- dummy -->"
+    }
+  ]
+}

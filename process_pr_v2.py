@@ -342,7 +342,7 @@ MULTILINE_COMMENTS_MAP: Dict[str, List[Any]] = {
     "use_ib_tag": ["true|false", "USE_IB_TAG"],
     "baseline": ["self|default", "USE_BASELINE"],
     "set_env": [r"[A-Z][A-Z0-9_]+(,[A-Z][A-Z0-9_]+)*", "CMSBOT_SET_ENV"],
-    f"skip_tests?": [rf"({SKIP_TESTS})(,({SKIP_TESTS}))*", "SKIP_TESTS"],
+    "skip_tests?": [rf"({SKIP_TESTS})(,({SKIP_TESTS}))*", "SKIP_TESTS"],
     "dry_run": ["true|false", "DRY_RUN"],
     "jenkins_(slave|node)": [JENKINS_NODES, "RUN_ON_SLAVE"],
     "(arch(itectures?)?|release|release/arch)": [CMSSW_RELEASE_QUEUE_PATTERN, "RELEASE_FORMAT"],
@@ -1031,6 +1031,7 @@ class CommandUser:
             (self.login in TRIGGER_PR_TESTS + [self.context.repo_org])
             or (len(self.user_categories) > 0)
             or self.is_release_manager
+            or self.login in self.context.granted_test_rights
         )
 
     @property
@@ -1199,6 +1200,7 @@ def save_cache_to_comments(issue, comments, cache: BotCache, dry_run: bool = Fal
             # Update existing comment
             if dry_run:
                 logger.info(f"[DRY RUN] Would update cache comment {i + 1}/{len(chunks)}")
+                logger.debug(comment_body)
             else:
                 existing_cache_comments[i].edit(comment_body)
                 logger.debug(f"Updated cache comment {i + 1}/{len(chunks)}")
@@ -2081,6 +2083,9 @@ class PRContext:
 
         Returns:
             Dict mapping status context name to status object
+
+        Raises:
+            No exceptions raised - returns empty dict on failure
         """
         # Return cached statuses if available
         if self._commit_statuses is not None:
@@ -2090,12 +2095,14 @@ class PRContext:
         sha = None
         try:
             sha = self.pr.head.sha if self.pr else None
-        except AttributeError:
+        except AttributeError as e:
             # pr.head or pr.head.sha not available
+            logger.debug(f"Could not get PR head SHA: {e}")
             if self.last_commit:
                 sha = self.last_commit.sha
 
         if not sha:
+            logger.debug("No commit SHA available for status lookup")
             return {}
 
         # Fetch combined status from API
@@ -2115,13 +2122,37 @@ class PRContext:
                 # Fallback for mocks - get_statuses() loads from CommitCombinedStatus
                 statuses_list = list(commit.get_statuses())
             else:
+                logger.warning("Commit object has no get_combined_status or get_statuses method")
                 statuses_list = []
 
             # Convert to dict keyed by context
             self._commit_statuses = {s.context: s for s in statuses_list}
             return self._commit_statuses
+        except AttributeError as e:
+            # Possible causes:
+            # - commit.get_combined_status() doesn't exist
+            # - combined.statuses doesn't exist
+            # - status object missing .context attribute
+            logger.warning(f"AttributeError fetching commit statuses for {sha}: {e}")
+            self._commit_statuses = {}
+            return {}
+        except (TypeError, ValueError) as e:
+            # Possible causes:
+            # - Invalid SHA format
+            # - Malformed status data
+            logger.warning(f"Data error fetching commit statuses for {sha}: {e}")
+            self._commit_statuses = {}
+            return {}
         except Exception as e:
-            logger.debug(f"Failed to get commit statuses for {sha}: {e}")
+            # Catch-all for network errors, API errors, rate limiting, etc.
+            # Common exceptions from PyGithub:
+            # - GithubException (API errors, 404, 403, etc.)
+            # - RateLimitExceededException
+            # - BadCredentialsException
+            # - UnknownObjectException (commit not found)
+            logger.error(
+                f"Unexpected error fetching commit statuses for {sha}: {type(e).__name__}: {e}"
+            )
             self._commit_statuses = {}
             return {}
 
@@ -2622,7 +2653,6 @@ def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) ->
     Multiple targets can be comma-separated.
     Package names contain '/' (e.g., Foo/Bar), category names don't.
     """
-    user = comment.user.login
     comment_id = comment.id
     timestamp = get_comment_timestamp(comment)
 
@@ -3132,7 +3162,7 @@ def handle_allow_test_rights(context: PRContext, match: re.Match, comment: Any) 
         target_user = match.group("username")
         context.granted_test_rights.add(target_user)
         logger.info(f"Test rights granted to {target_user} by {user}")
-        context.pending_labels.add(f"allow {user}")
+        context.pending_labels.add(f"allow-{target_user}")
         return True
     else:
         logger.info(
@@ -3202,7 +3232,7 @@ def handle_code_checks(context: PRContext, match: re.Match, comment: Any) -> boo
         comment.updated_at
     ):
         logger.info(
-            f"Setting code-check params but not triggering checks: last_commit was after this comment"
+            "Setting code-check params but not triggering checks: last_commit was after this comment"
         )
         return True
 
@@ -3761,7 +3791,6 @@ def handle_build_test(context: PRContext, match: re.Match, comment: Any) -> bool
     """
     user = comment.user.login
     comment_id = comment.id
-    timestamp = get_comment_timestamp(comment)
 
     # Get the full command line from the comment
     first_line = match.group(0)
@@ -5230,11 +5259,6 @@ def determine_pr_state(context: PRContext) -> PRState:
 
     category_states = compute_category_approval_states(context)
 
-    # Get required checks
-    signing_checks = context.get_signing_checks_for_pr()
-    pre_checks = signing_checks.pre_checks
-    extra_checks = signing_checks.extra_checks
-
     # Categories to skip for fully-signed determination
     # These are checked separately (code-checks for test trigger, tests+orp for merge)
     skip_for_fully_signed = {"code-checks", "tests", "orp"}
@@ -5359,16 +5383,6 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     pr_id = context.issue.number if context.issue else None
     if not pr_id:
         return {}
-
-    # Get the head commit SHA
-    try:
-        head_sha = context.pr.head.sha
-    except AttributeError:
-        # pr.head or pr.head.sha not available
-        if context.last_commit:
-            head_sha = context.last_commit.sha
-        else:
-            return {}
 
     # Get commit statuses using cached method (returns dict of context -> status)
     status_map = context.get_commit_statuses()

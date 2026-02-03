@@ -16,6 +16,43 @@ Usage:
 
     # Run a specific test
     pytest test_process_pr_v2.py::test_basic_approval --record-actions
+
+Writing New Tests:
+    Tests use fixtures to reduce boilerplate. Standard pattern:
+
+    def test_something(self, test_name, alice_user, repo_config, record_mode):
+        '''Test description.'''
+        create_basic_pr_data(
+            test_name,  # Auto-populated from test method name
+            comments=[
+                {"id": 100, "body": "+1"},  # user auto-set from alice_user
+            ],
+            user=alice_user,  # Default user for all comments
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(repo_config, gh, repo, issue, dryRun=False, ...)
+
+        # Assertions
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    Available user fixtures: alice_user, bob_user, carol_user, dave_user,
+                            tester_user, cmsbuild_user_dict, testuser
+
+    For multi-user tests, specify "user" in individual comments:
+        comments=[
+            {"id": 100, "body": "+1", "user": alice_user},
+            {"id": 101, "body": "hold", "user": bob_user},
+        ]
 """
 
 import functools
@@ -77,6 +114,7 @@ except ImportError:
 import process_pr_v2
 
 
+# noinspection PyUnusedLocal
 def _dummy_fetch_pr_result(url):
     """Dummy fetch_pr_result for testing - returns success with test passed message."""
     return 0, "+1\n\nTests passed"
@@ -219,6 +257,7 @@ def freeze_time(monkeypatch):
     This ensures that cache timestamps, comment processing, etc. all use
     the same time, making test results reproducible.
     """
+    # noinspection PyUnusedImports
     import process_pr_v2
 
     class FrozenDatetime(datetime):
@@ -235,6 +274,48 @@ def freeze_time(monkeypatch):
     # Patch datetime in process_pr_v2 module
     monkeypatch.setattr("process_pr_v2.datetime", FrozenDatetime)
     yield FROZEN_TIME
+
+
+@pytest.fixture
+def alice_user():
+    """L2 user with 'core' and 'analysis' categories."""
+    return {"login": "alice", "id": 2}
+
+
+@pytest.fixture
+def bob_user():
+    """L2 user with 'simulation' category."""
+    return {"login": "bob", "id": 3}
+
+
+@pytest.fixture
+def carol_user():
+    """L2 user with 'docs' and 'testing' categories."""
+    return {"login": "carol", "id": 4}
+
+
+@pytest.fixture
+def dave_user():
+    """ORP user."""
+    return {"login": "dave", "id": 5}
+
+
+@pytest.fixture
+def cmsbuild_user_dict():
+    """cmsbuild user (bot user with special permissions)."""
+    return {"login": "cmsbuild", "id": 6}
+
+
+@pytest.fixture
+def tester_user():
+    """Generic tester user (must be added to TRIGGER_PR_TESTS in test)."""
+    return {"login": "tester", "id": 100}
+
+
+@pytest.fixture
+def testuser():
+    """Default PR author from create_basic_pr_data."""
+    return {"login": "testuser", "id": 1}
 
 
 # =============================================================================
@@ -1479,6 +1560,7 @@ def create_basic_pr_data(
     base_ref: str = "main",
     statuses: List[Dict] = None,
     login: str = "testuser",
+    user: Dict[str, Any] = None,
 ) -> None:
     """
     Create basic test data files for a PR.
@@ -1495,6 +1577,8 @@ def create_basic_pr_data(
         base_ref: Target branch name (default "main", use "master" for cms-sw/cmssw)
         statuses: List of commit status dicts with context, state, description, target_url
         login: Name of Issue/PR author (default "testuser")
+        user: Default user dict for comments that don't specify a user (e.g., alice_user fixture)
+              If provided, comments without "user" field will use this user.
     """
     create_test_data_directory(test_name)
 
@@ -1538,10 +1622,13 @@ def create_basic_pr_data(
     if comments is None:
         comments = []
     else:
-        # Ensure all comments have timestamps at FROZEN_COMMENT_TIME
+        # Ensure all comments have timestamps and user
         for comment in comments:
             if "created_at" not in comment:
                 comment["created_at"] = comment_time.isoformat().replace("+00:00", "Z")
+            # If comment doesn't have a user and default user is provided, use it
+            if "user" not in comment and user is not None:
+                comment["user"] = user
 
     # Default labels (empty)
     if labels is None:
@@ -1712,10 +1799,10 @@ class TestBasicFunctionality:
         else:
             recorder.verify()
 
-    def test_category_specific_approval(self, repo_config, record_mode):
+    def test_category_specific_approval(self, test_name, alice_user, repo_config, record_mode):
         """Test approval for a specific category (+core)."""
         create_basic_pr_data(
-            "test_category_specific_approval",
+            test_name,
             pr_number=1,
             files=[
                 {
@@ -1728,16 +1815,15 @@ class TestBasicFunctionality:
                 {
                     "id": 100,
                     "body": "+core",
-                    "user": {"login": "alice", "id": 2},
-                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
                 }
             ],
+            user=alice_user,
         )
 
-        recorder = ActionRecorder("test_category_specific_approval", record_mode)
-        gh = MockGithub("test_category_specific_approval", recorder)
-        repo = MockRepository("test_category_specific_approval", recorder=recorder)
-        issue = MockIssue("test_category_specific_approval", number=1, recorder=recorder)
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
 
         result = process_pr(
             repo_config=repo_config,
@@ -1804,10 +1890,10 @@ class TestBasicFunctionality:
 class TestHoldMechanism:
     """Tests for the hold/unhold mechanism."""
 
-    def test_hold_command(self, repo_config, record_mode):
+    def test_hold_command(self, test_name, alice_user, repo_config, record_mode):
         """Test that hold command prevents merge."""
         create_basic_pr_data(
-            "test_hold_command",
+            test_name,
             pr_number=1,
             files=[
                 {
@@ -1820,22 +1906,19 @@ class TestHoldMechanism:
                 {
                     "id": 100,
                     "body": "+1",
-                    "user": {"login": "alice", "id": 2},
-                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
                 },
                 {
                     "id": 101,
                     "body": "hold",
-                    "user": {"login": "alice", "id": 2},
-                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
                 },
             ],
+            user=alice_user,
         )
 
-        recorder = ActionRecorder("test_hold_command", record_mode)
-        gh = MockGithub("test_hold_command", recorder)
-        repo = MockRepository("test_hold_command", recorder=recorder)
-        issue = MockIssue("test_hold_command", number=1, recorder=recorder)
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
 
         result = process_pr(
             repo_config=repo_config,

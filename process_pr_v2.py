@@ -1388,7 +1388,7 @@ def get_user_l2_categories(
         return []
 
     # Find categories active at the given timestamp
-    ts_epoch = timestamp.timestamp() if isinstance(timestamp, datetime) else timestamp
+    ts_epoch = timestamp if isinstance(timestamp, (int, float)) else timestamp.timestamp()
 
     for period in _L2_DATA[username]:
         start_date = period.get("start_date", 0)
@@ -4407,6 +4407,11 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
 
     Updates current_file_versions in cache with the current file version keys.
 
+    When a file is reverted to base (no longer appears in pr.get_files()), it is:
+    - Removed from the cache (cache.file_versions)
+    - Removed from current_file_versions
+    - Its categories are no longer required for signatures
+
     Returns:
         Tuple of (changed_files, new_categories):
         - changed_files: Set of filenames that changed since last check
@@ -4463,21 +4468,36 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
                 if cat not in old_categories:
                     new_categories.add(cat)
 
-    # Check for files that were removed
+    # Check for files that were removed (reverted to base)
     old_filenames = set()
+    removed_fv_keys = []
     for fv_key in old_fv_keys:
         if "::" in fv_key:
             filename = fv_key.split("::")[0]
             old_filenames.add(filename)
+            # If file is no longer in PR, it was reverted to base
+            if filename not in current_files:
+                removed_fv_keys.append(fv_key)
 
     for filename in old_filenames:
         if filename not in current_files:
             changed_files.add(filename)
 
+    # Remove reverted files from cache
+    # When a file is reverted to base, it's removed from pr.get_files()
+    # We need to remove it from cache so its categories are no longer required
+    if removed_fv_keys:
+        logger.info(f"Removing {len(removed_fv_keys)} reverted file(s) from cache")
+        for fv_key in removed_fv_keys:
+            if fv_key in context.cache.file_versions:
+                removed_fv = context.cache.file_versions.pop(fv_key)
+                logger.debug(f"Removed reverted file from cache: {removed_fv.filename}")
+
     # Update current file versions
     context.cache.current_file_versions = current_fv_keys
     logger.debug(
-        f"Updated file states: {len(current_fv_keys)} files, {len(changed_files)} changed, {len(new_categories)} new categories"
+        f"Updated file states: {len(current_fv_keys)} files, {len(changed_files)} changed, "
+        f"{len(new_categories)} new categories, {len(removed_fv_keys)} removed"
     )
 
     return changed_files, new_categories

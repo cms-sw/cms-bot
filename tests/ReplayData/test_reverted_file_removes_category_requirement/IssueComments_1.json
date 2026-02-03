@@ -1,0 +1,49 @@
+{
+  "comments": [
+    {
+      "id": 100,
+      "body": "+core",
+      "user": {
+        "login": "alice",
+        "id": 2
+      },
+      "created_at": "2025-12-12 12:00:00+00:00"
+    },
+    {
+      "id": 101,
+      "body": "+simulation",
+      "user": {
+        "login": "bob",
+        "id": 3
+      },
+      "created_at": "2025-12-12 12:00:00+00:00"
+    },
+    {
+      "id": 1000002,
+      "body": "This pull request is fully signed and it will be integrated in one of the next main IBs after it passes the integration tests. This pull request will be automatically merged.\n<!--fully_signed-->",
+      "user": {
+        "login": "cmsbuild",
+        "id": 0
+      },
+      "created_at": "2025-12-12 12:00:00+00:00"
+    },
+    {
+      "id": 1000003,
+      "body": "A new Pull Request was created by  @testuser.\n\n@Dr15Jones, @civanch, @kpedro88, @makortel, @mdhildreth, @smuzaffar can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->",
+      "user": {
+        "login": "cmsbuild",
+        "id": 0
+      },
+      "created_at": "2025-12-12 12:00:00+00:00"
+    },
+    {
+      "id": 1000004,
+      "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Core/core_file.py::core_sha_123\"],\"ts\":\"2025-12-12T12:00:00+00:00\",\"user\":\"alice\"},\"101\":{\"cats\":[\"simulation\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Simulation/sim_file.py::sim_sha_456\"],\"ts\":\"2025-12-12T12:00:00+00:00\",\"user\":\"bob\"}},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Core/core_file.py::core_sha_123\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"},\"Package/Simulation/sim_file.py::sim_sha_456\":{\"cats\":[\"simulation\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->",
+      "user": {
+        "login": "cmsbuild",
+        "id": 0
+      },
+      "created_at": "2025-12-12 12:00:00+00:00"
+    }
+  ]
+}

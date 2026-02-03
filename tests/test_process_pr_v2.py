@@ -114,7 +114,6 @@ except ImportError:
 import process_pr_v2
 
 
-# noinspection PyUnusedLocal
 def _dummy_fetch_pr_result(url):
     """Dummy fetch_pr_result for testing - returns success with test passed message."""
     return 0, "+1\n\nTests passed"
@@ -257,7 +256,6 @@ def freeze_time(monkeypatch):
     This ensures that cache timestamps, comment processing, etc. all use
     the same time, making test results reproducible.
     """
-    # noinspection PyUnusedImports
     import process_pr_v2
 
     class FrozenDatetime(datetime):
@@ -274,48 +272,6 @@ def freeze_time(monkeypatch):
     # Patch datetime in process_pr_v2 module
     monkeypatch.setattr("process_pr_v2.datetime", FrozenDatetime)
     yield FROZEN_TIME
-
-
-@pytest.fixture
-def alice_user():
-    """L2 user with 'core' and 'analysis' categories."""
-    return {"login": "alice", "id": 2}
-
-
-@pytest.fixture
-def bob_user():
-    """L2 user with 'simulation' category."""
-    return {"login": "bob", "id": 3}
-
-
-@pytest.fixture
-def carol_user():
-    """L2 user with 'docs' and 'testing' categories."""
-    return {"login": "carol", "id": 4}
-
-
-@pytest.fixture
-def dave_user():
-    """ORP user."""
-    return {"login": "dave", "id": 5}
-
-
-@pytest.fixture
-def cmsbuild_user_dict():
-    """cmsbuild user (bot user with special permissions)."""
-    return {"login": "cmsbuild", "id": 6}
-
-
-@pytest.fixture
-def tester_user():
-    """Generic tester user (must be added to TRIGGER_PR_TESTS in test)."""
-    return {"login": "tester", "id": 100}
-
-
-@pytest.fixture
-def testuser():
-    """Default PR author from create_basic_pr_data."""
-    return {"login": "testuser", "id": 1}
 
 
 # =============================================================================
@@ -1536,6 +1492,50 @@ def mock_issue(test_name, action_recorder):
 def repo_config():
     """Get default repository configuration as a mock module."""
     return create_mock_repo_config()
+
+
+# User fixtures for common test scenarios
+# These preserve the usernames from setup_test_l2_data to avoid rerecording
+@pytest.fixture
+def alice_user():
+    """L2 user with 'core' and 'analysis' categories."""
+    return {"login": "alice", "id": 2}
+
+
+@pytest.fixture
+def bob_user():
+    """L2 user with 'simulation' category."""
+    return {"login": "bob", "id": 3}
+
+
+@pytest.fixture
+def carol_user():
+    """L2 user with 'docs' and 'testing' categories."""
+    return {"login": "carol", "id": 4}
+
+
+@pytest.fixture
+def dave_user():
+    """ORP user."""
+    return {"login": "dave", "id": 5}
+
+
+@pytest.fixture
+def cmsbuild_user_dict():
+    """cmsbuild user (bot user with special permissions)."""
+    return {"login": "cmsbuild", "id": 6}
+
+
+@pytest.fixture
+def tester_user():
+    """Generic tester user (must be added to TRIGGER_PR_TESTS in test)."""
+    return {"login": "tester", "id": 100}
+
+
+@pytest.fixture
+def testuser():
+    """Default PR author from create_basic_pr_data."""
+    return {"login": "testuser", "id": 1}
 
 
 # =============================================================================
@@ -3621,6 +3621,117 @@ class TestSignatureLocking:
         )
 
         assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestRevertedFiles:
+    """Tests for handling files reverted to base."""
+
+    def test_reverted_file_removes_category_requirement(
+        self, test_name, alice_user, bob_user, repo_config, record_mode
+    ):
+        """Test that reverting a file to base removes its category from requirements."""
+        # Create PR with two files from different categories
+        create_basic_pr_data(
+            test_name,
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/core_file.py",
+                    "sha": "core_sha_123",
+                    "status": "modified",
+                },
+                {
+                    "filename": "Package/Simulation/sim_file.py",
+                    "sha": "sim_sha_456",
+                    "status": "modified",
+                },
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": alice_user,
+                },
+                {
+                    "id": 101,
+                    "body": "+simulation",
+                    "user": bob_user,
+                },
+            ],
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        # First run: both categories required
+        result1 = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert "core" in result1["categories"]
+        assert "simulation" in result1["categories"]
+
+        # Get all comments including cache comments created during first run
+        all_comments = list(issue.get_comments())
+        comment_list = []
+        for comment in all_comments:
+            comment_list.append(
+                {
+                    "id": comment.id,
+                    "body": comment.body,
+                    "user": {"login": comment.user.login, "id": comment.user.id},
+                    "created_at": comment.created_at,
+                }
+            )
+
+        # Now revert simulation file to base (remove it from PR)
+        # Include all comments (including cache) to preserve cache state
+        create_basic_pr_data(
+            test_name,
+            pr_number=1,
+            files=[
+                {
+                    "filename": "Package/Core/core_file.py",
+                    "sha": "core_sha_123",
+                    "status": "modified",
+                },
+                # simulation file no longer in PR - reverted to base
+            ],
+            comments=comment_list,  # Preserve all comments including cache
+        )
+
+        # Recreate mocks to pick up new file list
+        gh2 = MockGithub(test_name, recorder)
+        repo2 = MockRepository(test_name, recorder=recorder)
+        issue2 = MockIssue(test_name, number=1, recorder=recorder)
+
+        # Second run: only core category should be required now
+        result2 = process_pr(
+            repo_config=repo_config,
+            gh=gh2,
+            repo=repo2,
+            issue=issue2,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert "core" in result2["categories"]
+        # Simulation category should not be required since file was reverted
+        assert "simulation" not in result2["categories"]
 
         if record_mode:
             recorder.save()

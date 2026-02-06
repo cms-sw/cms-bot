@@ -141,8 +141,18 @@ if $CODE_FORMAT ; then
   if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
     grep -v '\.inc$' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-format-files.txt || true
     if [ -s ${UP_DIR}/code-format-files.txt ] ; then
+      USE_OLD_CODE_FORMAT=false
+      if [ "${RELEASE_FORMAT}" == "CMSSW_16_1_X_2026-02-06-1100" ] ; then
+        if [ $(diff ${CMSSW_RELEASE_BASE}/src/.clang-format ${CMSSW_BASE}/src/.clang-format | wc -l) -gt 0 ] ; then
+          echo "Clang format file changed in dev area. Using the IB clang format file."
+          mv  ${CMSSW_BASE}/src/.clang-format ${CMSSW_BASE}/.orig-clang-format
+          cp ${CMSSW_RELEASE_BASE}/src/.clang-format ${CMSSW_BASE}/src/.clang-format
+          USE_OLD_CODE_FORMAT=true
+        fi
+      fi
       scram build -k -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="${UP_DIR}/code-format-files.txt" > ${UP_DIR}/code-format.log 2>&1
       pushd $CMSSW_BASE/src
+        if $USE_OLD_CODE_FORMAT ; then mv ${CMSSW_BASE}/.orig-clang-format ${CMSSW_BASE}/src/.clang-format ; fi
         git diff > ${UP_DIR}/code-format.patch
         if [ -s ${UP_DIR}/code-format.patch ] ; then
           git commit -a -m 'auto applied code-formats changes'

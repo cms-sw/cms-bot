@@ -1200,7 +1200,8 @@ def save_cache_to_comments(issue, comments, cache: BotCache, dry_run: bool = Fal
             # Update existing comment
             if dry_run:
                 logger.info(f"[DRY RUN] Would update cache comment {i + 1}/{len(chunks)}")
-                logger.debug(comment_body)
+                logger.debug(f"Old body: {old_body}")
+                logger.debug(f"New body: {comment_body}")
             else:
                 existing_cache_comments[i].edit(comment_body)
                 logger.debug(f"Updated cache comment {i + 1}/{len(chunks)}")
@@ -4434,12 +4435,10 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
         except AttributeError:
             pass
 
-    # Get old file version keys for comparison
-    old_fv_keys = set(context.cache.current_file_versions)
-
     # Get categories that were already known before this update
+    # (from cached file versions)
     old_categories = set()
-    for fv_key in old_fv_keys:
+    for fv_key in context.cache.file_versions.keys():
         if fv_key in context.cache.file_versions:
             old_categories.update(context.cache.file_versions[fv_key].categories)
 
@@ -4469,9 +4468,13 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
                     new_categories.add(cat)
 
     # Check for files that were removed (reverted to base)
+    # Old files are in cache.file_versions (from previous run)
+    # New files are in current_files (from pr.get_files() this run)
     old_filenames = set()
     removed_fv_keys = []
-    for fv_key in old_fv_keys:
+
+    # Get all filenames from cached file versions
+    for fv_key in context.cache.file_versions.keys():
         if "::" in fv_key:
             filename = fv_key.split("::")[0]
             old_filenames.add(filename)
@@ -4479,6 +4482,7 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
             if filename not in current_files:
                 removed_fv_keys.append(fv_key)
 
+    # Track reverted files as "changed"
     for filename in old_filenames:
         if filename not in current_files:
             changed_files.add(filename)

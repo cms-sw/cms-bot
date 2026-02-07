@@ -91,7 +91,7 @@
       "action": "edit_comment",
       "details": {
         "comment_id": 1000004,
-        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Core/core_file.py::core_sha_123\"],\"ts\":\"2025-12-12T12:00:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\"},\"fv\":{\"Package/Core/core_file.py::core_sha_123\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"},\"Package/Simulation/sim_file.py::sim_sha_456\":{\"cats\":[\"simulation\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Core/core_file.py::core_sha_123\"],\"ts\":\"2025-12-12T12:00:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\"},\"fv\":{\"Package/Core/core_file.py::core_sha_123\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
       }
     }
   ]

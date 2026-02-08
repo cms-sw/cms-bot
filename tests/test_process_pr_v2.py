@@ -3683,6 +3683,9 @@ class TestRevertedFiles:
 
         assert "core" in result1["categories"]
         assert "simulation" in result1["categories"]
+        # Check that labels were added for both categories
+        assert "core-approved" in result1["labels"]
+        assert "simulation-approved" in result1["labels"]
 
         # Get all comments including cache comments created during first run
         all_comments = list(issue.get_comments())
@@ -3732,6 +3735,13 @@ class TestRevertedFiles:
         assert "core" in result2["categories"]
         # Simulation category should not be required since file was reverted
         assert "simulation" not in result2["categories"]
+
+        # Check that labels were updated correctly
+        assert "core-approved" in result2["labels"]
+        # Simulation labels should be removed
+        assert "simulation-approved" not in result2["labels"]
+        assert "simulation-pending" not in result2["labels"]
+        assert "simulation-rejected" not in result2["labels"]
 
         if record_mode:
             recorder.save()

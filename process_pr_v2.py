@@ -4402,7 +4402,7 @@ def get_changed_files(pr) -> List[str]:
     return changed_files
 
 
-def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
+def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str], Set[str]]:
     """
     Update file states based on current PR state.
 
@@ -4414,9 +4414,10 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
     - Its categories are no longer required for signatures
 
     Returns:
-        Tuple of (changed_files, new_categories):
+        Tuple of (changed_files, new_categories, removed_categories):
         - changed_files: Set of filenames that changed since last check
         - new_categories: Set of categories that are new (not seen before in this PR)
+        - removed_categories: Set of categories that are no longer required (files reverted)
     """
     # Use cached files if available, otherwise fetch
     if context._pr_files_with_sha is not None:
@@ -4472,6 +4473,7 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
     # New files are in current_files (from pr.get_files() this run)
     old_filenames = set()
     removed_fv_keys = []
+    removed_categories = set()
 
     # Get all filenames from cached file versions
     for fv_key in context.cache.file_versions.keys():
@@ -4481,6 +4483,9 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
             # If file is no longer in PR, it was reverted to base
             if filename not in current_files:
                 removed_fv_keys.append(fv_key)
+                # Track categories from removed files
+                if fv_key in context.cache.file_versions:
+                    removed_categories.update(context.cache.file_versions[fv_key].categories)
 
     # Track reverted files as "changed"
     for filename in old_filenames:
@@ -4497,14 +4502,23 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str]]:
                 removed_fv = context.cache.file_versions.pop(fv_key)
                 logger.debug(f"Removed reverted file from cache: {removed_fv.filename}")
 
+    # Filter removed_categories to only include categories that are no longer needed
+    # A category is truly "removed" if no remaining files have it
+    remaining_categories = set()
+    for fv_key in current_fv_keys:
+        if fv_key in context.cache.file_versions:
+            remaining_categories.update(context.cache.file_versions[fv_key].categories)
+
+    removed_categories = removed_categories - remaining_categories
+
     # Update current file versions
     context.cache.current_file_versions = current_fv_keys
     logger.debug(
         f"Updated file states: {len(current_fv_keys)} files, {len(changed_files)} changed, "
-        f"{len(new_categories)} new categories, {len(removed_fv_keys)} removed"
+        f"{len(new_categories)} new categories, {len(removed_categories)} removed categories"
     )
 
-    return changed_files, new_categories
+    return changed_files, new_categories, removed_categories
 
 
 # =============================================================================
@@ -5283,6 +5297,11 @@ def determine_pr_state(context: PRContext) -> PRState:
 
     category_states = compute_category_approval_states(context)
 
+    # Get required checks
+    signing_checks = context.get_signing_checks_for_pr()
+    pre_checks = signing_checks.pre_checks
+    extra_checks = signing_checks.extra_checks
+
     # Categories to skip for fully-signed determination
     # These are checked separately (code-checks for test trigger, tests+orp for merge)
     skip_for_fully_signed = {"code-checks", "tests", "orp"}
@@ -5407,6 +5426,16 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     pr_id = context.issue.number if context.issue else None
     if not pr_id:
         return {}
+
+    # Get the head commit SHA
+    try:
+        head_sha = context.pr.head.sha
+    except AttributeError:
+        # pr.head or pr.head.sha not available
+        if context.last_commit:
+            head_sha = context.last_commit.sha
+        else:
+            return {}
 
     # Get commit statuses using cached method (returns dict of context -> status)
     status_map = context.get_commit_statuses()
@@ -5825,6 +5854,10 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
             ApprovalState.STARTED: "-started",
         }
 
+        # Track current categories
+        current_categories = set(category_states.keys())
+
+        # Add/update labels for current categories
         for cat, state in category_states.items():
             # Add current state label
             current_state_label = f"{cat}{state_suffixes[state]}"
@@ -5837,6 +5870,17 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
                 if other_state != state:
                     old_label = f"{cat}{suffix}"
                     if old_label in old_labels:
+                        labels_to_remove.add(old_label)
+
+        # Remove labels for categories that no longer exist (files reverted)
+        # Check all old labels to see if they're category state labels for removed categories
+        for old_label in old_labels:
+            for suffix in state_suffixes.values():
+                if old_label.endswith(suffix):
+                    # Extract category name
+                    cat = old_label[: -len(suffix)]
+                    # If this category no longer exists, remove its label
+                    if cat not in current_categories:
                         labels_to_remove.add(old_label)
 
         # Overall state labels
@@ -6765,7 +6809,16 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
                 )
                 new_categories_msg += f"\n\n{new_l2_mentions} can you please review and sign?"
 
-    msg = f"Pull request #{pr_number} was updated.{resign_msg}{new_categories_msg}{watchers_msg}"
+    # Build removed categories message
+    removed_categories_msg = ""
+    removed_categories = getattr(context, "_removed_categories", set())
+    if removed_categories:
+        removed_cat_list = ", ".join(f"**{cat}**" for cat in sorted(removed_categories))
+        removed_categories_msg = (
+            f"\n\nThe following categories are no longer affected: {removed_cat_list}"
+        )
+
+    msg = f"Pull request #{pr_number} was updated.{resign_msg}{new_categories_msg}{removed_categories_msg}{watchers_msg}"
     post_bot_comment(context, msg, "pr_updated", deterministic_hash(new_commit_sha))
 
 
@@ -7123,14 +7176,17 @@ def process_pr(
             context.watchers = get_watchers(context, chg_files)
 
         # Update file states (sets current_file_versions)
-        changed_files, new_categories = update_file_states(context)
+        changed_files, new_categories, removed_categories = update_file_states(context)
         if changed_files:
             logger.info(f"Changed files: {changed_files}")
         if new_categories:
             logger.info(f"New categories: {new_categories}")
+        if removed_categories:
+            logger.info(f"Removed categories: {removed_categories}")
 
-        # Store new categories for use in PR updated message
+        # Store new/removed categories for use in PR updated message
         context._new_categories = new_categories
+        context._removed_categories = removed_categories
 
         # Check for new commits and post update message if needed
         check_for_new_commits(context)

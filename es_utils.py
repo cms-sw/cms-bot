@@ -165,7 +165,11 @@ def send_cached_payload():
     for cache_file in glob("%s/*/*.json" % es_cache_dir()):
         print("Processing: ", cache_file)
         with open(cache_file) as ref:
-            data = json.load(ref, parse_float=lambda x: str(x))
+            try:
+                data = json.load(ref, parse_float=lambda x: str(x))
+            except:
+                remove(cache_file)
+                continue
             if not send_request(
                 data["uri"],
                 payload=data["payload"],

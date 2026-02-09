@@ -36145,6 +36145,11 @@
                 {
                   "architecture": "el8_aarch64_gcc13",
                   "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
                 }
               ]
             }

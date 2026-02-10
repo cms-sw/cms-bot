@@ -30875,6 +30875,10 @@
                 {
                   "architecture": "slc7_amd64_gcc12",
                   "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
                 }
               ]
             }

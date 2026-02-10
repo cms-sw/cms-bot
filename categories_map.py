@@ -850,6 +850,7 @@ CMSSW_CATEGORIES = {
         "Geometry/MTDGeometryBuilder",
         "Geometry/MTDNumberingBuilder",
         "Geometry/MTDSimData",
+        "Geometry/MTDTBCommonData",
         "Geometry/MuonCommonData",
         "Geometry/MuonNumbering",
         "Geometry/MuonSimData",

@@ -4,12 +4,17 @@ source $(dirname $0)/setup-pr-test-env.sh
 ALLOWED_PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
 MATRIX_OPT=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING MATRIX_OPTION)
 
-WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
-
-for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS ; do
-  WORKFLOWS="$WORKFLOWS $PROFILING_WORKFLOW"
-done
-
+if [ "X$PROFILING_WORKFLOWS" == "X" ];then
+  WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
+else
+  for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS ; do
+    if echo $ALLOWED_PROFILING_WORKFLOWS | grep -qw $PROFILING_WORKFLOW ; then
+      WORKFLOWS="$WORKFLOWS $PROFILING_WORKFLOW"
+    else
+      echo "Workflow $PROFILING_WORKFLOW not in allowed workflows $ALLOWED_WORKFLOW_LIST"
+    fi
+  done
+fi
 
 git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 

@@ -38,8 +38,9 @@ for ((i=1; i<=$#; i++)); do
     -h|--help|-help      ) HELP=YES ;;
   esac
 done
-if [ "${LIMIT}" != "" ]       ; then DAS_EX_OPTS="${DAS_EX_OPTS} --limit=${LIMIT}" ; fi
-if [ "${DAS_EX_OPTS}" != "" ] ; then DAS_EX_OPTS=" #DAS_EXTRA_OPTIONS# ${DAS_EX_OPTS}" ; fi
+[ "${LIMIT}" == "0" ] && LIMIT=""
+[ "${LIMIT}" != "" ]  &&      DAS_EX_OPTS="${DAS_EX_OPTS} --limit=${LIMIT}"
+[ "${DAS_EX_OPTS}" != "" ] && DAS_EX_OPTS=" #DAS_EXTRA_OPTIONS# ${DAS_EX_OPTS}"
 
 ORIG_DAS_CLIENT=""
 for DAS_CLIENT in $(echo $PATH | tr ':' '\n' | grep -E -v '/CMSSW_[^/]*/(bin|src)' | sed "s|\$|/${CMD_NAME}|") ; do

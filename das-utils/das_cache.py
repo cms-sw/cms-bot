@@ -61,12 +61,12 @@ def run_das_client(
 ):
     sha = basename(outfile)
     if " #DAS_EXTRA_OPTIONS# " in query:
-        query_data = query.split(" #DAS_EXTRA_OPTIONS# ",1)
+        query_data = query.split(" #DAS_EXTRA_OPTIONS# ", 1)
         options = query_data[-1].strip()
         query = query_data[0]
-        if '--limit=' in options:
-            xlimit = int(options.split('--limit=',1)[-1].split(" ")[0])
-            options = re.sub('\s*--limit=\d+\s*',' ', options).strip()
+        if "--limit=" in options:
+            xlimit = int(options.split("--limit=", 1)[-1].split(" ")[0])
+            options = re.sub("\s*--limit=\d+\s*", " ", options).strip()
             slimit = limit if (limit > 0) else default_max_limit
             limit = xlimit if (xlimit < slimit) else slimit
     field = query.split(" ", 1)[0]
@@ -79,7 +79,7 @@ def run_das_client(
     fields = ofields[:]
     field_filter = ""
     field = fields[-1]
-    run_non_json = (options != "")
+    run_non_json = options != ""
     if not "|" in query:
         if field in ["file", "site", "dataset"]:
             field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)

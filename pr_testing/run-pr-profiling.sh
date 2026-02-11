@@ -6,14 +6,6 @@ MATRIX_OPT=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING MATRIX_OPTION)
 
 if [ "X$PROFILING_WORKFLOWS" == "X" ];then
   WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
-else
-  for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS ; do
-    if echo $ALLOWED_PROFILING_WORKFLOWS | grep -qw $PROFILING_WORKFLOW ; then
-      WORKFLOWS="$WORKFLOWS $PROFILING_WORKFLOW"
-    else
-      echo "Workflow $PROFILING_WORKFLOW not in allowed workflows $ALLOWED_WORKFLOW_LIST"
-    fi
-  done
 fi
 
 git clone --depth 1 https://github.com/cms-cmpwg/profiling.git

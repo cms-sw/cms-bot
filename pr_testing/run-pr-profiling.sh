@@ -8,11 +8,7 @@ if [ "X$PROFILING_WORKFLOWS" == "X" ];then
   WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
 else
   for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS ; do
-    if echo $ALLOWED_PROFILING_WORKFLOWS | grep -qw $PROFILING_WORKFLOW ; then
       WORKFLOWS="$WORKFLOWS $PROFILING_WORKFLOW"
-    else
-      echo "Workflow $PROFILING_WORKFLOW not in allowed workflows $ALLOWED_WORKFLOW_LIST"
-    fi
   done
 fi
 

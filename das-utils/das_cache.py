@@ -29,7 +29,7 @@ ignore_lfn = [
     "/store/data/Run2012D/SingleMu/RAW-RECO/ZMu-15Apr2014-v1/00000/0A3BFB8B-0DCD-E311-A6C5-485B39800C2D.root",
     "/store/relval/CMSSW_12_3_0_pre5/RelValTTbar_14TeV/GEN-SIM/123X_mcRun4_realistic_v4_2026D88noPU-v1/10000/49e54274-4298-4576-b47b-866e2247eab5.root",
 ]
-default_max_limit = 10000
+default_max_limit = 1000
 override_limit = {
     "55976934e0a2dbd0b6e99d9f64e1edc5840aaf3648204589f76e15ba933764b5": default_max_limit,
     "fdf9e08774bbca514fbe4de4dc65585eb4807291e8283d0c7420c1ba5928b9ef": default_max_limit,
@@ -60,6 +60,15 @@ def run_das_client(
     outfile, query, override, dasclient="das_client", options="", threshold=900, retry=5, limit=0
 ):
     sha = basename(outfile)
+    if " #DAS_EXTRA_OPTIONS# " in query:
+        query_data = query.split(" #DAS_EXTRA_OPTIONS# ",1)
+        options = query_data[-1].strip()
+        query = query_data[0]
+        if '--limit=' in options:
+            xlimit = int(options.split('--limit=',1)[-1].split(" ")[0])
+            options = re.sub('\s*--limit=\d+\s*',' ', options).strip()
+            slimit = limit if (limit > 0) else default_max_limit
+            limit = xlimit if (xlimit < slimit) else slimit
     field = query.split(" ", 1)[0]
     if "=" in field:
         field = field.split("=", 1)[0]
@@ -70,7 +79,7 @@ def run_das_client(
     fields = ofields[:]
     field_filter = ""
     field = fields[-1]
-    run_non_json = False
+    run_non_json = (options != "")
     if not "|" in query:
         if field in ["file", "site", "dataset"]:
             field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)

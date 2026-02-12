@@ -167,13 +167,6 @@ KNOWN_ERRORS["relvals"][RelFilter][".+"] = {
     "536.0": {"step": 1, "exitcode": 256, "reason": MSG_ASAN_INCOMPETIBILITY},
 }
 
-RelFilter = "CMSSW_[0-9]+_[0-9]+_(.*CLANG.*)_X_.+"
-KNOWN_ERRORS["relvals"][RelFilter] = {}
-KNOWN_ERRORS["relvals"][RelFilter][".+"] = {
-    "537.0": {"step": 1, "exitcode": 62720, "reason": "TimeOut: TOO_MANY_EVENTS_TO_PROCESS"},
-    "538.0": {"step": 1, "exitcode": 62720, "reason": "TimeOut: TOO_MANY_EVENTS_TO_PROCESS"},
-}
-
 RelFilter = "CMSSW_(12|1[2-9]|[2-9][0-9]|[1-9][0-9][0-9]+)_.+"
 KNOWN_ERRORS["relvals"][RelFilter] = {}
 KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {

@@ -2,8 +2,10 @@
 THISDIR=$(dirname $0)
 source ${THISDIR}/cmsrep.sh
 CONFIG_MAP=${THISDIR}/config.map
-if [ "X$PROFLING_WORKFLOWS" = "X" ] ; then
+if [ "X$PROFILING_WORKFLOWS" = "X" ] ; then
   PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
+else 
+  PROFILING_WORKFLOWS=$(echo $PROFILING_WORKFLOWS | tr ',' ' ')
 fi
 
 for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do

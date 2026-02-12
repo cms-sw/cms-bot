@@ -7,7 +7,7 @@ MATRIX_OPT=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING MATRIX_OPTION)
 if [ "X$PROFILING_WORKFLOWS" == "X" ];then
   WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
 else
-  for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS ; do
+  for PROFILING_WORKFLOW in $(echo $PROFILING_WORKFLOWS | tr ',' ' ') ; do
       WORKFLOWS="$WORKFLOWS $PROFILING_WORKFLOW"
   done
 fi
@@ -16,7 +16,7 @@ git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 
 for PROFILING_WORKFLOW in $WORKFLOWS;do
   if [ $(runTheMatrix.py -n ${MATRIX_OPT} -w cleanedupgrade,standard,highstats,pileup,generator,extendedgen,production,identity,ged,machine,premix,nano,gpu,2017,2026 | grep "^$PROFILING_WORKFLOW " | wc -l) -eq 0 ] ; then
-    mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Not run: not a valid workflows" -e
+    mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Not run: not a valid workflow" -e
     continue
   else
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'pending' -u "${BUILD_URL}" -d "Running tests" || true

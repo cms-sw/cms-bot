@@ -21,6 +21,8 @@ CMD_NAME="dasgoclient"
 LIMIT_RESULTS="NO"
 QUERY=
 FORMAT="plain"
+DAS_EX_OPTS=""
+LIMIT=""
 HELP=
 for ((i=1; i<=$#; i++)); do
   next=$((i+1))
@@ -29,10 +31,16 @@ for ((i=1; i<=$#; i++)); do
     --query|-query       ) QUERY=${!next} ;;
     --format=*|-format=* ) FORMAT=$(echo ${!i} | sed 's|.*=||') ;;
     --format|-format     ) FORMAT=${!next} ;;
+    --unique|-unique     ) DAS_EX_OPTS="${DAS_EX_OPTS} -unique" ;;
+    --limit=*|-limit=*   ) LIMIT=$(echo ${!i} | sed 's|.*limit=||') ;;
+    --limit|-limit       ) LIMIT=${!next} ;;
     -json                ) CMS_BOT_USE_DASGOCLIENT=true ;;
     -h|--help|-help      ) HELP=YES ;;
   esac
 done
+[ "${LIMIT}" == "0" ] && LIMIT=""
+[ "${LIMIT}" != "" ]  &&      DAS_EX_OPTS="${DAS_EX_OPTS} --limit=${LIMIT}"
+[ "${DAS_EX_OPTS}" != "" ] && DAS_EX_OPTS=" #DAS_EXTRA_OPTIONS# ${DAS_EX_OPTS}"
 
 ORIG_DAS_CLIENT=""
 for DAS_CLIENT in $(echo $PATH | tr ':' '\n' | grep -E -v '/CMSSW_[^/]*/(bin|src)' | sed "s|\$|/${CMD_NAME}|") ; do
@@ -60,14 +68,14 @@ case $(cmsos) in
   * ) ;;
 esac
 QUERY=$(echo "${QUERY}" | sed 's|^ *||;s| *$||;s|  *| |g;s| =|=|g;s|= |=|g;')
-QUERY_SHA_HASH=$(echo -n "${QUERY}" | sha256sum | sed 's| .*$||;s| *||')
+QUERY_SHA_HASH=$(echo -n "${QUERY}${DAS_EX_OPTS}" | sha256sum | sed 's| .*$||;s| *||')
 QUERY_SHA=$(echo "${QUERY_SHA_HASH}" | sed 's|^\(..\)|\1/\1|')
 QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/${QUERY_SHA}"
 DAS_QUERY_DIR=das_query/$$
 if [ "X${LOCALRT}" != "X" ] ; then DAS_QUERY_DIR="${LOCALRT}/${DAS_QUERY_DIR}" ; fi
 rm -rf ${DAS_QUERY_DIR}
 mkdir -p ${DAS_QUERY_DIR}
-echo "${QUERY}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
+echo "${QUERY}${DAS_EX_OPTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
 touch ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
 if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(${DOWNLOAD_CMD} "${QUERY_URL}.json" || true)

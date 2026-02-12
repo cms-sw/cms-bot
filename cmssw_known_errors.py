@@ -167,9 +167,10 @@ KNOWN_ERRORS["relvals"][RelFilter][".+"] = {
     "536.0": {"step": 1, "exitcode": 256, "reason": MSG_ASAN_INCOMPETIBILITY},
 }
 
+NON_AMD64_ARCHS = ".+_(aarch64|ppc64le|riscv64)_.+"
 RelFilter = "CMSSW_(12|1[2-9]|[2-9][0-9]|[1-9][0-9][0-9]+)_.+"
 KNOWN_ERRORS["relvals"][RelFilter] = {}
-KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
+KNOWN_ERRORS["relvals"][RelFilter][NON_AMD64_ARCHS] = {
     "10804.31": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
     "10805.31": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
 }
@@ -178,7 +179,7 @@ KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
 RelFilter = "CMSSW_(14|1[5-9]|[2-9][0-9]|[1-9][0-9][0-9]+)_.+"
 KNOWN_ERRORS["relvals"][RelFilter] = {}
 # Known MSG_ARCH_INCOMPETIBILITY failures
-KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {}
+KNOWN_ERRORS["relvals"][RelFilter][NON_AMD64_ARCHS] = {}
 for wf, step in [
     ("180.1", 1),
     ("181.1", 1),
@@ -189,7 +190,7 @@ for wf, step in [
     ("2500.9102", 1),
     ("2500.9103", 1),
 ]:
-    KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"][wf] = {
+    KNOWN_ERRORS["relvals"][RelFilter][NON_AMD64_ARCHS][wf] = {
         "step": step,
         "exitcode": 16640,
         "reason": MSG_ARCH_INCOMPETIBILITY,

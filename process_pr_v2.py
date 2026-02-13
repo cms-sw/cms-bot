@@ -541,6 +541,9 @@ def init_l2_data(
     """
     global _L2_DATA
 
+    if _L2_DATA:
+        return _L2_DATA
+
     if cms_repo:
         # Load default L2 data from cmssw_l2/l2.json
         default_l2_path = join(dirname(__file__), "cmssw_l2", "l2.json")
@@ -2545,21 +2548,30 @@ def _handle_approval(
         # Specific category - check if it's a valid signing category
         category = category_str.strip()
 
-        # Get all valid signing categories:
-        # 1. L2 categories from file ownership (in context.signing_categories)
-        # 2. Manually assigned categories (in context.signing_categories)
-        # 3. Pre-checks and extra-checks (code-checks, tests, orp, externals)
-        all_valid_categories = (
-            context.signing_categories
-            | set(signing_checks.pre_checks)
-            | set(signing_checks.extra_checks)
-        )
+        if category in pre_checks:
+            # Pre-check category (e.g. code-checks) - only the bot posts these
+            # No L2 membership check needed: regular users never sign pre-checks
+            if user == context.cmsbuild_user:
+                categories = [category]
+            else:
+                logger.info(
+                    f"User {user} is not a cmsbuild user, ignoring signature for {category}"
+                )
+                return False
 
-        if category not in all_valid_categories:
+        elif category in context.signing_categories | set(signing_checks.extra_checks):
+            # Regular or extra-check category - verify user belongs to it
+            user_cats = get_user_l2_categories(context.repo_config, user, timestamp)
+            if category not in user_cats:
+                logger.info(
+                    f"User {user} tried to sign for category '{category}' but only has: {user_cats}"
+                )
+                return False
+            categories = [category]
+        else:
             # Not a signing category - return None to allow fallthrough to other commands
             logger.debug(f"Category '{category}' is not a signing category, allowing fallthrough")
             return None
-        categories = [category]
     else:
         # Generic +1/-1 applies to all user's L2 categories at that time
         categories = get_user_l2_categories(context.repo_config, user, timestamp)
@@ -7019,6 +7031,8 @@ def process_pr(
     )
     context._last_commit = last_commit
     context.notify_without_at = notify_without_at
+
+    init_l2_data(repo_config, context.cms_repo)
 
     # Set repository info (these are stored, computed properties derive from them)
     context.repo_name = repo.name

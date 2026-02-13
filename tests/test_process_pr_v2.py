@@ -114,6 +114,7 @@ except ImportError:
 import process_pr_v2
 
 
+# noinspection PyUnusedLocal
 def _dummy_fetch_pr_result(url):
     """Dummy fetch_pr_result for testing - returns success with test passed message."""
     return 0, "+1\n\nTests passed"
@@ -256,6 +257,7 @@ def freeze_time(monkeypatch):
     This ensures that cache timestamps, comment processing, etc. all use
     the same time, making test results reproducible.
     """
+    # noinspection PyUnusedImports
     import process_pr_v2
 
     class FrozenDatetime(datetime):
@@ -4450,6 +4452,121 @@ class TestL2MembershipChanges:
         assert (
             result["categories"]["dqm"]["state"] == "approved"
         ), "dqm should be approved (Alice was dqm L2 at T2)"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestUnauthorizedCategorySign:
+    """Tests for signing for a category the user doesn't belong to."""
+
+    def test_sign_wrong_category_gets_minus_one(
+        self, test_name, bob_user, repo_config, record_mode
+    ):
+        """Test that signing for a category you don't have gets a :-1: reaction.
+
+        bob has 'simulation' category, but tries to sign +core.
+        Expected: :-1: reaction, core remains unsigned.
+        """
+        create_basic_pr_data(
+            test_name,
+            pr_number=1,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "+core",
+                    "user": bob_user,  # bob only has 'simulation', not 'core'
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # core should still be pending - bob's sign attempt was rejected
+        assert result["categories"]["core"]["state"] == "pending"
+
+        # Verify :-1: reaction was set (not :+1:)
+        reaction_actions = [
+            a
+            for a in recorder.actions
+            if a["action"] == "create_reaction" and a["details"].get("comment_id") == 100
+        ]
+        assert len(reaction_actions) == 1
+        assert (
+            reaction_actions[0]["details"]["reaction"] == "-1"
+        ), "Should have set :-1: reaction for unauthorized category sign"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_reject_wrong_category_gets_minus_one(
+        self, test_name, bob_user, repo_config, record_mode
+    ):
+        """Test that rejecting a category you don't have also gets a :-1: reaction.
+
+        bob has 'simulation' category, but tries to sign -core.
+        Expected: :-1: reaction, core is not rejected.
+        """
+        create_basic_pr_data(
+            test_name,
+            pr_number=1,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "-core",
+                    "user": bob_user,  # bob only has 'simulation', not 'core'
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+            ],
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["pr_number"] == 1
+        # core should be pending, not rejected
+        assert result["categories"]["core"]["state"] == "pending"
+
+        reaction_actions = [
+            a
+            for a in recorder.actions
+            if a["action"] == "create_reaction" and a["details"].get("comment_id") == 100
+        ]
+        assert len(reaction_actions) == 1
+        assert (
+            reaction_actions[0]["details"]["reaction"] == "-1"
+        ), "Should have set :-1: reaction for unauthorized category reject"
 
         if record_mode:
             recorder.save()

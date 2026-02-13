@@ -12,7 +12,6 @@ function dockerrun()
     os=$(echo $SCRAM_ARCH | cut -d_ -f1)
     case $os in
       slc*|cc*|cs* ) os=$(echo $os | sed 's|^[a-z]*|el|') ;;
-      fc38 ) os="fc39" ;;
     esac
     IMG="cmssw/${os}:${arch}"
     if [ $(uname -m) != "${arch}" ] ; then
@@ -46,8 +45,11 @@ function dockerrun()
       ;;
     qemu)
       ls ${IMAGE_BASE} >/dev/null 2>&1
-      CMD_ARG="-b /tmp:/tmp -b /cvmfs:/cvmfs -w ${THISDIR}"
-      if [ -d /build ] ; then CMD_ARG="-b /build:/build ${CMD_ARG}"; fi
+      xdir=$(echo ${THISDIR} | cut -d/ -f2)
+      CMD_ARG="-w ${THISDIR}"
+      for xd in $(echo "cvmfs tmp build data scratch ${xdir}" | tr ' ' '\n' | sort | uniq | grep -v '^$') ; do
+        [ -e "/${xd}" ] && CMD_ARG="-b /$xd:/$xd ${CMD_ARG}"
+      done
       if [ "${MOUNT_DIRS}" != "" ] ; then for p in ${MOUNT_DIRS} ; do CMD_ARG="${CMD_ARG} -b $p"; done ; fi
       ARGS="cd ${THISDIR}; $@"
       $PROOTDIR/proot -R ${IMAGE_BASE}/${IMG} ${CMD_ARG} -q "${QEMU_ARGS}" sh -c "${ARGS}"

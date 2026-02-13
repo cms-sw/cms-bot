@@ -24,6 +24,7 @@ function dockerrun()
         QEMU_ARGS="${QEMU_ARGS} -cpu POWER8"
       elif [ "${arch}" = "riscv64" ] ; then
         QEMU_ARGS="${QEMU_ARGS} -cpu rv64"
+        MOUNT_DIRS="${MOUNT_DIRS} /tmp:/var/tmp"
       fi
     fi
   fi

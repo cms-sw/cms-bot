@@ -302,9 +302,9 @@ pushd compareProducts
   for wf in 136.874 ; do
     for step in step3 ; do
       for stype in "" "_inMINIAOD" ; do
-        fA=$(ls -d $WORKSPACE/data/PR-$PR_NUM/${wf}_*/${step}${stype}.root || true)
+        fA=$(ls -d $WORKSPACE/data/PR-$PR_NUM/${wf}_*/${step}${stype}.root 2>/dev/null || true)
         [ "${fA}" != "" ] || continue
-        fB=$(ls -d $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_*/${step}${stype}.root || true)
+        fB=$(ls -d $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_*/${step}${stype}.root 2>/dev/null || true)
         [ "${fB}" != "" ] || continue
         aod_log="${stype}"
         [ "${stype}" == "" ] && aod_log="_AOD"

@@ -303,9 +303,9 @@ pushd compareProducts
     for step in step3 ; do
       for stype in "" "_inMINIAOD" ; do
         fA=$(ls -d $WORKSPACE/data/PR-$PR_NUM/${wf}_*/${step}${stype}.root || true)
-        [ "${fA}" != "" ] && continue
+        [ "${fA}" != "" ] || continue
         fB=$(ls -d $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_*/${step}${stype}.root || true)
-        [ "${fB}" != "" ] && continue
+        [ "${fB}" != "" ] || continue
         aod_log="${stype}"
         [ "${stype}" == "" ] && aod_log="_AOD"
         ./compareProducts.sh "$fA" "$fB" _ 100 10 > ${WORKSPACE}/upload/products${aod_log}.log || true

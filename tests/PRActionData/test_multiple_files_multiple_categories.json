@@ -1,0 +1,62 @@
+{
+  "test_name": "test_multiple_files_multiple_categories",
+  "action_count": 6,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_reaction",
+      "details": {
+        "comment_id": 100,
+        "reaction": "+1"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "analysis-approved",
+          "core-approved",
+          "fully-signed",
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "This pull request is fully signed and it will be integrated in one of the next main IBs after it passes the integration tests. This pull request will be automatically merged.\n<!--fully_signed-->"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "A new Pull Request was created by  @testuser.\n\n@Dr15Jones, @makortel, @smuzaffar, @tvami can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "commit123",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/1/jenkins"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"100\":{\"cats\":[\"core\",\"analysis\"],\"ctype\":\"+1\",\"first_line\":\"+1\",\"signed_files\":[\"Package/Analysis/analyzer.py::file_sha_2\",\"Package/Core/main.py::file_sha_1\"],\"ts\":\"2025-12-12T12:00:00+00:00\",\"user\":\"alice\"}},\"emoji\":{\"100\":\"+1\"},\"fv\":{\"Package/Analysis/analyzer.py::file_sha_2\":{\"cats\":[\"analysis\"],\"ts\":\"2025-12-12T11:00:00Z\"},\"Package/Core/main.py::file_sha_1\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"},\"docs/README.md::file_sha_3\":{\"cats\":[],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

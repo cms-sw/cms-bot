@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "sha": "faa9944e724742f98b149d49943697df443161bc",
+      "filename": "RecoLocalCalo/EcalRecProducers/plugins/alpaka/EcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc",
+      "status": "modified",
+      "additions": 3,
+      "deletions": 0,
+      "changes": 3,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/06336c8884bcfbc516cc69fd99b0a161bb3a14d5/RecoLocalCalo%2FEcalRecProducers%2Fplugins%2Falpaka%2FEcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/06336c8884bcfbc516cc69fd99b0a161bb3a14d5/RecoLocalCalo%2FEcalRecProducers%2Fplugins%2Falpaka%2FEcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/RecoLocalCalo%2FEcalRecProducers%2Fplugins%2Falpaka%2FEcalUncalibRecHitPhase2WeightsAlgoPortable.dev.cc?ref=06336c8884bcfbc516cc69fd99b0a161bb3a14d5",
+      "patch": "@@ -34,7 +34,10 @@ namespace ALPAKA_ACCELERATOR_NAMESPACE::ecal::weights {\n       //divide the grid into uniform elements\n       for (auto tx : uniform_elements(acc, nchannels)) {\n         bool g1 = false;\n+#pragma GCC diagnostic push\n+#pragma GCC diagnostic ignored \"-Wdangling-reference\"\n         const auto& digi = digisDev[tx].data();\n+#pragma GCC diagnostic pop\n         auto recHit = uncalibratedRecHitsDev[tx];\n         recHit.amplitude() = 0;\n         recHit.jitter() = 0;"
+    }
+  ]
+}

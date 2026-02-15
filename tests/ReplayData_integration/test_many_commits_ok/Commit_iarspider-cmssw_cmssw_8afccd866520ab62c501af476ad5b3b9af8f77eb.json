@@ -1,0 +1,98 @@
+{
+  "sha": "8afccd866520ab62c501af476ad5b3b9af8f77eb",
+  "node_id": "C_kwDOF83__NoAKDhhZmNjZDg2NjUyMGFiNjJjNTAxYWY0NzZhZDViM2I5YWY4Zjc3ZWI",
+  "commit": {
+    "author": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:44:53Z"
+    },
+    "committer": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:44:53Z"
+    },
+    "message": "Dummy commit",
+    "tree": {
+      "sha": "6c81a6cb7c3ba6bd69df6e1715d38b2501ad8d31",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/6c81a6cb7c3ba6bd69df6e1715d38b2501ad8d31"
+    },
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/8afccd866520ab62c501af476ad5b3b9af8f77eb",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null
+    }
+  },
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/8afccd866520ab62c501af476ad5b3b9af8f77eb",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/8afccd866520ab62c501af476ad5b3b9af8f77eb",
+  "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/8afccd866520ab62c501af476ad5b3b9af8f77eb/comments",
+  "author": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "e51cf1bf814047845cf0e6a09112abb57a0b6299",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/e51cf1bf814047845cf0e6a09112abb57a0b6299",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/e51cf1bf814047845cf0e6a09112abb57a0b6299"
+    }
+  ],
+  "stats": {
+    "total": 1,
+    "additions": 1,
+    "deletions": 0
+  },
+  "files": [
+    {
+      "sha": "06fd47eb14b15dc3b226b529ad54bebb3b43bc75",
+      "filename": "Alignment/APEEstimation/python/ApeEstimator_cfi.py",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/8afccd866520ab62c501af476ad5b3b9af8f77eb/Alignment%2FAPEEstimation%2Fpython%2FApeEstimator_cfi.py",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/8afccd866520ab62c501af476ad5b3b9af8f77eb/Alignment%2FAPEEstimation%2Fpython%2FApeEstimator_cfi.py",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Alignment%2FAPEEstimation%2Fpython%2FApeEstimator_cfi.py?ref=8afccd866520ab62c501af476ad5b3b9af8f77eb",
+      "patch": "@@ -98,3 +98,4 @@\n     #Define intervals in residual error for calculation of APE (one estimation per interval), (for APE calculation)\n     residualErrorBinning = cms.vdouble(),\n )\n+# dummy dummy"
+    }
+  ]
+}

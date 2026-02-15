@@ -1,0 +1,22 @@
+{
+  "test_name": "test_ignore_rejected_invalid",
+  "action_count": 2,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 25,
+        "body": "Pull request #25 was updated. iarspider can you please check and sign again.\n<!--pr_updated:113591181535781546-->"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2827851759,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2801602205\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2025-04-14T12:47:46+00:00\",\"user\":\"iarspider\"},\"2827788285\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2025-04-24T14:14:41+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"README::8ba380ffd2b1d4ab7fa8173325151d49cefee02b\":{\"cats\":[],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

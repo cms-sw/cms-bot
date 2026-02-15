@@ -1,0 +1,30 @@
+{
+  "test_name": "test_draft_pr_ready",
+  "action_count": 3,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 21,
+        "body": "New categories assigned: l1\n\n@aloeliger, @epalencia you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2523442237-->"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 21,
+        "body": "A new Pull Request was created by  @iarspider for master.\n\nIt involves the following packages:\n\n- FWCore/Utilities (**core**)\n\n@Dr15Jones, @aloeliger, @epalencia, @makortel, @smuzaffar can you please review it and eventually sign? Thanks.\n@felicepantaleo, @makortel, @missirol, @wddgit this is something you requested to watch as well.\n@iarspider you are the release manager for this.\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2523322081,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"},\"2523514208\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:36:43+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2523442237\":\"+1\"},\"fv\":{\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

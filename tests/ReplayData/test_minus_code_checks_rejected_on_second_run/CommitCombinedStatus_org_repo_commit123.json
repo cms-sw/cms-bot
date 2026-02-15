@@ -1,0 +1,11 @@
+{
+  "state": "pending",
+  "statuses": [
+    {
+      "context": "cms/1/code-checks",
+      "state": "error",
+      "description": "See details",
+      "target_url": ""
+    }
+  ]
+}

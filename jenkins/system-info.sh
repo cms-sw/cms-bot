@@ -38,7 +38,8 @@ rm -f $WORKSPACE/cmsos
 
 #Protection for CVE-2022-24765
 #Workaround for lxplus /tmp/.git
-if [ $(hostname | grep 'lxplus' | wc -l) -gt 0 ] ; then
+BUILD_HOST=$(hostname -s)
+if [ $(echo ${BUILD_HOST} | grep 'lxplus' | wc -l) -gt 0 ] ; then
   if [ ! -e $WORKSPACE/.git/config ] ; then
     rm -rf $WORKSPACE/.git
     git init $WORKSPACE
@@ -65,10 +66,9 @@ if [ "${USER_HOME_MD5}" != "" ] ; then
   elif [ $(cat ${RSYNC_SLAVE_FILE}) != "${USER_HOME_MD5}" ] ; then
     RSYNC_SLAVE=true
   else
-    HN=$(hostname -s)
-    if [ -e "${HOME}/.ssh/authorized_keys-${HN}" ] ; then
-      cat ${HOME}/.ssh/authorized_keys-${HN} >> ${HOME}/.ssh/authorized_keys
-      rm -f ${HOME}/.ssh/authorized_keys-${HN}
+    if [ -e "${HOME}/.ssh/authorized_keys-${BUILD_HOST}" ] ; then
+      cat ${HOME}/.ssh/authorized_keys-${BUILD_HOST} >> ${HOME}/.ssh/authorized_keys
+      rm -f ${HOME}/.ssh/authorized_keys-${BUILD_HOST}
     fi
   fi
 fi
@@ -84,7 +84,7 @@ if [ -e $WORKSPACE/slave.jar ] ; then
 fi
 echo "DATA_SLAVE_JAR=${slave_jar}"
 
-SLAVE_LABELS="user-$(whoami) kernel-$(uname -r) hostname-$(hostname -s)"
+SLAVE_LABELS="user-$(whoami) kernel-$(uname -r) hostname-${BUILD_HOST}"
 if [ $(echo $HOME | grep '^/afs/' |wc -l) -gt 0 ] ; then SLAVE_LABELS="${SLAVE_LABELS} home-afs"; fi
 arch=$(uname -m)
 SLAVE_LABELS="${SLAVE_LABELS} ${arch}"
@@ -98,6 +98,10 @@ elif [ "$arch" = "x86_64" ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} ${arch}"
   SLAVE_LABELS="${SLAVE_LABELS} $(ld.so --help | grep -E ' x86-64-v[0-9]+ ' | grep -i supported | sed 's|^ *||;s| .*||' | grep x86-64-v | tr '\n' ' ')"
   HOST_ARCH=$(cat /proc/cpuinfo 2> /dev/null | grep vendor_id | sed 's|.*: *||' | tail -1)
+  case $BUILD_HOST in
+    cmsbuild* ) SLAVE_LABELS="${SLAVE_LABELS} qemu-riscv65" ;;
+    * ) ;;
+  esac
 fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
@@ -241,8 +245,7 @@ if [ "$ROCM_VERSION" ]; then
   fi
 fi
 
-if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
-  hname=$(hostname -s)
+if [ $(echo ${BUILD_HOST} | grep '^lxplus' | wc -l) -gt 0 ] ; then
   case ${HOST_CMS_ARCH} in
     slc6_*) lxplus_type="lxplus6";;
     slc7_*|cc7_*|cs7_*) lxplus_type="lxplus7";;
@@ -250,9 +253,9 @@ if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
     cs9_*|el9_*|alma9*_) lxplus_type="lxplus9";;
   esac
   if [ "${CLEANUP_WORKSPACE}" != "cleanup" ] ; then
-    SLAVE_LABELS="$hname lxplus-scripts ${lxplus_type}-scripts ${SLAVE_LABELS}"
+    SLAVE_LABELS="${BUILD_HOST} lxplus-scripts ${lxplus_type}-scripts ${SLAVE_LABELS}"
   else 
-    SLAVE_LABELS="$hname lxplus ${lxplus_type} ${SLAVE_LABELS}"
+    SLAVE_LABELS="${BUILD_HOST} lxplus ${lxplus_type} ${SLAVE_LABELS}"
   fi
 fi
 
@@ -266,10 +269,9 @@ fi
 echo "DATA_LIMITS=${val}"
 
 #Extra labels
-case $(hostname -s) in
+case ${BUILD_HOST} in
   techlab-arm64-thunderx-02 | ibmminsky-* ) SLAVE_LABELS="profiling ${SLAVE_LABELS}";;
   cmsecal* ) SLAVE_LABELS="cmsecal ${SLAVE_LABELS}";;
-  cmsbuild*) SLAVE_LABELS="qemu-riscv64 ${SLAVE_LABELS}";;
 esac
 SLAVE_LABELS="disk-free-$(df -BG $WORKSPACE | tail -1 | awk '{print $4"-of-"$2}') ${SLAVE_LABELS}"
 echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"

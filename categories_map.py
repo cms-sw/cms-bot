@@ -781,6 +781,7 @@ CMSSW_CATEGORIES = {
         "GeneratorInterface/MCatNLOInterface",
         "GeneratorInterface/PartonShowerVeto",
         "GeneratorInterface/PhotosInterface",
+        "GeneratorInterface/PlutoInterface",
         "GeneratorInterface/PomwigInterface",
         "GeneratorInterface/PyquenInterface",
         "GeneratorInterface/Pythia6Interface",

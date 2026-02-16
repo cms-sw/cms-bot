@@ -64,22 +64,26 @@ elif [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then
   DOCKER_IMG=$DOCKER_IMG_HOST
 fi
 UNAME_M=$(uname -m)
+IMG_ARCH=${UNAME_M}
 export CMSBOT_CI_TESTS=true
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
+  xarch=""
+  if [ "${ARCHITECTURE}" != "" ] ; then
+    xarch="${ARCHITECTURE}"
+    export SCRAM_ARCH="${ARCHITECTURE}"
+  elif [ "${SCRAM_ARCH}" != "" ] ; then
+    xarch="${SCRAM_ARCH}"
+  else
+    echo "ERROR: DOCKER_IMG cmssw used without providing valid ARCHITECTURE/SCRAM_ARCH"
+    exit 1
+  fi
+  IMG_ARCH=$(echo $xarch | cut -d_ -f2)
+  [ "${IMG_ARCH}" = "amd64" ] && IMG_ARCH="x86_64"
   if [ "$DOCKER_IMG" = "cmssw" ] ; then
-    xarch=""
-    if [ "${ARCHITECTURE}" != "" ] ; then
-      xarch="${ARCHITECTURE}"
-    elif [ "${SCRAM_ARCH}" != "" ] ; then
-      xarch="${SCRAM_ARCH}"
-    else
-      echo "ERROR: DOCKER_IMG cmssw used without providing valid ARCHITECTURE/SCRAM_ARCH"
-      exit 1
-    fi
-    DOCKER_IMG=cmssw/$(echo ${xarch} | sed 's|_.*||;s|slc|el|'):${UNAME_M}
+    DOCKER_IMG=cmssw/$(echo ${xarch} | sed 's|_.*||;s|slc|el|'):${IMG_ARCH}
   elif [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
     if [ $(echo "${DOCKER_IMG}" | grep ':' | wc -l) -eq 0 ] ; then
-      export DOCKER_IMG="${DOCKER_IMG}:${UNAME_M}"
+      export DOCKER_IMG="${DOCKER_IMG}:${IMG_ARCH}"
     fi
   fi
   BUILD_BASEDIR=$(dirname $WORKSPACE)
@@ -216,8 +220,14 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ "${CMSCI_CONTAINER_OPTS_SCRIPT}" != "" ] ; then
       EX_OPTIONS="${EX_OPTIONS} $(${SCRIPTPATH}/${CMSCI_CONTAINER_OPTS_SCRIPT} ${CONTAINER_CMD})"
     fi
-    PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
-    #if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+    if [ "${UNAME_M}" != "${IMG_ARCH}" -a "${IMG_ARCH}" == "riscv64" ] ; then
+      export MOUNT_DIRS=$(echo $BINDPATH | tr ',' ' ')
+      source ${SCRIPTPATH}/dockerrun.sh
+      dockerrun "${precmd} $CMD2RUN" || ERR=$?
+    else
+      PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
+      #if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+    fi
     exit $ERR
   fi
 else

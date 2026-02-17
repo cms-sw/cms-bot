@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ngt-amd-mi300x-@N@
+  labels:
+    home-eos: "true"
+    mount-cvmfs: "true"
+    mount-afs: "false"
+    mount-eos: "true"
+spec:
+  containers:
+    - name: container
+      image: cmssw/el9:x86_64-d20260205
+      command: ["/usr/bin/tini", "--"]
+      args: ["sleep", "infinity"]
+      env:
+        - name: TZ
+          value: Europe/Zurich
+      resources:
+        limits:
+          amd.com/gpu: 1
+  nodeSelector:
+    amd.com/gpu.product-name: AMD_Instinct_MI300X_OAM

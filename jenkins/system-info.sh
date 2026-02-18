@@ -38,7 +38,7 @@ rm -f $WORKSPACE/cmsos
 
 #Protection for CVE-2022-24765
 #Workaround for lxplus /tmp/.git
-BUILD_HOST=$(hostname -s)
+BUILD_HOST=$(uname -n | cut -d. -f1)
 if [ $(echo ${BUILD_HOST} | grep 'lxplus' | wc -l) -gt 0 ] ; then
   if [ ! -e $WORKSPACE/.git/config ] ; then
     rm -rf $WORKSPACE/.git

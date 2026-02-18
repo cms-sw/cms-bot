@@ -3,7 +3,7 @@ cat <<EOF
 #!/bin/bash -ex
 klist || true
 kinit -R || true
-hostname
+hostname || uname -n
 umask 0002
 cvmfs_config probe || true
 for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do

@@ -112,7 +112,7 @@ REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -
 echo $REPOSITORIES
 $CVMFS_INSTALL && cvmfs_transaction ${CVMFS_PUBLISH_PATH}
 
-hostname > $BASEDIR/stratum0
+uname -n > $BASEDIR/stratum0
 
 #Recreate the links
 PUBLISH_CLEANUP=false

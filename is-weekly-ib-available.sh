@@ -17,7 +17,7 @@ if [ "${RELEASE_INSTALL_PATH}" != "" ] ; then IB_WEEK_DIR="${RELEASE_INSTALL_PAT
 if [ "X$WAIT_STEP" = "X" ] ; then WAIT_STEP=120; fi
 if [ "X$MAX_WAIT" = "X" ]  ; then MAX_WAIT=7200; fi
 TOTAL_WAIT=0
-hostname
+hostname || uname -n
 for dir in /cvmfs/cms-ib.cern.ch /cvmfs/grid.cern.ch /cvmfs/unpacked.cern.ch ; do
   ls ${dir} >/dev/null || true
   if [ ! -e ${dir} ] ; then echo "Error: No such directory: ${dir}"; exit 1; fi

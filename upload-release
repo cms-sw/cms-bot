@@ -26,7 +26,7 @@ case $CMSSW_X_Y_Z in
     ;;
 esac
 
-WORKER=`hostname -s`
+WORKER=`uname -n | cut -d. -f1`
 
 # the jenkins build number is the one of the job in jenkins doing the upload
 $WORKSPACE/report-build-release-status $BUILD_NUMBER $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z UPLOADING $DRY_RUN_PARAM

@@ -222,8 +222,10 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     fi
     if [ "${UNAME_M}" != "${IMG_ARCH}" -a "${IMG_ARCH}" == "riscv64" ] ; then
       export MOUNT_DIRS=$(echo $BINDPATH | tr ',' ' ')
+      pkill -9 qemu-riscv64 || true
       source ${SCRIPTPATH}/dockerrun.sh
       dockerrun "${precmd} $CMD2RUN" || ERR=$?
+      pkill -9 qemu-riscv64 || true
     else
       PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
       #if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi

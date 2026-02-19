@@ -18,15 +18,18 @@ fi
 
 git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 
+mkdir -p $WORKSPACE/upload/profiling/
 for PROFILING_WORKFLOW in $WORKFLOWS;do
-  if [ $(runTheMatrix.py -n ${MATRIX_OPT} -w cleanedupgrade,standard,highstats,pileup,generator,extendedgen,production,identity,ged,machine,premix,nano,gpu,2017,2026 | grep "^$PROFILING_WORKFLOW " | wc -l) -eq 0 ] ; then
+  if [ $(runTheMatrix.py -n ${MATRIX_OPT} | grep "^$PROFILING_WORKFLOW " | wc -l) -eq 0 ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Not run: not a valid workflows" -e
+    echo "<li>$PROFILING_WORKFLOW: Not a valid workflow</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    PROF_RES="ERROR"
+    echo "CMSSW_PROFILING_${PROFILING_WORKFLOW};${PROF_RES},Profiling wf $PROFILING_WORKFLOW Results,See Logs,profiling/index-${PROFILING_WORKFLOW}.html" >> ${RESULTS_DIR}/profiling-$PROFILING_WORKFLOW.txt
     continue
   else
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   fi
-  mkdir -p $WORKSPACE/upload/profiling/
-  echo "<html><head></head><title>Profiling wf $PROFILING_WORKFLOW' results</title><body><ul>" > $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<html><head></head><title>Profiling wf $PROFILING_WORKFLOW results</title><body><ul>" > $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   export LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
   PROF_RES="OK"

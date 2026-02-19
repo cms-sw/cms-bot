@@ -26,7 +26,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   fi
   mkdir -p $WORKSPACE/upload/profiling/
-  echo "<html><head></head><title>Profiling wf $PROFILING_WORKFLOW' results</title><body><ul>" > $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<html><head></head><title>Profiling wf $PROFILING_WORKFLOW results</title><body><ul>" > $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   export LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
   PROF_RES="OK"

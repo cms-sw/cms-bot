@@ -1516,7 +1516,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     echo "RUN_THE_MATRIX_CMD_OPTS=${FULL_MATRIX_ARGS}" >> $WORKSPACE/run-relvals.prop
   fi
 
-  for tn in threading rntuple ; do
+  for tn in threading rntuple profiling; do
     uc_tn=$(echo $tn | tr a-z A-Z)
     if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${uc_tn}$" | wc -l) -gt 0 ] ; then
       prop_file="$WORKSPACE/run-relvals-${tn}.prop"

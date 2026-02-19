@@ -61,7 +61,7 @@ fi
 
 PR_TEST_MATRIX_EXTRAS_HIGH_STATS=35034.0
 PR_TEST_MATRIX_EXTRAS_NANO=all
-MATRIX_OPTION_PROFILING=""
+MATRIX_OPTION_PROFILING="-w cleanedupgrade,standard,highstats,pileup,generator,extendedgen,production,identity,ged,machine,premix,nano,gpu,2017,2026"
 VAR_PREFIX="PR_TEST_MATRIX_EXTRAS"
 [ "$2" = "" ] || VAR_PREFIX="$2"
 eval "echo \${${VAR_PREFIX}${1}}"

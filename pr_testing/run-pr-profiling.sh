@@ -40,7 +40,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   fi
 
   pushd $WORKSPACE/$CMSSW_VERSION/ || true
-  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -n ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
@@ -51,7 +51,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     AMP="&"
     echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
     if [ ! -f $CMSSW_VERSION-$BASENAME ] ; then
@@ -61,11 +61,14 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     $CMS_BOT_DIR/comparisons/resources-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
-    for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -n ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
-    echo "<li><a href=\"${PROFILING_WORKFLOW}/$BASENAME.html\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
+    cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
+    AMP="&"
+    echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -n ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
     if [ ! -f $CMSSW_VERSION-$BASENAME ] ; then

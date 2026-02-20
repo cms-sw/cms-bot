@@ -55,7 +55,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
     if [ ! -f $CMSSW_VERSION-$BASENAME ] ; then
-      echo "File $CMSSW_VERSION-$BASENAME not found, skipping diff"
+      echo "<li>File $CMSSW_VERSION-$BASENAME not found, skipping diff</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       continue
     fi
     $CMS_BOT_DIR/comparisons/resources-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
@@ -72,7 +72,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
     if [ ! -f $CMSSW_VERSION-$BASENAME ] ; then
-      echo "File $CMSSW_VERSION-$BASENAME not found, skipping diff"
+      echo "<li>File $CMSSW_VERSION-$BASENAME not found, skipping diff</li>">> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       continue
     fi
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true

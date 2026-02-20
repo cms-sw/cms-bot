@@ -40,7 +40,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   fi
 
   pushd $WORKSPACE/$CMSSW_VERSION/ || true
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*step*.json' | sort -n ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -n ) ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
@@ -58,7 +58,12 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     $CMS_BOT_DIR/comparisons/resources-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json' ) ; do
+    for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -n ) ; do
+    BASENAME=$(basename $f)
+    $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
+    echo "<li><a href=\"${PROFILING_WORKFLOW}/$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+  done
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -n ) ; do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true

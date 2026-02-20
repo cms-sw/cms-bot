@@ -7,12 +7,8 @@ MATRIX_OPT=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING MATRIX_OPTION)
 if [ "X$PROFILING_WORKFLOWS" == "X" ];then
   WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
 else
-  for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS ; do
-    if echo $ALLOWED_PROFILING_WORKFLOWS | grep -qw $PROFILING_WORKFLOW ; then
+  for PROFILING_WORKFLOW in $(echo $PROFILING_WORKFLOWS | tr ',' ' ') ; do
       WORKFLOWS="$WORKFLOWS $PROFILING_WORKFLOW"
-    else
-      echo "Workflow $PROFILING_WORKFLOW not in allowed workflows $ALLOWED_WORKFLOW_LIST"
-    fi
   done
 fi
 
@@ -20,7 +16,7 @@ git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 
 for PROFILING_WORKFLOW in $WORKFLOWS;do
   if [ $(runTheMatrix.py -n ${MATRIX_OPT} -w cleanedupgrade,standard,highstats,pileup,generator,extendedgen,production,identity,ged,machine,premix,nano,gpu,2017,2026 | grep "^$PROFILING_WORKFLOW " | wc -l) -eq 0 ] ; then
-    mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Not run: not a valid workflows" -e
+    mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Not run: not a valid workflow" -e
     continue
   else
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
@@ -44,27 +40,41 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   fi
 
   pushd $WORKSPACE/$CMSSW_VERSION/ || true
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*step*.json' ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     BASENAME=$(basename $f)
     mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
-    ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}/profiling/$d/$BASENAME $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
-    ls -l $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/$BASENAME || true
+    cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
     AMP="&"
     echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
+    if [ ! -f $CMSSW_VERSION-$BASENAME ] ; then
+      echo "<li>File $CMSSW_VERSION-$BASENAME not found, skipping diff</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      continue
+    fi
     $CMS_BOT_DIR/comparisons/resources-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json' ) ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
+    BASENAME=$(basename $f)
+    mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
+    cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
+    AMP="&"
+    echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  done
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
+    if [ ! -f $CMSSW_VERSION-$BASENAME ] ; then
+      echo "<li>File $CMSSW_VERSION-$BASENAME not found, skipping diff</li>">> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      continue
+    fi
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done

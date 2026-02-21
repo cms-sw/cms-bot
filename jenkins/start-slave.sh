@@ -36,7 +36,7 @@ AGENT_MEMORY=$(get_env JENKINS_AGENT_MEMORY)
 
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${HOME}/slave.jar | sed 's| .*||')
 USER_HOME_MD5=""
-if [ "${REMOTE_USER}" = "cmsbld" ] ; then
+if [ "${REMOTE_USER}" = "cmsbld" -o "$(get_env SYNC_USER_HOME)" = "true" ] ; then
   USER_HOME_MD5=$(tar c ${HOME}/slave_setup/cmsbot 2>&1 | md5sum  | tail -1 | sed 's| .*||')
 fi
 #ssh -n $SSH_EX_OPTS $SSH_OPTS $TARGET aklog || true

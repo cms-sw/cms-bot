@@ -172,7 +172,7 @@ for REPOSITORY in $REPOSITORIES; do
         exit 1
       fi
       XPKGS="${XPKGS} SCRAMV1 SCRAMV2 cmssw-wm-tools cms-git-tools crab"
-      [ "${RELEASE_NAME}" != "" ] || XPKGS="${XPKGS} cmssw-tool-conf"
+      [ "${RELEASE_NAME}" != "" ] || [ "${INSTALL_PACKAGES}" != "" ] || XPKGS="${XPKGS} cmssw-tool-conf"
     elif [ $(grep "server  *${CMSREP_IB_SERVER} " $WORKDIR/common/cmspkg | wc -l) -eq 0 ] ; then
       sed -i -e "s| \-\-server *[^ ]* | --server ${CMSREP_IB_SERVER} |" $WORKDIR/common/cmspkg
     fi

@@ -1634,8 +1634,6 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
     fi
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$WORKFLOW.prop
     echo "PROFILING_WORKFLOWS=${WORKFLOW}" >> $WORKSPACE/run-profiling-$WORKFLOW.prop
-    cp $WORKSPACE/test-env.txt $WORKSPACE/run-vtune_profiling-$WORKFLOW.prop
-    echo "PROFILING_WORKFLOWS=${WORKFLOW}" >> $WORKSPACE/run-vtune_profiling-$WORKFLOW.prop
   done
 fi
 

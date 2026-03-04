@@ -1717,12 +1717,12 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = (
         "ls "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_*.resources.json 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = (
         "ls -d "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/ 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME/||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/* 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME/||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3 = (
         "ls "
@@ -1730,9 +1730,9 @@ if __name__ == "__main__":
         + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME||"'
     )
     MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
-        "ls "
+        "ls -d "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$|/r-step3-WORKFLOW-hs|"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/r-step3-* 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/||"'
     )
     CHECK_HLT_PATH = (
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"

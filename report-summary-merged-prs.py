@@ -1732,7 +1732,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
         "ls -v "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3-vtune.log 2>/dev/null | tail -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$||;s/^\\(.*\\/\\)\\(.*\\)/\1\\2\/r-step3-\2-hs/"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3-vtune.log 2>/dev/null | tail -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$||;s|^\\(.*\\/\\)\\(.*\\)|\\1\\\2\/r-step3-\\2-hs|"'
     )
     CHECK_HLT_PATH = (
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"

@@ -1628,8 +1628,6 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
         echo "Profiling artifacts for workflow $WORKFLOW do not exist, creating profiling properties file"
         cp $WORKSPACE/test-env.txt $WORKSPACE/run-ib_profiling-$WORKFLOW.prop
         echo "PROFILING_WORKFLOWS=${WORKFLOW}" >> $WORKSPACE/run-ib_profiling-$WORKFLOW.prop
-        cp $WORKSPACE/test-env.txt $WORKSPACE/run-ib_vtune_profiling-$WORKFLOW.prop
-        echo "PROFILING_WORKFLOWS=${WORKFLOW}" >> $WORKSPACE/run-ib_vtune_profiling-$WORKFLOW.prop
       fi 
     fi
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$WORKFLOW.prop

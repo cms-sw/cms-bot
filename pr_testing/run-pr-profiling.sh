@@ -41,7 +41,15 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     PROF_RES="ERROR"
     continue
   fi
-
+  WAIT_TIME=36000
+  while [ $WAIT_TIME -gt 0 ] ; do
+    if  has_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$PROFILING_WORKFLOW/moduleAllocMonitor.log  ; then
+      break
+    else
+      sleep 60
+      let WAIT_TIME=$WAIT_TIME-60
+    fi
+  done
   pushd $WORKSPACE/$CMSSW_VERSION/ || true
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     d=$(dirname $f)
@@ -56,8 +64,8 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
-    if [ ! -f $CMSSW_VERSION-$BASENAME ] ; then
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PWD/$CMSSW_VERSION-$BASENAME || true
+    if ! [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
       echo "<li>File $CMSSW_VERSION-$BASENAME not found, skipping diff</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       continue
     fi
@@ -73,9 +81,9 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $CMSSW_VERSION-$BASENAME || true
-    if [ ! -f $CMSSW_VERSION-$BASENAME ] ; then
-      echo "<li>File $CMSSW_VERSION-$BASENAME not found, skipping diff</li>">> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PWD/$CMSSW_VERSION-$BASENAME || true
+    if ! [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
+      echo "<li>File $CMSSW_VERSION-$BASENAME not found, skipping diff</li>">> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
       continue
     fi
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true

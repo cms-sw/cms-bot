@@ -12,6 +12,17 @@ else
   done
 fi
 
+function send_vtune_profiles(){
+  local ARTIFACTS_SERVER=cmsvtune-01.cern.ch
+  local ARTIFACTS_USER=vtune
+  local ARTIFACT_BASE_DIR=/data/cms
+  for WORKFLOW in $WORKFLOWS ; do
+    if [ -d $WORKSPACE/vtune-profiles/${WORKFLOW} ]; then
+      send_jenkins_artifacts $WORKSPACE/vtune-profiles/${WORKFLOW} vtune-profiles/$CMSSW_VERSION/$ARCHITECTURE/${WORKFLOW}/$UPLOAD_UNIQ_ID
+    fi
+  done
+}
+
 git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 
 mkdir -p $WORKSPACE/upload/profiling/
@@ -35,6 +46,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   export RUNALLSTEPS=1
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_allocmon.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/runall_vtune.sh $CMSSW_VERSION || true
   if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Error: failed to run profiling"
     echo "<li>$PROFILING_WORKFLOW: No such directory</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
@@ -89,10 +101,15 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*.json.gz' -o -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html') ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name '*.json.gz' -o -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html' | grep -v 'r-step') ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
+  done
+  for d in $(find $PROFILING_WORKFLOW -type d -name 'r-step*' | sort -V ) ; do
+    mkdir -p $WORKSPACE/vtune-profiles/$PROFILING_WORKFLOW/$d || true
+    cp -rp $d $WORKSPACE/vtune-profiles/$PROFILING_WORKFLOW || true
+    echo "<li><a href=\"https://cmssdt.cern.ch/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">$(basename $d)</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   popd
   echo "<br><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

@@ -1076,7 +1076,7 @@ def find_one_profiling_result(magic_command):
     """
     Looks for one profiling result
     """
-    command_to_execute = magic_command.replace("WORKFLOW", "13034.21")
+    command_to_execute = magic_command
     print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
     print("Ran:", out, err, ret_code, command_to_execute)
@@ -1715,24 +1715,24 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_IGPROF = "test -d " + JENKINS_ARTIFACTS_DIR + "/igprof/RELEASE_NAME"
     MAGIC_COMMAND_FIND_PROFILING = "test -d " + JENKINS_ARTIFACTS_DIR + "/profiling/RELEASE_NAME"
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = (
-        "ls "
+        "ls -v "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_*.resources.json 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_*.resources.json 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = (
-        "ls -d "
+        "ls -vd "
         + JENKINS_ARTIFACTS_DIR
         + '/profiling/RELEASE_NAME/ARCHITECTURE/* 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME/||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3 = (
-        "ls "
+        "ls -v "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME||"'
     )
     MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
-        "ls -d "
+        "ls -vd "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/r-step3-* 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/r-step3-* 2>/dev/null | tail -1 |  sed "s|.*/RELEASE_NAME/||"'
     )
     CHECK_HLT_PATH = (
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"

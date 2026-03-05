@@ -12,16 +12,6 @@ else
   done
 fi
 
-function send_vtune_profiles(){
-  local ARTIFACTS_SERVER=cmsvtune-01.cern.ch
-  local ARTIFACTS_USER=vtune
-  local ARTIFACT_BASE_DIR=/data/cms
-  for WORKFLOW in $WORKFLOWS ; do
-    if [ -d $WORKSPACE/vtune-profiles/${WORKFLOW} ]; then
-      send_jenkins_artifacts $WORKSPACE/vtune-profiles/${WORKFLOW} vtune-profiles/$CMSSW_VERSION/$ARCHITECTURE/${WORKFLOW}/$UPLOAD_UNIQ_ID
-    fi
-  done
-}
 
 git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 
@@ -121,6 +111,15 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   fi
   echo "CMSSW_PROFILING_${PROFILING_WORKFLOW};${PROF_RES},Profiling wf $PROFILING_WORKFLOW Results,See Logs,profiling/index-${PROFILING_WORKFLOW}.html" >> ${RESULTS_DIR}/profiling-$PROFILING_WORKFLOW.txt
   prepare_upload_results
-  send_vtune_profiles
   mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Passed"
 done
+
+ARTIFACTS_SERVER=cmsvtune-01.cern.ch
+ARTIFACTS_USER=vtune
+ARTIFACT_BASE_DIR=/data/cms
+for WORKFLOW in $WORKFLOWS ; do
+  if [ -d $WORKSPACE/vtune-profiles/${WORKFLOW} ]; then
+    send_jenkins_artifacts $WORKSPACE/vtune-profiles/${WORKFLOW} vtune-profiles/$CMSSW_VERSION/$ARCHITECTURE/${WORKFLOW}/$UPLOAD_UNIQ_ID
+  fi
+done
+

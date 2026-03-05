@@ -97,8 +97,8 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
   done
   for d in $(find $PROFILING_WORKFLOW -type d -name 'r-step*' | sort -V ) ; do
-    mkdir -p $WORKSPACE/vtune-profiles/$PROFILING_WORKFLOW/$d || true
-    cp -rp $d $WORKSPACE/vtune-profiles/$PROFILING_WORKFLOW || true
+    mkdir -p $WORKSPACE/vtune-profiles/$d || true
+    rsync -auv $d/ $WORKSPACE/vtune-profiles/$d/ || true
     echo "<li><a href=\"https://cmssdt.cern.ch/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">$(basename $d)</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   popd
@@ -117,6 +117,7 @@ done
 ARTIFACTS_SERVER=cmsvtune-01.cern.ch
 ARTIFACTS_USER=vtune
 ARTIFACT_BASE_DIR=/data/cms
+source $CMS_BOT_DIR/jenkins-artifacts
 for WORKFLOW in $WORKFLOWS ; do
   if [ -d $WORKSPACE/vtune-profiles/${WORKFLOW} ]; then
     send_jenkins_artifacts $WORKSPACE/vtune-profiles/${WORKFLOW} vtune-profiles/$CMSSW_VERSION/$ARCHITECTURE/${WORKFLOW}/$UPLOAD_UNIQ_ID

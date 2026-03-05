@@ -7,6 +7,7 @@ function usage(){
   exit 1
 }
 
+IMG_DATE="20260305"
 GPU="$1"
 ID="$2"
 [ "$GPU" != "" ] || usage
@@ -15,5 +16,5 @@ if [ ! -f "${GPU}" ] ; then
   echo "ERROR: No such file $GPU"
   exit 1
 fi
-sed -e "s|@N@|$ID|" $GPU > session.yaml
+sed -e "s|@N@|$ID|;s|@IMG_DATE@|$IMG_DATE|" $GPU > session.yaml
 kubectl create -f session.yaml

@@ -62,7 +62,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
     cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
     AMP="&"
-    echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    echo "<li><a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     BASENAME=$(basename $f)
@@ -72,14 +72,14 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
       continue
     fi
     $CMS_BOT_DIR/comparisons/resources-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
-    echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<li><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
     mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
     cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
     AMP="&"
-    echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    echo "<li><a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
@@ -89,7 +89,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
       continue
     fi
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
-    echo "<li><a href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<li><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   for f in $(find $PROFILING_WORKFLOW -type f -name '*.json.gz' -o -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html' | grep -v 'r-step') ; do
     d=$(dirname $f)
@@ -99,7 +99,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   for d in $(find $PROFILING_WORKFLOW -type d -name 'r-step*' | sort -V ) ; do
     mkdir -p $WORKSPACE/vtune-profiles/$d || true
     rsync -auv $d/ $WORKSPACE/vtune-profiles/$d/ || true
-    echo "<li><a href=\"https://cmssdt.cern.ch/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">$(basename $d)/</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<li><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">$(basename $d)/</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   popd
   echo "<br><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

@@ -154,9 +154,13 @@ summaryLines += [
     "<table>",
     '<tr><td align="center">Type<BR>Label</td>',
     '<td align="center">added construction</td>',
+    '<td align="center">added begin run</td>',
+    '<td align="center">added begin luminosity block</td>',
     '<td align="center">added event</td>',
     '<td align="center">added event setup</td>',
     '<td align="center">nAlloc construction</td>',
+    '<td align="center">nAlloc begin run</td>',
+    '<td align="center">nAlloc begin luminosity block</td>',
     '<td align="center">nAlloc event</td>',
     '<td align="center">nAlloc event setup</td>',
     "</tr>",
@@ -166,6 +170,22 @@ summaryLines += [
         ibdata["total"]["added construction"],
         prdata["total"]["added construction"],
         results["total"]["added construction diff"],
+    ),
+    '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
+    % (
+        ibdata["total"]["added global begin run"] + ibdata["total"]["added stream begin run"],
+        prdata["total"]["added global begin run"] + prdata["total"]["added stream begin run"],
+        results["total"]["added global begin run diff"]
+        + results["total"]["added stream begin run diff"],
+    ),
+    '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
+    % (
+        ibdata["total"]["added global begin luminosity block"]
+        + ibdata["total"]["added stream begin luminosity block"],
+        prdata["total"]["added global begin luminosity block"]
+        + prdata["total"]["added stream begin luminosity block"],
+        results["total"]["added global begin luminosity block diff"]
+        + results["total"]["added stream begin luminosity block diff"],
     ),
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
@@ -187,6 +207,22 @@ summaryLines += [
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
+        ibdata["total"]["nAlloc global begin run"] + ibdata["total"]["nAlloc stream begin run"],
+        prdata["total"]["nAlloc global begin run"] + prdata["total"]["nAlloc stream begin run"],
+        results["total"]["nAlloc global begin run diff"]
+        + results["total"]["nAlloc stream begin run diff"],
+    ),
+    '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+    % (
+        ibdata["total"]["nAlloc global begin luminosity block"]
+        + ibdata["total"]["nAlloc stream begin luminosity block"],
+        prdata["total"]["nAlloc global begin luminosity block"]
+        + prdata["total"]["nAlloc stream begin luminosity block"],
+        results["total"]["nAlloc global begin luminosity block diff"]
+        + results["total"]["nAlloc stream begin luminosity block diff"],
+    ),
+    '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+    % (
         ibdata["total"]["nAlloc event"],
         prdata["total"]["nAlloc event"],
         results["total"]["nAlloc event diff"],
@@ -200,10 +236,14 @@ summaryLines += [
     "</tr></table>",
     '<table><tr><td align="center">Module label<BR>Module type<BR>Module record</td>',
     '<td align="center">added construction (kB)</td>',
+    '<td align="center">added begin run (kB)</td>',
+    '<td align="center">added begin luminosity block (kB)</td>',
     '<td align="center">added event (kB)</td>',
     '<td align="center">added event setup (kB)</td>',
     '<td align="center">added total (kB)</td>',
     '<td align="center">nAlloc construction</td>',
+    '<td align="center">nAlloc begin run</td>',
+    '<td align="center">nAlloc begin luminosity block</td>',
     '<td align="center">nAlloc event</td>',
     '<td align="center">nAlloc event setup</td>',
     '<td align="center">nAlloc total</td>',
@@ -229,16 +269,28 @@ for item in sorted(
             modulepr.get("added event setup", 0)
             + modulepr.get("added event", 0)
             + modulepr.get("added construction", 0)
+            + modulepr.get("added global begin run", 0)
+            + modulepr.get("added stream begin run", 0)
+            + modulepr.get("added global begin luminosity block", 0)
+            + modulepr.get("added stream begin luminosity block", 0)
         )
         added_total_ib = (
             moduleib.get("added event setup", 0)
             + moduleib.get("added event", 0)
             + moduleib.get("added construction", 0)
+            + moduleib.get("added global begin run", 0)
+            + moduleib.get("added stream begin run", 0)
+            + moduleib.get("added global begin luminosity block", 0)
+            + moduleib.get("added stream begin luminosity block", 0)
         )
         added_total_diff = (
             moduleres.get("added event setup diff", 0)
             + moduleres.get("added event diff", 0)
             + moduleres.get("added construction diff", 0)
+            + moduleres.get("added global begin run diff", 0)
+            + moduleres.get("added stream begin run diff", 0)
+            + moduleres.get("added global begin luminosity block diff", 0)
+            + moduleres.get("added stream begin luminosity block diff", 0)
         )
         if added_total_diff > threshold:
             color = 'bgcolor="orange"'
@@ -259,6 +311,22 @@ for item in sorted(
                 moduleib["added construction"],
                 modulepr["added construction"],
                 moduleres["added construction diff"],
+            ),
+            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
+            % (
+                moduleib["added global begin run"] + moduleib["added stream begin run"],
+                modulepr["added global begin run"] + modulepr["added stream begin run"],
+                moduleres["added global begin run diff"]
+                + moduleres["added stream begin run diff"],
+            ),
+            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
+            % (
+                moduleib["added global begin luminosity block"]
+                + moduleib["added stream begin luminosity block"],
+                modulepr["added global begin luminosity block"]
+                + modulepr["added stream begin luminosity block"],
+                moduleres["added global begin luminosity block diff"]
+                + moduleres["added stream begin luminosity block diff"],
             ),
             '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
             % (
@@ -284,6 +352,22 @@ for item in sorted(
                 moduleib["nAlloc construction"],
                 modulepr["nAlloc construction"],
                 moduleres["nAlloc construction diff"],
+            ),
+            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            % (
+                moduleib["nAlloc global begin run"] + moduleib["nAlloc stream begin run"],
+                modulepr["nAlloc global begin run"] + modulepr["nAlloc stream begin run"],
+                moduleres["nAlloc global begin run diff"]
+                + moduleres["nAlloc stream begin run diff"],
+            ),
+            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            % (
+                moduleib["nAlloc global begin luminosity block"]
+                + moduleib["nAlloc stream begin luminosity block"],
+                modulepr["nAlloc global begin luminosity block"]
+                + modulepr["nAlloc stream begin luminosity block"],
+                moduleres["nAlloc global begin luminosity block diff"]
+                + moduleres["nAlloc stream begin luminosity block diff"],
             ),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (moduleib["nAlloc event"], modulepr["nAlloc event"], moduleres["nAlloc event diff"]),

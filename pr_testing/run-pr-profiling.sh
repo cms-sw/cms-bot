@@ -136,7 +136,9 @@ EOF
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   popd
-  echo "</ul></body></html>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "</table>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<a href=\"$PROFILING_WORKFLOW\"> profiling logs</a>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "</body></html>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   if [ -z ${NO_POST} ] ; then
     if [ -d $LOCALREL/profiling ]; then
       send_jenkins_artifacts $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH} profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/

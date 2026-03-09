@@ -1,0 +1,34 @@
+{
+  "test_name": "test_abort_ignored_no_pending",
+  "action_count": 3,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "core-pending",
+          "pending-signatures",
+          "tests-approved"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "A new Pull Request was created by  @testuser.\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign/assign? Thanks.\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"Package/Core/main.py::abc123def456\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

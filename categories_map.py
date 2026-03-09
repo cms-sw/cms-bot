@@ -1375,6 +1375,7 @@ CMSSW_CATEGORIES = {
         "RecoMET/METPUSubtraction",
         "RecoMET/METProducers",
         "RecoML/Topology",
+        "RecoML/AnomalyDetection",
         "RecoMTD/Configuration",
         "RecoMTD/DetLayers",
         "RecoMTD/MeasurementDet",
@@ -1822,6 +1823,7 @@ CMSSW_CATEGORIES = {
         "PhysicsTools/MVATrainer",
         "PhysicsTools/XGBoost",
         "RecoML/Topology",
+        "RecoML/AnomalyDetection",
     ],
 }
 

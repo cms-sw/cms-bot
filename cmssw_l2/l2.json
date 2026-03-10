@@ -320,6 +320,14 @@
       "start_date": 1557187200
     }
   ],
+  "ahinzmann": [
+    {
+      "category": [
+        "pf"
+      ],
+      "start_date": 1772841600
+    }
+  ],
   "ahmad3213": [
     {
       "category": [
@@ -543,6 +551,7 @@
       "category": [
         "pf"
       ],
+      "end_date": 1772841600,
       "start_date": 1687478400
     }
   ],
@@ -1567,6 +1576,7 @@
       "category": [
         "pf"
       ],
+      "end_date": 1772841600,
       "start_date": 1632787200
     }
   ],
@@ -2645,6 +2655,14 @@
       "start_date": 1756684800
     }
   ],
+  "stahlleiton": [
+    {
+      "category": [
+        "pf"
+      ],
+      "start_date": 1772841600
+    }
+  ],
   "subansal": [
     {
       "category": [
@@ -2684,6 +2702,7 @@
       "category": [
         "pf"
       ],
+      "end_date": 1772841600,
       "start_date": 1695081600
     }
   ],

@@ -133,9 +133,8 @@ CMSSW_L2 = {
     "martinamalberti": ["mtd-dpg"],
     "parbol": ["mtd-dpg"],
     # pogs
-    "bellan": ["pf"],
-    "kdlong": ["pf"],
-    "swagata87": ["pf"],
+    "stahlleiton": ["pf"],
+    "ahinzmann": ["pf"],
     "Raffaella07": ["egamma-pog"],
     "RSalvatico": ["egamma-pog"],
     "kirschen": ["jetmet-pog"],

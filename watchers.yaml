@@ -1644,16 +1644,6 @@ ram1123:
   - RecoEcal
   - EgammaAnalysis
   - DataFormats/EgammaCandidates
-dinyar:
-  - DataFormats/L1TMuon
-  - DataFormats/L1Scouting
-  - DataFormats/L1ScoutingRawData
-  - DataFormats/L1Trigger
-  - EventFilter/L1ScoutingRawToDigi
-  - EventFilter/L1TRawToDigi
-  - L1Trigger/L1TCommon
-  - L1Trigger/L1TMuon
-  - L1Trigger/L1TNtuples
 tau-pog:
   - RecoTauTag/
   - DataFormats/TauReco

@@ -313,6 +313,7 @@ CMSSW_CATEGORIES = {
         "FWIO/RNTupleTempInput",
         "FWIO/RNTupleTempOutput",
         "FWIO/RNTupleTempTests",
+        "FWStorage/Catalog",
         "FWStorage/DCacheAdaptor",
         "FWStorage/DavixAdaptor",
         "FWStorage/Services",

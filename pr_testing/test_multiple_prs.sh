@@ -640,7 +640,7 @@ if ${BUILD_EXTERNAL} ; then
         env_log="$WORKSPACE/cmsset_default/run.log"
         for sh in bash sh zsh ; do
           echo "Checking cmsset_default.sh for $sh under $os" >> ${env_log}
-          if ! $cmssw_env -- $sh -e $env_script >>${env_log} 2>&1 ; then
+          if ! $cmssw_env -- $sh -eu $env_script >>${env_log} 2>&1 ; then
             CMSSET_DEFAULT_ERR="${CMSSET_DEFAULT_ERR} $sh:$os"
             echo "Failed" >> ${env_log}
             $cmssw_env -- $sh -ex $env_script > $WORKSPACE/cmsset_default/${sh}-${os}.log 2>&1 || true

@@ -351,9 +351,9 @@ for item in sorted(
             cellString
             + "%0.2f<br> %0.2f<br> %0.2f</td>"
             % (
-                added_total_ib,
-                added_total_pr,
-                added_total_diff,
+                moduleib["added total"],
+                modulepr["added total"],
+                moduleres["added total diff"],
             ),
             '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
             % (

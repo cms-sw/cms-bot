@@ -251,17 +251,7 @@ summaryLines += [
     "</tr>",
 ]
 
-for item in sorted(
-    datamapres.items(),
-    key=lambda x: x[1]["added construction diff"]
-    + x[1]["added event diff"]
-    + x[1]["added event setup diff"]
-    + x[1]["added global begin run diff"]
-    + x[1]["added stream begin run diff"]
-    + x[1]["added global begin luminosity block diff"]
-    + x[1]["added stream begin luminosity block diff"],
-    reverse=True,
-):
+for item in datamapres.items():
     key = item[1]["label"] + "|" + item[1]["type"] + "|" + item[1]["record"]
     if not key == "||":
         moduleib = datamapib[key]
@@ -278,6 +268,7 @@ for item in sorted(
             + modulepr.get("added global begin luminosity block", 0)
             + modulepr.get("added stream begin luminosity block", 0)
         )
+        modulepr["added total"] = added_total_pr
         added_total_ib = (
             moduleib.get("added event setup", 0)
             + moduleib.get("added event", 0)
@@ -287,6 +278,7 @@ for item in sorted(
             + moduleib.get("added global begin luminosity block", 0)
             + moduleib.get("added stream begin luminosity block", 0)
         )
+        moduleib["added total"] = added_total_ib
         added_total_diff = (
             moduleres.get("added event setup diff", 0)
             + moduleres.get("added event diff", 0)
@@ -296,13 +288,22 @@ for item in sorted(
             + moduleres.get("added global begin luminosity block diff", 0)
             + moduleres.get("added stream begin luminosity block diff", 0)
         )
-        if added_total_diff > threshold:
+        moduleres["added total diff"] = added_total_diff
+
+for item in sorted(
+    datamapres.items(),
+    key=lambda x: x[1]["added total diff"],
+    reverse=True,
+):
+    key = item[1]["label"] + "|" + item[1]["type"] + "|" + item[1]["record"]
+    if not key == "||":
+        if item["added total diff"] > threshold:
             color = 'bgcolor="orange"'
-        if added_total_diff > error_threshold:
+        if item["added total diff"] > error_threshold:
             color = 'bgcolor="red"'
-        if added_total_diff < -1.0 * threshold:
+        if item["added total diff"] < -1.0 * threshold:
             color = 'bgcolor="cyan"'
-        if added_total_diff < -1.0 * error_threshold:
+        if item["added total diff"] < -1.0 * error_threshold:
             color = 'bgcolor="green"'
         cellString += color
         cellString += ">"

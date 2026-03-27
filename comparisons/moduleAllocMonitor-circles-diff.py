@@ -257,8 +257,6 @@ for item in datamapres.items():
         moduleib = datamapib[key]
         modulepr = datamappr[key]
         moduleres = datamapres[key]
-        cellString = '<td align="right" '
-        color = ""
         added_total_pr = (
             modulepr.get("added event setup", 0)
             + modulepr.get("added event", 0)
@@ -300,6 +298,8 @@ for item in sorted(
         moduleib = datamapib[key]
         modulepr = datamappr[key]
         moduleres = datamapres[key]
+        cellString = '<td align="right" '
+        color = ""
         if moduleres["added total diff"] > threshold:
             color = 'bgcolor="orange"'
         if moduleres["added total diff"] > error_threshold:

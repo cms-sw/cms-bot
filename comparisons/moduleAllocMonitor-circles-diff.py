@@ -297,13 +297,16 @@ for item in sorted(
 ):
     key = item[1]["label"] + "|" + item[1]["type"] + "|" + item[1]["record"]
     if not key == "||":
-        if item["added total diff"] > threshold:
+        moduleib = datamapib[key]
+        modulepr = datamappr[key]
+        moduleres = datamapres[key]
+        if moduleres["added total diff"] > threshold:
             color = 'bgcolor="orange"'
-        if item["added total diff"] > error_threshold:
+        if moduleres["added total diff"] > error_threshold:
             color = 'bgcolor="red"'
-        if item["added total diff"] < -1.0 * threshold:
+        if moduleres["added total diff"] < -1.0 * threshold:
             color = 'bgcolor="cyan"'
-        if item["added total diff"] < -1.0 * error_threshold:
+        if moduleres["added total diff"] < -1.0 * error_threshold:
             color = 'bgcolor="green"'
         cellString += color
         cellString += ">"

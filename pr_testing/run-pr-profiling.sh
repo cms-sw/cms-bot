@@ -77,7 +77,7 @@ EOF
     fi
   done
   pushd $WORKSPACE/$CMSSW_VERSION/ || true
-  echo "<tr><td>Fast Timer Service PR</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Fast Timer Service </td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
@@ -87,11 +87,11 @@ EOF
     mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
     cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
     AMP="&"
-    echo "<a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">IB $BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-    echo "<td><a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">PR $BASENAME</a><BR>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    echo "<td><a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">IB $BASENAME</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    echo "<a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">PR $BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-  echo "<tr><td>Fast Timer Service PR Comparison to IB</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Fast Timer Service Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PWD/$CMSSW_VERSION-$BASENAME || true
@@ -103,17 +103,17 @@ EOF
     echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-  echo "<tr><td>Module Alloc Monitor PR</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Module Alloc Monitor</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
     mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
     cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
     AMP="&"
-    echo "<a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${BASENAME//.json/}${AMP}resource=added%20construction${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">IB $BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-    echo "<td><a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=added%20construction${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">PR $BASENAME</a><BR>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    echo "<td><a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${BASENAME//.json/}${AMP}resource=added%20construction${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">IB $BASENAME</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    echo "<a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=added%20construction${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">PR $BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-  echo "<tr><td>Module Alloc Monitor PR Comparison to IB</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Module Alloc Monitor Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PWD/$CMSSW_VERSION-$BASENAME || true
@@ -130,12 +130,12 @@ EOF
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
   done
-  echo "<tr><td>Vtune Profiles for PR</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Vtune Profiles</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for d in $(find $PROFILING_WORKFLOW -type d -name 'r-step*' | sort -V ) ; do
     mkdir -p $WORKSPACE/vtune-profiles/$d || true
     rsync -auv $d/ $WORKSPACE/vtune-profiles/$d/ || true
-    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)\">IB $(basename $d)/</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
-    echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR $(basename $d)/</a><BR>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)\">IB $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR $(basename $d)/</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   popd

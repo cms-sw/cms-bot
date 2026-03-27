@@ -255,7 +255,11 @@ for item in sorted(
     datamapres.items(),
     key=lambda x: x[1]["added construction diff"]
     + x[1]["added event diff"]
-    + x[1]["added event setup diff"],
+    + x[1]["added event setup diff"]
+    + x[1]["added global begin run diff"]
+    + x[1]["added stream begin run diff"]
+    + x[1]["added global begin luminosity block diff"]
+    + x[1]["added stream begin luminosity block diff"],
     reverse=True,
 ):
     key = item[1]["label"] + "|" + item[1]["type"] + "|" + item[1]["record"]

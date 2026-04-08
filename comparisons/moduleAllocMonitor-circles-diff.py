@@ -149,10 +149,8 @@ summaryLines += [
     "        for (var i = 1; i < (rows.length - 1); i++) {",
     "            var x = rows[i].getElementsByTagName(\"td\")[column];",
     "            var y = rows[i + 1].getElementsByTagName(\"td\")[column];",
-    "            var xContent = x.innerHTML.replace(/<br>/g, \"\").trim();",
-    "            var yContent = y.innerHTML.replace(/<br>/g, \"\").trim();",
-    "            var xValue = parseFloat(xContent) || (xContent === \"\" ? 0 : NaN);",
-    "            var yValue = parseFloat(yContent) || (yContent === \"\" ? 0 : NaN);",
+    "            var xValue = parseFloat(x) || (x === \"\" ? 0 : NaN);",
+    "            var yValue = parseFloat(y) || (y === \"\" ? 0 : NaN);",
     "            if (direction === 1) {",
     "                if (xValue < yValue) {",
     "                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);",
@@ -266,20 +264,48 @@ summaryLines += [
     ),
     "</tr></table>",
     '<table id="moduleTable"><tr>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 0)">Module label<BR>Module type<BR>Module record</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 1)">added construction (kB)</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 2)">added begin run (kB)</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 3)">added begin luminosity block (kB)</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 4)">added event (kB)</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 5)">added event setup (kB)</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 6)">added total (kB)</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 7)">nAlloc construction</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 8)">nAlloc begin run</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 9)">nAlloc begin luminosity block</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 10)">nAlloc event</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 11)">nAlloc event setup</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 12)">nAlloc total</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\"moduleTable\"), 13)">transitions</th>',
+    '<th align="center" >Module label</th>',
+    '<th align="center" >Module type</th>',
+    '<th align="center" >Module record</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 4)">added construction (kB) IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 5)">added construction (kB) PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 6)">added construction (kB) PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 7)">added begin run (kB) IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 8)">added begin run (kB) PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 9)">added begin run (kB) PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 10)">added begin luminosity block (kB) IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 11)">added begin luminosity block (kB) PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 12)">added begin luminosity block (kB) PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 13)">added event (kB) IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 14)">added event (kB) PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 15)">added event (kB) PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 16)">added event setup (kB) IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 17)">added event setup (kB) PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 18)">added event setup (kB) PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 19)">added total (kB) IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 20)">added total (kB) PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 21)">added total (kB) PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 22)">nAlloc construction IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 23)">nAlloc construction PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 24)">nAlloc construction PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 25)">nAlloc begin run IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 26)">nAlloc begin run PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 27)">nAlloc begin run PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 28)">nAlloc begin luminosity block IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 29)">nAlloc begin luminosity block PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 30)">nAlloc begin luminosity block PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 31)">nAlloc event IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 32)">nAlloc event PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 33)">nAlloc event PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 34)">nAlloc event setup IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 35)">nAlloc event setup PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 36)">nAlloc event setup PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 37)">nAlloc total IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 38)">nAlloc total PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 39)">nAlloc total PR - IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 40)">transitions IB</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 41)">transitions PR</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 42)">transitions PR - IB</th>',
     "</tr>",
 ]
 
@@ -344,22 +370,22 @@ for item in sorted(
         cellString += ">"
         summaryLines += [
             "<tr>",
-            '<td align="center">%s<BR>%s<BR> %s</td>'
+            '<td align="center">%s</td><td align="center">%s</td><td align="center">%s</td>'
             % (moduleres["label"], moduleres["type"], moduleres["record"]),
-            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["added construction"],
                 modulepr["added construction"],
                 moduleres["added construction diff"],
             ),
-            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["added global begin run"] + moduleib["added stream begin run"],
                 modulepr["added global begin run"] + modulepr["added stream begin run"],
                 moduleres["added global begin run diff"]
                 + moduleres["added stream begin run diff"],
             ),
-            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["added global begin luminosity block"]
                 + moduleib["added stream begin luminosity block"],
@@ -368,39 +394,38 @@ for item in sorted(
                 moduleres["added global begin luminosity block diff"]
                 + moduleres["added stream begin luminosity block diff"],
             ),
-            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["added event"],
                 modulepr["added event"],
                 moduleres["added event diff"],
             ),
-            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["added event setup"],
                 modulepr["added event setup"],
                 moduleres["added event setup diff"],
             ),
-            cellString
-            + "%0.2f<br> %0.2f<br> %0.2f</td>"
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["added total"],
                 modulepr["added total"],
                 moduleres["added total diff"],
             ),
-            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["nAlloc construction"],
                 modulepr["nAlloc construction"],
                 moduleres["nAlloc construction diff"],
             ),
-            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["nAlloc global begin run"] + moduleib["nAlloc stream begin run"],
                 modulepr["nAlloc global begin run"] + modulepr["nAlloc stream begin run"],
                 moduleres["nAlloc global begin run diff"]
                 + moduleres["nAlloc stream begin run diff"],
             ),
-            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["nAlloc global begin luminosity block"]
                 + moduleib["nAlloc stream begin luminosity block"],
@@ -409,15 +434,15 @@ for item in sorted(
                 moduleres["nAlloc global begin luminosity block diff"]
                 + moduleres["nAlloc stream begin luminosity block diff"],
             ),
-            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (moduleib["nAlloc event"], modulepr["nAlloc event"], moduleres["nAlloc event diff"]),
-            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["nAlloc event setup"],
                 modulepr["nAlloc event setup"],
                 moduleres["nAlloc event setup diff"],
             ),
-            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
             % (
                 moduleib["nAlloc event setup"]
                 + moduleib["nAlloc event"]
@@ -429,8 +454,8 @@ for item in sorted(
                 + moduleres["nAlloc event diff"]
                 + moduleres["nAlloc construction diff"],
             ),
-            "<td>%i<br>%i<br>%i</td>"
-            % (moduleib["transitions"], modulepr["transitions"], moduleres["transitions"]),
+            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
+            % (moduleib["transitions"], modulepr["transitions"], modulepr["transitions"]-moduleib["transitions"]),
             "</tr>",
         ]
 

@@ -151,6 +151,8 @@ selectable_metrics = [
 selector_options = "".join(
     ['<option value="%s">%s</option>' % (metric_key, metric_name) for metric_key, metric_name in selectable_metrics]
 )
+js_threshold = "%0.2f" % threshold
+js_error_threshold = "%0.2f" % error_threshold
 
 
 summaryLines = []
@@ -209,19 +211,18 @@ summaryLines += [
     "        cells[i].removeAttribute(\"bgcolor\");",
     "        var diffValue = Number(diffs[selectedMetric]);",
     "        if (!isNaN(diffValue)) {",
-    "            if (diffValue > %0.2f) {",
+    "            if (diffValue > %s) {" % js_error_threshold,
     "                cells[i].setAttribute(\"bgcolor\", \"red\");",
-    "            } else if (diffValue > %0.2f) {",
+    "            } else if (diffValue > %s) {" % js_threshold,
     "                cells[i].setAttribute(\"bgcolor\", \"orange\");",
-    "            } else if (diffValue < -1.0 * %0.2f) {",
+    "            } else if (diffValue < -1.0 * %s) {" % js_error_threshold,
     "                cells[i].setAttribute(\"bgcolor\", \"green\");",
-    "            } else if (diffValue < -1.0 * %0.2f) {",
+    "            } else if (diffValue < -1.0 * %s) {" % js_threshold,
     "                cells[i].setAttribute(\"bgcolor\", \"cyan\");",
     "            }",
     "        }",
     "    }",
     "}",
-    % (error_threshold, threshold, error_threshold, threshold),
     "document.addEventListener(\"DOMContentLoaded\", updateMetricColumn);",
     "</script>",
     "</head>",

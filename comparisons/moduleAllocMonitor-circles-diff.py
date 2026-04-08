@@ -141,30 +141,41 @@ summaryLines += [
     "<style> th, td {padding: 15px;}</style>",
     "<script>",
     "function sortTable(table, column) {",
-    "    var rows = table.rows;",
-    "    var switching = true;",
-    "    var direction = 1;",
-    "    while (switching) {",
-    "        switching = false;",
-    "        for (var i = 1; i < (rows.length - 1); i++) {",
-    "            var x = rows[i].getElementsByTagName(\"td\")[column];",
-    "            var y = rows[i + 1].getElementsByTagName(\"td\")[column];",
-    "            var xValue = parseFloat(x) || (x === \"\" ? 0 : NaN);",
-    "            var yValue = parseFloat(y) || (y === \"\" ? 0 : NaN);",
-    "            if (direction === 1) {",
-    "                if (xValue < yValue) {",
-    "                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);",
-    "                    switching = true;",
-    "                }",
-    "            } else {",
-    "                if (xValue > yValue) {",
-    "                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);",
-    "                    switching = true;",
-    "                }",
-    "            }",
-    "        }",
-    "        direction = direction === 1 ? -1 : 1;",
+    "    var colIndex = column - 1;",
+    "    var rows = Array.prototype.slice.call(table.rows, 1);",
+    "    var previousColumn = parseInt(table.getAttribute(\"data-sort-column\"), 10);",
+    "    var previousDirection = table.getAttribute(\"data-sort-direction\") || \"desc\";",
+    "    var direction = \"desc\";",
+    "    if (!isNaN(previousColumn) && previousColumn === colIndex) {",
+    "        direction = previousDirection === \"desc\" ? \"asc\" : \"desc\";",
     "    }",
+    "",
+    "    rows.sort(function(a, b) {",
+    "        var xCell = a.getElementsByTagName(\"td\")[colIndex];",
+    "        var yCell = b.getElementsByTagName(\"td\")[colIndex];",
+    "        var xText = xCell ? xCell.textContent.trim() : \"\";",
+    "        var yText = yCell ? yCell.textContent.trim() : \"\";",
+    "",
+    "        var xNum = Number(xText);",
+    "        var yNum = Number(yText);",
+    "        var xIsNum = xText !== \"\" && !isNaN(xNum);",
+    "        var yIsNum = yText !== \"\" && !isNaN(yNum);",
+    "",
+    "        var cmp = 0;",
+    "        if (xIsNum && yIsNum) {",
+    "            cmp = xNum - yNum;",
+    "        } else {",
+    "            cmp = xText.localeCompare(yText);",
+    "        }",
+    "        return direction === \"asc\" ? cmp : -cmp;",
+    "    });",
+    "",
+    "    for (var i = 0; i < rows.length; i++) {",
+    "        table.appendChild(rows[i]);",
+    "    }",
+    "",
+    "    table.setAttribute(\"data-sort-column\", colIndex);",
+    "    table.setAttribute(\"data-sort-direction\", direction);",
     "}",
     "</script>",
     "</head>",
@@ -264,9 +275,9 @@ summaryLines += [
     ),
     "</tr></table>",
     '<table id="moduleTable"><tr>',
-    '<th align="center" >Module label</th>',
-    '<th align="center" >Module type</th>',
-    '<th align="center" >Module record</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 1)">Module label</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 2)">Module type</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 3)">Module record</th>',
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 4)">added construction (kB) IB</th>',
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 5)">added construction (kB) PR</th>',
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 6)">added construction (kB) PR - IB</th>',
@@ -346,6 +357,10 @@ for item in datamapres.items():
         )
         moduleres["added total diff"] = added_total_diff
 
+dumpfile = os.path.dirname(sys.argv[2]) + "./diff-" + os.path.basename(sys.argv[2])
+with open(dumpfile, "w") as f:
+    json.dump(results, f, indent=2)
+
 for item in sorted(
     datamapres.items(),
     key=lambda x: x[1]["added total diff"],
@@ -412,20 +427,20 @@ for item in sorted(
                 modulepr["added total"],
                 moduleres["added total diff"],
             ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
+            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
             % (
                 moduleib["nAlloc construction"],
                 modulepr["nAlloc construction"],
                 moduleres["nAlloc construction diff"],
             ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
+            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
             % (
                 moduleib["nAlloc global begin run"] + moduleib["nAlloc stream begin run"],
                 modulepr["nAlloc global begin run"] + modulepr["nAlloc stream begin run"],
                 moduleres["nAlloc global begin run diff"]
                 + moduleres["nAlloc stream begin run diff"],
             ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
+            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
             % (
                 moduleib["nAlloc global begin luminosity block"]
                 + moduleib["nAlloc stream begin luminosity block"],
@@ -434,15 +449,15 @@ for item in sorted(
                 moduleres["nAlloc global begin luminosity block diff"]
                 + moduleres["nAlloc stream begin luminosity block diff"],
             ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
+            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
             % (moduleib["nAlloc event"], modulepr["nAlloc event"], moduleres["nAlloc event diff"]),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
+            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
             % (
                 moduleib["nAlloc event setup"],
                 modulepr["nAlloc event setup"],
                 moduleres["nAlloc event setup diff"],
             ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
+            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
             % (
                 moduleib["nAlloc event setup"]
                 + moduleib["nAlloc event"]
@@ -462,11 +477,8 @@ for item in sorted(
 summaryLines += []
 summaryLines += ["</body></html>"]
 
-summaryFile = os.path.dirname(sys.argv[2]) + "/diff-" + os.path.basename(sys.argv[2]) + ".html"
+summaryFile = os.path.dirname(sys.argv[2]) + "./diff-" + os.path.basename(sys.argv[2]) + ".html"
 with open(summaryFile, "w") as g:
     for summaryLine in summaryLines:
         print(summaryLine, file=g)
 
-dumpfile = os.path.dirname(sys.argv[2]) + "/diff-" + os.path.basename(sys.argv[2])
-with open(dumpfile, "w") as f:
-    json.dump(results, f, indent=2)

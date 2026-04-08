@@ -175,7 +175,10 @@ selectable_metrics = [
 ]
 
 selector_options = "".join(
-    ['<option value="%s">%s</option>' % (metric_key, metric_name) for metric_key, metric_name in selectable_metrics]
+    [
+        '<option value="%s">%s</option>' % (metric_key, metric_name)
+        for metric_key, metric_name in selectable_metrics
+    ]
 )
 js_threshold = "%0.2f" % threshold
 js_error_threshold = "%0.2f" % error_threshold
@@ -191,23 +194,23 @@ summaryLines += [
     "function sortTable(table, column) {",
     "    var colIndex = column - 1;",
     "    var rows = Array.prototype.slice.call(table.rows, 1);",
-    "    var previousColumn = parseInt(table.getAttribute(\"data-sort-column\"), 10);",
-    "    var previousDirection = table.getAttribute(\"data-sort-direction\") || \"desc\";",
-    "    var direction = \"desc\";",
+    '    var previousColumn = parseInt(table.getAttribute("data-sort-column"), 10);',
+    '    var previousDirection = table.getAttribute("data-sort-direction") || "desc";',
+    '    var direction = "desc";',
     "    if (!isNaN(previousColumn) && previousColumn === colIndex) {",
-    "        direction = previousDirection === \"desc\" ? \"asc\" : \"desc\";",
+    '        direction = previousDirection === "desc" ? "asc" : "desc";',
     "    }",
     "",
     "    rows.sort(function(a, b) {",
-    "        var xCell = a.getElementsByTagName(\"td\")[colIndex];",
-    "        var yCell = b.getElementsByTagName(\"td\")[colIndex];",
-    "        var xText = xCell ? xCell.textContent.trim() : \"\";",
-    "        var yText = yCell ? yCell.textContent.trim() : \"\";",
+    '        var xCell = a.getElementsByTagName("td")[colIndex];',
+    '        var yCell = b.getElementsByTagName("td")[colIndex];',
+    '        var xText = xCell ? xCell.textContent.trim() : "";',
+    '        var yText = yCell ? yCell.textContent.trim() : "";',
     "",
     "        var xNum = Number(xText);",
     "        var yNum = Number(yText);",
-    "        var xIsNum = xText !== \"\" && !isNaN(xNum);",
-    "        var yIsNum = yText !== \"\" && !isNaN(yNum);",
+    '        var xIsNum = xText !== "" && !isNaN(xNum);',
+    '        var yIsNum = yText !== "" && !isNaN(yNum);',
     "",
     "        var cmp = 0;",
     "        if (xIsNum && yIsNum) {",
@@ -215,44 +218,44 @@ summaryLines += [
     "        } else {",
     "            cmp = xText.localeCompare(yText);",
     "        }",
-    "        return direction === \"asc\" ? cmp : -cmp;",
+    '        return direction === "asc" ? cmp : -cmp;',
     "    });",
     "",
     "    for (var i = 0; i < rows.length; i++) {",
     "        table.appendChild(rows[i]);",
     "    }",
     "",
-    "    table.setAttribute(\"data-sort-column\", colIndex);",
-    "    table.setAttribute(\"data-sort-direction\", direction);",
+    '    table.setAttribute("data-sort-column", colIndex);',
+    '    table.setAttribute("data-sort-direction", direction);',
     "}",
     "function updateMetricColumn(sortAfterUpdate) {",
-    "    var selector = document.getElementById(\"metricSelector\");",
+    '    var selector = document.getElementById("metricSelector");',
     "    if (!selector) return;",
     "    var selectedMetric = selector.value;",
-    "    var cells = document.getElementsByClassName(\"selectedMetric\");",
+    '    var cells = document.getElementsByClassName("selectedMetric");',
     "    for (var i = 0; i < cells.length; i++) {",
-    "        var metrics = JSON.parse(cells[i].getAttribute(\"data-metrics\") || \"{}\");",
-    "        var diffs = JSON.parse(cells[i].getAttribute(\"data-diffs\") || \"{}\");",
-    "        cells[i].innerHTML = metrics[selectedMetric] || \"\";",
-    "        cells[i].removeAttribute(\"bgcolor\");",
+    '        var metrics = JSON.parse(cells[i].getAttribute("data-metrics") || "{}");',
+    '        var diffs = JSON.parse(cells[i].getAttribute("data-diffs") || "{}");',
+    '        cells[i].innerHTML = metrics[selectedMetric] || "";',
+    '        cells[i].removeAttribute("bgcolor");',
     "        var diffValue = Number(diffs[selectedMetric]);",
     "        if (!isNaN(diffValue)) {",
     "            if (diffValue > %s) {" % js_error_threshold,
-    "                cells[i].setAttribute(\"bgcolor\", \"red\");",
+    '                cells[i].setAttribute("bgcolor", "red");',
     "            } else if (diffValue > %s) {" % js_threshold,
-    "                cells[i].setAttribute(\"bgcolor\", \"orange\");",
+    '                cells[i].setAttribute("bgcolor", "orange");',
     "            } else if (diffValue < -1.0 * %s) {" % js_error_threshold,
-    "                cells[i].setAttribute(\"bgcolor\", \"green\");",
+    '                cells[i].setAttribute("bgcolor", "green");',
     "            } else if (diffValue < -1.0 * %s) {" % js_threshold,
-    "                cells[i].setAttribute(\"bgcolor\", \"cyan\");",
+    '                cells[i].setAttribute("bgcolor", "cyan");',
     "            }",
     "        }",
     "    }",
     "    if (sortAfterUpdate) {",
-    "        var table = document.getElementById(\"moduleTable\");",
+    '        var table = document.getElementById("moduleTable");',
     "        if (table) {",
-    "            table.removeAttribute(\"data-sort-column\");",
-    "            table.setAttribute(\"data-sort-direction\", \"desc\");",
+    '            table.removeAttribute("data-sort-column");',
+    '            table.setAttribute("data-sort-direction", "desc");',
     "            sortTable(table, 4);",
     "        }",
     "    }",
@@ -260,22 +263,22 @@ summaryLines += [
     "var hideZeroMetrics = false;",
     "function toggleZeroFilter() {",
     "    hideZeroMetrics = !hideZeroMetrics;",
-    "    var btn = document.getElementById(\"filterZerosBtn\");",
+    '    var btn = document.getElementById("filterZerosBtn");',
     "    if (btn) {",
-    "        btn.textContent = hideZeroMetrics ? \"Show All\" : \"Hide Zeros\";",
-    "        btn.style.backgroundColor = hideZeroMetrics ? \"#ffcc00\" : \"#cccccc\";",
+    '        btn.textContent = hideZeroMetrics ? "Show All" : "Hide Zeros";',
+    '        btn.style.backgroundColor = hideZeroMetrics ? "#ffcc00" : "#cccccc";',
     "    }",
     "    filterTable();",
     "}",
     "function filterTable() {",
-    "    var searchInput = document.getElementById(\"moduleSearch\");",
+    '    var searchInput = document.getElementById("moduleSearch");',
     "    if (!searchInput) return;",
     "    var searchText = searchInput.value.toLowerCase();",
-    "    var table = document.getElementById(\"moduleTable\");",
+    '    var table = document.getElementById("moduleTable");',
     "    if (!table) return;",
-    "    var rows = table.getElementsByTagName(\"tr\");",
+    '    var rows = table.getElementsByTagName("tr");',
     "    for (var i = 1; i < rows.length; i++) {",
-    "        var cells = rows[i].getElementsByTagName(\"td\");",
+    '        var cells = rows[i].getElementsByTagName("td");',
     "        if (cells.length >= 4) {",
     "            var label = cells[0].textContent.toLowerCase();",
     "            var type = cells[1].textContent.toLowerCase();",
@@ -283,20 +286,19 @@ summaryLines += [
     "            var metricText = cells[3].textContent.trim();",
     "            var metricValue = parseFloat(metricText);",
     "            var matchesSearch = label.includes(searchText) || type.includes(searchText) || record.includes(searchText);",
-    "            var isZero = hideZeroMetrics && (metricValue === 0 || metricText === \"\");",
+    '            var isZero = hideZeroMetrics && (metricValue === 0 || metricText === "");',
     "            if (matchesSearch && !isZero) {",
-    "                rows[i].style.display = \"\";",
+    '                rows[i].style.display = "";',
     "            } else {",
-    "                rows[i].style.display = \"none\";",
+    '                rows[i].style.display = "none";',
     "            }",
     "        }",
     "    }",
     "}",
-    "document.addEventListener(\"DOMContentLoaded\", function() { updateMetricColumn(false); });",
+    'document.addEventListener("DOMContentLoaded", function() { updateMetricColumn(false); });',
     "</script>",
     "</head>",
     "<body><h3>ModuleAllocMonitor Resources Difference</h3><table></table>",
-
     "<table>",
     '<tr><td align="center">Type<BR>Label</td>',
     "<td>metric:</td>",
@@ -382,7 +384,7 @@ summaryLines += [
         results["total"]["nAlloc event setup diff"],
     ),
     "</tr></table>",
-   '<table><tr><td bgcolor="orange">',
+    '<table><tr><td bgcolor="orange">',
     "warn threshold %0.2f kB" % threshold,
     '</td></tr><tr><td bgcolor="red">',
     "error threshold %0.2f kB" % error_threshold,
@@ -460,12 +462,29 @@ for item in sorted(
             "added_construction_IB": "%0.2f" % moduleib["added construction"],
             "added_construction_PR": "%0.2f" % modulepr["added construction"],
             "added_construction_DIFF": "%0.2f" % moduleres["added construction diff"],
-            "added_begin_run_IB": "%0.2f" % (moduleib["added global begin run"] + moduleib["added stream begin run"]),
-            "added_begin_run_PR": "%0.2f" % (modulepr["added global begin run"] + modulepr["added stream begin run"]),
-            "added_begin_run_DIFF": "%0.2f" % (moduleres["added global begin run diff"] + moduleres["added stream begin run diff"]),
-            "added_begin_lumi_IB": "%0.2f" % (moduleib["added global begin luminosity block"] + moduleib["added stream begin luminosity block"]),
-            "added_begin_lumi_PR": "%0.2f" % (modulepr["added global begin luminosity block"] + modulepr["added stream begin luminosity block"]),
-            "added_begin_lumi_DIFF": "%0.2f" % (moduleres["added global begin luminosity block diff"] + moduleres["added stream begin luminosity block diff"]),
+            "added_begin_run_IB": "%0.2f"
+            % (moduleib["added global begin run"] + moduleib["added stream begin run"]),
+            "added_begin_run_PR": "%0.2f"
+            % (modulepr["added global begin run"] + modulepr["added stream begin run"]),
+            "added_begin_run_DIFF": "%0.2f"
+            % (
+                moduleres["added global begin run diff"] + moduleres["added stream begin run diff"]
+            ),
+            "added_begin_lumi_IB": "%0.2f"
+            % (
+                moduleib["added global begin luminosity block"]
+                + moduleib["added stream begin luminosity block"]
+            ),
+            "added_begin_lumi_PR": "%0.2f"
+            % (
+                modulepr["added global begin luminosity block"]
+                + modulepr["added stream begin luminosity block"]
+            ),
+            "added_begin_lumi_DIFF": "%0.2f"
+            % (
+                moduleres["added global begin luminosity block diff"]
+                + moduleres["added stream begin luminosity block diff"]
+            ),
             "added_event_IB": "%0.2f" % moduleib["added event"],
             "added_event_PR": "%0.2f" % modulepr["added event"],
             "added_event_DIFF": "%0.2f" % moduleres["added event diff"],
@@ -475,35 +494,70 @@ for item in sorted(
             "nalloc_construction_IB": "%i" % moduleib["nAlloc construction"],
             "nalloc_construction_PR": "%i" % modulepr["nAlloc construction"],
             "nalloc_construction_DIFF": "%i" % moduleres["nAlloc construction diff"],
-            "nalloc_begin_run_IB": "%i" % (moduleib["nAlloc global begin run"] + moduleib["nAlloc stream begin run"]),
-            "nalloc_begin_run_PR": "%i" % (modulepr["nAlloc global begin run"] + modulepr["nAlloc stream begin run"]),
-            "nalloc_begin_run_DIFF": "%i" % (moduleres["nAlloc global begin run diff"] + moduleres["nAlloc stream begin run diff"]),
-            "nalloc_begin_lumi_IB": "%i" % (moduleib["nAlloc global begin luminosity block"] + moduleib["nAlloc stream begin luminosity block"]),
-            "nalloc_begin_lumi_PR": "%i" % (modulepr["nAlloc global begin luminosity block"] + modulepr["nAlloc stream begin luminosity block"]),
-            "nalloc_begin_lumi_DIFF": "%i" % (moduleres["nAlloc global begin luminosity block diff"] + moduleres["nAlloc stream begin luminosity block diff"]),
+            "nalloc_begin_run_IB": "%i"
+            % (moduleib["nAlloc global begin run"] + moduleib["nAlloc stream begin run"]),
+            "nalloc_begin_run_PR": "%i"
+            % (modulepr["nAlloc global begin run"] + modulepr["nAlloc stream begin run"]),
+            "nalloc_begin_run_DIFF": "%i"
+            % (
+                moduleres["nAlloc global begin run diff"]
+                + moduleres["nAlloc stream begin run diff"]
+            ),
+            "nalloc_begin_lumi_IB": "%i"
+            % (
+                moduleib["nAlloc global begin luminosity block"]
+                + moduleib["nAlloc stream begin luminosity block"]
+            ),
+            "nalloc_begin_lumi_PR": "%i"
+            % (
+                modulepr["nAlloc global begin luminosity block"]
+                + modulepr["nAlloc stream begin luminosity block"]
+            ),
+            "nalloc_begin_lumi_DIFF": "%i"
+            % (
+                moduleres["nAlloc global begin luminosity block diff"]
+                + moduleres["nAlloc stream begin luminosity block diff"]
+            ),
             "nalloc_event_IB": "%i" % moduleib["nAlloc event"],
             "nalloc_event_PR": "%i" % modulepr["nAlloc event"],
             "nalloc_event_DIFF": "%i" % moduleres["nAlloc event diff"],
             "nalloc_event_setup_IB": "%i" % moduleib["nAlloc event setup"],
             "nalloc_event_setup_PR": "%i" % modulepr["nAlloc event setup"],
             "nalloc_event_setup_DIFF": "%i" % moduleres["nAlloc event setup diff"],
-            "nalloc_total_IB": "%i" % (moduleib["nAlloc event setup"] + moduleib["nAlloc event"] + moduleib["nAlloc construction"]),
-            "nalloc_total_PR": "%i" % (modulepr["nAlloc event setup"] + modulepr["nAlloc event"] + modulepr["nAlloc construction"]),
-            "nalloc_total_DIFF": "%i" % (moduleres["nAlloc event setup diff"] + moduleres["nAlloc event diff"] + moduleres["nAlloc construction diff"]),
+            "nalloc_total_IB": "%i"
+            % (
+                moduleib["nAlloc event setup"]
+                + moduleib["nAlloc event"]
+                + moduleib["nAlloc construction"]
+            ),
+            "nalloc_total_PR": "%i"
+            % (
+                modulepr["nAlloc event setup"]
+                + modulepr["nAlloc event"]
+                + modulepr["nAlloc construction"]
+            ),
+            "nalloc_total_DIFF": "%i"
+            % (
+                moduleres["nAlloc event setup diff"]
+                + moduleres["nAlloc event diff"]
+                + moduleres["nAlloc construction diff"]
+            ),
             "transitions_IB": "%i" % moduleib["transitions"],
             "transitions_PR": "%i" % modulepr["transitions"],
             "transitions_DIFF": "%i" % (modulepr["transitions"] - moduleib["transitions"]),
         }
         selected_metric_diffs = {
             "added_construction_DIFF": moduleres["added construction diff"],
-            "added_begin_run_DIFF": moduleres["added global begin run diff"] + moduleres["added stream begin run diff"],
+            "added_begin_run_DIFF": moduleres["added global begin run diff"]
+            + moduleres["added stream begin run diff"],
             "added_begin_lumi_DIFF": moduleres["added global begin luminosity block diff"]
             + moduleres["added stream begin luminosity block diff"],
             "added_event_DIFF": moduleres["added event diff"],
             "added_event_setup_DIFF": moduleres["added event setup diff"],
             "added_total_DIFF": moduleres["added total diff"],
             "nalloc_construction_DIFF": moduleres["nAlloc construction diff"],
-            "nalloc_begin_run_DIFF": moduleres["nAlloc global begin run diff"] + moduleres["nAlloc stream begin run diff"],
+            "nalloc_begin_run_DIFF": moduleres["nAlloc global begin run diff"]
+            + moduleres["nAlloc stream begin run diff"],
             "nalloc_begin_lumi_DIFF": moduleres["nAlloc global begin luminosity block diff"]
             + moduleres["nAlloc stream begin luminosity block diff"],
             "nalloc_event_DIFF": moduleres["nAlloc event diff"],
@@ -519,7 +573,7 @@ for item in sorted(
             "<tr>",
             '<td align="center">%s</td><td align="center">%s</td><td align="center">%s</td>'
             % (moduleres["label"], moduleres["type"], moduleres["record"]),
-            '<td align="right" class="selectedMetric" data-metrics=\'%s\' data-diffs=\'%s\'></td>'
+            "<td align=\"right\" class=\"selectedMetric\" data-metrics='%s' data-diffs='%s'></td>"
             % (selected_metric_json, selected_metric_diffs_json),
             "</tr>",
         ]
@@ -531,4 +585,3 @@ summaryFile = os.path.dirname(sys.argv[2]) + "./diff-" + os.path.basename(sys.ar
 with open(summaryFile, "w") as g:
     for summaryLine in summaryLines:
         print(summaryLine, file=g)
-

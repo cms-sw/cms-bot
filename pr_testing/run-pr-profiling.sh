@@ -60,7 +60,7 @@ EOF
   export RUNALLSTEPS=1
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_allocmon.sh $CMSSW_VERSION || true
-  $WORKSPACE/profiling/Gen_tool/runall_vtune.sh $CMSSW_VERSION || true
+  #$WORKSPACE/profiling/Gen_tool/runall_vtune.sh $CMSSW_VERSION || true
   if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Error: failed to run profiling"
     echo "<BR>$PROFILING_WORKFLOW: No such directory" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

@@ -312,11 +312,13 @@ summaryLines += [
     '<td align="center">added begin luminosity block</td>',
     '<td align="center">added event</td>',
     '<td align="center">added event setup</td>',
+    '<td align="center">added total</td>',
     '<td align="center">nAlloc construction</td>',
     '<td align="center">nAlloc begin run</td>',
     '<td align="center">nAlloc begin luminosity block</td>',
     '<td align="center">nAlloc event</td>',
     '<td align="center">nAlloc event setup</td>',
+    '<td align="center">nAlloc total</td>',
     "</tr>",
     "<td>%s<BR>%s</td>" % (prdata["total"]["type"], prdata["total"]["label"]),
     '<td align="center">&lt;baseline&gt;<BR>&lt;pull request&gt;<BR>&lt;PR - baseline&gt; </td>',
@@ -354,6 +356,12 @@ summaryLines += [
         prdata["total"]["added event setup"],
         results["total"]["added event setup diff"],
     ),
+    '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
+    % (
+        ibdata["total"]["added construction"]+ibdata["total"]["added global begin run"]+ibdata["total"]["added stream begin run"]+ibdata["total"]["added stream begin luminosity block"]+ibdata["total"]["added global begin luminosity block"]+ibdata["total"]["added event"]+ibdata["total"]["added event setup"],
+        prdata["total"]["added construction"]+prdata["total"]["added global begin run"]+prdata["total"]["added stream begin run"]+prdata["total"]["added stream begin luminosity block"]+prdata["total"]["added global begin luminosity block"]+prdata["total"]["added event"]+prdata["total"]["added event setup"],
+        results["total"]["added construction diff"] + results["total"]["added global begin run diff"] + results["total"]["added stream begin run diff"] + results["total"]["added stream begin luminosity block diff"] + results["total"]["added global begin luminosity block diff"] + results["total"]["added event diff"] + results["total"]["added event setup diff"],
+    ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
         ibdata["total"]["nAlloc construction"],
@@ -388,6 +396,12 @@ summaryLines += [
         prdata["total"]["nAlloc event setup"],
         results["total"]["nAlloc event setup diff"],
     ),
+    '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
+    % (
+        ibdata["total"]["nAlloc event setup"] + ibdata["total"]["nAlloc event"] + ibdata["total"]["nAlloc construction"]+ibdata["total"]["nAlloc global begin run"]+ibdata["total"]["nAlloc stream begin run"]+ibdata["total"]["nAlloc global begin luminosity block"]+ibdata["total"]["nAlloc stream begin luminosity block"],
+        prdata["total"]["nAlloc event setup"] + prdata["total"]["nAlloc event"] + prdata["total"]["nAlloc construction"]+prdata["total"]["nAlloc global begin run"]+prdata["total"]["nAlloc stream begin run"]+prdata["total"]["nAlloc global begin luminosity block"]+prdata["total"]["nAlloc stream begin luminosity block"],
+        results["total"]["nAlloc event setup diff"] + results["total"]["nAlloc event diff"] + results["total"]["nAlloc construction diff"]+results["total"]["nAlloc global begin run diff"]+results["total"]["nAlloc stream begin run diff"]+results["total"]["nAlloc global begin luminosity block diff"]+results["total"]["nAlloc stream begin luminosity block diff"],
+    ),
     "</tr></table>",
     '<table><tr><td bgcolor="orange">',
     "warn threshold %0.2f kB" % threshold,
@@ -409,45 +423,6 @@ summaryLines += [
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 2)">Module type</th>',
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 3)">Module record</th>',
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 4)">Selected Metric:<BR><span id="selectedMetricLabel"></span></th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 5)">added construction (kB) IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 6)">added construction (kB) PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 7)">added construction (kB) PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 8)">added begin run (kB) IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 9)">added begin run (kB) PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 10)">added begin run (kB) PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 11)">added begin luminosity block (kB) IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 12)">added begin luminosity block (kB) PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 13)">added begin luminosity block (kB) PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 14)">added event (kB) IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 15)">added event (kB) PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 16)">added event (kB) PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 17)">added event setup (kB) IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 18)">added event setup (kB) PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 19)">added event setup (kB) PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 20)">added total (kB) IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 21)">added total (kB) PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 22)">added total (kB) PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 23)">nAlloc construction IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 24)">nAlloc construction PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 25)">nAlloc construction PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 26)">nAlloc begin run IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 27)">nAlloc begin run PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 28)">nAlloc begin run PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 29)">nAlloc begin luminosity block IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 30)">nAlloc begin luminosity block PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 31)">nAlloc begin luminosity block PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 32)">nAlloc event IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 33)">nAlloc event PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 34)">nAlloc event PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 35)">nAlloc event setup IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 36)">nAlloc event setup PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 37)">nAlloc event setup PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 38)">nAlloc total IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 39)">nAlloc total PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 40)">nAlloc total PR - IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 41)">transitions IB</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 42)">transitions PR</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 43)">transitions PR - IB</th>',
     "</tr>",
 ]
 
@@ -627,90 +602,6 @@ for item in sorted(
             % (moduleres["label"], moduleres["type"], moduleres["record"]),
             "<td align=\"right\" class=\"selectedMetric\" data-metrics='%s' data-diffs='%s'></td>"
             % (selected_metric_json, selected_metric_diffs_json),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
-            % (
-                moduleib["added construction"],
-                modulepr["added construction"],
-                moduleres["added construction diff"],
-            ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
-            % (
-                moduleib["added global begin run"] + moduleib["added stream begin run"],
-                modulepr["added global begin run"] + modulepr["added stream begin run"],
-                moduleres["added global begin run diff"]
-                + moduleres["added stream begin run diff"],
-            ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
-            % (
-                moduleib["added global begin luminosity block"]
-                + moduleib["added stream begin luminosity block"],
-                modulepr["added global begin luminosity block"]
-                + modulepr["added stream begin luminosity block"],
-                moduleres["added global begin luminosity block diff"]
-                + moduleres["added stream begin luminosity block diff"],
-            ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
-            % (
-                moduleib["added event"],
-                modulepr["added event"],
-                moduleres["added event diff"],
-            ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
-            % (
-                moduleib["added event setup"],
-                modulepr["added event setup"],
-                moduleres["added event setup diff"],
-            ),
-            '<td align="right"> %0.2f</td><td align="right"> %0.2f</td><td align="right"> %0.2f</td>'
-            % (
-                moduleib["added total"],
-                modulepr["added total"],
-                moduleres["added total diff"],
-            ),
-            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
-            % (
-                moduleib["nAlloc construction"],
-                modulepr["nAlloc construction"],
-                moduleres["nAlloc construction diff"],
-            ),
-            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
-            % (
-                moduleib["nAlloc global begin run"] + moduleib["nAlloc stream begin run"],
-                modulepr["nAlloc global begin run"] + modulepr["nAlloc stream begin run"],
-                moduleres["nAlloc global begin run diff"]
-                + moduleres["nAlloc stream begin run diff"],
-            ),
-            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
-            % (
-                moduleib["nAlloc global begin luminosity block"]
-                + moduleib["nAlloc stream begin luminosity block"],
-                modulepr["nAlloc global begin luminosity block"]
-                + modulepr["nAlloc stream begin luminosity block"],
-                moduleres["nAlloc global begin luminosity block diff"]
-                + moduleres["nAlloc stream begin luminosity block diff"],
-            ),
-            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
-            % (moduleib["nAlloc event"], modulepr["nAlloc event"], moduleres["nAlloc event diff"]),
-            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
-            % (
-                moduleib["nAlloc event setup"],
-                modulepr["nAlloc event setup"],
-                moduleres["nAlloc event setup diff"],
-            ),
-            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
-            % (
-                moduleib["nAlloc event setup"]
-                + moduleib["nAlloc event"]
-                + moduleib["nAlloc construction"],
-                modulepr["nAlloc event setup"]
-                + modulepr["nAlloc event"]
-                + modulepr["nAlloc construction"],
-                moduleres["nAlloc event setup diff"]
-                + moduleres["nAlloc event diff"]
-                + moduleres["nAlloc construction diff"],
-            ),
-            '<td align="right"> %i</td><td align="right"> %i</td><td align="right"> %i</td>'
-            % (moduleib["transitions"], modulepr["transitions"], modulepr["transitions"]-moduleib["transitions"]),
             "</tr>",
         ]
 

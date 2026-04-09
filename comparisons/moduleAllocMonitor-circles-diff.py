@@ -421,7 +421,7 @@ summaryLines += [
     "<tr>",
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 1)">Module label</th>',
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 2)">Module type</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 3)">Module record</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 3)">Module metrics</th>',
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 4)">Selected Metric:<BR><span id="selectedMetricLabel"></span></th>',
     "</tr>",
 ]
@@ -596,10 +596,16 @@ for item in sorted(
         }
         selected_metric_json = json.dumps(selected_metric_values).replace("'", "&apos;")
         selected_metric_diffs_json = json.dumps(selected_metric_diffs).replace("'", "&apos;")
+        selected_metric_text = "<br>".join(
+            ["%s: %s" % (metric_key, metric_value) for metric_key, metric_value in selected_metric_values.items()]
+        )
+        record_value = moduleres.get("record")
+        if not record_value:
+            record_value = "N/A"
         summaryLines += [
             "<tr>",
-            '<td align="center">%s</td><td align="center">%s</td><td align="center">%s</td>'
-            % (moduleres["label"], moduleres["type"], moduleres["record"]),
+            '<td align="left">%s</td><td align="left">%s</td><td align="left">Record: %s<BR>%s</td>'
+            % (moduleres["label"], moduleres["type"], record_value, selected_metric_text),
             "<td align=\"right\" class=\"selectedMetric\" data-metrics='%s' data-diffs='%s'></td>"
             % (selected_metric_json, selected_metric_diffs_json),
             "</tr>",

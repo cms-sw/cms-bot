@@ -441,7 +441,12 @@ for item in datamapres.items():
         )
         moduleres["added total diff"] = added_total_diff
 
-dumpfile = os.path.dirname(sys.argv[2]) + "./diff-" + os.path.basename(sys.argv[2])
+dumpfile = (
+    os.path.dirname(os.path.realpath(sys.argv[2]))
+    + "/diff-"
+    + os.path.basename(os.path.realpath(sys.argv[2]))
+    + ".json"
+)
 with open(dumpfile, "w") as f:
     json.dump(results, f, indent=2)
 
@@ -581,7 +586,12 @@ for item in sorted(
 summaryLines += []
 summaryLines += ["</body></html>"]
 
-summaryFile = os.path.dirname(sys.argv[2]) + "./diff-" + os.path.basename(sys.argv[2]) + ".html"
+summaryFile = (
+    os.path.dirname(os.path.realpath(sys.argv[2]))
+    + "/diff-"
+    + os.path.basename(os.path.realpath(sys.argv[2]))
+    + ".html"
+)
 with open(summaryFile, "w") as g:
     for summaryLine in summaryLines:
         print(summaryLine, file=g)

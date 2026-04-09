@@ -235,7 +235,7 @@ summaryLines += [
     '    var selectedMetricLabel = document.getElementById("selectedMetricLabel");',
     "    if (selectedMetricLabel) {",
     "        var opt = selector.options[selector.selectedIndex];",
-    '        selectedMetricLabel.textContent = opt ? opt.text : selectedMetric;',
+    "        selectedMetricLabel.textContent = opt ? opt.text : selectedMetric;",
     "    }",
     '    var cells = document.getElementsByClassName("selectedMetric");',
     "    for (var i = 0; i < cells.length; i++) {",
@@ -358,9 +358,27 @@ summaryLines += [
     ),
     '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
     % (
-        ibdata["total"]["added construction"]+ibdata["total"]["added global begin run"]+ibdata["total"]["added stream begin run"]+ibdata["total"]["added stream begin luminosity block"]+ibdata["total"]["added global begin luminosity block"]+ibdata["total"]["added event"]+ibdata["total"]["added event setup"],
-        prdata["total"]["added construction"]+prdata["total"]["added global begin run"]+prdata["total"]["added stream begin run"]+prdata["total"]["added stream begin luminosity block"]+prdata["total"]["added global begin luminosity block"]+prdata["total"]["added event"]+prdata["total"]["added event setup"],
-        results["total"]["added construction diff"] + results["total"]["added global begin run diff"] + results["total"]["added stream begin run diff"] + results["total"]["added stream begin luminosity block diff"] + results["total"]["added global begin luminosity block diff"] + results["total"]["added event diff"] + results["total"]["added event setup diff"],
+        ibdata["total"]["added construction"]
+        + ibdata["total"]["added global begin run"]
+        + ibdata["total"]["added stream begin run"]
+        + ibdata["total"]["added stream begin luminosity block"]
+        + ibdata["total"]["added global begin luminosity block"]
+        + ibdata["total"]["added event"]
+        + ibdata["total"]["added event setup"],
+        prdata["total"]["added construction"]
+        + prdata["total"]["added global begin run"]
+        + prdata["total"]["added stream begin run"]
+        + prdata["total"]["added stream begin luminosity block"]
+        + prdata["total"]["added global begin luminosity block"]
+        + prdata["total"]["added event"]
+        + prdata["total"]["added event setup"],
+        results["total"]["added construction diff"]
+        + results["total"]["added global begin run diff"]
+        + results["total"]["added stream begin run diff"]
+        + results["total"]["added stream begin luminosity block diff"]
+        + results["total"]["added global begin luminosity block diff"]
+        + results["total"]["added event diff"]
+        + results["total"]["added event setup diff"],
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
@@ -398,9 +416,27 @@ summaryLines += [
     ),
     '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
     % (
-        ibdata["total"]["nAlloc event setup"] + ibdata["total"]["nAlloc event"] + ibdata["total"]["nAlloc construction"]+ibdata["total"]["nAlloc global begin run"]+ibdata["total"]["nAlloc stream begin run"]+ibdata["total"]["nAlloc global begin luminosity block"]+ibdata["total"]["nAlloc stream begin luminosity block"],
-        prdata["total"]["nAlloc event setup"] + prdata["total"]["nAlloc event"] + prdata["total"]["nAlloc construction"]+prdata["total"]["nAlloc global begin run"]+prdata["total"]["nAlloc stream begin run"]+prdata["total"]["nAlloc global begin luminosity block"]+prdata["total"]["nAlloc stream begin luminosity block"],
-        results["total"]["nAlloc event setup diff"] + results["total"]["nAlloc event diff"] + results["total"]["nAlloc construction diff"]+results["total"]["nAlloc global begin run diff"]+results["total"]["nAlloc stream begin run diff"]+results["total"]["nAlloc global begin luminosity block diff"]+results["total"]["nAlloc stream begin luminosity block diff"],
+        ibdata["total"]["nAlloc event setup"]
+        + ibdata["total"]["nAlloc event"]
+        + ibdata["total"]["nAlloc construction"]
+        + ibdata["total"]["nAlloc global begin run"]
+        + ibdata["total"]["nAlloc stream begin run"]
+        + ibdata["total"]["nAlloc global begin luminosity block"]
+        + ibdata["total"]["nAlloc stream begin luminosity block"],
+        prdata["total"]["nAlloc event setup"]
+        + prdata["total"]["nAlloc event"]
+        + prdata["total"]["nAlloc construction"]
+        + prdata["total"]["nAlloc global begin run"]
+        + prdata["total"]["nAlloc stream begin run"]
+        + prdata["total"]["nAlloc global begin luminosity block"]
+        + prdata["total"]["nAlloc stream begin luminosity block"],
+        results["total"]["nAlloc event setup diff"]
+        + results["total"]["nAlloc event diff"]
+        + results["total"]["nAlloc construction diff"]
+        + results["total"]["nAlloc global begin run diff"]
+        + results["total"]["nAlloc stream begin run diff"]
+        + results["total"]["nAlloc global begin luminosity block diff"]
+        + results["total"]["nAlloc stream begin luminosity block diff"],
     ),
     "</tr></table>",
     '<table><tr><td bgcolor="orange">',
@@ -416,7 +452,8 @@ summaryLines += [
     '<table id="moduleTable">',
     "<tr>",
     '<th align="center" colspan="3">Search<BR><input type="text" id="moduleSearch" placeholder="label/type/record" onkeyup="filterTable()" style="width:130px"></th>',
-    '<th align="left" colspan="40">Select Metric: <select id="metricSelector" onchange="updateMetricColumn(true)">%s</select> <button id="filterZerosBtn" onclick="toggleZeroFilter()" style="margin-top:5px;padding:4px 8px;background-color:#cccccc;border:1px solid #999;border-radius:3px;cursor:pointer;font-size:12px">Hide Zeros</button></th>' % selector_options,
+    '<th align="left" colspan="40">Select Metric: <select id="metricSelector" onchange="updateMetricColumn(true)">%s</select> <button id="filterZerosBtn" onclick="toggleZeroFilter()" style="margin-top:5px;padding:4px 8px;background-color:#cccccc;border:1px solid #999;border-radius:3px;cursor:pointer;font-size:12px">Hide Zeros</button></th>'
+    % selector_options,
     "</tr>",
     "<tr>",
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 1)">Module label</th>',
@@ -597,7 +634,10 @@ for item in sorted(
         selected_metric_json = json.dumps(selected_metric_values).replace("'", "&apos;")
         selected_metric_diffs_json = json.dumps(selected_metric_diffs).replace("'", "&apos;")
         selected_metric_text = "<br>".join(
-            ["%s: %s" % (metric_key, metric_value) for metric_key, metric_value in selected_metric_values.items()]
+            [
+                "%s: %s" % (metric_key, metric_value)
+                for metric_key, metric_value in selected_metric_values.items()
+            ]
         )
         record_value = moduleres.get("record")
         if not record_value:

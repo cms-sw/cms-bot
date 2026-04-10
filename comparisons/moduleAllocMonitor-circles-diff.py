@@ -132,54 +132,22 @@ datamapres = {
 threshold = 5000.0
 error_threshold = 20000.0
 
-selectable_metrics = [
-    ("added_total_DIFF", "added total (kB) PR-IB"),
-    ("added_total_IB", "added total (kB) IB"),
-    ("added_total_PR", "added total (kB) PR"),
-    ("added_construction_IB", "added construction (kB) IB"),
-    ("added_construction_PR", "added construction (kB) PR"),
-    ("added_construction_DIFF", "added construction (kB) PR-IB"),
-    ("added_begin_run_IB", "added begin run (kB) IB"),
-    ("added_begin_run_PR", "added begin run (kB) PR"),
-    ("added_begin_run_DIFF", "added begin run (kB) PR-IB"),
-    ("added_begin_lumi_IB", "added begin luminosity block (kB) IB"),
-    ("added_begin_lumi_PR", "added begin luminosity block (kB) PR"),
-    ("added_begin_lumi_DIFF", "added begin luminosity block (kB) PR-IB"),
-    ("added_event_IB", "added event (kB) IB"),
-    ("added_event_PR", "added event (kB) PR"),
-    ("added_event_DIFF", "added event (kB) PR-IB"),
-    ("added_event_setup_IB", "added event setup (kB) IB"),
-    ("added_event_setup_PR", "added event setup (kB) PR"),
-    ("added_event_setup_DIFF", "added event setup (kB) PR-IB"),
-    ("nalloc_construction_IB", "nAlloc construction IB"),
-    ("nalloc_construction_PR", "nAlloc construction PR"),
-    ("nalloc_construction_DIFF", "nAlloc construction PR-IB"),
-    ("nalloc_begin_run_IB", "nAlloc begin run IB"),
-    ("nalloc_begin_run_PR", "nAlloc begin run PR"),
-    ("nalloc_begin_run_DIFF", "nAlloc begin run PR-IB"),
-    ("nalloc_begin_lumi_IB", "nAlloc begin luminosity block IB"),
-    ("nalloc_begin_lumi_PR", "nAlloc begin luminosity block PR"),
-    ("nalloc_begin_lumi_DIFF", "nAlloc begin luminosity block PR-IB"),
-    ("nalloc_event_IB", "nAlloc event IB"),
-    ("nalloc_event_PR", "nAlloc event PR"),
-    ("nalloc_event_DIFF", "nAlloc event PR-IB"),
-    ("nalloc_event_setup_IB", "nAlloc event setup IB"),
-    ("nalloc_event_setup_PR", "nAlloc event setup PR"),
-    ("nalloc_event_setup_DIFF", "nAlloc event setup PR-IB"),
-    ("nalloc_total_IB", "nAlloc total IB"),
-    ("nalloc_total_PR", "nAlloc total PR"),
-    ("nalloc_total_DIFF", "nAlloc total PR-IB"),
-    ("transitions_IB", "transitions IB"),
-    ("transitions_PR", "transitions PR"),
-    ("transitions_DIFF", "transitions PR-IB"),
-]
+selectable_metrics = {
+    "added_total": "Sum All (kB)",
+    "added_construction": "Construction (kB)",
+    "added_begin_run": "Begin Run (kB)",
+    "added_begin_lumi": "Begin Luminosity Block (kB)",
+    "added_event": "Event (kB)",
+    "added_event_setup": "Event Setup (kB)",
+    "nalloc_construction": "nAlloc Construction",
+    "nalloc_begin_run": "nAlloc Begin Run",
+    "nalloc_begin_lumi": "nAlloc Begin Luminosity Block",
+    "nalloc_event": "nAlloc Event",
+    "nalloc_event_setup": "nAlloc Event Setup",
+    "nalloc_total": "nAlloc Sum All",
+    "transitions": "transitions",
+}
 
-selector_options = "".join(
-    [
-        '<option value="%s">%s</option>' % (metric_key, metric_name)
-        for metric_key, metric_name in selectable_metrics
-    ]
-)
 js_threshold = "%0.2f" % threshold
 js_error_threshold = "%0.2f" % error_threshold
 
@@ -239,11 +207,12 @@ summaryLines += [
     "    }",
     '    var cells = document.getElementsByClassName("selectedMetric");',
     "    for (var i = 0; i < cells.length; i++) {",
-    '        var metrics = JSON.parse(cells[i].getAttribute("data-metrics") || "{}");',
-    '        var diffs = JSON.parse(cells[i].getAttribute("data-diffs") || "{}");',
-    '        cells[i].innerHTML = metrics[selectedMetric] || "";',
+    '        var metrics_ib = JSON.parse(cells[i].getAttribute("data-metrics-ib") || "{}");',
+    '        var metrics_pr = JSON.parse(cells[i].getAttribute("data-metrics-pr") || "{}");',
+    '        var metrics_diffs = JSON.parse(cells[i].getAttribute("data-metrics-diffs") || "{}");',
+    '        cells[i].innerHTML = metrics_diffs[selectedMetric] || "";',
     '        cells[i].removeAttribute("bgcolor");',
-    "        var diffValue = Number(diffs[selectedMetric]);",
+    "        var diffValue = Number(metrics_diffs[selectedMetric]);",
     "        if (!isNaN(diffValue)) {",
     "            if (diffValue > %s) {" % js_error_threshold,
     '                cells[i].setAttribute("bgcolor", "red");',
@@ -452,14 +421,15 @@ summaryLines += [
     '<table id="moduleTable">',
     "<tr>",
     '<th align="center" colspan="3">Search<BR><input type="text" id="moduleSearch" placeholder="label/type/record" onkeyup="filterTable()" style="width:130px"></th>',
-    '<th align="left" colspan="40">Select Metric: <select id="metricSelector" onchange="updateMetricColumn(true)">%s</select> <button id="filterZerosBtn" onclick="toggleZeroFilter()" style="margin-top:5px;padding:4px 8px;background-color:#cccccc;border:1px solid #999;border-radius:3px;cursor:pointer;font-size:12px">Hide Zeros</button></th>'
-    % selector_options,
+    '<th align="left" colspan="3"><button id="filterZerosBtn" onclick="toggleZeroFilter()" style="margin-top:5px;padding:4px 8px;background-color:#cccccc;border:1px solid #999;border-radius:3px;cursor:pointer;font-size:12px">Hide Zeros</button></th>'
     "</tr>",
     "<tr>",
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 1)">Module label</th>',
     '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 2)">Module type</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 3)">Module metrics</th>',
-    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 4)">Selected Metric:<BR><span id="selectedMetricLabel"></span></th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 3)">Module transition</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 4)">Metric IB:</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 4)">Metric PR:</th>',
+    '<th align="center" onclick="sortTable(document.getElementById(\'moduleTable\'), 4)">Metric PR-IB:</th>',
     "</tr>",
 ]
 
@@ -519,137 +489,128 @@ for item in sorted(
         moduleib = datamapib[key]
         modulepr = datamappr[key]
         moduleres = datamapres[key]
-        selected_metric_values = {
-            "added_total_DIFF": "%0.2f" % moduleres["added total diff"],
-            "added_total_IB": "%0.2f" % moduleib["added total"],
-            "added_total_PR": "%0.2f" % modulepr["added total"],
-            "added_construction_IB": "%0.2f" % moduleib["added construction"],
-            "added_construction_PR": "%0.2f" % modulepr["added construction"],
-            "added_construction_DIFF": "%0.2f" % moduleres["added construction diff"],
-            "added_begin_run_IB": "%0.2f"
+        selected_metric_values_ib = {
+            "added_total": "%0.2f" % moduleib["added total"],
+            "added_construction": "%0.2f" % moduleib["added construction"],
+            "added_begin_run": "%0.2f"
             % (moduleib["added global begin run"] + moduleib["added stream begin run"]),
-            "added_begin_run_PR": "%0.2f"
-            % (modulepr["added global begin run"] + modulepr["added stream begin run"]),
-            "added_begin_run_DIFF": "%0.2f"
-            % (
-                moduleres["added global begin run diff"] + moduleres["added stream begin run diff"]
-            ),
-            "added_begin_lumi_IB": "%0.2f"
+             "added_begin_lumi": "%0.2f"
             % (
                 moduleib["added global begin luminosity block"]
                 + moduleib["added stream begin luminosity block"]
             ),
-            "added_begin_lumi_PR": "%0.2f"
-            % (
-                modulepr["added global begin luminosity block"]
-                + modulepr["added stream begin luminosity block"]
-            ),
-            "added_begin_lumi_DIFF": "%0.2f"
-            % (
-                moduleres["added global begin luminosity block diff"]
-                + moduleres["added stream begin luminosity block diff"]
-            ),
-            "added_event_IB": "%0.2f" % moduleib["added event"],
-            "added_event_PR": "%0.2f" % modulepr["added event"],
-            "added_event_DIFF": "%0.2f" % moduleres["added event diff"],
-            "added_event_setup_IB": "%0.2f" % moduleib["added event setup"],
-            "added_event_setup_PR": "%0.2f" % modulepr["added event setup"],
-            "added_event_setup_DIFF": "%0.2f" % moduleres["added event setup diff"],
-            "nalloc_construction_IB": "%i" % moduleib["nAlloc construction"],
-            "nalloc_construction_PR": "%i" % modulepr["nAlloc construction"],
-            "nalloc_construction_DIFF": "%i" % moduleres["nAlloc construction diff"],
-            "nalloc_begin_run_IB": "%i"
-            % (moduleib["nAlloc global begin run"] + moduleib["nAlloc stream begin run"]),
-            "nalloc_begin_run_PR": "%i"
+            "added_event": "%0.2f" % moduleib["added event"],
+            "added_event_setup": "%0.2f" % moduleib["added event setup"],
+            "nalloc_construction": "%i" % moduleib["nAlloc construction"],
+            "nalloc_begin_run": "%i"
             % (modulepr["nAlloc global begin run"] + modulepr["nAlloc stream begin run"]),
-            "nalloc_begin_run_DIFF": "%i"
-            % (
-                moduleres["nAlloc global begin run diff"]
-                + moduleres["nAlloc stream begin run diff"]
-            ),
-            "nalloc_begin_lumi_IB": "%i"
+            "nalloc_begin_lumi": "%i"
             % (
                 moduleib["nAlloc global begin luminosity block"]
                 + moduleib["nAlloc stream begin luminosity block"]
             ),
-            "nalloc_begin_lumi_PR": "%i"
-            % (
-                modulepr["nAlloc global begin luminosity block"]
-                + modulepr["nAlloc stream begin luminosity block"]
-            ),
-            "nalloc_begin_lumi_DIFF": "%i"
-            % (
-                moduleres["nAlloc global begin luminosity block diff"]
-                + moduleres["nAlloc stream begin luminosity block diff"]
-            ),
-            "nalloc_event_IB": "%i" % moduleib["nAlloc event"],
-            "nalloc_event_PR": "%i" % modulepr["nAlloc event"],
-            "nalloc_event_DIFF": "%i" % moduleres["nAlloc event diff"],
-            "nalloc_event_setup_IB": "%i" % moduleib["nAlloc event setup"],
-            "nalloc_event_setup_PR": "%i" % modulepr["nAlloc event setup"],
-            "nalloc_event_setup_DIFF": "%i" % moduleres["nAlloc event setup diff"],
-            "nalloc_total_IB": "%i"
+            "nalloc_event": "%i" % moduleib["nAlloc event"],
+            "nalloc_event_setup": "%i" % moduleib["nAlloc event setup"],
+            "nalloc_total": "%i"
             % (
                 moduleib["nAlloc event setup"]
                 + moduleib["nAlloc event"]
                 + moduleib["nAlloc construction"]
             ),
-            "nalloc_total_PR": "%i"
+            "transitions": "%i" % moduleib["transitions"],
+        }
+        selected_metric_values_pr = {
+            "added_total": "%0.2f" % modulepr["added total"],
+            "added_construction": "%0.2f" % modulepr["added construction"],
+            "added_begin_run": "%0.2f"
+            % (modulepr["added global begin run"] + modulepr["added stream begin run"]),
+            "added_begin_lumi": "%0.2f"
+            % (
+                modulepr["added global begin luminosity block"]
+                + modulepr["added stream begin luminosity block"]
+            ),
+            "added_event": "%0.2f" % modulepr["added event"],
+            "added_event_setup": "%0.2f" % modulepr["added event setup"],
+            "nalloc_construction": "%i" % modulepr["nAlloc construction"],
+            "nalloc_begin_run": "%i"
+            % (modulepr["nAlloc global begin run"] + modulepr["nAlloc stream begin run"]),
+            "nalloc_begin_lumi": "%i"
+            % (
+                modulepr["nAlloc global begin luminosity block"]
+                + modulepr["nAlloc stream begin luminosity block"]
+            ),
+            "nalloc_event": "%i" % modulepr["nAlloc event"],
+            "nalloc_event_setup": "%i" % modulepr["nAlloc event setup"],
+            "nalloc_total": "%i"
             % (
                 modulepr["nAlloc event setup"]
                 + modulepr["nAlloc event"]
                 + modulepr["nAlloc construction"]
             ),
-            "nalloc_total_DIFF": "%i"
-            % (
-                moduleres["nAlloc event setup diff"]
-                + moduleres["nAlloc event diff"]
-                + moduleres["nAlloc construction diff"]
-            ),
-            "transitions_IB": "%i" % moduleib["transitions"],
-            "transitions_PR": "%i" % modulepr["transitions"],
-            "transitions_DIFF": "%i" % (modulepr["transitions"] - moduleib["transitions"]),
+            "transitions": "%i" % modulepr["transitions"],
         }
-        selected_metric_diffs = {
-            "added_construction_DIFF": moduleres["added construction diff"],
-            "added_begin_run_DIFF": moduleres["added global begin run diff"]
+        selected_metric_values_diffs = {
+            "added_construction": moduleres["added construction diff"],
+            "added_begin_run": moduleres["added global begin run diff"]
             + moduleres["added stream begin run diff"],
-            "added_begin_lumi_DIFF": moduleres["added global begin luminosity block diff"]
+            "added_begin_lumi": moduleres["added global begin luminosity block diff"]
             + moduleres["added stream begin luminosity block diff"],
-            "added_event_DIFF": moduleres["added event diff"],
-            "added_event_setup_DIFF": moduleres["added event setup diff"],
-            "added_total_DIFF": moduleres["added total diff"],
-            "nalloc_construction_DIFF": moduleres["nAlloc construction diff"],
-            "nalloc_begin_run_DIFF": moduleres["nAlloc global begin run diff"]
+            "added_event": moduleres["added event diff"],
+            "added_event_setup": moduleres["added event setup diff"],
+            "added_total": moduleres["added total diff"],
+            "nalloc_construction": moduleres["nAlloc construction diff"],
+            "nalloc_begin_run": moduleres["nAlloc global begin run diff"]
             + moduleres["nAlloc stream begin run diff"],
-            "nalloc_begin_lumi_DIFF": moduleres["nAlloc global begin luminosity block diff"]
+            "nalloc_begin_lumi": moduleres["nAlloc global begin luminosity block diff"]
             + moduleres["nAlloc stream begin luminosity block diff"],
-            "nalloc_event_DIFF": moduleres["nAlloc event diff"],
-            "nalloc_event_setup_DIFF": moduleres["nAlloc event setup diff"],
-            "nalloc_total_DIFF": moduleres["nAlloc event setup diff"]
+            "nalloc_event": moduleres["nAlloc event diff"],
+            "nalloc_event_setup": moduleres["nAlloc event setup diff"],
+            "nalloc_total": moduleres["nAlloc event setup diff"]
             + moduleres["nAlloc event diff"]
             + moduleres["nAlloc construction diff"],
-            "transitions_DIFF": modulepr["transitions"] - moduleib["transitions"],
+            "transitions": modulepr["transitions"] - moduleib["transitions"],
         }
-        selected_metric_json = json.dumps(selected_metric_values).replace("'", "&apos;")
-        selected_metric_diffs_json = json.dumps(selected_metric_diffs).replace("'", "&apos;")
-        selected_metric_text = "<br>".join(
-            [
-                "%s: %s" % (metric_key, metric_value)
-                for metric_key, metric_value in selected_metric_values.items()
-            ]
-        )
+        selected_metric_ib_json = json.dumps(selected_metric_values_ib).replace("'", "&apos;")
+        selected_metric_pr_json = json.dumps(selected_metric_values_pr).replace("'", "&apos;")
+        selected_metric_diffs_json = json.dumps(selected_metric_values_diffs).replace("'", "&apos;")
         record_value = moduleres.get("record")
-        if not record_value:
-            record_value = "N/A"
-        summaryLines += [
-            "<tr>",
-            '<td align="left">%s</td><td align="left">%s</td><td align="left">Record: %s<BR>%s</td>'
-            % (moduleres["label"], moduleres["type"], record_value, selected_metric_text),
-            "<td align=\"right\" class=\"selectedMetric\" data-metrics='%s' data-diffs='%s'></td>"
-            % (selected_metric_json, selected_metric_diffs_json),
-            "</tr>",
-        ]
+        if record_value:
+
+            for selected_metric in ["added_total", "added_construction"]:
+                summaryLines += [
+                    "<tr>",
+                '<td align="left">%s</td><td align="left">%s</td><td align="left">%s</td>'
+                % (moduleres["label"], moduleres["type"], selectable_metrics[selected_metric]),
+                '<td align="right">%s</td><td align="right">%s</td><td align="right">%s</td>' %
+                (
+                    selected_metric_values_ib[selected_metric],
+                    selected_metric_values_pr[selected_metric],
+                    selected_metric_values_diffs[selected_metric],
+                ),
+                    "</tr>",
+                    ]
+            summaryLines += [
+                "<tr>",
+                '<td align="left">%s</td><td align="left">%s</td><td align="left">Record: %s</td>'
+                % (moduleres["label"], moduleres["type"], record_value),
+                "<td align=\"right\">%s</td><td align=\"right\">%s</td><td align=\"right\">%s</td>"
+                % (selected_metric_values_ib["added_event_setup"], selected_metric_values_pr["added_event_setup"], selected_metric_values_diffs["added_event_setup"]),
+                "</tr>",
+            ]
+        else:
+            for selected_metric in ["added_total", "added_construction", "added_begin_run", "added_begin_lumi", "added_event",]    :
+                summaryLines += [
+                    "<tr>",
+                '<td align="left">%s</td><td align="left">%s</td><td align="left">%s</td>'
+                % (moduleres["label"], moduleres["type"], selectable_metrics[selected_metric]),
+                '<td align="right">%s</td><td align="right">%s</td><td align="right">%s</td>' %
+                (
+                    selected_metric_values_ib[selected_metric],
+                    selected_metric_values_pr[selected_metric],
+                    selected_metric_values_diffs[selected_metric],
+                ),
+                "</tr>",
+            ]
 
 summaryLines += []
 summaryLines += ["</body></html>"]

@@ -60,7 +60,6 @@ EOF
   export RUNALLSTEPS=1
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_allocmon.sh $CMSSW_VERSION || true
-  $WORKSPACE/profiling/Gen_tool/runall_vtune.sh $CMSSW_VERSION || true
   if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Error: failed to run profiling"
     echo "<BR>$PROFILING_WORKFLOW: No such directory" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
@@ -130,13 +129,6 @@ EOF
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
   done
-  echo "<tr><td>Vtune Profiles</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-  for d in $(find $PROFILING_WORKFLOW -type d -name 'r-step*' | sort -V ) ; do
-    mkdir -p $WORKSPACE/vtune-profiles/$d || true
-    rsync -auv $d/ $WORKSPACE/vtune-profiles/$d/ || true
-    echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)\">IB $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
-    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR $(basename $d)/</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
-  done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   popd
   echo "</table>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
@@ -152,13 +144,4 @@ EOF
   mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Passed"
 done
 
-ARTIFACTS_SERVER=cmsvtune-01.cern.ch
-ARTIFACTS_USER=vtune
-ARTIFACT_BASE_DIR=/data/cms
-source $CMS_BOT_DIR/jenkins-artifacts
-for WORKFLOW in $WORKFLOWS ; do
-  if [ -d $WORKSPACE/vtune-profiles/${WORKFLOW} ]; then
-    send_jenkins_artifacts $WORKSPACE/vtune-profiles/${WORKFLOW} vtune-profiles/$CMSSW_VERSION/$ARCHITECTURE/${WORKFLOW}/$UPLOAD_UNIQ_ID
-  fi
-done
 

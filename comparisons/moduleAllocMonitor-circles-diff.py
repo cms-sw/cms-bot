@@ -494,7 +494,7 @@ for item in sorted(
             "added_construction": "%0.2f" % moduleib["added construction"],
             "added_begin_run": "%0.2f"
             % (moduleib["added global begin run"] + moduleib["added stream begin run"]),
-             "added_begin_lumi": "%0.2f"
+            "added_begin_lumi": "%0.2f"
             % (
                 moduleib["added global begin luminosity block"]
                 + moduleib["added stream begin luminosity block"]
@@ -572,45 +572,57 @@ for item in sorted(
         }
         selected_metric_ib_json = json.dumps(selected_metric_values_ib).replace("'", "&apos;")
         selected_metric_pr_json = json.dumps(selected_metric_values_pr).replace("'", "&apos;")
-        selected_metric_diffs_json = json.dumps(selected_metric_values_diffs).replace("'", "&apos;")
+        selected_metric_diffs_json = json.dumps(selected_metric_values_diffs).replace(
+            "'", "&apos;"
+        )
         record_value = moduleres.get("record")
         if record_value:
 
             for selected_metric in ["added_total", "added_construction"]:
                 summaryLines += [
                     "<tr>",
-                '<td align="left">%s</td><td align="left">%s</td><td align="left">%s</td>'
-                % (moduleres["label"], moduleres["type"], selectable_metrics[selected_metric]),
-                '<td align="right">%s</td><td align="right">%s</td><td align="right">%s</td>' %
-                (
-                    selected_metric_values_ib[selected_metric],
-                    selected_metric_values_pr[selected_metric],
-                    selected_metric_values_diffs[selected_metric],
-                ),
+                    '<td align="left">%s</td><td align="left">%s</td><td align="left">%s</td>'
+                    % (moduleres["label"], moduleres["type"], selectable_metrics[selected_metric]),
+                    '<td align="right">%s</td><td align="right">%s</td><td align="right">%s</td>'
+                    % (
+                        selected_metric_values_ib[selected_metric],
+                        selected_metric_values_pr[selected_metric],
+                        selected_metric_values_diffs[selected_metric],
+                    ),
                     "</tr>",
-                    ]
+                ]
             summaryLines += [
                 "<tr>",
                 '<td align="left">%s</td><td align="left">%s</td><td align="left">Record: %s</td>'
                 % (moduleres["label"], moduleres["type"], record_value),
-                "<td align=\"right\">%s</td><td align=\"right\">%s</td><td align=\"right\">%s</td>"
-                % (selected_metric_values_ib["added_event_setup"], selected_metric_values_pr["added_event_setup"], selected_metric_values_diffs["added_event_setup"]),
-                "</tr>",
-            ]
-        else:
-            for selected_metric in ["added_total", "added_construction", "added_begin_run", "added_begin_lumi", "added_event",]    :
-                summaryLines += [
-                    "<tr>",
-                '<td align="left">%s</td><td align="left">%s</td><td align="left">%s</td>'
-                % (moduleres["label"], moduleres["type"], selectable_metrics[selected_metric]),
-                '<td align="right">%s</td><td align="right">%s</td><td align="right">%s</td>' %
-                (
-                    selected_metric_values_ib[selected_metric],
-                    selected_metric_values_pr[selected_metric],
-                    selected_metric_values_diffs[selected_metric],
+                '<td align="right">%s</td><td align="right">%s</td><td align="right">%s</td>'
+                % (
+                    selected_metric_values_ib["added_event_setup"],
+                    selected_metric_values_pr["added_event_setup"],
+                    selected_metric_values_diffs["added_event_setup"],
                 ),
                 "</tr>",
             ]
+        else:
+            for selected_metric in [
+                "added_total",
+                "added_construction",
+                "added_begin_run",
+                "added_begin_lumi",
+                "added_event",
+            ]:
+                summaryLines += [
+                    "<tr>",
+                    '<td align="left">%s</td><td align="left">%s</td><td align="left">%s</td>'
+                    % (moduleres["label"], moduleres["type"], selectable_metrics[selected_metric]),
+                    '<td align="right">%s</td><td align="right">%s</td><td align="right">%s</td>'
+                    % (
+                        selected_metric_values_ib[selected_metric],
+                        selected_metric_values_pr[selected_metric],
+                        selected_metric_values_diffs[selected_metric],
+                    ),
+                    "</tr>",
+                ]
 
 summaryLines += []
 summaryLines += ["</body></html>"]

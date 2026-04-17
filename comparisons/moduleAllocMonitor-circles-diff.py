@@ -3,6 +3,7 @@
 import sys
 import json
 import os
+import html
 
 threshold = 5000.0
 error_threshold = 20000.0
@@ -51,24 +52,30 @@ def format_metric(value):
     return f"{value:.2f}" if isinstance(value, float) else str(value)
 
 
-def append_triplet_cell(summary_lines, ib, pr, diff, attrs='align="right"'):
-    summary_lines.append(
-        "<td %s>%s<br>%s<br>%s</td>"
-        % (attrs, format_metric(ib), format_metric(pr), format_metric(diff))
-    )
+def safe_text(value, default=""):
+    text = default if value is None else str(value)
+    return html.escape(text, quote=True)
+
+
+def append_triplet_cell(summary_lines, ib, pr, diff, attrs=''):
+    summary_lines.extend([
+        "<td %s>%s</td>" % (attrs, safe_text(format_metric(ib))),
+        "<td %s>%s</td>" % (attrs, safe_text(format_metric(pr))),
+        "<td %s>%s</td>" % (attrs, safe_text(format_metric(diff))),
+    ])
 
 
 def added_total_color(diff_value):
     if not isinstance(diff_value, (int, float)):
         return ""
     if diff_value > error_threshold:
-        return 'bgcolor="red"'
+        return "red"
     if diff_value > threshold:
-        return 'bgcolor="orange"'
+        return "orange"
     if diff_value < -1.0 * error_threshold:
-        return 'bgcolor="green"'
+        return "green"
     if diff_value < -1.0 * threshold:
-        return 'bgcolor="cyan"'
+        return "cyan"
     return ""
 
 
@@ -105,70 +112,158 @@ def update_added_totals(datamapres):
 
 def build_header_row():
     return [
-        '<td align="center">added begin job</td>',
-        '<td align="center">added construction</td>',
-        '<td align="center">added begin run</td>',
-        '<td align="center">added begin luminosity block</td>',
-        '<td align="center">added event</td>',
-        '<td align="center">added event setup</td>',
-        '<td align="center">added total</td>',
-        '<td align="center">nAlloc begin job</td>',
-        '<td align="center">nAlloc construction</td>',
-        '<td align="center">nAlloc begin run</td>',
-        '<td align="center">nAlloc begin luminosity block</td>',
-        '<td align="center">nAlloc event</td>',
-        '<td align="center">nAlloc event setup</td>',
-        '<td align="center">nAlloc total</td>',
-        '<td align="center">nDealloc begin job</td>',
-        '<td align="center">nDealloc construction</td>',
-        '<td align="center">nDealloc begin run</td>',
-        '<td align="center">nDealloc begin luminosity block</td>',
-        '<td align="center">nDealloc event</td>',
-        '<td align="center">nDealloc event setup</td>',
-        '<td align="center">nDealloc total</td>',
-        '<td align="center">maxTemp begin job</td>',
-        '<td align="center">maxTemp construction</td>',
-        '<td align="center">maxTemp begin run</td>',
-        '<td align="center">maxTemp begin luminosity block</td>',
-        '<td align="center">maxTemp event</td>',
-        '<td align="center">maxTemp event setup</td>',
-        '<td align="center">maxTemp total</td>',
-        '<td align="center">max1Alloc begin job</td>',
-        '<td align="center">max1Alloc construction</td>',
-        '<td align="center">max1Alloc begin run</td>',
-        '<td align="center">max1Alloc begin luminosity block</td>',
-        '<td align="center">max1Alloc event</td>',
-        '<td align="center">max1Alloc event setup</td>',
-        '<td align="center">max1Alloc total</td>',
+        '<th >added begin job IB</th>',
+        '<th >added begin job PR</th>',
+        '<th >added begin job diff</th>',
+        '<th >added construction IB</th>',
+        '<th >added construction PR</th>',
+        '<th >added construction diff</th>',
+        '<th >added begin run IB</th>',
+        '<th >added begin run PR</th>',
+        '<th >added begin run diff</th>',
+        '<th >added begin luminosity block IB</th>',
+        '<th >added begin luminosity block PR</th>',
+        '<th >added begin luminosity block diff</th>',
+        '<th >added event IB</th>',
+        '<th >added event PR</th>',
+        '<th >added event diff</th>',
+        '<th >added event setup IB</th>',
+        '<th >added event setup PR</th>',
+        '<th >added event setup diff</th>',
+        '<th >added total IB</th>',
+        '<th >added total PR</th>',
+        '<th >added total diff</th>',
+        '<th >nAlloc begin job IB</th>',
+        '<th >nAlloc begin job PR</th>',
+        '<th >nAlloc begin job diff</th>',
+        '<th >nAlloc construction IB</th>',
+        '<th >nAlloc construction PR</th>',
+        '<th >nAlloc construction diff</th>',
+        '<th >nAlloc begin run IB</th>',
+        '<th >nDealloc begin run PR</th>',
+        '<th >nDealloc begin run diff</th>',
+        '<th >nDealloc begin luminosity block IB</th>',
+        '<th >nDealloc begin luminosity block PR</th>',
+        '<th >nDealloc begin luminosity block diff</th>',
+        '<th >nDealloc event IB</th>',
+        '<th >nDealloc event PR</th>',
+        '<th >nDealloc event diff</th>',
+        '<th >nDealloc event setup IB</th>',
+        '<th >nDealloc event setup PR</th>',
+        '<th >nDealloc event setup diff</th>',
+        '<th >nDealloc total IB</th>',
+        '<th >nDealloc total PR</th>',
+        '<th >nDealloc total diff</th>',
+        '<th >nDealloc begin job IB</th>',
+        '<th >nDealloc begin job PR</th>',
+        '<th >nDealloc begin job diff</th>',
+        '<th >nDealloc construction IB</th>',
+        '<th >nDealloc construction PR</th>',
+        '<th >nDealloc construction diff</th>',
+        '<th >nDealloc begin run IB</th>',
+        '<th >nDealloc begin run PR</th>',
+        '<th >nDealloc begin run diff</th>',
+        '<th >nDealloc begin luminosity block IB</th>',
+        '<th >nDealloc begin luminosity block PR</th>',
+        '<th >nDealloc begin luminosity block diff</th>',
+        '<th >nDealloc event IB</th>',
+        '<th >nDealloc event PR</th>',
+        '<th >nDealloc event diff</th>',
+        '<th >nDealloc event setup IB</th>',
+        '<th >nDealloc event setup PR</th>',
+        '<th >nDealloc event setup diff</th>',
+        '<th >nDealloc total IB</th>',
+        '<th >nDealloc total PR</th>',
+        '<th >nDealloc total diff</th>',
+        '<th >maxTemp begin job IB</th>',
+        '<th >maxTemp begin job PR</th>',
+        '<th >maxTemp begin job diff</th>',
+        '<th >maxTemp construction IB</th>',
+        '<th >maxTemp construction PR</th>',
+        '<th >maxTemp construction diff</th>',
+        '<th >maxTemp begin run IB</th>',
+        '<th >maxTemp begin run PR</th>',
+        '<th >maxTemp begin run diff</th>',
+        '<th >maxTemp begin luminosity block IB</th>',
+        '<th >maxTemp begin luminosity block PR</th>',
+        '<th >maxTemp begin luminosity block diff</th>',
+        '<th >maxTemp event IB</th>',
+        '<th >maxTemp event PR</th>',
+        '<th >maxTemp event diff</th>',
+        '<th >maxTemp event setup IB</th>',
+        '<th >maxTemp event setup PR</th>',
+        '<th >maxTemp event setup diff</th>',
+        '<th >maxTemp total IB</th>',
+        '<th >maxTemp total PR</th>',
+        '<th >maxTemp total diff</th>',
+        '<th >max1Alloc begin job IB</th>',
+        '<th >max1Alloc begin job PR</th>',
+        '<th >max1Alloc begin job diff</th>',
+        '<th >max1Alloc construction IB</th>',
+        '<th >max1Alloc construction PR</th>',
+        '<th >max1Alloc construction diff</th>',
+        '<th >max1Alloc begin run IB</th>',
+        '<th >max1Alloc begin run PR</th>',
+        '<th >max1Alloc begin run diff</th>',
+        '<th >max1Alloc begin luminosity block IB</th>',
+        '<th >max1Alloc begin luminosity block PR</th>',
+        '<th >max1Alloc begin luminosity block diff</th>',
+        '<th >max1Alloc event IB</th>',
+        '<th >max1Alloc event PR</th>',
+        '<th >max1Alloc event diff</th>',
+        '<th >max1Alloc event setup IB</th>',
+        '<th >max1Alloc event setup PR</th>',
+        '<th >max1Alloc event setup diff</th>',
+        '<th >max1Alloc total IB</th>',
+        '<th >max1Alloc total PR</th>',
+        '<th >max1Alloc total diff</th>',
     ]
 
 
 def build_summary_header(ibdata, prdata, results):
     summary_header = [
+        "<!DOCTYPE html>",
         "<html>",
-        "<head><style>",
+        "<head>",
+        '<meta charset="utf-8">',
+        "<title>ModuleAllocMonitor Resources Difference</title>",
+    ]
+    summary_header += [
+        '<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">',
+        '<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>',
+        '<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>',
+    ]
+    summary_header += [
+        "<style>",
         "table, th, td {border: 1px solid black;}</style>",
         "<style> th, td {padding: 15px;}</style></head>",
-        "<body><h3>ModuleAllocMonitor Resources Difference</h3><table>",
-        '</table><table><tr><td bgcolor="orange">',
+        "<body><h3>ModuleAllocMonitor Resources Difference</h3>",
+        '<table id="thresholds"><tr><td style="background-color: orange;">',
         "warn threshold %0.2f kB" % threshold,
-        '</td></tr><tr><td bgcolor="red">',
+        '</td></tr><tr><td style="background-color: red;">',
         "error threshold %0.2f kB" % error_threshold,
-        '</td></tr><tr><td bgcolor="green">',
+        '</td></tr><tr><td style="background-color: green;">',
         "warn threshold -%0.2f kB" % threshold,
-        '</td></tr><tr><td bgcolor="cyan">',
+        '</td></tr><tr><td style="background-color: cyan;">',
         "warn threshold -%0.2f kB" % error_threshold,
         "</td></tr>",
         "<tr><td>metric:<BR>&lt;baseline&gt;<BR>&lt;pull request&gt;<BR>&lt;PR - baseline&gt; </td>",
         "</tr></table>",
-        "<table>",
-        '<tr><td align="center">Type<BR>Label</td>',
+        "<table id='summary' class='display' style='width: 100%'>",
+        '<thead><tr><th >Type</th><th >Label</th><th >Record</th>',
     ]
     summary_header += build_header_row()
     summary_header += [
         "</tr>",
+        "</thead>",
+        "<tbody>",
         "<tr>",
-        "<td>%s<BR>%s</td>" % (prdata["total"]["type"], prdata["total"]["label"]),
+        "<td>%s</td><td>%s</td><td>%s</td>"
+        % (
+            safe_text(prdata["total"]["type"]),
+            safe_text(prdata["total"]["label"]),
+            safe_text(prdata["total"].get("record", "N/A")),
+        ),
     ]
     for metric in METRICS_KEYS:
         append_triplet_cell(
@@ -256,24 +351,31 @@ def build_summary_header(ibdata, prdata, results):
             ),
         )
     summary_header += [
-        "</tr></table>",
-        '<table style="width: 100%"><tr><td align="center">Module label<BR>Module type<BR>Module record</td>',
+        "</tr></tbody></table>",
+        '<table id="module_summary" style="width: 100%">',
+        "<thead>",
+        '<tr><th >Module label</th>',
+        '<th >Module type</th>',
+        '<th >Module record</th>',
     ]
     summary_header += build_header_row()
     summary_header += [
-        '<td align="center">transitions</td>',
+        '<th >transitions IB</th>',
+        '<th >transitions PR</th>',
+        '<th >transitions diff</th>',
         "</tr>",
     ]
     return summary_header
 
 
 def append_module_columns_prefix(summary_lines, moduleres, prefix):
-    cell_attrs = 'align="right"'
+    cell_style = "text-align: right;"
     if prefix == "added":
         addedtotaldiff = numeric_value(moduleres, "added total diff", float("-inf"))
         color = added_total_color(addedtotaldiff)
         if color:
-            cell_attrs += " " + color
+            cell_style += f" background-color: {color};"
+    cell_attrs = f'style="{cell_style}"'
     append_triplet_cell(
         summary_lines,
         sum_with_prefix_suffix(moduleres, BEGIN_JOB_KEYS, prefix=prefix, suffix="IB"),
@@ -322,8 +424,12 @@ def append_module_columns_prefix(summary_lines, moduleres, prefix):
 def append_module_rows(summary_lines, moduleib, modulepr, moduleres):
     summary_lines += [
         "<tr>",
-        '<td align="center">%s<BR>%s<BR> %s</td>'
-        % (moduleres.get("label", ""), moduleres.get("type", ""), moduleres.get("record", "")),
+        '<td>%s</td><td>%s</td><td>%s</td>'
+        % (
+            safe_text(moduleres.get("label", "")),
+            safe_text(moduleres.get("type", "")),
+            safe_text(moduleres.get("record", "N/A")),
+        ),
     ]
     for metric in METRICS_KEYS:
         append_module_columns_prefix(summary_lines, moduleres, metric)
@@ -353,7 +459,18 @@ def build_summary_lines(ibdata, prdata, results, datamapib, datamappr, datamapre
     summary_lines = build_summary_header(ibdata, prdata, results)
     update_added_totals(datamapres)
     append_sorted_module_rows(summary_lines, datamapib, datamappr, datamapres)
-    summary_lines += ["</body></html>"]
+    summary_lines += [
+        "</table>"]
+    summary_lines += [
+        "<script>",
+        "document.addEventListener('DOMContentLoaded', function () {",
+        "  new DataTable('#module_summary', { paging: true, pageLength: 25, info: false, searching: false, ordering: false,  orderClasses: false });",
+        "});",
+        "</script>"
+    ]
+    summary_lines += [
+        "</body></html>",
+    ]
     return summary_lines
 
 

@@ -229,11 +229,6 @@ def build_summary_header(ibdata, prdata, results):
         "<title>ModuleAllocMonitor Resources Difference</title>",
     ]
     summary_header += [
-        '<link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">',
-        '<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>',
-        '<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>',
-    ]
-    summary_header += [
         "<style>",
         "table, th, td {border: 1px solid black;}</style>",
         "<style> th, td {padding: 15px;}</style></head>",
@@ -249,7 +244,7 @@ def build_summary_header(ibdata, prdata, results):
         "</td></tr>",
         "<tr><td>metric:<BR>&lt;baseline&gt;<BR>&lt;pull request&gt;<BR>&lt;PR - baseline&gt; </td>",
         "</tr></table>",
-        "<table id='summary' class='display' style='width: 100%'>",
+        '<table id="summary">',
         '<thead><tr><th >Type</th><th >Label</th><th >Record</th>',
     ]
     summary_header += build_header_row()
@@ -352,7 +347,7 @@ def build_summary_header(ibdata, prdata, results):
         )
     summary_header += [
         "</tr></tbody></table>",
-        '<table id="module_summary" style="width: 100%">',
+        '<table id="module_summary">',
         "<thead>",
         '<tr><th >Module label</th>',
         '<th >Module type</th>',
@@ -461,13 +456,6 @@ def build_summary_lines(ibdata, prdata, results, datamapib, datamappr, datamapre
     append_sorted_module_rows(summary_lines, datamapib, datamappr, datamapres)
     summary_lines += [
         "</table>"]
-    summary_lines += [
-        "<script>",
-        "document.addEventListener('DOMContentLoaded', function () {",
-        "  new DataTable('#module_summary', { paging: true, pageLength: 25, info: false, searching: false, ordering: false,  orderClasses: false });",
-        "});",
-        "</script>"
-    ]
     summary_lines += [
         "</body></html>",
     ]

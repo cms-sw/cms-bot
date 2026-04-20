@@ -39,8 +39,9 @@
     }
 
     .wrap {
-      width: min(1280px, 96vw);
-      margin: 2rem auto 3rem;
+      width: 100%;
+      margin: 0;
+      padding: 1rem;
       display: grid;
       gap: 1rem;
     }
@@ -219,6 +220,15 @@
       z-index: 2;
     }
 
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    thead th.sortable:hover {
+      background: #ebf3f1;
+    }
+
     tbody td {
       border-bottom: 1px solid #efe4d5;
       padding: 0.48rem 0.7rem;
@@ -313,8 +323,7 @@
 
     @media (max-width: 560px) {
       .wrap {
-        width: 95vw;
-        margin-top: 1rem;
+        padding: 0.75rem;
       }
 
       .grid,
@@ -362,10 +371,18 @@
             <label for="sortBy">Sort</label>
             <select id="sortBy">
               <option value="abs-desc">Abs(diff) high to low</option>
-              <option value="metric-desc">Diff high to low</option>
-              <option value="metric-asc">Diff low to high</option>
               <option value="label-asc">Label A to Z</option>
               <option value="label-desc">Label Z to A</option>
+              <option value="type-asc">Type A to Z</option>
+              <option value="type-desc">Type Z to A</option>
+              <option value="record-asc">Record low to high</option>
+              <option value="record-desc">Record high to low</option>
+              <option value="ib-desc">IB high to low</option>
+              <option value="ib-asc">IB low to high</option>
+              <option value="pr-desc">PR high to low</option>
+              <option value="pr-asc">PR low to high</option>
+              <option value="metric-desc">Diff high to low</option>
+              <option value="metric-asc">Diff low to high</option>
             </select>
           </div>
           <div>
@@ -400,12 +417,12 @@
           <table>
             <thead>
               <tr>
-                <th style="width: 25%;">Label</th>
-                <th style="width: 12%;">Type</th>
-                <th style="width: 10%;">Record</th>
-                <th id="colIB" style="width: 14%;">IB</th>
-                <th id="colPR" style="width: 14%;">PR</th>
-                <th id="colDiff" style="width: 14%;">diff</th>
+                <th id="colLabel" class="sortable" style="width: 25%;">Label</th>
+                <th id="colType" class="sortable" style="width: 12%;">Type</th>
+                <th id="colRecord" class="sortable" style="width: 10%;">Record</th>
+                <th id="colIB" class="sortable" style="width: 14%;">IB</th>
+                <th id="colPR" class="sortable" style="width: 14%;">PR</th>
+                <th id="colDiff" class="sortable" style="width: 14%;">diff</th>
                 <th style="width: 10%;">Visual</th>
               </tr>
             </thead>
@@ -443,6 +460,9 @@
       statTypes: document.getElementById("statTypes"),
       statMean: document.getElementById("statMean"),
       statMaxAbs: document.getElementById("statMaxAbs"),
+      colLabel: document.getElementById("colLabel"),
+      colType: document.getElementById("colType"),
+      colRecord: document.getElementById("colRecord"),
       colIB: document.getElementById("colIB"),
       colPR: document.getElementById("colPR"),
       colDiff: document.getElementById("colDiff"),
@@ -563,9 +583,29 @@
     }
 
     function updateColumnHeaders(fieldBase) {
-      el.colIB.textContent = `${fieldBase} IB`;
-      el.colPR.textContent = `${fieldBase} PR`;
-      el.colDiff.textContent = `${fieldBase} diff`;
+      const arrow = {
+        "label-desc": " ▼",
+        "label-asc": " ▲",
+        "type-desc": " ▼",
+        "type-asc": " ▲",
+        "record-desc": " ▼",
+        "record-asc": " ▲",
+        "ib-desc": " ▼",
+        "ib-asc": " ▲",
+        "pr-desc": " ▼",
+        "pr-asc": " ▲",
+        "metric-desc": " ▼",
+        "metric-asc": " ▲"
+      };
+      const sortBy = el.sortBy.value;
+
+      el.colLabel.textContent = `Label${arrow[sortBy] && sortBy.startsWith("label-") ? arrow[sortBy] : ""}`;
+      el.colType.textContent = `Type${arrow[sortBy] && sortBy.startsWith("type-") ? arrow[sortBy] : ""}`;
+      el.colRecord.textContent = `Record${arrow[sortBy] && sortBy.startsWith("record-") ? arrow[sortBy] : ""}`;
+
+      el.colIB.textContent = `${fieldBase} IB${arrow[sortBy] && sortBy.startsWith("ib-") ? arrow[sortBy] : ""}`;
+      el.colPR.textContent = `${fieldBase} PR${arrow[sortBy] && sortBy.startsWith("pr-") ? arrow[sortBy] : ""}`;
+      el.colDiff.textContent = `${fieldBase} diff${arrow[sortBy] && sortBy.startsWith("metric-") ? arrow[sortBy] : ""}`;
     }
 
     function updateStats(rows, fieldBase) {
@@ -614,20 +654,53 @@
       });
 
       rows.sort((a, b) => {
+        const ibKey = `${fieldBase} IB`;
+        const prKey = `${fieldBase} PR`;
         const av = toNumber(a[diffKey]);
         const bv = toNumber(b[diffKey]);
 
         if (sortBy === "abs-desc") {
           return Math.abs(bv) - Math.abs(av);
         }
+        if (sortBy === "label-desc") {
+          return String(b.label || "").localeCompare(String(a.label || ""));
+        }
+        if (sortBy === "label-asc") {
+          return String(a.label || "").localeCompare(String(b.label || ""));
+        }
+        if (sortBy === "type-desc") {
+          return String(b.type || "").localeCompare(String(a.type || ""));
+        }
+        if (sortBy === "type-asc") {
+          return String(a.type || "").localeCompare(String(b.type || ""));
+        }
+        if (sortBy === "record-desc" || sortBy === "record-asc") {
+          const aNum = Number(a.record);
+          const bNum = Number(b.record);
+          const bothNumeric = Number.isFinite(aNum) && Number.isFinite(bNum);
+          if (bothNumeric) {
+            return sortBy === "record-desc" ? bNum - aNum : aNum - bNum;
+          }
+          const cmp = String(a.record || "").localeCompare(String(b.record || ""), undefined, { numeric: true });
+          return sortBy === "record-desc" ? -cmp : cmp;
+        }
+        if (sortBy === "ib-desc") {
+          return toNumber(b[ibKey]) - toNumber(a[ibKey]);
+        }
+        if (sortBy === "ib-asc") {
+          return toNumber(a[ibKey]) - toNumber(b[ibKey]);
+        }
+        if (sortBy === "pr-desc") {
+          return toNumber(b[prKey]) - toNumber(a[prKey]);
+        }
+        if (sortBy === "pr-asc") {
+          return toNumber(a[prKey]) - toNumber(b[prKey]);
+        }
         if (sortBy === "metric-desc") {
           return bv - av;
         }
         if (sortBy === "metric-asc") {
           return av - bv;
-        }
-        if (sortBy === "label-desc") {
-          return String(b.label || "").localeCompare(String(a.label || ""));
         }
         return String(a.label || "").localeCompare(String(b.label || ""));
       });
@@ -752,6 +825,12 @@
     }
 
     function wireEvents() {
+      function toggleSort(descValue, ascValue) {
+        el.sortBy.value = el.sortBy.value === descValue ? ascValue : descValue;
+        state.page = 1;
+        applyFilters();
+      }
+
       el.fileInput.addEventListener("change", async (evt) => {
         const file = evt.target.files && evt.target.files[0];
         if (!file) {
@@ -776,6 +855,13 @@
           applyFilters();
         });
       });
+
+      el.colIB.addEventListener("click", () => toggleSort("ib-desc", "ib-asc"));
+      el.colPR.addEventListener("click", () => toggleSort("pr-desc", "pr-asc"));
+      el.colDiff.addEventListener("click", () => toggleSort("metric-desc", "metric-asc"));
+      el.colLabel.addEventListener("click", () => toggleSort("label-desc", "label-asc"));
+      el.colType.addEventListener("click", () => toggleSort("type-desc", "type-asc"));
+      el.colRecord.addEventListener("click", () => toggleSort("record-desc", "record-asc"));
 
       el.prevBtn.addEventListener("click", () => {
         state.page = Math.max(1, state.page - 1);

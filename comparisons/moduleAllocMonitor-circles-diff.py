@@ -5,6 +5,28 @@ import json
 import os
 import html
 
+
+def build_viewer_html(template_path, embedded_data, source_label):
+        with open(template_path, encoding="utf-8") as template_file:
+                content = template_file.read()
+
+        embedded_json = json.dumps(embedded_data).replace("</", "<\\/")
+
+        autoload_snippet = """
+    <script>
+        (function () {
+            var embeddedData = %s;
+            if (typeof loadFromObject === "function") {
+                loadFromObject(embeddedData, %s);
+            }
+        })();
+    </script>
+""" % (embedded_json, json.dumps(source_label))
+
+        if "</body>" in content:
+                content = content.replace("</body>", autoload_snippet + "</body>", 1)
+        return content
+
 threshold = 5000.0
 error_threshold = 20000.0
 
@@ -570,9 +592,6 @@ for key in sorted(keys):
 datamapres = {}
 for module in results["modules"]:
     datamapres[module_key(module)] = module
-
-
-summaryLines = build_summary_lines(ibdata, prdata, results, datamapib, datamappr, datamapres)
 dumpfile = (
     os.path.dirname(os.path.realpath(sys.argv[2]))
     + "/diff-"
@@ -587,6 +606,11 @@ summaryFile = (
     + os.path.basename(os.path.realpath(sys.argv[2]))
     + ".html"
 )
-with open(summaryFile, "w") as g:
-    for summaryLine in summaryLines:
-        print(summaryLine, file=g)
+
+templateFile = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), "module_alloc_monitor_viewer.html"
+)
+summaryHtml = build_viewer_html(template_path=templateFile, embedded_data=results, source_label="embedded diff data")
+
+with open(summaryFile, "w", encoding="utf-8") as g:
+    g.write(summaryHtml)

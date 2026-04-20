@@ -254,6 +254,59 @@
       background: #faf5ec;
     }
 
+    tbody tr.expandable {
+      cursor: pointer;
+    }
+
+    tbody tr.expanded {
+      background: #f2faf8;
+    }
+
+    .expand-icon {
+      display: inline-block;
+      width: 1.1em;
+      color: #3f5d5a;
+      font-size: 0.8em;
+    }
+
+    .detail-row td {
+      background: #fff8ee;
+      border-bottom: 1px solid #e8d9c4;
+      padding: 0;
+    }
+
+    .detail-wrap {
+      padding: 0.65rem 0.8rem 0.8rem;
+    }
+
+    .detail-title {
+      margin: 0 0 0.45rem;
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .detail-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .detail-table th,
+    .detail-table td {
+      border-bottom: 1px solid #eddcc6;
+      padding: 0.35rem 0.45rem;
+      text-align: left;
+    }
+
+    .detail-table th {
+      background: #f9efe1;
+      color: #374247;
+      position: static;
+    }
+
     .mono {
       font-family: "IBM Plex Mono", monospace;
       white-space: nowrap;
@@ -389,7 +442,11 @@
             <select id="typeFilter"></select>
           </div>
           <div>
-            <label for="metricSelect">Field group (IB/PR/diff)</label>
+            <label for="quantitySelect">Quantity</label>
+            <select id="quantitySelect"></select>
+          </div>
+          <div>
+            <label for="metricSelect">Transition</label>
             <select id="metricSelect"></select>
           </div>
           <div>
@@ -461,11 +518,16 @@
     const state = {
       modules: [],
       filtered: [],
-      fieldGroups: [],
+      fieldGroupsByQuantity: {},
+      quantities: [],
+      expandedRows: new Set(),
       page: 1,
       maxAbsMetric: 1,
       fileName: ""
     };
+
+    const QUANTITY_ORDER = ["added", "nAlloc", "nDealloc", "max1Alloc", "maxTemp"];
+    const FIXED_SORT_FIELD_BASE = "added total";
 
     const el = {
       fileInput: document.getElementById("fileInput"),
@@ -473,6 +535,7 @@
       autoLoadBtn: document.getElementById("autoLoadBtn"),
       search: document.getElementById("search"),
       typeFilter: document.getElementById("typeFilter"),
+      quantitySelect: document.getElementById("quantitySelect"),
       metricSelect: document.getElementById("metricSelect"),
       sortBy: document.getElementById("sortBy"),
       minAbs: document.getElementById("minAbs"),
@@ -518,6 +581,70 @@
       return Number.isFinite(n) ? n : 0;
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function rowKey(row) {
+      return `${row.label || ""}|${row.type || ""}|${row.record || ""}`;
+    }
+
+    function metricDisplayValue(row, key) {
+      if (!Object.prototype.hasOwnProperty.call(row, key)) {
+        return "-";
+      }
+      const value = Number(row[key]);
+      return Number.isFinite(value) ? fmtNumber(value) : "-";
+    }
+
+    function buildExpandedMetricsRows(row, quantity) {
+      const rows = [];
+      const groups = state.fieldGroupsByQuantity[quantity] || [];
+      const hasRecord = row.record !== undefined && row.record !== null && String(row.record).trim() !== "";
+      for (const group of groups) {
+          const groupLower = String(group).toLowerCase();
+          if (hasRecord) {
+            if (groupLower !== "event setup" && groupLower !== "total") {
+              continue;
+            }
+          } else if (groupLower === "event setup") {
+            continue;
+          }
+          const fieldBase = group === "(none)" ? quantity : `${quantity} ${group}`;
+          const ibKey = `${fieldBase} IB`;
+          const prKey = `${fieldBase} PR`;
+          const diffKey = `${fieldBase} diff`;
+          const hasAny =
+            Object.prototype.hasOwnProperty.call(row, ibKey) ||
+            Object.prototype.hasOwnProperty.call(row, prKey) ||
+            Object.prototype.hasOwnProperty.call(row, diffKey);
+          if (!hasAny) {
+            continue;
+          }
+          rows.push(
+            `<tr><td>${escapeHtml(quantity)}</td><td>${escapeHtml(group)}</td><td class="mono">${metricDisplayValue(row, ibKey)}</td><td class="mono">${metricDisplayValue(row, prKey)}</td><td class="mono">${metricDisplayValue(row, diffKey)}</td></tr>`
+          );
+        }
+      if (!rows.length) {
+        return '<tr><td colspan="5" class="mono">No transition details available.</td></tr>';
+      }
+      return rows.join("");
+    }
+
+    function toggleRowExpanded(key) {
+      if (state.expandedRows.has(key)) {
+        state.expandedRows.delete(key);
+      } else {
+        state.expandedRows.add(key);
+      }
+      renderTable();
+    }
+
     function extractModules(data) {
       if (data && Array.isArray(data.modules)) {
         return data.modules;
@@ -532,46 +659,65 @@
 
     function collectFieldGroups(modules) {
       const map = new Map();
-      for (const mod of modules.slice(0, 80)) {
+      for (const mod of modules) {
         Object.keys(mod).forEach((k) => {
           const m = k.match(/^(.*) (IB|PR|diff)$/);
-          if (!m || typeof mod[k] !== "number") {
+          if (!m) {
             return;
           }
           const base = m[1];
           const part = m[2];
           if (!map.has(base)) {
-            map.set(base, { IB: false, PR: false, diff: false });
+            map.set(base, { IB: false, PR: false, diff: false, hasNumeric: false });
           }
-          map.get(base)[part] = true;
+          const flags = map.get(base);
+          flags[part] = true;
+          if (Number.isFinite(Number(mod[k]))) {
+            flags.hasNumeric = true;
+          }
         });
       }
 
-      const groups = [];
+      const grouped = {};
       for (const [base, flags] of map.entries()) {
-        if (flags.IB && flags.PR && flags.diff) {
-          groups.push(base);
+        if (flags.IB && flags.PR && flags.diff && flags.hasNumeric) {
+          const idx = base.indexOf(" ");
+          const quantity = idx > 0 ? base.slice(0, idx) : base;
+          const group = idx > 0 ? base.slice(idx + 1) : "(none)";
+          if (!grouped[quantity]) {
+            grouped[quantity] = [];
+          }
+          grouped[quantity].push(group);
         }
       }
 
-      groups.sort();
-      return groups;
+      Object.keys(grouped).forEach((quantity) => grouped[quantity].sort());
+
+      const known = QUANTITY_ORDER.filter((q) => grouped[q]);
+      const extra = Object.keys(grouped).filter((q) => !QUANTITY_ORDER.includes(q)).sort();
+      return {
+        byQuantity: grouped,
+        quantities: [...known, ...extra]
+      };
     }
 
-    function chooseDefaultField(keys) {
-      const byPreference = [
-        "added total",
-        "maxTemp total",
-        "nAlloc total",
-        "added event"
-      ];
-
-      for (const wanted of byPreference) {
-        if (keys.includes(wanted)) {
+    function chooseDefaultQuantity(quantities) {
+      for (const wanted of QUANTITY_ORDER) {
+        if (quantities.includes(wanted)) {
           return wanted;
         }
       }
-      return keys[0] || "";
+      return quantities[0] || "";
+    }
+
+    function chooseDefaultGroup(groups) {
+      const byPreference = ["total", "event", "construction", "begin job"];
+      for (const wanted of byPreference) {
+        if (groups.includes(wanted)) {
+          return wanted;
+        }
+      }
+      return groups[0] || "";
     }
 
     function setStatus(message, isError = false) {
@@ -594,15 +740,38 @@
       }
     }
 
-    function populateMetricSelect(keys) {
+    function populateQuantitySelect(quantities) {
+      el.quantitySelect.innerHTML = "";
+      for (const quantity of quantities) {
+        const opt = document.createElement("option");
+        opt.value = quantity;
+        opt.textContent = quantity;
+        el.quantitySelect.appendChild(opt);
+      }
+      el.quantitySelect.value = chooseDefaultQuantity(quantities);
+    }
+
+    function populateMetricSelect(groups) {
       el.metricSelect.innerHTML = "";
-      for (const key of keys) {
+      for (const key of groups) {
         const opt = document.createElement("option");
         opt.value = key;
         opt.textContent = key;
         el.metricSelect.appendChild(opt);
       }
-      el.metricSelect.value = chooseDefaultField(keys);
+      el.metricSelect.value = chooseDefaultGroup(groups);
+    }
+
+    function getSelectedFieldBase() {
+      const quantity = el.quantitySelect.value;
+      const group = el.metricSelect.value;
+      if (!quantity || !group) {
+        return "";
+      }
+      if (group === "(none)") {
+        return quantity;
+      }
+      return `${quantity} ${group}`;
     }
 
     function updateColumnHeaders(fieldBase) {
@@ -650,10 +819,19 @@
     function applyFilters() {
       const q = el.search.value.trim().toLowerCase();
       const type = el.typeFilter.value;
-      const fieldBase = el.metricSelect.value;
+      const fieldBase = getSelectedFieldBase();
+      if (!fieldBase) {
+        state.filtered = [];
+        updateColumnHeaders("(field)");
+        updateStats([], "");
+        renderTable();
+        return;
+      }
       const diffKey = `${fieldBase} diff`;
+      const ibKey = `${fieldBase} IB`;
+      const prKey = `${fieldBase} PR`;
       const minAbs = Math.abs(toNumber(el.minAbs.value));
-      const sortBy = el.sortBy.value;
+      const fixedSortDiffKey = `${FIXED_SORT_FIELD_BASE} diff`;
 
       updateColumnHeaders(fieldBase || "(field)");
 
@@ -673,59 +851,49 @@
           return false;
         }
 
+        if ((el.sortBy.value === "record-asc" || el.sortBy.value === "record-desc") &&
+            (!m.record || String(m.record).trim() === "")) {
+          return false;
+        }
+
         return true;
       });
 
       rows.sort((a, b) => {
-        const ibKey = `${fieldBase} IB`;
-        const prKey = `${fieldBase} PR`;
-        const av = toNumber(a[diffKey]);
-        const bv = toNumber(b[diffKey]);
-
-        if (sortBy === "abs-desc") {
-          return Math.abs(bv) - Math.abs(av);
-        }
-        if (sortBy === "label-desc") {
-          return String(b.label || "").localeCompare(String(a.label || ""));
-        }
-        if (sortBy === "label-asc") {
-          return String(a.label || "").localeCompare(String(b.label || ""));
-        }
-        if (sortBy === "type-desc") {
-          return String(b.type || "").localeCompare(String(a.type || ""));
-        }
-        if (sortBy === "type-asc") {
-          return String(a.type || "").localeCompare(String(b.type || ""));
-        }
-        if (sortBy === "record-desc" || sortBy === "record-asc") {
-          const aNum = Number(a.record);
-          const bNum = Number(b.record);
-          const bothNumeric = Number.isFinite(aNum) && Number.isFinite(bNum);
-          if (bothNumeric) {
-            return sortBy === "record-desc" ? bNum - aNum : aNum - bNum;
+        switch (el.sortBy.value) {
+          case "label-asc":
+            return String(a.label || "").localeCompare(String(b.label || ""));
+          case "label-desc":
+            return String(b.label || "").localeCompare(String(a.label || ""));
+          case "type-asc":
+            return String(a.type || "").localeCompare(String(b.type || ""));
+          case "type-desc":
+            return String(b.type || "").localeCompare(String(a.type || ""));
+          case "record-asc":
+            return String(a.record || "").localeCompare(String(b.record || ""));
+          case "record-desc":
+            return String(b.record || "").localeCompare(String(a.record || ""));
+          case "ib-asc":
+            return toNumber(a[ibKey]) - toNumber(b[ibKey]);
+          case "ib-desc":
+            return toNumber(b[ibKey]) - toNumber(a[ibKey]);
+          case "pr-asc":
+            return toNumber(a[prKey]) - toNumber(b[prKey]);
+          case "pr-desc":
+            return toNumber(b[prKey]) - toNumber(a[prKey]);
+          case "metric-asc":
+            return toNumber(a[diffKey]) - toNumber(b[diffKey]);
+          case "metric-desc":
+            return toNumber(b[diffKey]) - toNumber(a[diffKey]);
+          case "abs-desc":
+          default: {
+            const byFixedMetric = Math.abs(toNumber(b[fixedSortDiffKey])) - Math.abs(toNumber(a[fixedSortDiffKey]));
+            if (byFixedMetric !== 0) {
+              return byFixedMetric;
+            }
+            return String(a.label || "").localeCompare(String(b.label || ""));
           }
-          const cmp = String(a.record || "").localeCompare(String(b.record || ""), undefined, { numeric: true });
-          return sortBy === "record-desc" ? -cmp : cmp;
         }
-        if (sortBy === "ib-desc") {
-          return toNumber(b[ibKey]) - toNumber(a[ibKey]);
-        }
-        if (sortBy === "ib-asc") {
-          return toNumber(a[ibKey]) - toNumber(b[ibKey]);
-        }
-        if (sortBy === "pr-desc") {
-          return toNumber(b[prKey]) - toNumber(a[prKey]);
-        }
-        if (sortBy === "pr-asc") {
-          return toNumber(a[prKey]) - toNumber(b[prKey]);
-        }
-        if (sortBy === "metric-desc") {
-          return bv - av;
-        }
-        if (sortBy === "metric-asc") {
-          return av - bv;
-        }
-        return String(a.label || "").localeCompare(String(b.label || ""));
       });
 
       state.filtered = rows;
@@ -745,7 +913,15 @@
     }
 
     function renderTable() {
-      const fieldBase = el.metricSelect.value;
+      const fieldBase = getSelectedFieldBase();
+      if (!fieldBase) {
+        el.tbody.innerHTML = "";
+        el.empty.style.display = "block";
+        el.pageInfo.textContent = "Page 0/0";
+        el.prevBtn.disabled = true;
+        el.nextBtn.disabled = true;
+        return;
+      }
       const ibKey = `${fieldBase} IB`;
       const prKey = `${fieldBase} PR`;
       const diffKey = `${fieldBase} diff`;
@@ -765,9 +941,14 @@
         const prValue = toNumber(row[prKey]);
         const diffValue = toNumber(row[diffKey]);
         const visual = barStyle(diffValue);
+        const key = rowKey(row);
+        const isExpanded = state.expandedRows.has(key);
+
+        tr.className = isExpanded ? "expandable expanded" : "expandable";
+        tr.setAttribute("aria-expanded", String(isExpanded));
 
         tr.innerHTML = `
-          <td title="${(row.label || "").replaceAll('"', "&quot;")}">${row.label || ""}</td>
+          <td title="${(row.label || "").replaceAll('"', "&quot;")}"><span class="expand-icon">${isExpanded ? "▼" : "▶"}</span>${row.label || ""}</td>
           <td><span class="pill">${row.type || "(none)"}</span></td>
           <td class="mono">${row.record || "-"}</td>
           <td class="mono">${fmtNumber(ibValue)}</td>
@@ -779,7 +960,33 @@
             </div>
           </td>
         `;
+        tr.addEventListener("click", () => toggleRowExpanded(key));
         el.tbody.appendChild(tr);
+
+        if (isExpanded) {
+          const detailTr = document.createElement("tr");
+          detailTr.className = "detail-row";
+          detailTr.innerHTML = `
+            <td colspan="7">
+              <div class="detail-wrap">
+                <p class="detail-title">Transitions for quantity: ${escapeHtml(el.quantitySelect.value)}</p>
+                <table class="detail-table">
+                  <thead>
+                    <tr>
+                      <th>Quantity</th>
+                      <th>Transition</th>
+                      <th>IB</th>
+                      <th>PR</th>
+                      <th>Diff</th>
+                    </tr>
+                  </thead>
+                  <tbody>${buildExpandedMetricsRows(row, el.quantitySelect.value)}</tbody>
+                </table>
+              </div>
+            </td>
+          `;
+          el.tbody.appendChild(detailTr);
+        }
       }
 
       const from = state.filtered.length ? start + 1 : 0;
@@ -796,15 +1003,19 @@
       }
 
       state.modules = modules;
-      state.fieldGroups = collectFieldGroups(modules);
+      const groupedFields = collectFieldGroups(modules);
+      state.fieldGroupsByQuantity = groupedFields.byQuantity;
+      state.quantities = groupedFields.quantities;
       state.page = 1;
 
-      if (!state.fieldGroups.length) {
-        throw new Error("No IB/PR/diff field groups found in module records.");
+      if (!state.quantities.length) {
+        throw new Error("No IB/PR/diff transitions found in module records.");
       }
 
       populateTypeFilter(modules);
-      populateMetricSelect(state.fieldGroups);
+      populateQuantitySelect(state.quantities);
+      const selectedQuantity = el.quantitySelect.value;
+      populateMetricSelect(state.fieldGroupsByQuantity[selectedQuantity] || []);
       applyFilters();
 
       setStatus(`Loaded ${modules.length.toLocaleString()} modules from ${sourceLabel}.`);
@@ -871,6 +1082,13 @@
         tryAutoLoad(el.defaultFile.value);
       });
 
+      el.quantitySelect.addEventListener("change", () => {
+        const groups = state.fieldGroupsByQuantity[el.quantitySelect.value] || [];
+        populateMetricSelect(groups);
+        state.page = 1;
+        applyFilters();
+      });
+
       [el.search, el.typeFilter, el.metricSelect, el.sortBy, el.minAbs, el.rowsPerPage].forEach((node) => {
         const eventName = node.tagName === "INPUT" ? "input" : "change";
         node.addEventListener(eventName, () => {
@@ -927,6 +1145,10 @@
     function boot() {
       wireEvents();
       el.typeFilter.innerHTML = '<option value="">All types</option>';
+      el.sortBy.disabled = false;
+      el.sortBy.value = "abs-desc";
+      el.sortBy.title = "Default sort: abs(added total diff) high to low.";
+      el.quantitySelect.innerHTML = "";
       el.metricSelect.innerHTML = "";
       renderTable();
 

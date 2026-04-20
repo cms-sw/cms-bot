@@ -6,12 +6,12 @@ import os
 
 
 def build_viewer_html(template_path, embedded_data, source_label):
-        with open(template_path, encoding="utf-8") as template_file:
-                content = template_file.read()
+    with open(template_path, encoding="utf-8") as template_file:
+        content = template_file.read()
 
-        embedded_json = json.dumps(embedded_data).replace("</", "<\\/")
+    embedded_json = json.dumps(embedded_data).replace("</", "<\\/")
 
-        autoload_snippet = """
+    autoload_snippet = """
     <script>
         (function () {
             var embeddedData = %s;
@@ -22,9 +22,10 @@ def build_viewer_html(template_path, embedded_data, source_label):
     </script>
 """ % (embedded_json, json.dumps(source_label))
 
-        if "</body>" in content:
-                content = content.replace("</body>", autoload_snippet + "</body>", 1)
-        return content
+    if "</body>" in content:
+        content = content.replace("</body>", autoload_snippet + "</body>", 1)
+    return content
+
 
 BEGIN_JOB_KEYS = ["begin job"]
 BEGIN_RUN_KEYS = ["global begin run", "stream begin run"]
@@ -63,8 +64,6 @@ def sum_with_prefix_suffix(data, metric_keys, prefix="added", suffix="", default
 
 def is_valid_module_key(key):
     return key != "None|None|None" and key != "||"
-
-
 
 
 def update_added_totals(datamapres):
@@ -213,7 +212,9 @@ summaryFile = (
 templateFile = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), "module_alloc_monitor_viewer.html"
 )
-summaryHtml = build_viewer_html(template_path=templateFile, embedded_data=results, source_label="embedded diff data")
+summaryHtml = build_viewer_html(
+    template_path=templateFile, embedded_data=results, source_label="embedded diff data"
+)
 
 with open(summaryFile, "w", encoding="utf-8") as g:
     g.write(summaryHtml)

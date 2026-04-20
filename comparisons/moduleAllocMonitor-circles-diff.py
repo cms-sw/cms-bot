@@ -592,6 +592,9 @@ for key in sorted(keys):
 datamapres = {}
 for module in results["modules"]:
     datamapres[module_key(module)] = module
+
+update_added_totals(datamapres)
+
 dumpfile = (
     os.path.dirname(os.path.realpath(sys.argv[2]))
     + "/diff-"

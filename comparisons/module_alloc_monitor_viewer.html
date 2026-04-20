@@ -528,6 +528,17 @@
 
     const QUANTITY_ORDER = ["added", "nAlloc", "nDealloc", "max1Alloc", "maxTemp"];
     const FIXED_SORT_FIELD_BASE = "added total";
+    const TRANSITION_ORDER = [
+      "construction",
+      "begin job",
+      "begin stream",
+      "global begin run",
+      "stream begin run",
+      "global begin luminosity block",
+      "stream begin luminosity block",
+      "event",
+      "event setup",
+    ];
 
     const el = {
       fileInput: document.getElementById("fileInput"),
@@ -671,7 +682,7 @@
           );
         }
       if (!rows.length) {
-        return '<tr><td colspan="5" class="mono">No transition details available.</td></tr>';
+        return '<tr><td colspan="7" class="mono">No transition details available.</td></tr>';
       }
       return rows.join("");
     }
@@ -731,7 +742,17 @@
         }
       }
 
-      Object.keys(grouped).forEach((quantity) => grouped[quantity].sort());
+      const transitionRank = new Map(TRANSITION_ORDER.map((name, index) => [name, index]));
+      Object.keys(grouped).forEach((quantity) => {
+        grouped[quantity].sort((a, b) => {
+          const aRank = transitionRank.has(a) ? transitionRank.get(a) : Number.MAX_SAFE_INTEGER;
+          const bRank = transitionRank.has(b) ? transitionRank.get(b) : Number.MAX_SAFE_INTEGER;
+          if (aRank !== bRank) {
+            return aRank - bRank;
+          }
+          return a.localeCompare(b);
+        });
+      });
 
       const known = QUANTITY_ORDER.filter((q) => grouped[q]);
       const extra = Object.keys(grouped).filter((q) => !QUANTITY_ORDER.includes(q)).sort();
@@ -1007,10 +1028,17 @@
           const detailTr = document.createElement("tr");
           detailTr.className = "detail-row";
           detailTr.innerHTML = `
-            <td colspan="7">
+            <td colspan="5">
               <div class="detail-wrap">
                 <p class="detail-title">Transitions for quantity: ${escapeHtml(el.quantitySelect.value)}</p>
                 <table class="detail-table">
+                  <colgroup>
+                    <col style="width: 20%;">
+                    <col style="width: 20%;">
+                    <col style="width: 20%;">
+                    <col style="width: 20%;">
+                    <col style="width: 20%;">
+                  </colgroup>
                   <thead>
                     <tr>
                       <th>Quantity</th>

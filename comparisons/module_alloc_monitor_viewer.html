@@ -213,7 +213,7 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       background: #fff;
-      max-height: 62vh;
+      max-height: 100%;
     }
 
     table {
@@ -473,7 +473,7 @@
           </div>
           <div>
             <label for="rowsPerPage">Rows per page</label>
-            <input id="rowsPerPage" type="number" min="20" step="20" value="120">
+            <input id="rowsPerPage" type="number" min="10" step="10" value="100">
           </div>
         </div>
         <div id="status" class="sub">No data loaded yet.</div>
@@ -608,8 +608,11 @@
       const hasRecord = row.record !== undefined && row.record !== null && String(row.record).trim() !== "";
       for (const group of groups) {
           const groupLower = String(group).toLowerCase();
+          if (groupLower === "total") {
+            continue;
+          }
           if (hasRecord) {
-            if (groupLower !== "event setup" && groupLower !== "total") {
+            if (groupLower !== "event setup") {
               continue;
             }
           } else if (groupLower === "event setup") {
@@ -619,11 +622,48 @@
           const ibKey = `${fieldBase} IB`;
           const prKey = `${fieldBase} PR`;
           const diffKey = `${fieldBase} diff`;
-          const hasAny =
-            Object.prototype.hasOwnProperty.call(row, ibKey) ||
-            Object.prototype.hasOwnProperty.call(row, prKey) ||
-            Object.prototype.hasOwnProperty.call(row, diffKey);
+          const hasIB = Object.prototype.hasOwnProperty.call(row, ibKey);
+          const hasPR = Object.prototype.hasOwnProperty.call(row, prKey);
+          const hasDiff = Object.prototype.hasOwnProperty.call(row, diffKey);
+          const hasAny = hasIB || hasPR || hasDiff;
           if (!hasAny) {
+            continue;
+          }
+          const ibValue = Number(row[ibKey]);
+          const prValue = Number(row[prKey]);
+          const diffValue = Number(row[diffKey]);
+          const hasNumericIB = hasIB && Number.isFinite(ibValue);
+          const hasNumericPR = hasPR && Number.isFinite(prValue);
+          const hasNumericDiff = hasDiff && Number.isFinite(diffValue);
+          const missingOrNonNumericCount =
+            (hasNumericIB ? 0 : 1) +
+            (hasNumericPR ? 0 : 1) +
+            (hasNumericDiff ? 0 : 1);
+          const presentNumericValues = [];
+          if (hasNumericIB) {
+            presentNumericValues.push(ibValue);
+          }
+          if (hasNumericPR) {
+            presentNumericValues.push(prValue);
+          }
+          if (hasNumericDiff) {
+            presentNumericValues.push(diffValue);
+          }
+          const missingAndRemainingZero =
+            missingOrNonNumericCount > 0 &&
+            presentNumericValues.length > 0 &&
+            presentNumericValues.every((v) => v === 0);
+          if (missingAndRemainingZero) {
+            continue;
+          }
+          const allZero =
+            Number.isFinite(ibValue) &&
+            Number.isFinite(prValue) &&
+            Number.isFinite(diffValue) &&
+            ibValue === 0 &&
+            prValue === 0 &&
+            diffValue === 0;
+          if (allZero) {
             continue;
           }
           rows.push(

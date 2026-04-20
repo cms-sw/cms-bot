@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Module Allocation Monitor Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --ink: #1d232a;
+      --ink-soft: #4a525c;
+      --paper: #fffaf3;
+      --card: #fffdf8;
+      --line: #dacfbf;
+      --accent: #0e8f7a;
+      --accent-soft: #a4ddd5;
+      --up: #0b8a6a;
+      --down: #c53d20;
+      --shadow: 0 10px 30px rgba(35, 41, 48, 0.12);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 8% 20%, #ffe7b8 0%, transparent 33%),
+        radial-gradient(circle at 85% 10%, #cdeef4 0%, transparent 40%),
+        linear-gradient(140deg, #efe6d6 0%, #f4efe6 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: 100%;
+      margin: 0;
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 1.2rem 1.2rem 1.4rem;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -45px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 40px;
+      transform: rotate(22deg);
+      background: linear-gradient(135deg, #9adfd2, #f6d9a3);
+      opacity: 0.45;
+      z-index: -1;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.2vw, 2rem);
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin: 0.45rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      padding: 1rem 1.2rem 1.2rem;
+      display: grid;
+      gap: 0.8rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 25%);
+    }
+
+    .grid {
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+    }
+
+    .grid > * {
+      min-width: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    button {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.92rem;
+      border-radius: 10px;
+      border: 1px solid #c7bcae;
+      padding: 0.55rem 0.65rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input[type="file"] {
+      width: 100%;
+      font-size: 0.86rem;
+      color: var(--ink-soft);
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #fdfefe, #edf9f6);
+      border-color: #a9cfc8;
+      font-weight: 600;
+    }
+
+    button:hover {
+      filter: brightness(0.98);
+    }
+
+    .dropzone {
+      border: 1.5px dashed #86b9af;
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+      color: var(--ink-soft);
+      background: #f5fcfa;
+      transition: 150ms ease;
+    }
+
+    .dropzone.drag {
+      border-color: var(--accent);
+      background: #def4ef;
+      color: #1d4039;
+      transform: translateY(-1px);
+    }
+
+    .stats {
+      display: grid;
+      gap: 0.8rem;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 35%);
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid #ddd1c1;
+      border-radius: 12px;
+      padding: 0.7rem 0.8rem;
+    }
+
+    .stat .k {
+      color: var(--ink-soft);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat .v {
+      margin-top: 0.25rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .table-wrap {
+      padding: 0 1.2rem 1.2rem;
+    }
+
+    .table-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      max-height: 62vh;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+      font-size: 0.88rem;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f4f8f7;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      color: #2d3a3f;
+      font-weight: 700;
+      padding: 0.6rem 0.7rem;
+      z-index: 2;
+    }
+
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    thead th.sortable:hover {
+      background: #ebf3f1;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #efe4d5;
+      padding: 0.48rem 0.7rem;
+      vertical-align: top;
+    }
+
+    tbody tr:hover {
+      background: #faf5ec;
+    }
+
+    .mono {
+      font-family: "IBM Plex Mono", monospace;
+      white-space: nowrap;
+    }
+
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      background: #e7f5f2;
+      border: 1px solid #c2dfd8;
+      color: #19574c;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.74rem;
+      line-height: 1.2;
+    }
+
+    .bar-cell {
+      min-width: 180px;
+    }
+
+    .bar-track {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: #f0e7dc;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      transform: translateX(-50%);
+      border-radius: 999px;
+    }
+
+    .up {
+      background: linear-gradient(90deg, #41bd97, #0b8a6a);
+    }
+
+    .down {
+      background: linear-gradient(90deg, #e67f67, #c53d20);
+    }
+
+    .pager {
+      padding: 0.75rem 0;
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .pager button {
+      width: auto;
+      min-width: 76px;
+      padding: 0.45rem 0.75rem;
+    }
+
+    .empty {
+      padding: 1.2rem;
+      color: var(--ink-soft);
+    }
+
+    .error {
+      color: #8d2f1f;
+      font-weight: 600;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(100px, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .wrap {
+        padding: 0.75rem;
+      }
+
+      .grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel">
+      <div class="hero">
+        <h1>Module Allocation Monitor Viewer</h1>
+        <p class="sub">Inspect module-level metrics from moduleAllocMonitor circles JSON files.</p>
+      </div>
+
+      <div class="controls">
+        <div class="grid">
+          <div>
+            <label for="fileInput">Load JSON file</label>
+            <input id="fileInput" type="file" accept=".json,application/json">
+          </div>
+          <div>
+            <label for="defaultFile">Auto-load file name</label>
+            <input id="defaultFile" type="text" value="">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="autoLoadBtn" type="button">Try Auto-Load</button>
+          </div>
+          <div>
+            <label for="search">Search label/type</label>
+            <input id="search" type="text" placeholder="e.g. JetMonitor or PromptMonitoring">
+          </div>
+          <div>
+            <label for="typeFilter">Filter type</label>
+            <select id="typeFilter"></select>
+          </div>
+          <div>
+            <label for="metricSelect">Field group (IB/PR/diff)</label>
+            <select id="metricSelect"></select>
+          </div>
+          <div>
+            <label for="sortBy">Sort</label>
+            <select id="sortBy">
+              <option value="abs-desc">Abs(diff) high to low</option>
+              <option value="label-asc">Label A to Z</option>
+              <option value="label-desc">Label Z to A</option>
+              <option value="type-asc">Type A to Z</option>
+              <option value="type-desc">Type Z to A</option>
+              <option value="record-asc">Record low to high</option>
+              <option value="record-desc">Record high to low</option>
+              <option value="ib-desc">IB high to low</option>
+              <option value="ib-asc">IB low to high</option>
+              <option value="pr-desc">PR high to low</option>
+              <option value="pr-asc">PR low to high</option>
+              <option value="metric-desc">Diff high to low</option>
+              <option value="metric-asc">Diff low to high</option>
+            </select>
+          </div>
+          <div>
+            <label for="minAbs">Min abs(diff)</label>
+            <input id="minAbs" type="number" step="any" value="0">
+          </div>
+          <div>
+            <label for="rowsPerPage">Rows per page</label>
+            <input id="rowsPerPage" type="number" min="20" step="20" value="120">
+          </div>
+        </div>
+
+        <div id="dropzone" class="dropzone">Drag and drop a JSON file here</div>
+        <div id="status" class="sub">No data loaded yet.</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Modules</div><div id="statModules" class="v">0</div></div>
+        <div class="stat"><div class="k">Types</div><div id="statTypes" class="v">0</div></div>
+        <div class="stat"><div class="k">Diff Mean</div><div id="statMean" class="v">0</div></div>
+        <div class="stat"><div class="k">Max |Diff|</div><div id="statMaxAbs" class="v">0</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="pager">
+          <button id="prevBtn" type="button">Prev</button>
+          <button id="nextBtn" type="button">Next</button>
+          <span id="pageInfo">Page 0/0</span>
+        </div>
+
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr>
+                <th id="colLabel" class="sortable" style="width: 25%;">Label</th>
+                <th id="colType" class="sortable" style="width: 12%;">Type</th>
+                <th id="colRecord" class="sortable" style="width: 10%;">Record</th>
+                <th id="colIB" class="sortable" style="width: 14%;">IB</th>
+                <th id="colPR" class="sortable" style="width: 14%;">PR</th>
+                <th id="colDiff" class="sortable" style="width: 14%;">diff</th>
+                <th style="width: 10%;">Visual</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div id="empty" class="empty">Load a JSON file to begin.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      modules: [],
+      filtered: [],
+      fieldGroups: [],
+      page: 1,
+      maxAbsMetric: 1,
+      fileName: ""
+    };
+
+    const el = {
+      fileInput: document.getElementById("fileInput"),
+      defaultFile: document.getElementById("defaultFile"),
+      autoLoadBtn: document.getElementById("autoLoadBtn"),
+      search: document.getElementById("search"),
+      typeFilter: document.getElementById("typeFilter"),
+      metricSelect: document.getElementById("metricSelect"),
+      sortBy: document.getElementById("sortBy"),
+      minAbs: document.getElementById("minAbs"),
+      rowsPerPage: document.getElementById("rowsPerPage"),
+      dropzone: document.getElementById("dropzone"),
+      status: document.getElementById("status"),
+      statModules: document.getElementById("statModules"),
+      statTypes: document.getElementById("statTypes"),
+      statMean: document.getElementById("statMean"),
+      statMaxAbs: document.getElementById("statMaxAbs"),
+      colLabel: document.getElementById("colLabel"),
+      colType: document.getElementById("colType"),
+      colRecord: document.getElementById("colRecord"),
+      colIB: document.getElementById("colIB"),
+      colPR: document.getElementById("colPR"),
+      colDiff: document.getElementById("colDiff"),
+      tbody: document.getElementById("tbody"),
+      empty: document.getElementById("empty"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      pageInfo: document.getElementById("pageInfo")
+    };
+
+    function fmtNumber(value) {
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return "-";
+      }
+      const abs = Math.abs(value);
+      if (abs >= 1000000) {
+        return value.toExponential(3);
+      }
+      if (abs >= 1000) {
+        return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      }
+      if (abs >= 1) {
+        return value.toLocaleString(undefined, { maximumFractionDigits: 4 });
+      }
+      return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+    }
+
+    function toNumber(val) {
+      const n = Number(val);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function extractModules(data) {
+      if (data && Array.isArray(data.modules)) {
+        return data.modules;
+      }
+
+      if (Array.isArray(data)) {
+        return data;
+      }
+
+      return [];
+    }
+
+    function collectFieldGroups(modules) {
+      const map = new Map();
+      for (const mod of modules.slice(0, 80)) {
+        Object.keys(mod).forEach((k) => {
+          const m = k.match(/^(.*) (IB|PR|diff)$/);
+          if (!m || typeof mod[k] !== "number") {
+            return;
+          }
+          const base = m[1];
+          const part = m[2];
+          if (!map.has(base)) {
+            map.set(base, { IB: false, PR: false, diff: false });
+          }
+          map.get(base)[part] = true;
+        });
+      }
+
+      const groups = [];
+      for (const [base, flags] of map.entries()) {
+        if (flags.IB && flags.PR && flags.diff) {
+          groups.push(base);
+        }
+      }
+
+      groups.sort();
+      return groups;
+    }
+
+    function chooseDefaultField(keys) {
+      const byPreference = [
+        "added total",
+        "maxTemp total",
+        "nAlloc total",
+        "added event"
+      ];
+
+      for (const wanted of byPreference) {
+        if (keys.includes(wanted)) {
+          return wanted;
+        }
+      }
+      return keys[0] || "";
+    }
+
+    function setStatus(message, isError = false) {
+      el.status.textContent = message;
+      el.status.className = isError ? "sub error" : "sub";
+    }
+
+    function populateTypeFilter(modules) {
+      const types = [...new Set(modules.map((m) => m.type || "(none)"))].sort();
+      el.typeFilter.innerHTML = "";
+      const all = document.createElement("option");
+      all.value = "";
+      all.textContent = "All types";
+      el.typeFilter.appendChild(all);
+      for (const t of types) {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        el.typeFilter.appendChild(opt);
+      }
+    }
+
+    function populateMetricSelect(keys) {
+      el.metricSelect.innerHTML = "";
+      for (const key of keys) {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = key;
+        el.metricSelect.appendChild(opt);
+      }
+      el.metricSelect.value = chooseDefaultField(keys);
+    }
+
+    function updateColumnHeaders(fieldBase) {
+      const arrow = {
+        "label-desc": " ▼",
+        "label-asc": " ▲",
+        "type-desc": " ▼",
+        "type-asc": " ▲",
+        "record-desc": " ▼",
+        "record-asc": " ▲",
+        "ib-desc": " ▼",
+        "ib-asc": " ▲",
+        "pr-desc": " ▼",
+        "pr-asc": " ▲",
+        "metric-desc": " ▼",
+        "metric-asc": " ▲"
+      };
+      const sortBy = el.sortBy.value;
+
+      el.colLabel.textContent = `Label${arrow[sortBy] && sortBy.startsWith("label-") ? arrow[sortBy] : ""}`;
+      el.colType.textContent = `Type${arrow[sortBy] && sortBy.startsWith("type-") ? arrow[sortBy] : ""}`;
+      el.colRecord.textContent = `Record${arrow[sortBy] && sortBy.startsWith("record-") ? arrow[sortBy] : ""}`;
+
+      el.colIB.textContent = `${fieldBase} IB${arrow[sortBy] && sortBy.startsWith("ib-") ? arrow[sortBy] : ""}`;
+      el.colPR.textContent = `${fieldBase} PR${arrow[sortBy] && sortBy.startsWith("pr-") ? arrow[sortBy] : ""}`;
+      el.colDiff.textContent = `${fieldBase} diff${arrow[sortBy] && sortBy.startsWith("metric-") ? arrow[sortBy] : ""}`;
+    }
+
+    function updateStats(rows, fieldBase) {
+      const diffKey = `${fieldBase} diff`;
+      const values = rows.map((r) => toNumber(r[diffKey]));
+      const count = values.length;
+      const mean = count ? values.reduce((a, b) => a + b, 0) / count : 0;
+      const maxAbs = count ? Math.max(...values.map((v) => Math.abs(v))) : 0;
+      const types = new Set(rows.map((r) => r.type || "(none)")).size;
+
+      state.maxAbsMetric = Math.max(maxAbs, 1e-9);
+
+      el.statModules.textContent = count.toLocaleString();
+      el.statTypes.textContent = types.toLocaleString();
+      el.statMean.textContent = fmtNumber(mean);
+      el.statMaxAbs.textContent = fmtNumber(maxAbs);
+    }
+
+    function applyFilters() {
+      const q = el.search.value.trim().toLowerCase();
+      const type = el.typeFilter.value;
+      const fieldBase = el.metricSelect.value;
+      const diffKey = `${fieldBase} diff`;
+      const minAbs = Math.abs(toNumber(el.minAbs.value));
+      const sortBy = el.sortBy.value;
+
+      updateColumnHeaders(fieldBase || "(field)");
+
+      const rows = state.modules.filter((m) => {
+        if (type && (m.type || "(none)") !== type) {
+          return false;
+        }
+
+        if (q) {
+          const hay = `${m.label || ""} ${m.type || ""}`.toLowerCase();
+          if (!hay.includes(q)) {
+            return false;
+          }
+        }
+
+        if (Math.abs(toNumber(m[diffKey])) < minAbs) {
+          return false;
+        }
+
+        return true;
+      });
+
+      rows.sort((a, b) => {
+        const ibKey = `${fieldBase} IB`;
+        const prKey = `${fieldBase} PR`;
+        const av = toNumber(a[diffKey]);
+        const bv = toNumber(b[diffKey]);
+
+        if (sortBy === "abs-desc") {
+          return Math.abs(bv) - Math.abs(av);
+        }
+        if (sortBy === "label-desc") {
+          return String(b.label || "").localeCompare(String(a.label || ""));
+        }
+        if (sortBy === "label-asc") {
+          return String(a.label || "").localeCompare(String(b.label || ""));
+        }
+        if (sortBy === "type-desc") {
+          return String(b.type || "").localeCompare(String(a.type || ""));
+        }
+        if (sortBy === "type-asc") {
+          return String(a.type || "").localeCompare(String(b.type || ""));
+        }
+        if (sortBy === "record-desc" || sortBy === "record-asc") {
+          const aNum = Number(a.record);
+          const bNum = Number(b.record);
+          const bothNumeric = Number.isFinite(aNum) && Number.isFinite(bNum);
+          if (bothNumeric) {
+            return sortBy === "record-desc" ? bNum - aNum : aNum - bNum;
+          }
+          const cmp = String(a.record || "").localeCompare(String(b.record || ""), undefined, { numeric: true });
+          return sortBy === "record-desc" ? -cmp : cmp;
+        }
+        if (sortBy === "ib-desc") {
+          return toNumber(b[ibKey]) - toNumber(a[ibKey]);
+        }
+        if (sortBy === "ib-asc") {
+          return toNumber(a[ibKey]) - toNumber(b[ibKey]);
+        }
+        if (sortBy === "pr-desc") {
+          return toNumber(b[prKey]) - toNumber(a[prKey]);
+        }
+        if (sortBy === "pr-asc") {
+          return toNumber(a[prKey]) - toNumber(b[prKey]);
+        }
+        if (sortBy === "metric-desc") {
+          return bv - av;
+        }
+        if (sortBy === "metric-asc") {
+          return av - bv;
+        }
+        return String(a.label || "").localeCompare(String(b.label || ""));
+      });
+
+      state.filtered = rows;
+      const pageCount = Math.max(1, Math.ceil(rows.length / Math.max(20, toNumber(el.rowsPerPage.value) || 120)));
+      state.page = Math.min(state.page, pageCount);
+
+      updateStats(rows, fieldBase);
+      renderTable();
+    }
+
+    function barStyle(value) {
+      const abs = Math.abs(value);
+      const pct = Math.min(100, (abs / state.maxAbsMetric) * 100);
+      const side = value >= 0 ? "up" : "down";
+      const left = value >= 0 ? "50%" : `${50 - pct / 2}%`;
+      return { pct, side, left };
+    }
+
+    function renderTable() {
+      const fieldBase = el.metricSelect.value;
+      const ibKey = `${fieldBase} IB`;
+      const prKey = `${fieldBase} PR`;
+      const diffKey = `${fieldBase} diff`;
+      const rowsPerPage = Math.max(20, toNumber(el.rowsPerPage.value) || 120);
+      const pageCount = Math.max(1, Math.ceil(state.filtered.length / rowsPerPage));
+      state.page = Math.min(Math.max(1, state.page), pageCount);
+
+      const start = (state.page - 1) * rowsPerPage;
+      const pageRows = state.filtered.slice(start, start + rowsPerPage);
+
+      el.tbody.innerHTML = "";
+      el.empty.style.display = pageRows.length ? "none" : "block";
+
+      for (const row of pageRows) {
+        const tr = document.createElement("tr");
+        const ibValue = toNumber(row[ibKey]);
+        const prValue = toNumber(row[prKey]);
+        const diffValue = toNumber(row[diffKey]);
+        const visual = barStyle(diffValue);
+
+        tr.innerHTML = `
+          <td title="${(row.label || "").replaceAll('"', "&quot;")}">${row.label || ""}</td>
+          <td><span class="pill">${row.type || "(none)"}</span></td>
+          <td class="mono">${row.record || "-"}</td>
+          <td class="mono">${fmtNumber(ibValue)}</td>
+          <td class="mono">${fmtNumber(prValue)}</td>
+          <td class="mono">${fmtNumber(diffValue)}</td>
+          <td class="bar-cell">
+            <div class="bar-track">
+              <div class="bar-fill ${visual.side}" style="left:${visual.left}; width:${visual.pct}%;"></div>
+            </div>
+          </td>
+        `;
+        el.tbody.appendChild(tr);
+      }
+
+      const from = state.filtered.length ? start + 1 : 0;
+      const to = Math.min(start + pageRows.length, state.filtered.length);
+      el.pageInfo.textContent = `Page ${state.page}/${pageCount} | Rows ${from}-${to} of ${state.filtered.length}`;
+      el.prevBtn.disabled = state.page <= 1;
+      el.nextBtn.disabled = state.page >= pageCount;
+    }
+
+    function loadFromObject(data, sourceLabel) {
+      const modules = extractModules(data);
+      if (!modules.length || typeof modules[0] !== "object") {
+        throw new Error("No module records found. Expected an object with a modules array.");
+      }
+
+      state.modules = modules;
+      state.fieldGroups = collectFieldGroups(modules);
+      state.page = 1;
+
+      if (!state.fieldGroups.length) {
+        throw new Error("No IB/PR/diff field groups found in module records.");
+      }
+
+      populateTypeFilter(modules);
+      populateMetricSelect(state.fieldGroups);
+      applyFilters();
+
+      setStatus(`Loaded ${modules.length.toLocaleString()} modules from ${sourceLabel}.`);
+    }
+
+    async function loadFromText(text, sourceLabel) {
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`Invalid JSON in ${sourceLabel}: ${err.message}`);
+      }
+      loadFromObject(data, sourceLabel);
+    }
+
+    async function tryAutoLoad(fileName) {
+      const name = fileName.trim();
+      if (!name) {
+        setStatus("Please enter a file name to auto-load.", true);
+        return;
+      }
+
+      try {
+        const res = await fetch(name, { cache: "no-store" });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const text = await res.text();
+        await loadFromText(text, name);
+      } catch (err) {
+        setStatus(
+          `Auto-load failed (${err.message}). If this page is opened with file://, browser fetch may be blocked. Use file picker or drag-and-drop.`,
+          true
+        );
+      }
+    }
+
+    function getFileParamFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("file") || params.get("url") || params.get("json") || "";
+    }
+
+    function wireEvents() {
+      function toggleSort(descValue, ascValue) {
+        el.sortBy.value = el.sortBy.value === descValue ? ascValue : descValue;
+        state.page = 1;
+        applyFilters();
+      }
+
+      el.fileInput.addEventListener("change", async (evt) => {
+        const file = evt.target.files && evt.target.files[0];
+        if (!file) {
+          return;
+        }
+        const text = await file.text();
+        try {
+          await loadFromText(text, file.name);
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+
+      el.autoLoadBtn.addEventListener("click", () => {
+        tryAutoLoad(el.defaultFile.value);
+      });
+
+      [el.search, el.typeFilter, el.metricSelect, el.sortBy, el.minAbs, el.rowsPerPage].forEach((node) => {
+        const eventName = node.tagName === "INPUT" ? "input" : "change";
+        node.addEventListener(eventName, () => {
+          state.page = 1;
+          applyFilters();
+        });
+      });
+
+      el.colIB.addEventListener("click", () => toggleSort("ib-desc", "ib-asc"));
+      el.colPR.addEventListener("click", () => toggleSort("pr-desc", "pr-asc"));
+      el.colDiff.addEventListener("click", () => toggleSort("metric-desc", "metric-asc"));
+      el.colLabel.addEventListener("click", () => toggleSort("label-desc", "label-asc"));
+      el.colType.addEventListener("click", () => toggleSort("type-desc", "type-asc"));
+      el.colRecord.addEventListener("click", () => toggleSort("record-desc", "record-asc"));
+
+      el.prevBtn.addEventListener("click", () => {
+        state.page = Math.max(1, state.page - 1);
+        renderTable();
+      });
+
+      el.nextBtn.addEventListener("click", () => {
+        state.page += 1;
+        renderTable();
+      });
+
+      ["dragenter", "dragover"].forEach((evtName) => {
+        el.dropzone.addEventListener(evtName, (evt) => {
+          evt.preventDefault();
+          el.dropzone.classList.add("drag");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((evtName) => {
+        el.dropzone.addEventListener(evtName, (evt) => {
+          evt.preventDefault();
+          el.dropzone.classList.remove("drag");
+        });
+      });
+
+      el.dropzone.addEventListener("drop", async (evt) => {
+        const file = evt.dataTransfer && evt.dataTransfer.files && evt.dataTransfer.files[0];
+        if (!file) {
+          return;
+        }
+        try {
+          const text = await file.text();
+          await loadFromText(text, file.name);
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+    }
+
+    function boot() {
+      wireEvents();
+      el.typeFilter.innerHTML = '<option value="">All types</option>';
+      el.metricSelect.innerHTML = "";
+      renderTable();
+
+      const fileFromUrl = getFileParamFromUrl().trim();
+      if (fileFromUrl) {
+        el.defaultFile.value = fileFromUrl;
+        setStatus(`Trying URL parameter file: ${fileFromUrl}`);
+        tryAutoLoad(fileFromUrl);
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

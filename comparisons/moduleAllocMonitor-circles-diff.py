@@ -83,6 +83,7 @@ def sum_with_prefix_suffix(data, metric_keys, prefix="added", suffix="", default
 def is_valid_module_key(key):
     return key != "None|None|None" and key != "||"
 
+
 def compute_event_setup_total(event_setup):
     total = 0
     if not isinstance(event_setup, dict):
@@ -107,9 +108,6 @@ def ensure_event_setup_total(module):
                 event_setup = {"total": 0}
             event_setup["total"] = compute_event_setup_total(event_setup)
             module["%s event setup %s" % (metric, key)] = event_setup
-
-    
-    
 
 
 def update_added_totals(datamapres):

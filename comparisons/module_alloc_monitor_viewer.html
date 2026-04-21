@@ -588,8 +588,22 @@
       return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
     }
 
+    function metricNumber(value) {
+      const numeric = Number(value);
+      if (Number.isFinite(numeric)) {
+        return numeric;
+      }
+      if (value && typeof value === "object") {
+        const total = Number(value.total);
+        if (Number.isFinite(total)) {
+          return total;
+        }
+      }
+      return NaN;
+    }
+
     function toNumber(val) {
-      const n = Number(val);
+      const n = metricNumber(val);
       return Number.isFinite(n) ? n : 0;
     }
 
@@ -610,7 +624,7 @@
       if (!Object.prototype.hasOwnProperty.call(row, key)) {
         return "-";
       }
-      const value = Number(row[key]);
+      const value = metricNumber(row[key]);
       return Number.isFinite(value) ? fmtNumber(value, quantity) : "-";
     }
 
@@ -620,6 +634,16 @@
       const hasRecord = row.record !== undefined && row.record !== null && String(row.record).trim() !== "";
       for (const group of groups) {
           const groupLower = String(group).toLowerCase();
+          const fieldBase = group === "(none)" ? quantity : `${quantity} ${group}`;
+          const ibKey = `${fieldBase} IB`;
+          const prKey = `${fieldBase} PR`;
+          const diffKey = `${fieldBase} diff`;
+          const hasEventSetupDictionary =
+            groupLower === "event setup" &&
+            [row[ibKey], row[prKey], row[diffKey]].some((value) => {
+              return value && typeof value === "object" && Object.prototype.hasOwnProperty.call(value, "total");
+            });
+          const keepEventSetupTotalRow = groupLower === "event setup" && (hasRecord || hasEventSetupDictionary);
           if (groupLower === "total") {
             continue;
           }
@@ -627,13 +651,9 @@
             if (groupLower !== "event setup") {
               continue;
             }
-          } else if (groupLower === "event setup") {
+          } else if (groupLower === "event setup" && !hasEventSetupDictionary) {
             continue;
           }
-          const fieldBase = group === "(none)" ? quantity : `${quantity} ${group}`;
-          const ibKey = `${fieldBase} IB`;
-          const prKey = `${fieldBase} PR`;
-          const diffKey = `${fieldBase} diff`;
           const hasIB = Object.prototype.hasOwnProperty.call(row, ibKey);
           const hasPR = Object.prototype.hasOwnProperty.call(row, prKey);
           const hasDiff = Object.prototype.hasOwnProperty.call(row, diffKey);
@@ -641,9 +661,9 @@
           if (!hasAny) {
             continue;
           }
-          const ibValue = Number(row[ibKey]);
-          const prValue = Number(row[prKey]);
-          const diffValue = Number(row[diffKey]);
+          const ibValue = metricNumber(row[ibKey]);
+          const prValue = metricNumber(row[prKey]);
+          const diffValue = metricNumber(row[diffKey]);
           const hasNumericIB = hasIB && Number.isFinite(ibValue);
           const hasNumericPR = hasPR && Number.isFinite(prValue);
           const hasNumericDiff = hasDiff && Number.isFinite(diffValue);
@@ -665,7 +685,7 @@
             missingOrNonNumericCount > 0 &&
             presentNumericValues.length > 0 &&
             presentNumericValues.every((v) => v === 0);
-          if (missingAndRemainingZero) {
+          if (missingAndRemainingZero && !keepEventSetupTotalRow) {
             continue;
           }
           const allZero =
@@ -675,7 +695,7 @@
             ibValue === 0 &&
             prValue === 0 &&
             diffValue === 0;
-          if (allZero) {
+          if (allZero && !keepEventSetupTotalRow) {
             continue;
           }
           rows.push(
@@ -686,6 +706,71 @@
         return '<tr><td colspan="7" class="mono">No transition details available.</td></tr>';
       }
       return rows.join("");
+    }
+
+    function eventSetupEntries(value) {
+      if (!value || typeof value !== "object") {
+        return null;
+      }
+      const keys = Object.keys(value).filter((k) => k !== "total");
+      if (!keys.length) {
+        return null;
+      }
+      return keys;
+    }
+
+    function buildEventSetupDetailTable(row, quantity) {
+      const ibKey = `${quantity} event setup IB`;
+      const prKey = `${quantity} event setup PR`;
+      const diffKey = `${quantity} event setup diff`;
+      const ibMap = row[ibKey] && typeof row[ibKey] === "object" ? row[ibKey] : null;
+      const prMap = row[prKey] && typeof row[prKey] === "object" ? row[prKey] : null;
+      const diffMap = row[diffKey] && typeof row[diffKey] === "object" ? row[diffKey] : null;
+
+      const keySet = new Set();
+      [ibMap, prMap, diffMap].forEach((map) => {
+        const keys = eventSetupEntries(map);
+        if (!keys) {
+          return;
+        }
+        keys.forEach((k) => keySet.add(k));
+      });
+
+      const keys = [...keySet].sort((a, b) => a.localeCompare(b));
+      if (!keys.length) {
+        return "";
+      }
+
+      const rows = keys.map((k) => {
+        const ibValue = ibMap ? metricNumber(ibMap[k]) : NaN;
+        const prValue = prMap ? metricNumber(prMap[k]) : NaN;
+        const diffValue = diffMap ? metricNumber(diffMap[k]) : NaN;
+        const ibText = Number.isFinite(ibValue) ? fmtNumber(ibValue, quantity) : "-";
+        const prText = Number.isFinite(prValue) ? fmtNumber(prValue, quantity) : "-";
+        const diffText = Number.isFinite(diffValue) ? fmtNumber(diffValue, quantity) : "-";
+        return `<tr><td>${escapeHtml(k)}</td><td class="mono">${ibText}</td><td class="mono">${prText}</td><td class="mono">${diffText}</td></tr>`;
+      });
+
+      return `
+        <p class="detail-title">Event setup dictionary entries (${escapeHtml(quantity)})</p>
+        <table class="detail-table">
+          <colgroup>
+            <col style="width: 40%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>IB</th>
+              <th>PR</th>
+              <th>Diff</th>
+            </tr>
+          </thead>
+          <tbody>${rows.join("")}</tbody>
+        </table>
+      `;
     }
 
     function toggleRowExpanded(key) {
@@ -754,7 +839,7 @@
           }
           const flags = map.get(base);
           flags[part] = true;
-          if (Number.isFinite(Number(mod[k]))) {
+          if (Number.isFinite(metricNumber(mod[k]))) {
             flags.hasNumeric = true;
           }
         });
@@ -1065,6 +1150,7 @@
         el.tbody.appendChild(tr);
 
         if (isExpanded) {
+          const eventSetupDetail = buildEventSetupDetailTable(row, el.quantitySelect.value);
           const detailTr = document.createElement("tr");
           detailTr.className = "detail-row";
           detailTr.innerHTML = `
@@ -1090,6 +1176,7 @@
                   </thead>
                   <tbody>${buildExpandedMetricsRows(row, el.quantitySelect.value)}</tbody>
                 </table>
+                ${eventSetupDetail}
               </div>
             </td>
           `;

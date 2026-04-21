@@ -48,12 +48,30 @@ METRICS_KEYS = ["added", "nAlloc", "nDealloc", "maxTemp", "max1Alloc"]
 
 
 def module_key(module):
-    return "%s|%s|%s" % (module.get("label", ""), module.get("type", ""), module.get("record", ""))
+    return "%s|%s" % (module.get("label", ""), module.get("type", ""))
+
+
+def module_record(module):
+    record = module.get("record", "")
+    return str(record).strip()
+
+
+def is_event_setup_metric(metric):
+    return str(metric).strip().lower().endswith(" event setup")
+
+
+def to_numeric_or_none(value):
+    if isinstance(value, (int, float)):
+        return value
+    if isinstance(value, dict):
+        values = [sub_value for sub_value in value.values() if isinstance(sub_value, (int, float))]
+        return sum(values) if values else None
+    return None
 
 
 def sum_numeric_values(data, keys, default="N/A"):
-    values = [data.get(key, default) for key in keys]
-    return sum(values) if all(isinstance(value, (int, float)) for value in values) else default
+    values = [to_numeric_or_none(data.get(key, default)) for key in keys]
+    return sum(values) if all(value is not None for value in values) else default
 
 
 def sum_with_prefix_suffix(data, metric_keys, prefix="added", suffix="", default="N/A"):
@@ -64,6 +82,34 @@ def sum_with_prefix_suffix(data, metric_keys, prefix="added", suffix="", default
 
 def is_valid_module_key(key):
     return key != "None|None|None" and key != "||"
+
+def compute_event_setup_total(event_setup):
+    total = 0
+    if not isinstance(event_setup, dict):
+        return total
+    for key, value in event_setup.items():
+        if key == "total":
+            continue
+        if isinstance(value, (int, float)):
+            total += value
+        elif isinstance(value, dict):
+            for nested in value.values():
+                if isinstance(nested, (int, float)):
+                    total += nested
+    return total
+
+
+def ensure_event_setup_total(module):
+    for key in ["IB", "PR", "diff"]:
+        for metric in METRICS_KEYS:
+            event_setup = module.get("%s event setup %s" % (metric, key))
+            if not isinstance(event_setup, dict):
+                event_setup = {"total": 0}
+            event_setup["total"] = compute_event_setup_total(event_setup)
+            module["%s event setup %s" % (metric, key)] = event_setup
+
+    
+    
 
 
 def update_added_totals(datamapres):
@@ -83,13 +129,70 @@ def update_added_totals(datamapres):
             )
 
 
+def merge_modules_by_key(modules, metrics):
+    merged = {}
+    for module in modules:
+        key = module_key(module)
+        if key not in merged:
+            merged[key] = {
+                "type": module.get("type"),
+                "label": module.get("label"),
+                "event setup": {"total": 0},
+            }
+        dest = merged[key]
+        record = module_record(module)
+        if record:
+            dest["event setup"].setdefault(record, {})
+
+        for metric in metrics:
+            value = module.get(metric, "N/A")
+            if is_event_setup_metric(metric):
+                metric_map = dest.get(metric)
+                if not isinstance(metric_map, dict):
+                    metric_map = {}
+                    dest[metric] = metric_map
+                rec_key = record if record else "total"
+                metric_map[rec_key] = value
+
+                if record and isinstance(value, (int, float)):
+                    dest["event setup"][record][metric] = value
+            elif isinstance(value, (int, float)):
+                dest[metric] = dest.get(metric, 0) + value
+            elif metric not in dest:
+                dest[metric] = value
+    return merged
+
+
 def diff_from(metrics, data, dest, res):
+    def diff_dictionary_values(ib_values, pr_values):
+        records = sorted(set(ib_values.keys()) | set(pr_values.keys()))
+        diff_values = {}
+        for record in records:
+            ib_value = ib_values.get(record, "N/A")
+            pr_value = pr_values.get(record, "N/A")
+            if isinstance(ib_value, (int, float)) and isinstance(pr_value, (int, float)):
+                diff_values[record] = pr_value - ib_value
+            elif isinstance(pr_value, (int, float)):
+                diff_values[record] = pr_value
+            elif isinstance(ib_value, (int, float)):
+                diff_values[record] = -ib_value
+            else:
+                diff_values[record] = "N/A"
+        return diff_values
+
     for metric in metrics:
         ibkey = "%s IB" % metric
-        res[ibkey] = data.get(metric, "N/A")
+        ibvalue = data.get(metric, "N/A")
+        res[ibkey] = ibvalue
         prkey = "%s PR" % metric
-        res[prkey] = dest.get(metric, "N/A")
-        if res[ibkey] == "N/A" or res[prkey] == "N/A":
+        prvalue = dest.get(metric, "N/A")
+        res[prkey] = prvalue
+
+        if isinstance(ibvalue, dict) or isinstance(prvalue, dict):
+            ibdict = ibvalue if isinstance(ibvalue, dict) else {}
+            prdict = prvalue if isinstance(prvalue, dict) else {}
+            res[metric + " diff"] = diff_dictionary_values(ibdict, prdict)
+        elif res[ibkey] == "N/A" or res[prkey] == "N/A":
             if res[prkey] != "N/A":
                 res[metric + " diff"] = res[prkey] - 0
             elif res[ibkey] != "N/A":
@@ -115,7 +218,7 @@ for resource in ibdata["resources"]:
         for key in resource:
             metrics.append(key)
 
-datamapib = {module_key(module): module for module in ibdata["modules"]}
+datamapib = merge_modules_by_key(ibdata["modules"], metrics)
 
 datacumulsib = {}
 for module in ibdata["modules"]:
@@ -137,7 +240,7 @@ if ibdata["resources"] != prdata["resources"]:
     print("Error: input files describe different metrics")
     sys.exit(1)
 
-datamappr = {module_key(module): module for module in prdata["modules"]}
+datamappr = merge_modules_by_key(prdata["modules"], metrics)
 
 
 if ibdata["total"]["label"] != prdata["total"]["label"]:
@@ -174,18 +277,16 @@ for key in sorted(keys):
     if key in datamapib and key not in datamappr:
         result["type"] = datamapib.get(key).get("type")
         result["label"] = datamapib.get(key).get("label")
-        result["record"] = datamapib.get(key).get("record")
         diff_from(metrics, datamapib.get(key, {}), {}, result)
     elif key in datamappr and key not in datamapib:
         result["type"] = datamappr.get(key).get("type")
         result["label"] = datamappr.get(key).get("label")
-        result["record"] = datamappr.get(key).get("record")
         diff_from(metrics, {}, datamappr.get(key, {}), result)
     else:
         result["type"] = datamappr.get(key).get("type")
         result["label"] = datamappr.get(key).get("label")
-        result["record"] = datamappr.get(key).get("record")
         diff_from(metrics, datamapib.get(key, {}), datamappr.get(key, {}), result)
+    ensure_event_setup_total(result)
     results["modules"].append(result)
 
 datamapres = {}

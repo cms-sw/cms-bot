@@ -522,6 +522,7 @@
       quantityUnits: {},
       quantities: [],
       expandedRows: new Set(),
+      eventSetupSort: { column: "key", direction: "asc" },
       page: 1,
       maxAbsMetric: 1,
       fileName: ""
@@ -736,19 +737,56 @@
         keys.forEach((k) => keySet.add(k));
       });
 
-      const keys = [...keySet].sort((a, b) => a.localeCompare(b));
+      const keys = [...keySet];
       if (!keys.length) {
         return "";
       }
 
-      const rows = keys.map((k) => {
+      const entries = keys.map((k) => {
         const ibValue = ibMap ? metricNumber(ibMap[k]) : NaN;
         const prValue = prMap ? metricNumber(prMap[k]) : NaN;
         const diffValue = diffMap ? metricNumber(diffMap[k]) : NaN;
-        const ibText = Number.isFinite(ibValue) ? fmtNumber(ibValue, quantity) : "-";
-        const prText = Number.isFinite(prValue) ? fmtNumber(prValue, quantity) : "-";
-        const diffText = Number.isFinite(diffValue) ? fmtNumber(diffValue, quantity) : "-";
-        return `<tr><td>${escapeHtml(k)}</td><td class="mono">${ibText}</td><td class="mono">${prText}</td><td class="mono">${diffText}</td></tr>`;
+        return { key: k, ibValue, prValue, diffValue };
+      });
+
+      const sortState = state.eventSetupSort || { column: "key", direction: "asc" };
+      const direction = sortState.direction === "desc" ? -1 : 1;
+      entries.sort((a, b) => {
+        const col = sortState.column;
+        if (col === "key") {
+          return direction * a.key.localeCompare(b.key);
+        }
+        const av = col === "ib" ? a.ibValue : col === "pr" ? a.prValue : a.diffValue;
+        const bv = col === "ib" ? b.ibValue : col === "pr" ? b.prValue : b.diffValue;
+        const aFinite = Number.isFinite(av);
+        const bFinite = Number.isFinite(bv);
+        if (!aFinite && !bFinite) {
+          return a.key.localeCompare(b.key);
+        }
+        if (!aFinite) {
+          return 1;
+        }
+        if (!bFinite) {
+          return -1;
+        }
+        if (av === bv) {
+          return a.key.localeCompare(b.key);
+        }
+        return direction * (av - bv);
+      });
+
+      function sortArrow(column) {
+        if (sortState.column !== column) {
+          return "";
+        }
+        return sortState.direction === "desc" ? " ▼" : " ▲";
+      }
+
+      const rows = entries.map((entry) => {
+        const ibText = Number.isFinite(entry.ibValue) ? fmtNumber(entry.ibValue, quantity) : "-";
+        const prText = Number.isFinite(entry.prValue) ? fmtNumber(entry.prValue, quantity) : "-";
+        const diffText = Number.isFinite(entry.diffValue) ? fmtNumber(entry.diffValue, quantity) : "-";
+        return `<tr><td>${escapeHtml(entry.key)}</td><td class="mono">${ibText}</td><td class="mono">${prText}</td><td class="mono">${diffText}</td></tr>`;
       });
 
       return `
@@ -762,10 +800,10 @@
           </colgroup>
           <thead>
             <tr>
-              <th>Key</th>
-              <th>IB</th>
-              <th>PR</th>
-              <th>Diff</th>
+              <th class="sortable es-sortable" data-es-sort="key">Key${sortArrow("key")}</th>
+              <th class="sortable es-sortable" data-es-sort="ib">IB${sortArrow("ib")}</th>
+              <th class="sortable es-sortable" data-es-sort="pr">PR${sortArrow("pr")}</th>
+              <th class="sortable es-sortable" data-es-sort="diff">Diff${sortArrow("diff")}</th>
             </tr>
           </thead>
           <tbody>${rows.join("")}</tbody>
@@ -1261,6 +1299,19 @@
         applyFilters();
       }
 
+      function toggleEventSetupSort(column) {
+        if (!column) {
+          return;
+        }
+        if (state.eventSetupSort.column === column) {
+          state.eventSetupSort.direction = state.eventSetupSort.direction === "desc" ? "asc" : "desc";
+        } else {
+          state.eventSetupSort.column = column;
+          state.eventSetupSort.direction = column === "key" ? "asc" : "desc";
+        }
+        renderTable();
+      }
+
       el.fileInput.addEventListener("change", async (evt) => {
         const file = evt.target.files && evt.target.files[0];
         if (!file) {
@@ -1299,6 +1350,14 @@
       el.colLabel.addEventListener("click", () => toggleSort("label-desc", "label-asc"));
       el.colType.addEventListener("click", () => toggleSort("type-desc", "type-asc"));
       el.colRecord.addEventListener("click", () => toggleSort("record-desc", "record-asc"));
+
+      el.tbody.addEventListener("click", (evt) => {
+        const header = evt.target.closest("th.es-sortable");
+        if (!header) {
+          return;
+        }
+        toggleEventSetupSort(header.dataset.esSort || "");
+      });
 
       el.prevBtn.addEventListener("click", () => {
         state.page = Math.max(1, state.page - 1);

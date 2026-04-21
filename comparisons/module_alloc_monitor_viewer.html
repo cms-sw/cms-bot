@@ -346,11 +346,11 @@
     }
 
     .up {
-      background: linear-gradient(90deg, #41bd97, #0b8a6a);
+      background: linear-gradient(90deg, #e67f67, #c53d20);
     }
 
     .down {
-      background: linear-gradient(90deg, #e67f67, #c53d20);
+      background: linear-gradient(90deg, #41bd97, #0b8a6a);
     }
 
     .pager {
@@ -519,6 +519,7 @@
       modules: [],
       filtered: [],
       fieldGroupsByQuantity: {},
+      quantityUnits: {},
       quantities: [],
       expandedRows: new Set(),
       page: 1,
@@ -527,7 +528,6 @@
     };
 
     const QUANTITY_ORDER = ["added", "nAlloc", "nDealloc", "max1Alloc", "maxTemp"];
-    const FIXED_SORT_FIELD_BASE = "added total";
     const TRANSITION_ORDER = [
       "construction",
       "begin job",
@@ -570,12 +570,13 @@
       pageInfo: document.getElementById("pageInfo")
     };
 
-    function fmtNumber(value) {
+    function fmtNumber(value, quantity) {
       if (value === null || value === undefined || Number.isNaN(value)) {
         return "-";
       }
       const abs = Math.abs(value);
-      if (abs >= 1000000) {
+        const useFixedPoint = !!quantity;
+      if (abs >= 1000000 && !useFixedPoint) {
         return value.toExponential(3);
       }
       if (abs >= 1000) {
@@ -605,12 +606,12 @@
       return `${row.label || ""}|${row.type || ""}|${row.record || ""}`;
     }
 
-    function metricDisplayValue(row, key) {
+    function metricDisplayValue(row, key, quantity) {
       if (!Object.prototype.hasOwnProperty.call(row, key)) {
         return "-";
       }
       const value = Number(row[key]);
-      return Number.isFinite(value) ? fmtNumber(value) : "-";
+      return Number.isFinite(value) ? fmtNumber(value, quantity) : "-";
     }
 
     function buildExpandedMetricsRows(row, quantity) {
@@ -678,7 +679,7 @@
             continue;
           }
           rows.push(
-            `<tr><td>${escapeHtml(quantity)}</td><td>${escapeHtml(group)}</td><td class="mono">${metricDisplayValue(row, ibKey)}</td><td class="mono">${metricDisplayValue(row, prKey)}</td><td class="mono">${metricDisplayValue(row, diffKey)}</td></tr>`
+            `<tr><td>${escapeHtml(quantity)}</td><td>${escapeHtml(group)}</td><td class="mono">${metricDisplayValue(row, ibKey, quantity)}</td><td class="mono">${metricDisplayValue(row, prKey, quantity)}</td><td class="mono">${metricDisplayValue(row, diffKey, quantity)}</td></tr>`
           );
         }
       if (!rows.length) {
@@ -706,6 +707,36 @@
       }
 
       return [];
+    }
+
+    function extractQuantityUnits(data) {
+      const quantityUnits = {};
+      if (!data || !Array.isArray(data.resources)) {
+        return quantityUnits;
+      }
+
+      for (const resource of data.resources) {
+        if (!resource || typeof resource.name !== "string") {
+          continue;
+        }
+        const quantity = resource.name.trim().split(/\s+/)[0];
+        if (!quantity || quantityUnits[quantity]) {
+          continue;
+        }
+
+        let unit = typeof resource.unit === "string" ? resource.unit : "";
+        unit = unit.replace(/\s*(IB|PR|diff)\s*$/, "").trim();
+        if (unit) {
+          quantityUnits[quantity] = unit;
+        }
+      }
+
+      return quantityUnits;
+    }
+
+    function quantityLabel(quantity) {
+      const unit = state.quantityUnits[quantity];
+      return unit ? `${quantity} (${unit})` : quantity;
     }
 
     function collectFieldGroups(modules) {
@@ -806,13 +837,14 @@
       for (const quantity of quantities) {
         const opt = document.createElement("option");
         opt.value = quantity;
-        opt.textContent = quantity;
+        opt.textContent = quantityLabel(quantity);
         el.quantitySelect.appendChild(opt);
       }
       el.quantitySelect.value = chooseDefaultQuantity(quantities);
     }
 
     function populateMetricSelect(groups) {
+      const currentValue = el.metricSelect.value;
       el.metricSelect.innerHTML = "";
       for (const key of groups) {
         const opt = document.createElement("option");
@@ -820,7 +852,11 @@
         opt.textContent = key;
         el.metricSelect.appendChild(opt);
       }
-      el.metricSelect.value = chooseDefaultGroup(groups);
+      if (groups.includes(currentValue)) {
+        el.metricSelect.value = currentValue;
+      } else {
+        el.metricSelect.value = chooseDefaultGroup(groups);
+      }
     }
 
     function getSelectedFieldBase() {
@@ -851,18 +887,21 @@
         "metric-asc": " ▲"
       };
       const sortBy = el.sortBy.value;
+      const quantity = fieldBase.split(" ")[0];
+      const unit = state.quantityUnits[quantity] ? ` [${state.quantityUnits[quantity]}]` : "";
 
       el.colLabel.textContent = `Label${arrow[sortBy] && sortBy.startsWith("label-") ? arrow[sortBy] : ""}`;
       el.colType.textContent = `Type${arrow[sortBy] && sortBy.startsWith("type-") ? arrow[sortBy] : ""}`;
       el.colRecord.textContent = `Record${arrow[sortBy] && sortBy.startsWith("record-") ? arrow[sortBy] : ""}`;
 
-      el.colIB.textContent = `${fieldBase} IB${arrow[sortBy] && sortBy.startsWith("ib-") ? arrow[sortBy] : ""}`;
-      el.colPR.textContent = `${fieldBase} PR${arrow[sortBy] && sortBy.startsWith("pr-") ? arrow[sortBy] : ""}`;
-      el.colDiff.textContent = `${fieldBase} diff${arrow[sortBy] && sortBy.startsWith("metric-") ? arrow[sortBy] : ""}`;
+      el.colIB.textContent = `${fieldBase} IB${unit}${arrow[sortBy] && sortBy.startsWith("ib-") ? arrow[sortBy] : ""}`;
+      el.colPR.textContent = `${fieldBase} PR${unit}${arrow[sortBy] && sortBy.startsWith("pr-") ? arrow[sortBy] : ""}`;
+      el.colDiff.textContent = `${fieldBase} diff${unit}${arrow[sortBy] && sortBy.startsWith("metric-") ? arrow[sortBy] : ""}`;
     }
 
     function updateStats(rows, fieldBase) {
       const diffKey = `${fieldBase} diff`;
+      const quantity = fieldBase.split(" ")[0];
       const values = rows.map((r) => toNumber(r[diffKey]));
       const count = values.length;
       const mean = count ? values.reduce((a, b) => a + b, 0) / count : 0;
@@ -873,8 +912,8 @@
 
       el.statModules.textContent = count.toLocaleString();
       el.statTypes.textContent = types.toLocaleString();
-      el.statMean.textContent = fmtNumber(mean);
-      el.statMaxAbs.textContent = fmtNumber(maxAbs);
+      el.statMean.textContent = fmtNumber(mean, quantity);
+      el.statMaxAbs.textContent = fmtNumber(maxAbs, quantity);
     }
 
     function applyFilters() {
@@ -892,7 +931,6 @@
       const ibKey = `${fieldBase} IB`;
       const prKey = `${fieldBase} PR`;
       const minAbs = Math.abs(toNumber(el.minAbs.value));
-      const fixedSortDiffKey = `${FIXED_SORT_FIELD_BASE} diff`;
 
       updateColumnHeaders(fieldBase || "(field)");
 
@@ -948,7 +986,7 @@
             return toNumber(b[diffKey]) - toNumber(a[diffKey]);
           case "abs-desc":
           default: {
-            const byFixedMetric = Math.abs(toNumber(b[fixedSortDiffKey])) - Math.abs(toNumber(a[fixedSortDiffKey]));
+            const byFixedMetric = Math.abs(toNumber(b[diffKey])) - Math.abs(toNumber(a[diffKey]));
             if (byFixedMetric !== 0) {
               return byFixedMetric;
             }
@@ -996,6 +1034,8 @@
       el.tbody.innerHTML = "";
       el.empty.style.display = pageRows.length ? "none" : "block";
 
+      const quantity = fieldBase.split(" ")[0];
+
       for (const row of pageRows) {
         const tr = document.createElement("tr");
         const ibValue = toNumber(row[ibKey]);
@@ -1012,9 +1052,9 @@
           <td title="${(row.label || "").replaceAll('"', "&quot;")}"><span class="expand-icon">${isExpanded ? "▼" : "▶"}</span>${row.label || ""}</td>
           <td><span class="pill">${row.type || "(none)"}</span></td>
           <td class="mono">${row.record || "-"}</td>
-          <td class="mono">${fmtNumber(ibValue)}</td>
-          <td class="mono">${fmtNumber(prValue)}</td>
-          <td class="mono">${fmtNumber(diffValue)}</td>
+          <td class="mono">${fmtNumber(ibValue, quantity)}</td>
+          <td class="mono">${fmtNumber(prValue, quantity)}</td>
+          <td class="mono">${fmtNumber(diffValue, quantity)}</td>
           <td class="bar-cell">
             <div class="bar-track">
               <div class="bar-fill ${visual.side}" style="left:${visual.left}; width:${visual.pct}%;"></div>
@@ -1071,6 +1111,7 @@
       }
 
       state.modules = modules;
+      state.quantityUnits = extractQuantityUnits(data);
       const groupedFields = collectFieldGroups(modules);
       state.fieldGroupsByQuantity = groupedFields.byQuantity;
       state.quantities = groupedFields.quantities;

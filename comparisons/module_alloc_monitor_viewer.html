@@ -312,6 +312,11 @@
       white-space: nowrap;
     }
 
+    td.mono {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
     .pill {
       display: inline-block;
       border-radius: 999px;
@@ -575,18 +580,9 @@
       if (value === null || value === undefined || Number.isNaN(value)) {
         return "-";
       }
-      const abs = Math.abs(value);
-        const useFixedPoint = !!quantity;
-      if (abs >= 1000000 && !useFixedPoint) {
-        return value.toExponential(3);
-      }
-      if (abs >= 1000) {
-        return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-      }
-      if (abs >= 1) {
-        return value.toLocaleString(undefined, { maximumFractionDigits: 4 });
-      }
-      return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+      return value.toLocaleString(undefined, {
+        maximumFractionDigits: 1
+      });
     }
 
     function metricNumber(value) {

@@ -64,6 +64,9 @@ def to_numeric_or_none(value):
     if isinstance(value, (int, float)):
         return value
     if isinstance(value, dict):
+        total_value = value.get("total")
+        if isinstance(total_value, (int, float)):
+            return total_value
         values = [sub_value for sub_value in value.values() if isinstance(sub_value, (int, float))]
         return sum(values) if values else None
     return None

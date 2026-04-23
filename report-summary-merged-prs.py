@@ -1589,7 +1589,7 @@ def identify_release_groups(results):
                 group = g
                 break
         if not group:
-            group = [prefix, []]
+            group = [prefix, [prefix]]
             groups.append(group)
         if not item[0] in group[1]:
             group[1].append(item[0])

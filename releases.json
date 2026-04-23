@@ -32283,6 +32283,15 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_15_0_19_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                }
+              ]
             }
           ],
           "CMSSW_15_1": [

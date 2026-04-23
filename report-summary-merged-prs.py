@@ -1597,7 +1597,7 @@ def identify_release_groups(results):
     structure = {"all_release_queues": [], "all_prefixes": [], "default_release": ""}
     for g in groups:
         rq = g[0]
-        structure[rq] = sorted(g[1], reverse=True)
+        structure[rq] = [g[1][0]] + sorted(g[1][1:])
         structure["all_release_queues"] = structure[rq] + structure["all_release_queues"]
         structure["all_prefixes"].append(rq)
     for rq in structure["all_prefixes"][::-1]:

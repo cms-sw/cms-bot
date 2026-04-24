@@ -11,13 +11,15 @@ if [ "${CMSSW_VER}" != "" ] ; then
   CMSSW_MAJOR=$(echo ${CMSSW_VER} | cut -d_ -f2)
   CMSSW_MINOR=$(echo ${CMSSW_VER} | cut -d_ -f3)
 fi
+echo $CMSSW_VER | grep -q '_EVOLUTION_'
+IS_EVOLUTION=$?
 CMSSW_VER=$(echo x0${CMSSW_MAJOR}x0${CMSSW_MINOR} | sed -r -e 's|x[0]*([0-9][0-9])|\1|g;s|^0||')
 PR_TEST_MATRIX_EXTRAS_LAB_TRACKING=12434.7
 if [ "$CMSSW_VER" -ge 1500 ] ; then
   PR_TEST_MATRIX_EXTRAS_LAB_TRACKING="${PR_TEST_MATRIX_EXTRAS_LAB_TRACKING=},12834.7"
 fi
 PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0,25202.0,10224.0,250202.181
-if echo "${CMSSW_VER}" | grep -q '_EVOLUTION_' ; then
+if [ "${IS_EVOLUTION}" = "0" ]; then
   # COMMENT: excluded workflows read old format file that is not supported in EVOLUTION_X branch
   PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0
 fi

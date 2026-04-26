@@ -130,11 +130,6 @@ class UnitTester(IBThreadBase):
             user_tests = "rocm"
         if ("ASAN" in os.environ["CMSSW_VERSION"]) or ("UBSAN" in os.environ["CMSSW_VERSION"]):
             paralleJobs = int(MachineCPUCount / 2)
-        if user_tests == "":
-            if "_GPU_X" in os.environ["CMSSW_VERSION"]:
-                user_tests = "cuda"
-            elif "_ROCM_X" in os.environ["CMSSW_VERSION"]:
-                user_tests = "rocm"
         if user_tests != "":
             precmd = "export USER_UNIT_TESTS=%s ;" % user_tests
         skipped = []

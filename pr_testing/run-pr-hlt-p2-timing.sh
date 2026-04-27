@@ -15,9 +15,12 @@ mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload
 cp -r ${HLT_BASEDIR}/${HLT_P2_SCRIPT} $WORKSPACE/rundir
 rm -rf $WORKSPACE/rundir/__pycache__
 
+ERR=0
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-  timeout $TIMEOUT bash -e ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${WORKSPACE}/hlt-p2-timing.log
+  set -o pipefail # required for correct error status piping
+  timeout $TIMEOUT bash -e ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${WORKSPACE}/hlt-p2-timing.log || ERR=1
+  set +o pipefail
 popd
 
 # Upload results
@@ -40,7 +43,7 @@ if [ "$CMSSW_VERSION_NUMBER" -ge 1600 ]; then
     )
 fi
 
-missing=0
+missing=$ERR
 for f in "${required_files[@]}"; do
     if [ ! -f "$f" ]; then
         echo "ERROR: Missing required file: $f" >> ${WORKSPACE}/hlt-p2-timing.log

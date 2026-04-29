@@ -122,6 +122,9 @@ EOF
       continue
     fi
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
+    if grep "Error: input files describe different metrics" $f.log ; then
+      $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $f $f >$f.log || true
+    fi
     echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

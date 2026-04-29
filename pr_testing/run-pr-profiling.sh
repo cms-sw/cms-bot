@@ -123,6 +123,7 @@ EOF
     fi
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     if grep "Error: input files describe different metrics" $f.log ; then
+        echo "<td>IB and PR files describe different metrics, comparing to self for diff</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $f $f >$f.log || true
     fi
     echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true

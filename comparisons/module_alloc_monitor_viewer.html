@@ -242,6 +242,11 @@
       background: #ebf3f1;
     }
 
+    thead th.th-num,
+    .detail-table th.th-num {
+      text-align: right;
+    }
+
     tbody td {
       border-bottom: 1px solid #efe4d5;
       padding: 0.48rem 0.7rem;
@@ -460,8 +465,6 @@
               <option value="label-desc">Label Z to A</option>
               <option value="type-asc">Type A to Z</option>
               <option value="type-desc">Type Z to A</option>
-              <option value="record-asc">Record low to high</option>
-              <option value="record-desc">Record high to low</option>
               <option value="ib-desc">IB high to low</option>
               <option value="ib-asc">IB low to high</option>
               <option value="pr-desc">PR high to low</option>
@@ -502,10 +505,9 @@
               <tr>
                 <th id="colLabel" class="sortable" style="width: 25%;">Label</th>
                 <th id="colType" class="sortable" style="width: 12%;">Type</th>
-                <th id="colRecord" class="sortable" style="width: 10%;">Record</th>
-                <th id="colIB" class="sortable" style="width: 14%;">IB</th>
-                <th id="colPR" class="sortable" style="width: 14%;">PR</th>
-                <th id="colDiff" class="sortable" style="width: 14%;">diff</th>
+                <th id="colIB" class="sortable th-num" style="width: 14%;">IB</th>
+                <th id="colPR" class="sortable th-num" style="width: 14%;">PR</th>
+                <th id="colDiff" class="sortable th-num" style="width: 14%;">diff</th>
                 <th style="width: 10%;">Visual</th>
               </tr>
             </thead>
@@ -563,7 +565,6 @@
       statMaxAbs: document.getElementById("statMaxAbs"),
       colLabel: document.getElementById("colLabel"),
       colType: document.getElementById("colType"),
-      colRecord: document.getElementById("colRecord"),
       colIB: document.getElementById("colIB"),
       colPR: document.getElementById("colPR"),
       colDiff: document.getElementById("colDiff"),
@@ -795,9 +796,9 @@
           <thead>
             <tr>
               <th class="sortable es-sortable" data-es-sort="key">Key${sortArrow("key")}</th>
-              <th class="sortable es-sortable" data-es-sort="ib">IB${sortArrow("ib")}</th>
-              <th class="sortable es-sortable" data-es-sort="pr">PR${sortArrow("pr")}</th>
-              <th class="sortable es-sortable" data-es-sort="diff">Diff${sortArrow("diff")}</th>
+              <th class="sortable es-sortable th-num" data-es-sort="ib">IB${sortArrow("ib")}</th>
+              <th class="sortable es-sortable th-num" data-es-sort="pr">PR${sortArrow("pr")}</th>
+              <th class="sortable es-sortable th-num" data-es-sort="diff">Diff${sortArrow("diff")}</th>
             </tr>
           </thead>
           <tbody>${rows.join("")}</tbody>
@@ -994,8 +995,6 @@
         "label-asc": " ▲",
         "type-desc": " ▼",
         "type-asc": " ▲",
-        "record-desc": " ▼",
-        "record-asc": " ▲",
         "ib-desc": " ▼",
         "ib-asc": " ▲",
         "pr-desc": " ▼",
@@ -1009,7 +1008,6 @@
 
       el.colLabel.textContent = `Label${arrow[sortBy] && sortBy.startsWith("label-") ? arrow[sortBy] : ""}`;
       el.colType.textContent = `Type${arrow[sortBy] && sortBy.startsWith("type-") ? arrow[sortBy] : ""}`;
-      el.colRecord.textContent = `Record${arrow[sortBy] && sortBy.startsWith("record-") ? arrow[sortBy] : ""}`;
 
       el.colIB.textContent = `${fieldBase} IB${unit}${arrow[sortBy] && sortBy.startsWith("ib-") ? arrow[sortBy] : ""}`;
       el.colPR.textContent = `${fieldBase} PR${unit}${arrow[sortBy] && sortBy.startsWith("pr-") ? arrow[sortBy] : ""}`;
@@ -1067,11 +1065,6 @@
           return false;
         }
 
-        if ((el.sortBy.value === "record-asc" || el.sortBy.value === "record-desc") &&
-            (!m.record || String(m.record).trim() === "")) {
-          return false;
-        }
-
         return true;
       });
 
@@ -1085,10 +1078,6 @@
             return String(a.type || "").localeCompare(String(b.type || ""));
           case "type-desc":
             return String(b.type || "").localeCompare(String(a.type || ""));
-          case "record-asc":
-            return String(a.record || "").localeCompare(String(b.record || ""));
-          case "record-desc":
-            return String(b.record || "").localeCompare(String(a.record || ""));
           case "ib-asc":
             return toNumber(a[ibKey]) - toNumber(b[ibKey]);
           case "ib-desc":
@@ -1168,7 +1157,6 @@
         tr.innerHTML = `
           <td title="${(row.label || "").replaceAll('"', "&quot;")}"><span class="expand-icon">${isExpanded ? "▼" : "▶"}</span>${row.label || ""}</td>
           <td><span class="pill">${row.type || "(none)"}</span></td>
-          <td class="mono">${row.record || "-"}</td>
           <td class="mono">${fmtNumber(ibValue, quantity)}</td>
           <td class="mono">${fmtNumber(prValue, quantity)}</td>
           <td class="mono">${fmtNumber(diffValue, quantity)}</td>
@@ -1186,7 +1174,7 @@
           const detailTr = document.createElement("tr");
           detailTr.className = "detail-row";
           detailTr.innerHTML = `
-            <td colspan="5">
+            <td colspan="6">
               <div class="detail-wrap">
                 <p class="detail-title">Transitions for quantity: ${escapeHtml(el.quantitySelect.value)}</p>
                 <table class="detail-table">
@@ -1201,9 +1189,9 @@
                     <tr>
                       <th>Quantity</th>
                       <th>Transition</th>
-                      <th>IB</th>
-                      <th>PR</th>
-                      <th>Diff</th>
+                      <th class="th-num">IB</th>
+                      <th class="th-num">PR</th>
+                      <th class="th-num">Diff</th>
                     </tr>
                   </thead>
                   <tbody>${buildExpandedMetricsRows(row, el.quantitySelect.value)}</tbody>
@@ -1343,7 +1331,6 @@
       el.colDiff.addEventListener("click", () => toggleSort("metric-desc", "metric-asc"));
       el.colLabel.addEventListener("click", () => toggleSort("label-desc", "label-asc"));
       el.colType.addEventListener("click", () => toggleSort("type-desc", "type-asc"));
-      el.colRecord.addEventListener("click", () => toggleSort("record-desc", "record-asc"));
 
       el.tbody.addEventListener("click", (evt) => {
         const header = evt.target.closest("th.es-sortable");

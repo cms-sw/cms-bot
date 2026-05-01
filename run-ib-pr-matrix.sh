@@ -97,7 +97,7 @@ pushd "$WORKSPACE/matrix-results"
   fi
   rm -f $WORKSPACE/runTheMatrix.log
 
-  [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' --prefix \"timeout --signal SIGTERM 9000\" ${CMD_OPTS}'"
+  [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
     CMS_SITE_OVERRIDE="local"
   fi

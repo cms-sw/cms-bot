@@ -99,7 +99,7 @@ pushd "$WORKSPACE/matrix-results"
 
   if [ "${CMD_OPTS}" != "" ] ; then
     case " ${CMD_OPTS} " in
-      *" --maxmem_profile "*) MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'" ;;
+      *" --maxmem_profile "*|*" --prefix "*) MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'" ;;
       * ) MATRIX_ARGS="${MATRIX_ARGS} --command ' --prefix \"timeout --signal SIGTERM 9000\" ${CMD_OPTS}'"
     esac
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then

@@ -122,7 +122,12 @@ EOF
       continue
     fi
     $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
-    echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    if grep "Error: input files describe different metrics" $f.log ; then
+        echo "IB and PR files describe different metrics, comparing to self for diff<BR>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $f $f >$f.log || true
+    fi
+    echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name '*.json.gz' -o -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html' | grep -v 'r-step') ; do

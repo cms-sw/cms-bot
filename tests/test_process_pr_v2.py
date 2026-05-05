@@ -5918,6 +5918,336 @@ class TestTypeCommand:
         else:
             recorder.verify()
 
+    def test_pattern_matching_with_use_input(
+        self, test_name, alice_user, repo_config, record_mode, monkeypatch
+    ):
+        """Test pattern matching with use_input flag (index 3 = True)."""
+        # Mock TYPE_COMMANDS with patterns that use input text
+        mock_type_commands = {
+            "x86_64": ["#0000ff", r"x86_64-[0-9a-f]+", "mtype", True],
+            "aarch64": ["#0000ff", r"aarch64-[0-9a-f]+", "mtype", True],
+            "ppc64le": ["#0000ff", r"ppc64le-[0-9a-f]+", "mtype", True],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            test_name,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type x86_64-76e4ef06c1",
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Should use the actual input text as the label, not the key
+        assert "x86_64-76e4ef06c1" in result["labels"]
+        assert "x86_64" not in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_multiple_pattern_labels_comma_separated(
+        self, test_name, alice_user, repo_config, record_mode, monkeypatch
+    ):
+        """Test multiple pattern-matched labels in one command."""
+        mock_type_commands = {
+            "x86_64": ["#0000ff", r"x86_64-[0-9a-f]+", "mtype", True],
+            "aarch64": ["#0000ff", r"aarch64-[0-9a-f]+", "mtype", True],
+            "el10": ["#00ff00", "el10", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            test_name,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type el10, aarch64-09ef77a586, x86_64-76e4ef06c1",
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # All three labels should be added
+        assert "el10" in result["labels"]
+        assert "aarch64-09ef77a586" in result["labels"]
+        assert "x86_64-76e4ef06c1" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_state_labels(self, test_name, alice_user, repo_config, record_mode, monkeypatch):
+        """Test state labels (index 4 == 'state') are merged into mtype."""
+        mock_type_commands = {
+            "x86_64-cms-docker": [
+                "#ff00ff",
+                r"x86_64-([a-z]+-|)(queued|building|done|error)",
+                "mtype",
+                True,
+                "state",
+            ],
+            "aarch64-cms-docker": [
+                "#ff00ff",
+                r"aarch64-([a-z]+-|)(queued|building|done|error)",
+                "mtype",
+                True,
+                "state",
+            ],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            test_name,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type x86_64-building",
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # State label should be added (merged into mtype)
+        assert "x86_64-building" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_case_insensitive_matching(
+        self, test_name, alice_user, repo_config, record_mode, monkeypatch
+    ):
+        """Test that pattern matching is case-insensitive."""
+        mock_type_commands = {
+            "documentation": ["#0000ff", r"doc(?:umentation)?", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            test_name,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type DOC",  # uppercase
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Should match and add the key (not the input)
+        assert "documentation" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_removal_with_pattern_matching(
+        self, test_name, alice_user, repo_config, record_mode, monkeypatch
+    ):
+        """Test removing pattern-matched labels."""
+        mock_type_commands = {
+            "x86_64": ["#0000ff", r"x86_64-[0-9a-f]+", "mtype", True],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            test_name,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type x86_64-76e4ef06c1",
+                },
+                {
+                    "id": 101,
+                    "body": "type -x86_64-76e4ef06c1",
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Label should be removed
+        assert "x86_64-76e4ef06c1" not in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_invalid_pattern_fails(
+        self, test_name, alice_user, repo_config, record_mode, monkeypatch
+    ):
+        """Test that invalid pattern fails validation."""
+        mock_type_commands = {
+            "x86_64": ["#0000ff", r"x86_64-[0-9a-f]+", "mtype", True],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            test_name,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type x86_64-invalid",  # doesn't match [0-9a-f]+
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Should have error message
+        assert any("Invalid type label" in msg for msg in result["messages"])
+        # No labels should be added
+        assert "x86_64-invalid" not in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_mixed_exact_and_pattern_labels(
+        self, test_name, alice_user, repo_config, record_mode, monkeypatch
+    ):
+        """Test mixing exact match labels with pattern-matched labels."""
+        mock_type_commands = {
+            "bug-fix": ["#ff0000", r"bug(?:-?fix)?", "type"],
+            "x86_64": ["#0000ff", r"x86_64-[0-9a-f]+", "mtype", True],
+            "el10": ["#00ff00", "el10", "mtype"],
+        }
+        monkeypatch.setattr("process_pr_v2.TYPE_COMMANDS", mock_type_commands)
+
+        create_basic_pr_data(
+            test_name,
+            comments=[
+                {
+                    "id": 100,
+                    "body": "type bug-fix, el10, x86_64-abc123",
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # All should be added
+        assert "bug-fix" in result["labels"]
+        assert "el10" in result["labels"]
+        assert "x86_64-abc123" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
 
 # =============================================================================
 # TEST DEDUPLICATION

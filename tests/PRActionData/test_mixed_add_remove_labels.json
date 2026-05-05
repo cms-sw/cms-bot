@@ -12,16 +12,6 @@
     },
     {
       "sequence": 2,
-      "action": "remove_labels",
-      "details": {
-        "issue_number": 1,
-        "labels": [
-          "bug-fix"
-        ]
-      }
-    },
-    {
-      "sequence": 3,
       "action": "add_labels",
       "details": {
         "issue_number": 1,
@@ -31,6 +21,16 @@
           "new-feature",
           "pending-signatures",
           "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "bug-fix"
         ]
       }
     },

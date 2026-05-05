@@ -3352,7 +3352,7 @@ def handle_file_count_override(context: PRContext, match: re.Match, comment: Any
 
 @command(
     "type",
-    r"^type (?P<labels>[-+]?[\w-]+(,[-+]?[\w-]+)*)$",
+    r"^type (?P<labels>.+)$",
     description="Add/remove type labels on the PR/Issue",
     acl=lambda u: bool(u.user_categories) or u.is_release_manager or u.is_requestor,
 )
@@ -3360,12 +3360,13 @@ def handle_type(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     Handle type <labels> command.
 
-    Adds or removes non-blocking labels on the PR/Issue. Labels must be defined
-    in TYPE_COMMANDS to be valid.
+    Adds or removes non-blocking labels on the PR/Issue. Labels are validated
+    against TYPE_COMMANDS patterns.
 
-    Labels have two modes:
-    - 'type': Only the last one applies (replaces previous type labels)
-    - 'mtype': Accumulates (multiple can coexist)
+    Label types:
+    - 'type': Only one per label_type group (replaces previous)
+    - 'mtype': Multiple can coexist
+    - 'state': Special state labels (merged into mtype)
 
     Prefixes:
     - No prefix or '+': Add the label
@@ -3382,81 +3383,102 @@ def handle_type(context: PRContext, match: re.Match, comment: Any) -> bool:
     """
     user = comment.user.login
     labels_str = match.group("labels")
-    labels_raw = [l.strip() for l in labels_str.split(",")]
 
-    errors = []
-    labels_to_add = []
-    labels_to_remove = []
+    # Parse comma-separated labels
+    label_tokens = [x.strip() for x in labels_str.split(",") if x.strip()]
 
-    for label_raw in labels_raw:
-        if not label_raw:
-            continue
+    # Track labels by label_type (type group)
+    # extra_labels[label_type] = [label1, label2, ...]
+    extra_labels = {}
+    rem_labels = {}
+    state_labels = {}  # For state-type labels
 
-        # Parse prefix
-        if label_raw.startswith("+"):
-            label = label_raw[1:]
-            action = "add"
-        elif label_raw.startswith("-"):
-            label = label_raw[1:]
-            action = "remove"
-        else:
-            label = label_raw
-            action = "add"
+    for type_cmd in label_tokens:
+        # Determine if adding or removing
+        rem_lab = type_cmd.startswith("-")
+        if type_cmd.startswith(("+", "-")):
+            type_cmd = type_cmd[1:]
 
-        # Validate label is in TYPE_COMMANDS
-        if label not in TYPE_COMMANDS:
-            errors.append(label)
-            continue
+        # Try to match against TYPE_COMMANDS patterns
+        valid_lab = False
+        for lab_key in TYPE_COMMANDS:
+            lab_info = TYPE_COMMANDS[lab_key]
+            # lab_info = [color, regexp, label_type, use_input?, state?]
+            if len(lab_info) < 2:
+                continue
 
-        if action == "add":
-            labels_to_add.append(label)
-        else:
-            labels_to_remove.append(label)
+            # Match the input against the pattern
+            if re.fullmatch(lab_info[1], type_cmd, re.I):
+                label_type = lab_info[2] if len(lab_info) > 2 else "mtype"
 
-    # Report errors if any
-    if errors:
-        valid_labels = ", ".join(sorted(TYPE_COMMANDS.keys()))
-        context.messages.append(
-            f"Invalid type label(s): {', '.join(errors)}. Valid labels: {valid_labels}"
-        )
-        logger.warning(f"Invalid type labels: {errors}")
-        return False
+                # Determine which collection to update
+                obj_labels = rem_labels if rem_lab else extra_labels
 
-    # Process labels to add
-    for label in labels_to_add:
-        # Get label type (type or mtype)
-        # TYPE_COMMANDS[label] = [color, regexp, label_type]
-        label_info = TYPE_COMMANDS[label]
-        label_type = label_info[2] if len(label_info) > 2 else "mtype"
+                # Check if this is a state label (index 4 == "state")
+                if len(lab_info) > 4 and lab_info[4] == "state":
+                    # State labels are stored separately and merged into mtype later
+                    state_labels[lab_key] = type_cmd
+                    valid_lab = True
+                    break
 
-        if label_type == "type":
-            # 'type' labels replace previous - remove other 'type' labels
-            type_labels_to_remove = set()
-            for existing_label in context.pending_labels:
-                if existing_label in TYPE_COMMANDS:
-                    existing_info = TYPE_COMMANDS[existing_label]
-                    existing_type = existing_info[2] if len(existing_info) > 2 else "mtype"
-                    if existing_type == "type":
-                        type_labels_to_remove.add(existing_label)
+                # Initialize label_type list if needed
+                if label_type not in obj_labels:
+                    obj_labels[label_type] = []
 
-            context.pending_labels -= type_labels_to_remove
-            if type_labels_to_remove:
-                logger.debug(f"Removed previous type labels: {type_labels_to_remove}")
+                # Determine the actual label to use
+                # If index 3 is True, use the matched input text; otherwise use the key
+                if len(lab_info) > 3 and lab_info[3]:
+                    actual_label = type_cmd
+                else:
+                    actual_label = lab_key
 
-        # Add the new label (also remove from pending removal if it was there)
-        context.pending_labels.add(label)
-        context.pending_labels_to_remove.discard(label)
-        logger.info(f"Type label '{label}' ({label_type}) added by {user}")
+                obj_labels[label_type].append(actual_label)
+                valid_lab = True
+                break
 
-    # Process labels to remove
-    for label in labels_to_remove:
-        # Remove from pending adds if it was there
-        context.pending_labels.discard(label)
-        # Mark for removal from existing labels
-        context.pending_labels_to_remove.add(label)
-        logger.info(f"Type label '{label}' marked for removal by {user}")
+        if not valid_lab:
+            valid_labels = ", ".join(sorted(TYPE_COMMANDS.keys()))
+            context.messages.append(
+                f"Invalid type label: '{type_cmd}'. Valid labels: {valid_labels}"
+            )
+            logger.warning(f"Invalid type label: {type_cmd}")
+            return False
 
-    # Note: type commands are not cached - only signatures (+1/-1) are cached
+    # Merge state labels into mtype
+    if state_labels:
+        if "mtype" not in extra_labels:
+            extra_labels["mtype"] = []
+        extra_labels["mtype"].extend(state_labels.values())
+
+    # Apply additions: for each label_type, add all specified labels
+    for label_type in extra_labels:
+        for label in extra_labels[label_type]:
+            # If this is a 'type' label_type (singular), remove other labels of same type
+            if label_type == "type":
+                # Remove all existing 'type' label_type labels
+                type_labels_to_remove = set()
+                for existing_label in context.pending_labels:
+                    if existing_label in TYPE_COMMANDS:
+                        existing_info = TYPE_COMMANDS[existing_label]
+                        existing_type = existing_info[2] if len(existing_info) > 2 else "mtype"
+                        if existing_type == "type" and existing_label != label:
+                            type_labels_to_remove.add(existing_label)
+
+                context.pending_labels -= type_labels_to_remove
+                if type_labels_to_remove:
+                    logger.debug(f"Removed previous type labels: {type_labels_to_remove}")
+
+            context.pending_labels.add(label)
+            context.pending_labels_to_remove.discard(label)
+            logger.info(f"Type label '{label}' ({label_type}) added by {user}")
+
+    # Apply removals
+    for label_type in rem_labels:
+        for label in rem_labels[label_type]:
+            context.pending_labels.discard(label)
+            context.pending_labels_to_remove.add(label)
+            logger.info(f"Type label '{label}' marked for removal by {user}")
+
     return True
 
 

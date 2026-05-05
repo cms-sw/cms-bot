@@ -2463,6 +2463,13 @@ class TestTestCommand:
         else:
             recorder.verify()
 
+    def test_test_empty_prev_t(self, repo_config, record_mode):
+        """See cms-sw/cms-bot#2736"""
+        with pytest.raises(process_pr_v2.TestCmdParseError) as exc_info:
+            parse_test_cmd("test full cmssw")
+
+        assert exc_info.value.args[0] == "Keyword full must be preceded by using"
+
 
 class TestCacheManagement:
     """Tests for cache storage and retrieval."""

@@ -3533,8 +3533,8 @@ def parse_test_cmd(first_line: str) -> TestCmdResult:
         ),
     ]
 
-    t: Optional[str] = None
-    prev_t: Optional[str] = None
+    t: Optional[str] = ""
+    prev_t: Optional[str] = ""
 
     while tokens:
         prev_t = t

@@ -843,8 +843,8 @@ def parse_test_cmd(first_line: str) -> ParseResult:
         ),
     ]
 
-    t = None
-    prev_t = None
+    t = ""
+    prev_t = ""
 
     while tokens:
         prev_t = t

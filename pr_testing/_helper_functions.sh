@@ -34,6 +34,7 @@ function get_cached_GH_JSON (){
 }
 
 function git_clone_and_merge (){
+    ERR=0
     PR_METADATA_PATH=$1  # Absolute path to JSON format text with PR data from github
     # ---
     BASE_REPO_NAME=$(${CMSBOT_PYTHON_CMD} -c "import json,sys,codecs;obj=json.load(codecs.open('${PR_METADATA_PATH}',encoding='utf-8',errors='ignore'));print(obj['base']['repo']['name'])")
@@ -45,7 +46,7 @@ function git_clone_and_merge (){
 
     pushd ${WORKSPACE} >/dev/null 2>&1
         if [ $(echo $BASE_REPO | grep '/cmsdist$' | wc -l) -gt 0 ] ; then
-          [ ! -z "${CMSDIST_TAG}" ] && BASE_BRANCH="${CMSDIST_TAG}"
+            [ ! -z "${CMSDIST_TAG}" ] && BASE_BRANCH="${CMSDIST_TAG}"
         fi
         if  [ ! -d ${BASE_REPO_NAME} ]; then
             git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH} || git clone git@github.com:${BASE_REPO} -b ${BASE_BRANCH}
@@ -53,9 +54,10 @@ function git_clone_and_merge (){
         pushd ${BASE_REPO_NAME}  >/dev/null 2>&1
             git config user.name "Cms Build"
             git config user.email "cmsbuild@cern.ch"
-            git pull --no-rebase https://github.com/${TEST_REPO}.git ${TEST_BRANCH}
+            git pull --no-rebase https://github.com/${TEST_REPO}.git ${TEST_BRANCH} || ERR=1
         popd
     popd
+    return $ERR
 }
 
 function get_base_branch(){

@@ -438,14 +438,14 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
     for PR in ${FILTERED_PRS}; do
         ERR=false
         git_clone_and_merge "$(get_cached_GH_JSON "${PR}")" || ERR=true
-	if [[ $(echo ${PR} | grep "cmsdist") ]]; then  # Check for CRAB updates to trigger unit test
-	    pushd cmsdist
-	    UPDATES=$(git diff origin/${BASE_BRANCH} --name-only)
+        if [[ $(echo ${PR} | grep "cmsdist") ]]; then  # Check for CRAB updates to trigger unit test
+            pushd cmsdist
+            UPDATES=$(git diff origin/${BASE_BRANCH} --name-only)
             if [[ $(echo ${UPDATES} | grep -E 'crab-.*(spec|file)') ]]; then
                 echo "There is a CRAB update."
-		DO_CRAB_TESTS=true
+                DO_CRAB_TESTS=true
             fi
-	    popd
+            popd
         fi
         if ${ERR} ; then
             echo "Failed to merge pull requests ${PR}." > ${RESULTS_DIR}/10-report.res

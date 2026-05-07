@@ -53,7 +53,7 @@ function git_clone_and_merge (){
         pushd ${BASE_REPO_NAME}  >/dev/null 2>&1
             git config user.name "Cms Build"
             git config user.email "cmsbuild@cern.ch"
-            git pull --no-rebase https://github.com/${TEST_REPO}.git ${TEST_BRANCH}
+            git pull --no-rebase https://github.com/${TEST_REPO}.git ${TEST_BRANCH} || return 1
         popd
     popd
 }

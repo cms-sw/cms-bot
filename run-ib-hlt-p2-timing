@@ -1,0 +1,10 @@
+#!/bin/bash -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+cd $LOCALRT
+git cms-addpkg HLTrigger/Configuration
+cd src/HLTrigger/Configuration/python/HLT_75e33/test
+# Uncomment the following in case we have to use quick patch for patatrack-scripts
+#echo "git clone https://github.com/cms-externals/patatrack-scripts --depth 1" >> $WORKSPACE/run.sh
+timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1
+mv Phase2Timing_resources*.json $WORKSPACE/upload

@@ -167,9 +167,9 @@ else
   curl -s -k -L -o $WORKSPACE/cmsos https://raw.githubusercontent.com/cms-sw/cms-common/master/common/cmsos
   chmod +x $WORKSPACE/cmsos
   HOST_CMS_ARCH=$($WORKSPACE/cmsos 2>/dev/null)
-  CMS_ARCH_DIR=$(ls -d /cvmfs/cms.cern.ch/${HOST_CMS_ARCH}_gcc* 2>/dev/null | sort | tail -1)
+  CMS_ARCH_DIR=$(ls -d /cvmfs/cms.cern.ch/${HOST_CMS_ARCH}_gcc* 2>/dev/null | sort | grep -v '_gcc16' | tail -1)
   if [ "${CMS_ARCH_DIR}" != "" ] ; then
-    GCC_ENV=$(ls -d ${CMS_ARCH_DIR}/external/gcc/*/etc/profile.d/init.sh 2>/dev/null | sort | tail -1)
+    GCC_ENV=$(ls -d ${CMS_ARCH_DIR}/external/gcc/*/etc/profile.d/init.sh 2>/dev/null | sort | grep -v '_gcc16' | tail -1)
     if [ "${GCC_ENV}" != "" ] ; then
       SLAVE_LABELS="${SLAVE_LABELS} cpu-family-$(source $GCC_ENV; gcc -march=native -Q --help=target 2>/dev/null | grep -- '^ *-march=' | sed 's|.*=\s*||;s|\s*$||;s|\s|-|g')"
     fi

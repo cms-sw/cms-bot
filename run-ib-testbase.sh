@@ -80,4 +80,5 @@ cudaComputeCapabilities || true
 CMSSW_MAJOR=\$(echo ${RELEASE_FORMAT} | cut -d_ -f2)
 CMSSW_MINOR=\$(echo ${RELEASE_FORMAT} | cut -d_ -f3)
 export CMSSW_VERSION_NUMBER=\$(echo x0\${CMSSW_MAJOR}x0\${CMSSW_MINOR} | sed -r -e 's|x[0]*([0-9][0-9])|\\1|g;s|^0||')
+[ -d $WORKSPACE/upload ] && export JENKINS_UPLOAD_DIR=$WORKSPACE/upload
 EOF

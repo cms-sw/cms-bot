@@ -8,3 +8,9 @@ cd src/HLTrigger/Configuration/python/HLT_75e33/test
 #echo "git clone https://github.com/cms-externals/patatrack-scripts --depth 1" >> $WORKSPACE/run.sh
 timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1
 mv Phase2Timing_resources*.json $WORKSPACE/upload
+if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
+    mv logs.Phase2_L1P2GT_HLT/gpu_memory.csv $WORKSPACE/upload/gpu_memory_ph2_hlt.csv
+    mv logs.Phase2_L1P2GT_HLT/gpu_usage.csv $WORKSPACE/upload/gpu_usage_ph2_hlt.csv
+    mv logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $WORKSPACE/upload/gpu_memory_ph2_ngt.csv
+    mv logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv $WORKSPACE/upload/gpu_usage_ph2_ngt.csv
+fi

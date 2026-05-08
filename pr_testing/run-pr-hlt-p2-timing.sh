@@ -12,19 +12,26 @@ HLT_P2_SCRIPT="src/HLTrigger/Configuration/python/HLT_75e33/test"
 HLT_BASEDIR="${CMSSW_BASE}"
 if [ ! -e "${HLT_BASEDIR}/${HLT_P2_SCRIPT}" ] ; then HLT_BASEDIR="${CMSSW_RELEASE_BASE}" ; fi
 mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload
-mkdir -p $JENKINS_UPLOAD_DIR/hlt-p2-timing
 cp -r ${HLT_BASEDIR}/${HLT_P2_SCRIPT} $WORKSPACE/rundir
 rm -rf $WORKSPACE/rundir/__pycache__
+
+upload_gpu_csvs() {
+  mkdir -p $JENKINS_UPLOAD_DIR/hlt-p2-timing
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_hlt.csv
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_hlt.csv
+  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_ngt.csv
+  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_ngt.csv
+}
 
 ERR=0
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
   set -o pipefail # required for correct error status piping
   timeout $TIMEOUT bash -e ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${WORKSPACE}/hlt-p2-timing.log || ERR=1
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIRECTORY/hlt-p2-timing/gpu_memory_ph2_hlt.csv
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIRECTORY/hlt-p2-timing/gpu_usage_ph2_hlt.csv
-  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIRECTORY/hlt-p2-timing/gpu_memory_ph2_ngt.csv
-  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIRECTORY/hlt-p2-timing/gpu_usage_ph2_ngt.csv
+  # if the release is greater or equal to CMSSW_17_0_X upload the csv files
+  if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
+      upload_gpu_csvs || echo "ERROR" > $JENKINS_UPLOAD_DIR/hlt-p2-timing/status
+  fi
   set +o pipefail
 popd
 
@@ -60,7 +67,9 @@ if [ $missing -eq 0 ]; then
   CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${CMSSW_VERSION}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
   echo "HLT_P2_TIMING;SUCCESS,HLT Phase 2 timing Test,See Chart,${CHART_URL}" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   echo "HLT_P2_TIMING_LOG;OK,HLT Phase 2 timing Test Log,See Logs,hlt-p2-timing.log" >> ${RESULTS_DIR}/hlt-p2-timing.txt
-  echo "HLT_P2_TIMING_CSV;OK,HLT Phase 2 timing CSV files,See Logs,hlt-p2-timing" >> ${RESULTS_DIR}/hlt-p2-timing.txt
+  if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
+      echo "HLT_P2_TIMING_CSV;OK,HLT Phase 2 timing CSV files,See Logs,hlt-p2-timing" >> ${RESULTS_DIR}/hlt-p2-timing.txt
+  fi
   echo -e "**HLT P2 Timing**: [chart](${CHART_URL})" > ${RESULTS_DIR}/11-hlt-p2-timing-report.res
 
   mv $WORKSPACE/rundir/Phase2Timing*.json $WORKSPACE/json_upload

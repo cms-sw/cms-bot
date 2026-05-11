@@ -13,7 +13,6 @@ import sys
 
 import maxmem_threshold
 
-
 VIEWER_TEMPLATE = "maxmem_summary_viewer.html"
 
 
@@ -103,7 +102,9 @@ def compare_maxmem_summary(**kwargs):
             jsonDict = json.load(f)
         if not is_raw_maxmem_comparison(jsonDict):
             if verbosity > 0:
-                WARNING("compare-maxmem-summary -- skipping non-comparison json file: " + inputFile)
+                WARNING(
+                    "compare-maxmem-summary -- skipping non-comparison json file: " + inputFile
+                )
             continue
         max_memory_pr_dict = jsonDict["max memory pr"]
         max_memory_base_dict = jsonDict["max memory base"]
@@ -201,7 +202,9 @@ def compare_maxmem_summary(**kwargs):
     summaryHtml = ""
     if summaryFormat == "html":
         payload = build_summary_payload(workflows, resultsURL)
-        viewer_template = os.path.join(os.path.dirname(os.path.realpath(__file__)), VIEWER_TEMPLATE)
+        viewer_template = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), VIEWER_TEMPLATE
+        )
         summaryHtml = build_viewer_html(viewer_template, payload, "embedded maxmem summary")
 
     if dryRun:

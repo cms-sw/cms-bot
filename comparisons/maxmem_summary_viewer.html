@@ -1,0 +1,1109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Max Memory Summary Viewer</title>
+  <style>
+    :root {
+      --bg: #eef3ea;
+      --ink: #1f2a20;
+      --ink-soft: #546356;
+      --panel: #fbfcf8;
+      --card: #f5f7ef;
+      --line: #cbd6c2;
+      --accent: #1a7f5a;
+      --accent-soft: #d9efe4;
+      --warn: #f4b942;
+      --error: #d74c2f;
+      --good: #6fa560;
+      --good-soft: #e3f0dc;
+      --bad-soft: #fde7df;
+      --shadow: 0 18px 40px rgba(33, 42, 33, 0.12);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 10% 18%, rgba(254, 221, 161, 0.55) 0%, transparent 28%),
+        radial-gradient(circle at 92% 12%, rgba(158, 222, 201, 0.45) 0%, transparent 30%),
+        linear-gradient(145deg, #edf3e7 0%, #e8efe1 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1680px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 16px 0 28px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 20px 22px 18px;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -20px;
+      bottom: -36px;
+      width: 170px;
+      height: 170px;
+      border-radius: 36px;
+      transform: rotate(18deg);
+      background: linear-gradient(135deg, rgba(111, 165, 96, 0.45), rgba(244, 185, 66, 0.36));
+      z-index: -1;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 2.4vw, 2rem);
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin: 8px 0 0;
+      max-width: 72ch;
+      color: var(--ink-soft);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+
+    .source-link {
+      margin: 10px 0 0;
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+    }
+
+    .source-link a {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .source-link a:hover {
+      text-decoration: underline;
+    }
+
+    .controls,
+    .stats,
+    .legend {
+      padding: 14px 22px 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.79rem;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid #bcc9b4;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: #ffffff;
+    }
+
+    .checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      align-self: end;
+      padding-bottom: 11px;
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+    }
+
+    .checkbox input {
+      width: auto;
+      margin: 0;
+    }
+
+    .stats {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(245, 247, 239, 0.7));
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid #d9e2d1;
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .stat .k {
+      font-size: 0.76rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+
+    .stat .v {
+      margin-top: 5px;
+      font-size: 1.08rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      color: var(--ink-soft);
+      font-size: 0.92rem;
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid #d8e0d0;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .table-wrap {
+      padding: 0 22px 22px;
+    }
+
+    .table-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      max-height: calc(100vh - 310px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 960px;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #e3e9dd;
+      vertical-align: middle;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: linear-gradient(180deg, #f7faf2, #eef4e8);
+      text-align: left;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+    }
+
+    tbody tr:hover {
+      background: #f8fbf4;
+    }
+
+    td.workflow-cell,
+    th.workflow-cell,
+    td.quantity-cell,
+    th.quantity-cell,
+    td.values-cell,
+    th.values-cell {
+      position: sticky;
+      z-index: 1;
+      background: inherit;
+    }
+
+    td.workflow-cell,
+    th.workflow-cell {
+      left: 0;
+      min-width: 280px;
+      max-width: 280px;
+    }
+
+    td.quantity-cell,
+    th.quantity-cell {
+      left: 280px;
+      min-width: 170px;
+      max-width: 170px;
+    }
+
+    td.values-cell,
+    th.values-cell {
+      left: 450px;
+      min-width: 210px;
+      max-width: 210px;
+    }
+
+    thead th.workflow-cell,
+    thead th.quantity-cell,
+    thead th.values-cell {
+      z-index: 3;
+      background: linear-gradient(180deg, #f7faf2, #eef4e8);
+    }
+
+    .workflow-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .workflow-link:hover {
+      text-decoration: underline;
+    }
+
+    .workflow-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .workflow-toggle:hover .workflow-name {
+      text-decoration: underline;
+    }
+
+    .workflow-caret {
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      flex: 0 0 auto;
+    }
+
+    .workflow-name {
+      font-weight: 700;
+    }
+
+    .detail-row td {
+      padding: 0;
+      background: #f7faf3;
+    }
+
+    .detail-wrap {
+      padding: 14px 16px 16px;
+      border-top: 1px solid #dfe7d7;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(240, 246, 235, 0.95));
+    }
+
+    .detail-title {
+      margin: 0 0 10px;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .detail-scroller {
+      overflow: auto;
+      border: 1px solid #d9e2d1;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .detail-table {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+    }
+
+    .detail-table th,
+    .detail-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e6ede0;
+    }
+
+    .detail-table th {
+      background: #f2f7ed;
+      color: var(--ink-soft);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead th.sortable,
+    .detail-table th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    thead th.sortable:hover,
+    .detail-table th.sortable:hover {
+      color: var(--ink);
+    }
+
+    th.th-num {
+      text-align: right;
+    }
+
+    .detail-table .th-num,
+    .detail-table .td-num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .detail-table .td-step {
+      white-space: nowrap;
+    }
+
+    .cell-num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .cell-empty {
+      color: #9da89d;
+    }
+
+    .delta-up {
+      color: #8f3b22;
+    }
+
+    .delta-down {
+      color: #2f6e2d;
+    }
+
+    .threshold-warn {
+      background: rgba(244, 185, 66, 0.22);
+    }
+
+    .threshold-error {
+      background: rgba(215, 76, 47, 0.2);
+    }
+
+    .threshold-good {
+      background: rgba(201, 231, 192, 0.55);
+    }
+
+    .threshold-great {
+      background: rgba(163, 214, 151, 0.7);
+    }
+
+    .status {
+      padding: 0 22px 16px;
+      color: var(--ink-soft);
+      font-size: 0.92rem;
+    }
+
+    .status.error {
+      color: #a03623;
+    }
+
+    @media (max-width: 1100px) {
+      .grid,
+      .stats {
+        grid-template-columns: repeat(2, minmax(160px, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .wrap {
+        width: min(100vw, calc(100vw - 12px));
+        padding-top: 8px;
+      }
+
+      .grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .table-scroller {
+        max-height: none;
+      }
+
+      td.workflow-cell,
+      th.workflow-cell {
+        min-width: 220px;
+        max-width: 220px;
+      }
+
+      td.quantity-cell,
+      th.quantity-cell {
+        left: 220px;
+        min-width: 150px;
+        max-width: 150px;
+      }
+
+      td.values-cell,
+      th.values-cell {
+        left: 370px;
+        min-width: 180px;
+        max-width: 180px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <div class="hero">
+        <h1>Max Memory Summary Viewer</h1>
+        <p class="sub">
+          Interactive view of compare-maxmem summaries. Pick a quantity and legend, filter workflows,
+          and sort by workflow or the max value across all steps from the main table headers or the sort control.
+        </p>
+        <p class="source-link" id="resultsLinkWrap" hidden>
+          <a id="resultsLink" href="#" target="_blank" rel="noopener noreferrer">View comparison artifacts:</a>
+        </p>
+      </div>
+
+      <div class="controls">
+        <div class="grid">
+          <div>
+            <label for="workflowSearch">Workflow Filter</label>
+            <input id="workflowSearch" type="text" placeholder="Search workflow name">
+          </div>
+          <div>
+            <label for="quantitySelect">Quantity</label>
+            <select id="quantitySelect"></select>
+          </div>
+          <div>
+            <label for="legendSelect">Legend</label>
+            <select id="legendSelect"></select>
+          </div>
+          <div>
+            <label for="sortSelect">Sort</label>
+            <select id="sortSelect">
+              <option value="workflow-asc">Workflow ascending</option>
+              <option value="workflow-desc">Workflow descending</option>
+              <option value="max-desc">Max value descending</option>
+              <option value="max-asc">Max value ascending</option>
+            </select>
+          </div>
+          <label class="checkbox" for="hideZeroRows">
+            <input id="hideZeroRows" type="checkbox">
+            Hide workflows with only zero values
+          </label>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="k">Loaded Workflows</div>
+          <div class="v" id="loadedCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="k">Visible Workflows</div>
+          <div class="v" id="visibleCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="k">Visible Steps</div>
+          <div class="v" id="stepCount">0</div>
+        </div>
+        <div class="stat">
+          <div class="k">Peak Signal</div>
+          <div class="v" id="peakValue">-</div>
+        </div>
+      </div>
+
+      <div class="legend" id="legendBar">
+        <span class="chip"><span class="swatch" style="background: rgba(244, 185, 66, 0.22);"></span>Above warn threshold</span>
+        <span class="chip"><span class="swatch" style="background: rgba(215, 76, 47, 0.2);"></span>Above error threshold</span>
+        <span class="chip"><span class="swatch" style="background: rgba(201, 231, 192, 0.55);"></span>Below negative warn threshold</span>
+        <span class="chip"><span class="swatch" style="background: rgba(163, 214, 151, 0.7);"></span>Below negative error threshold</span>
+        <span id="thresholdNote">Threshold highlighting is applied to max memory PR - baseline values.</span>
+      </div>
+
+      <div class="status" id="statusLine">Waiting for data.</div>
+
+      <div class="table-wrap">
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr id="tableHeadRow"></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const QUANTITIES = [
+      { key: "max memory", label: "Max memory used", unit: "MB", decimals: 2, integer: false },
+      { key: "req memory", label: "Total memory request", unit: "MB", decimals: 2, integer: false },
+      { key: "nallocated", label: "Allocation calls", unit: "", decimals: 0, integer: true },
+      { key: "leak memory", label: "Memory leaked", unit: "MB", decimals: 2, integer: false },
+      { key: "leaked alloc", label: "Allocation calls leaked", unit: "", decimals: 0, integer: true }
+    ];
+
+    const LEGENDS = [
+      { key: "base", label: "Baseline", unit: "" },
+      { key: "pr", label: "Pull request", unit: "" },
+      { key: "adiff", label: "PR - baseline", unit: "" },
+      { key: "pdiff", label: "100 * (PR - baseline) / baseline", unit: "%" }
+    ];
+
+    const state = {
+      payload: null,
+      workflows: [],
+      steps: [],
+      search: "",
+      quantityKey: "max memory",
+      legendKey: "adiff",
+      sortKey: "workflow-asc",
+      expandedWorkflows: new Set(),
+      detailSortKey: "step",
+      detailSortDir: "asc"
+    };
+
+    const el = {
+      workflowSearch: document.getElementById("workflowSearch"),
+      quantitySelect: document.getElementById("quantitySelect"),
+      legendSelect: document.getElementById("legendSelect"),
+      sortSelect: document.getElementById("sortSelect"),
+      hideZeroRows: document.getElementById("hideZeroRows"),
+      loadedCount: document.getElementById("loadedCount"),
+      visibleCount: document.getElementById("visibleCount"),
+      stepCount: document.getElementById("stepCount"),
+      peakValue: document.getElementById("peakValue"),
+      statusLine: document.getElementById("statusLine"),
+      tableHeadRow: document.getElementById("tableHeadRow"),
+      tableBody: document.getElementById("tableBody"),
+      thresholdNote: document.getElementById("thresholdNote"),
+      resultsLinkWrap: document.getElementById("resultsLinkWrap"),
+      resultsLink: document.getElementById("resultsLink")
+    };
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function workflowNumber(name) {
+      const parsed = Number.parseFloat(String(name).split("_")[0]);
+      return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+    }
+
+    function workflowNumberStr(name) {
+      return String(name).split("_")[0];
+    }
+
+    function stepNumber(step) {
+      const parsed = Number.parseInt(String(step).replace("step", ""), 10);
+      return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
+    }
+
+    function currentQuantity() {
+      return QUANTITIES.find((quantity) => quantity.key === state.quantityKey) || QUANTITIES[0];
+    }
+
+    function currentLegend() {
+      return LEGENDS.find((legend) => legend.key === state.legendKey) || LEGENDS[0];
+    }
+
+    function fieldName(quantityKey, legendKey) {
+      return `${quantityKey} ${legendKey}`;
+    }
+
+    function formatValue(value, quantity, legend) {
+      if (value === undefined || value === null || Number.isNaN(value)) {
+        return "-";
+      }
+
+      if (quantity.integer) {
+        return Math.round(value).toLocaleString();
+      }
+
+      const decimals = legend.key === "pdiff" ? 3 : quantity.decimals;
+      return Number(value).toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function getWorkflowRows() {
+      if (!state.payload || !state.payload.workflows) {
+        return [];
+      }
+
+      const search = state.search.trim().toLowerCase();
+      const quantity = currentQuantity();
+      const legend = currentLegend();
+      const selectedField = fieldName(quantity.key, legend.key);
+
+      let rows = state.workflows
+        .map((workflow) => ({
+          name: workflow,
+          steps: state.payload.workflows[workflow] || {}
+        }))
+        .filter((row) => !search || row.name.toLowerCase().includes(search));
+
+      if (el.hideZeroRows.checked) {
+        rows = rows.filter((row) => state.steps.some((step) => Number(row.steps[step]?.[selectedField] || 0) !== 0));
+      }
+
+      rows.sort((left, right) => compareRows(left, right, selectedField));
+      return rows;
+    }
+
+    function peakSignal(rows, selectedField) {
+      let bestValue = null;
+      let bestWorkflow = "";
+      let bestStep = "";
+
+      for (const row of rows) {
+        for (const step of state.steps) {
+          const value = row.steps[step]?.[selectedField];
+          if (typeof value !== "number") {
+            continue;
+          }
+          if (bestValue === null || Math.abs(value) > Math.abs(bestValue)) {
+            bestValue = value;
+            bestWorkflow = row.name;
+            bestStep = step;
+          }
+        }
+      }
+
+      return { value: bestValue, workflow: bestWorkflow, step: bestStep };
+    }
+
+    function compareRows(left, right, selectedField) {
+      switch (state.sortKey) {
+        case "workflow-desc":
+          return workflowNumber(right.name) - workflowNumber(left.name) || right.name.localeCompare(left.name);
+        case "max-asc":
+          return compareMaybeNumbers(maxStepValue(left, selectedField).value, maxStepValue(right, selectedField).value)
+            || workflowNumber(left.name) - workflowNumber(right.name)
+            || left.name.localeCompare(right.name);
+        case "max-desc":
+          return compareMaybeNumbers(maxStepValue(right, selectedField).value, maxStepValue(left, selectedField).value)
+            || workflowNumber(left.name) - workflowNumber(right.name)
+            || left.name.localeCompare(right.name);
+        case "workflow-asc":
+        default:
+          return workflowNumber(left.name) - workflowNumber(right.name) || left.name.localeCompare(right.name);
+      }
+    }
+
+    function mainSortColumn() {
+      return state.sortKey.startsWith("workflow") ? "workflow" : "max";
+    }
+
+    function mainSortIndicator(column) {
+      if (mainSortColumn() !== column) {
+        return "";
+      }
+      return state.sortKey.endsWith("asc") ? " ▲" : " ▼";
+    }
+
+    function updateMainSort(column) {
+      if (column === "workflow") {
+        state.sortKey = state.sortKey === "workflow-asc" ? "workflow-desc" : "workflow-asc";
+      } else if (column === "max") {
+        state.sortKey = state.sortKey === "max-desc" ? "max-asc" : "max-desc";
+      }
+      el.sortSelect.value = state.sortKey;
+      renderTable();
+    }
+
+    function maxStepValue(row, selectedField) {
+      let bestValue = null;
+      let bestStepData = null;
+
+      for (const step of state.steps) {
+        const stepData = row.steps[step] || {};
+        const value = stepData[selectedField];
+        if (typeof value !== "number" || Number.isNaN(value)) {
+          continue;
+        }
+        if (bestValue === null || value > bestValue) {
+          bestValue = value;
+          bestStepData = stepData;
+        }
+      }
+
+      return { value: bestValue, stepData: bestStepData };
+    }
+
+    function cellClass(quantity, legend, stepData, value) {
+      const classes = ["cell-num"];
+      if (value === undefined || value === null || Number.isNaN(value)) {
+        classes.push("cell-empty");
+        return classes.join(" ");
+      }
+
+      if (legend.key === "adiff" || legend.key === "pdiff") {
+        if (value > 0) {
+          classes.push("delta-up");
+        } else if (value < 0) {
+          classes.push("delta-down");
+        }
+      }
+
+      if (quantity.key === "max memory" && legend.key === "adiff") {
+        const warnThreshold = stepData.threshold || state.payload.defaultWarnThreshold;
+        const errorThreshold = stepData.error_threshold || state.payload.defaultErrorThreshold;
+        if (value > errorThreshold) {
+          classes.push("threshold-error");
+        } else if (value > warnThreshold) {
+          classes.push("threshold-warn");
+        } else if (value < -errorThreshold) {
+          classes.push("threshold-great");
+        } else if (value < -warnThreshold) {
+          classes.push("threshold-good");
+        }
+      }
+
+      return classes.join(" ");
+    }
+
+    function setStatus(message, isError) {
+      el.statusLine.textContent = message;
+      el.statusLine.classList.toggle("error", Boolean(isError));
+    }
+
+    function toggleWorkflowExpanded(workflowName) {
+      if (state.expandedWorkflows.has(workflowName)) {
+        state.expandedWorkflows.delete(workflowName);
+      } else {
+        state.expandedWorkflows.add(workflowName);
+      }
+      renderTable();
+    }
+
+    function updateDetailSort(sortKey) {
+      if (state.detailSortKey === sortKey) {
+        state.detailSortDir = state.detailSortDir === "asc" ? "desc" : "asc";
+      } else {
+        state.detailSortKey = sortKey;
+        state.detailSortDir = sortKey === "workflow" || sortKey === "step" ? "asc" : "desc";
+      }
+      renderTable();
+    }
+
+    function detailSortIndicator(sortKey) {
+      if (state.detailSortKey !== sortKey) {
+        return "";
+      }
+      return state.detailSortDir === "asc" ? " ▲" : " ▼";
+    }
+
+    function getDetailRows(workflowName, stepsByName) {
+      const quantity = currentQuantity();
+      const workflowRows = Object.keys(stepsByName).map((step) => {
+        const stepData = stepsByName[step] || {};
+        return {
+          workflow: workflowName,
+          step,
+          stepOrder: stepNumber(step),
+          baseline: stepData[fieldName(quantity.key, "base")],
+          pullRequest: stepData[fieldName(quantity.key, "pr")],
+          absoluteDiff: stepData[fieldName(quantity.key, "adiff")],
+          percentDiff: stepData[fieldName(quantity.key, "pdiff")]
+        };
+      });
+
+      const direction = state.detailSortDir === "asc" ? 1 : -1;
+      workflowRows.sort((left, right) => {
+        let result = 0;
+        switch (state.detailSortKey) {
+          case "workflow":
+            result = workflowNumber(left.workflow) - workflowNumber(right.workflow)
+              || left.workflow.localeCompare(right.workflow);
+            break;
+          case "baseline":
+            result = compareMaybeNumbers(left.baseline, right.baseline);
+            break;
+          case "pullRequest":
+            result = compareMaybeNumbers(left.pullRequest, right.pullRequest);
+            break;
+          case "absoluteDiff":
+            result = compareMaybeNumbers(left.absoluteDiff, right.absoluteDiff);
+            break;
+          case "percentDiff":
+            result = compareMaybeNumbers(left.percentDiff, right.percentDiff);
+            break;
+          case "step":
+          default:
+            result = left.stepOrder - right.stepOrder || left.step.localeCompare(right.step);
+            break;
+        }
+
+        if (result === 0) {
+          result = left.stepOrder - right.stepOrder || left.step.localeCompare(right.step);
+        }
+        return result * direction;
+      });
+
+      return workflowRows;
+    }
+
+    function compareMaybeNumbers(left, right) {
+      const leftIsNumber = typeof left === "number" && !Number.isNaN(left);
+      const rightIsNumber = typeof right === "number" && !Number.isNaN(right);
+      if (leftIsNumber && rightIsNumber) {
+        return left - right;
+      }
+      if (leftIsNumber) {
+        return 1;
+      }
+      if (rightIsNumber) {
+        return -1;
+      }
+      return 0;
+    }
+
+    function buildDetailTable(workflowName, steps) {
+      const quantity = currentQuantity();
+      const detailRows = getDetailRows(workflowName, steps);
+      const percentLegend = LEGENDS.find((legend) => legend.key === "pdiff");
+      const numberLegend = { key: "base", unit: quantity.unit };
+      return `
+        <div class="detail-wrap">
+          <p class="detail-title">All steps for ${escapeHtml(workflowName)}. Click a header to sort this expanded table.</p>
+          <div class="detail-scroller">
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th class="sortable" data-sort-key="workflow">Workflow${detailSortIndicator("workflow")}</th>
+                  <th class="sortable" data-sort-key="step">Step${detailSortIndicator("step")}</th>
+                  <th class="sortable th-num" data-sort-key="baseline">Baseline${detailSortIndicator("baseline")}</th>
+                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request${detailSortIndicator("pullRequest")}</th>
+                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline${detailSortIndicator("absoluteDiff")}</th>
+                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff${detailSortIndicator("percentDiff")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${detailRows.map((detailRow) => `
+                  <tr>
+                    <td>${escapeHtml(detailRow.workflow)}</td>
+                    <td class="td-step">${escapeHtml(detailRow.step.replace("step", "Step "))}</td>
+                    <td class="td-num ${detailRow.baseline == null ? "cell-empty" : ""}">${formatValue(detailRow.baseline, quantity, numberLegend)}</td>
+                    <td class="td-num ${detailRow.pullRequest == null ? "cell-empty" : ""}">${formatValue(detailRow.pullRequest, quantity, numberLegend)}</td>
+                    <td class="td-num ${detailRow.absoluteDiff == null ? "cell-empty" : detailRow.absoluteDiff > 0 ? "delta-up" : detailRow.absoluteDiff < 0 ? "delta-down" : ""}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)}</td>
+                    <td class="td-num ${detailRow.percentDiff == null ? "cell-empty" : detailRow.percentDiff > 0 ? "delta-up" : detailRow.percentDiff < 0 ? "delta-down" : ""}">${formatValue(detailRow.percentDiff, quantity, percentLegend)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachDetailSortHandlers() {
+      document.querySelectorAll(".detail-table th.sortable").forEach((header) => {
+        header.addEventListener("click", () => {
+          updateDetailSort(header.getAttribute("data-sort-key"));
+        });
+      });
+    }
+
+    function renderTable() {
+      if (!state.payload) {
+        return;
+      }
+
+      const quantity = currentQuantity();
+      const legend = currentLegend();
+      const selectedField = fieldName(quantity.key, legend.key);
+      const rows = getWorkflowRows();
+      const peak = peakSignal(rows, selectedField);
+
+      el.loadedCount.textContent = state.workflows.length.toLocaleString();
+      el.visibleCount.textContent = rows.length.toLocaleString();
+      el.stepCount.textContent = state.steps.length.toLocaleString();
+      el.peakValue.textContent = peak.value === null
+        ? "-"
+        : `${formatValue(peak.value, quantity, legend)}${legend.unit || quantity.unit ? ` ${legend.unit || quantity.unit}` : ""} @ ${peak.workflow} ${peak.step}`;
+
+      el.thresholdNote.textContent = quantity.key === "max memory" && legend.key === "adiff"
+        ? `Threshold highlighting uses warn ${state.payload.defaultWarnThreshold} MB and error ${state.payload.defaultErrorThreshold} MB defaults unless a step overrides them.`
+        : "Threshold highlighting is applied to max memory PR - baseline values.";
+
+      el.tableHeadRow.innerHTML = "";
+      const workflowHead = document.createElement("th");
+      workflowHead.className = "workflow-cell sortable";
+      workflowHead.setAttribute("data-sort-key", "workflow");
+      workflowHead.textContent = `Workflow${mainSortIndicator("workflow")}`;
+      el.tableHeadRow.appendChild(workflowHead);
+
+      const maxValueHead = document.createElement("th");
+      maxValueHead.className = "sortable th-num";
+      maxValueHead.setAttribute("data-sort-key", "max");
+      maxValueHead.textContent = `Max Value From All Steps${mainSortIndicator("max")}`;
+      el.tableHeadRow.appendChild(maxValueHead);
+
+      el.tableBody.innerHTML = "";
+      if (!rows.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="workflow-cell">No workflows matched the current filters.</td><td class="cell-empty">Adjust the search or toggle.</td>`;
+        el.tableBody.appendChild(tr);
+        setStatus("No rows matched the current filters.", false);
+        return;
+      }
+
+      for (const row of rows) {
+        const tr = document.createElement("tr");
+        const workflowCell = document.createElement("td");
+        workflowCell.className = "workflow-cell";
+        const isExpanded = state.expandedWorkflows.has(row.name);
+        workflowCell.innerHTML = `
+          <button class="workflow-toggle" type="button" data-workflow-name="${escapeHtml(row.name)}" aria-expanded="${isExpanded ? "true" : "false"}">
+            <span class="workflow-name">${escapeHtml(row.name)}</span>
+            <span class="workflow-caret">${isExpanded ? "Hide steps" : "Show steps"}</span>
+          </button>
+        `;
+        tr.appendChild(workflowCell);
+
+        const maxValue = maxStepValue(row, selectedField);
+        const maxValueCell = document.createElement("td");
+        maxValueCell.className = cellClass(quantity, legend, maxValue.stepData, maxValue.value);
+        maxValueCell.textContent = formatValue(maxValue.value, quantity, legend);
+        tr.appendChild(maxValueCell);
+
+        el.tableBody.appendChild(tr);
+
+        if (isExpanded) {
+          const detailTr = document.createElement("tr");
+          detailTr.className = "detail-row";
+          detailTr.innerHTML = `<td colspan="2">${buildDetailTable(row.name, row.steps)}</td>`;
+          el.tableBody.appendChild(detailTr);
+        }
+      }
+
+      document.querySelectorAll(".workflow-toggle").forEach((button) => {
+        button.addEventListener("click", () => {
+          toggleWorkflowExpanded(button.getAttribute("data-workflow-name"));
+        });
+      });
+      document.querySelectorAll("#tableHeadRow th.sortable").forEach((header) => {
+        header.addEventListener("click", () => {
+          updateMainSort(header.getAttribute("data-sort-key"));
+        });
+      });
+      attachDetailSortHandlers();
+
+      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label} / ${legend.label}, sorted by ${mainSortColumn() === "workflow" ? "workflow" : "max value"}.`, false);
+    }
+
+    function populateSelectors() {
+      el.quantitySelect.innerHTML = QUANTITIES
+        .map((quantity) => `<option value="${escapeHtml(quantity.key)}">${escapeHtml(quantity.label)}</option>`)
+        .join("");
+      el.legendSelect.innerHTML = LEGENDS
+        .map((legend) => `<option value="${escapeHtml(legend.key)}">${escapeHtml(legend.label)}</option>`)
+        .join("");
+      el.quantitySelect.value = state.quantityKey;
+      el.legendSelect.value = state.legendKey;
+      el.sortSelect.value = state.sortKey;
+    }
+
+    function attachEvents() {
+      el.workflowSearch.addEventListener("input", () => {
+        state.search = el.workflowSearch.value;
+        renderTable();
+      });
+
+      el.quantitySelect.addEventListener("change", () => {
+        state.quantityKey = el.quantitySelect.value;
+        renderTable();
+      });
+
+      el.legendSelect.addEventListener("change", () => {
+        state.legendKey = el.legendSelect.value;
+        renderTable();
+      });
+
+      el.sortSelect.addEventListener("change", () => {
+        state.sortKey = el.sortSelect.value;
+        renderTable();
+      });
+
+      el.hideZeroRows.addEventListener("change", () => {
+        renderTable();
+      });
+    }
+
+    function loadFromObject(data, sourceLabel) {
+      if (!data || typeof data !== "object" || !data.workflows) {
+        throw new Error("Expected embedded maxmem summary payload with a workflows object.");
+      }
+
+      state.payload = data;
+      state.workflows = Array.isArray(data.orderedWorkflows)
+        ? data.orderedWorkflows.slice()
+        : Object.keys(data.workflows).sort((left, right) => workflowNumber(left) - workflowNumber(right));
+      state.steps = Array.isArray(data.orderedSteps)
+        ? data.orderedSteps.slice().sort((left, right) => stepNumber(left) - stepNumber(right))
+        : Array.from(new Set(state.workflows.flatMap((workflow) => Object.keys(data.workflows[workflow] || {})))).sort((left, right) => stepNumber(left) - stepNumber(right));
+
+      if (typeof data.resultsURL === "string" && data.resultsURL.trim()) {
+        el.resultsLink.href = data.resultsURL;
+        el.resultsLink.textContent = "View comparison artifacts:";
+        el.resultsLink.title = data.resultsURL;
+        el.resultsLinkWrap.hidden = false;
+      } else {
+        el.resultsLinkWrap.hidden = true;
+      }
+
+      populateSelectors();
+      renderTable();
+      setStatus(`Loaded ${state.workflows.length.toLocaleString()} workflows from ${sourceLabel}.`, false);
+    }
+
+    attachEvents();
+    window.loadFromObject = loadFromObject;
+  </script>
+</body>
+</html>

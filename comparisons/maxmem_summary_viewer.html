@@ -113,7 +113,7 @@
     .grid {
       display: grid;
       gap: 12px;
-      grid-template-columns: repeat(5, minmax(160px, 1fr));
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
     }
 
     label {
@@ -250,11 +250,7 @@
     }
 
     td.workflow-cell,
-    th.workflow-cell,
-    td.quantity-cell,
-    th.quantity-cell,
-    td.values-cell,
-    th.values-cell {
+    th.workflow-cell {
       position: sticky;
       z-index: 1;
       background: inherit;
@@ -267,23 +263,7 @@
       max-width: 280px;
     }
 
-    td.quantity-cell,
-    th.quantity-cell {
-      left: 280px;
-      min-width: 170px;
-      max-width: 170px;
-    }
-
-    td.values-cell,
-    th.values-cell {
-      left: 450px;
-      min-width: 210px;
-      max-width: 210px;
-    }
-
-    thead th.workflow-cell,
-    thead th.quantity-cell,
-    thead th.values-cell {
+    thead th.workflow-cell {
       z-index: 3;
       background: linear-gradient(180deg, #f7faf2, #eef4e8);
     }
@@ -325,6 +305,8 @@
 
     .workflow-name {
       font-weight: 700;
+      overflow-wrap: anywhere;
+      word-break: normal;
     }
 
     .detail-row td {
@@ -470,19 +452,6 @@
         max-width: 220px;
       }
 
-      td.quantity-cell,
-      th.quantity-cell {
-        left: 220px;
-        min-width: 150px;
-        max-width: 150px;
-      }
-
-      td.values-cell,
-      th.values-cell {
-        left: 370px;
-        min-width: 180px;
-        max-width: 180px;
-      }
     }
   </style>
 </head>
@@ -511,16 +480,12 @@
             <select id="quantitySelect"></select>
           </div>
           <div>
-            <label for="legendSelect">Legend</label>
-            <select id="legendSelect"></select>
-          </div>
-          <div>
             <label for="sortSelect">Sort</label>
             <select id="sortSelect">
               <option value="workflow-asc">Workflow ascending</option>
               <option value="workflow-desc">Workflow descending</option>
-              <option value="max-desc">Max value descending</option>
-              <option value="max-asc">Max value ascending</option>
+              <option value="adiff-desc">PR - baseline descending</option>
+              <option value="adiff-asc">PR - baseline ascending</option>
             </select>
           </div>
           <label class="checkbox" for="hideZeroRows">
@@ -594,7 +559,6 @@
       steps: [],
       search: "",
       quantityKey: "max memory",
-      legendKey: "adiff",
       sortKey: "workflow-asc",
       expandedWorkflows: new Set(),
       detailSortKey: "step",
@@ -604,7 +568,6 @@
     const el = {
       workflowSearch: document.getElementById("workflowSearch"),
       quantitySelect: document.getElementById("quantitySelect"),
-      legendSelect: document.getElementById("legendSelect"),
       sortSelect: document.getElementById("sortSelect"),
       hideZeroRows: document.getElementById("hideZeroRows"),
       loadedCount: document.getElementById("loadedCount"),
@@ -633,8 +596,8 @@
       return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
     }
 
-    function workflowNumberStr(name) {
-      return String(name).split("_")[0];
+    function workflowNameHtml(name) {
+      return escapeHtml(String(name)).replace(/_/g, "_<wbr>");
     }
 
     function stepNumber(step) {
@@ -644,10 +607,6 @@
 
     function currentQuantity() {
       return QUANTITIES.find((quantity) => quantity.key === state.quantityKey) || QUANTITIES[0];
-    }
-
-    function currentLegend() {
-      return LEGENDS.find((legend) => legend.key === state.legendKey) || LEGENDS[0];
     }
 
     function fieldName(quantityKey, legendKey) {
@@ -677,8 +636,7 @@
 
       const search = state.search.trim().toLowerCase();
       const quantity = currentQuantity();
-      const legend = currentLegend();
-      const selectedField = fieldName(quantity.key, legend.key);
+      const defaultSortField = fieldName(quantity.key, "adiff");
 
       let rows = state.workflows
         .map((workflow) => ({
@@ -688,10 +646,15 @@
         .filter((row) => !search || row.name.toLowerCase().includes(search));
 
       if (el.hideZeroRows.checked) {
-        rows = rows.filter((row) => state.steps.some((step) => Number(row.steps[step]?.[selectedField] || 0) !== 0));
+        rows = rows.filter((row) => {
+          return state.steps.some((step) => {
+            const stepData = row.steps[step] || {};
+            return LEGENDS.some((legend) => Number(stepData[fieldName(quantity.key, legend.key)] || 0) !== 0);
+          });
+        });
       }
 
-      rows.sort((left, right) => compareRows(left, right, selectedField));
+      rows.sort((left, right) => compareRows(left, right, defaultSortField));
       return rows;
     }
 
@@ -721,14 +684,26 @@
       switch (state.sortKey) {
         case "workflow-desc":
           return workflowNumber(right.name) - workflowNumber(left.name) || right.name.localeCompare(left.name);
-        case "max-asc":
-          return compareMaybeNumbers(maxStepValue(left, selectedField).value, maxStepValue(right, selectedField).value)
+        case "base-asc":
+        case "pr-asc":
+        case "adiff-asc":
+        case "pdiff-asc": {
+          const legendKey = state.sortKey.split("-")[0];
+          const sortField = fieldName(currentQuantity().key, legendKey);
+          return compareMaybeNumbers(maxStepValue(left, sortField).value, maxStepValue(right, sortField).value)
             || workflowNumber(left.name) - workflowNumber(right.name)
             || left.name.localeCompare(right.name);
-        case "max-desc":
-          return compareMaybeNumbers(maxStepValue(right, selectedField).value, maxStepValue(left, selectedField).value)
+        }
+        case "base-desc":
+        case "pr-desc":
+        case "adiff-desc":
+        case "pdiff-desc": {
+          const legendKey = state.sortKey.split("-")[0];
+          const sortField = fieldName(currentQuantity().key, legendKey);
+          return compareMaybeNumbers(maxStepValue(right, sortField).value, maxStepValue(left, sortField).value)
             || workflowNumber(left.name) - workflowNumber(right.name)
             || left.name.localeCompare(right.name);
+        }
         case "workflow-asc":
         default:
           return workflowNumber(left.name) - workflowNumber(right.name) || left.name.localeCompare(right.name);
@@ -736,7 +711,7 @@
     }
 
     function mainSortColumn() {
-      return state.sortKey.startsWith("workflow") ? "workflow" : "max";
+      return state.sortKey.split("-")[0];
     }
 
     function mainSortIndicator(column) {
@@ -749,8 +724,8 @@
     function updateMainSort(column) {
       if (column === "workflow") {
         state.sortKey = state.sortKey === "workflow-asc" ? "workflow-desc" : "workflow-asc";
-      } else if (column === "max") {
-        state.sortKey = state.sortKey === "max-desc" ? "max-asc" : "max-desc";
+      } else {
+        state.sortKey = state.sortKey === `${column}-desc` ? `${column}-asc` : `${column}-desc`;
       }
       el.sortSelect.value = state.sortKey;
       renderTable();
@@ -955,19 +930,19 @@
       }
 
       const quantity = currentQuantity();
-      const legend = currentLegend();
-      const selectedField = fieldName(quantity.key, legend.key);
+      const selectedField = fieldName(quantity.key, "adiff");
       const rows = getWorkflowRows();
       const peak = peakSignal(rows, selectedField);
+      const adiffLegend = LEGENDS.find((legend) => legend.key === "adiff") || LEGENDS[0];
 
       el.loadedCount.textContent = state.workflows.length.toLocaleString();
       el.visibleCount.textContent = rows.length.toLocaleString();
       el.stepCount.textContent = state.steps.length.toLocaleString();
       el.peakValue.textContent = peak.value === null
         ? "-"
-        : `${formatValue(peak.value, quantity, legend)}${legend.unit || quantity.unit ? ` ${legend.unit || quantity.unit}` : ""} @ ${peak.workflow} ${peak.step}`;
+        : `${formatValue(peak.value, quantity, adiffLegend)}${adiffLegend.unit || quantity.unit ? ` ${adiffLegend.unit || quantity.unit}` : ""} @ ${peak.workflow} ${peak.step}`;
 
-      el.thresholdNote.textContent = quantity.key === "max memory" && legend.key === "adiff"
+      el.thresholdNote.textContent = quantity.key === "max memory"
         ? `Threshold highlighting uses warn ${state.payload.defaultWarnThreshold} MB and error ${state.payload.defaultErrorThreshold} MB defaults unless a step overrides them.`
         : "Threshold highlighting is applied to max memory PR - baseline values.";
 
@@ -978,16 +953,18 @@
       workflowHead.textContent = `Workflow${mainSortIndicator("workflow")}`;
       el.tableHeadRow.appendChild(workflowHead);
 
-      const maxValueHead = document.createElement("th");
-      maxValueHead.className = "sortable th-num";
-      maxValueHead.setAttribute("data-sort-key", "max");
-      maxValueHead.textContent = `Max Value From All Steps${mainSortIndicator("max")}`;
-      el.tableHeadRow.appendChild(maxValueHead);
+      for (const legend of LEGENDS) {
+        const legendHead = document.createElement("th");
+        legendHead.className = "sortable th-num";
+        legendHead.setAttribute("data-sort-key", legend.key);
+        legendHead.textContent = `${legend.label} (max)${mainSortIndicator(legend.key)}`;
+        el.tableHeadRow.appendChild(legendHead);
+      }
 
       el.tableBody.innerHTML = "";
       if (!rows.length) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="workflow-cell">No workflows matched the current filters.</td><td class="cell-empty">Adjust the search or toggle.</td>`;
+        tr.innerHTML = `<td class="workflow-cell">No workflows matched the current filters.</td><td colspan="${LEGENDS.length}" class="cell-empty">Adjust the search or toggle.</td>`;
         el.tableBody.appendChild(tr);
         setStatus("No rows matched the current filters.", false);
         return;
@@ -1000,24 +977,27 @@
         const isExpanded = state.expandedWorkflows.has(row.name);
         workflowCell.innerHTML = `
           <button class="workflow-toggle" type="button" data-workflow-name="${escapeHtml(row.name)}" aria-expanded="${isExpanded ? "true" : "false"}">
-            <span class="workflow-name">${escapeHtml(row.name)}</span>
+            <span class="workflow-name">${workflowNameHtml(row.name)}</span>
             <span class="workflow-caret">${isExpanded ? "Hide steps" : "Show steps"}</span>
           </button>
         `;
         tr.appendChild(workflowCell);
 
-        const maxValue = maxStepValue(row, selectedField);
-        const maxValueCell = document.createElement("td");
-        maxValueCell.className = cellClass(quantity, legend, maxValue.stepData, maxValue.value);
-        maxValueCell.textContent = formatValue(maxValue.value, quantity, legend);
-        tr.appendChild(maxValueCell);
+        for (const legend of LEGENDS) {
+          const legendField = fieldName(quantity.key, legend.key);
+          const maxValue = maxStepValue(row, legendField);
+          const maxValueCell = document.createElement("td");
+          maxValueCell.className = cellClass(quantity, legend, maxValue.stepData, maxValue.value);
+          maxValueCell.textContent = formatValue(maxValue.value, quantity, legend);
+          tr.appendChild(maxValueCell);
+        }
 
         el.tableBody.appendChild(tr);
 
         if (isExpanded) {
           const detailTr = document.createElement("tr");
           detailTr.className = "detail-row";
-          detailTr.innerHTML = `<td colspan="2">${buildDetailTable(row.name, row.steps)}</td>`;
+          detailTr.innerHTML = `<td colspan="${LEGENDS.length + 1}">${buildDetailTable(row.name, row.steps)}</td>`;
           el.tableBody.appendChild(detailTr);
         }
       }
@@ -1034,18 +1014,14 @@
       });
       attachDetailSortHandlers();
 
-      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label} / ${legend.label}, sorted by ${mainSortColumn() === "workflow" ? "workflow" : "max value"}.`, false);
+      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label}, sorted by ${mainSortColumn() === "workflow" ? "workflow" : mainSortColumn() + " max"}.`, false);
     }
 
     function populateSelectors() {
       el.quantitySelect.innerHTML = QUANTITIES
         .map((quantity) => `<option value="${escapeHtml(quantity.key)}">${escapeHtml(quantity.label)}</option>`)
         .join("");
-      el.legendSelect.innerHTML = LEGENDS
-        .map((legend) => `<option value="${escapeHtml(legend.key)}">${escapeHtml(legend.label)}</option>`)
-        .join("");
       el.quantitySelect.value = state.quantityKey;
-      el.legendSelect.value = state.legendKey;
       el.sortSelect.value = state.sortKey;
     }
 
@@ -1057,11 +1033,6 @@
 
       el.quantitySelect.addEventListener("change", () => {
         state.quantityKey = el.quantitySelect.value;
-        renderTable();
-      });
-
-      el.legendSelect.addEventListener("change", () => {
-        state.legendKey = el.legendSelect.value;
         renderTable();
       });
 

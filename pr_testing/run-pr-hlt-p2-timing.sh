@@ -37,6 +37,22 @@ popd
 
 # Upload results
 source $WORKSPACE/cms-bot/jenkins-artifacts
+
+# create folder for the baseline
+mkdir -p $WORKSPACE/baseline-hlt-p2-timing
+# get the csv files for the baseline
+get_jenkins_artifacts hlt-p2-timing/${COMPARISON_RELEASE}/${COMPARISON_ARCH} $WORKSPACE/baseline-hlt-p2-timing/
+
+# check if the comparison script is available and if it is produce comparison plots
+if which compareGPUMemoryProfiles.py >/dev/null 2>&1; then
+    compareGPUMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_hlt.csv $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv --label1 ${COMPARISON_RELEASE} --label2 "This PR" --cms-label "cmssw integration" --no-show --output hlt_gpu_memory_comparison
+    cp hlt_gpu_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/
+    compareGPUMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_ngt.csv $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv --label1 ${COMPARISON_RELEASE} --label2 "This PR" --cms-label "cmssw integration" --no-show --output --output ngt_gpu_memory_comparison
+    cp ngt_gpu_memory_comparison $JENKINS_UPLOAD_DIR/hlt-p2-timing/
+else
+    echo "compareGPUMemoryProfiles.py is NOT available"
+fi
+
 touch ${RESULTS_DIR}/11-hlt-p2-timing-report.res ${RESULTS_DIR}/11-hlt-p2-timing-failed.res
 
 required_files=(

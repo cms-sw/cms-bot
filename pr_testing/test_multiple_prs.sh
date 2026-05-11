@@ -1524,8 +1524,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.prop
   echo "DO_COMPARISON=$DO_COMPARISON" >> $WORKSPACE/run-relvals.prop
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
-  echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
-  echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
   echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> $WORKSPACE/run-relvals.prop
   WF_COMMON="-s $(get_pr_relval_args $DO_COMPARISON '')"
   [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF_COMMON="${WF_COMMON};-l ${WORKFLOWS_PR_LABELS}"
@@ -1549,8 +1547,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       cp $WORKSPACE/test-env.txt ${prop_file}
       if [ "${tn}" == "rntuple" ] ; then
         echo "DO_COMPARISON=$DO_COMPARISON" >> ${prop_file}
-        echo "COMPARISON_REL=${COMPARISON_REL}" >> ${prop_file}
-        echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> ${prop_file}
         echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> ${prop_file}
       else
         echo "DO_COMPARISON=false" >> ${prop_file}

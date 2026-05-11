@@ -1503,6 +1503,9 @@ echo "CONFIG_LINE=${CONFIG_LINE}" >> $WORKSPACE/test-env.txt
 echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $WORKSPACE/test-env.txt
 echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $WORKSPACE/test-env.txt
 echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
+echo "COMPARISON_RELEASE=${COMPARISON_REL}" >> $WORKSPACE/test-env.txt
+echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/test-env.txt
+
 
 # Store externals path for CRAB unit test
 if [ "X$DO_CRAB_TESTS" = Xtrue ]; then

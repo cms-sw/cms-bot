@@ -130,7 +130,80 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1200px;
+      min-width: 0;
+      table-layout: fixed;
+    }
+
+    .totals-table-wrap > table,
+    .table-scroller > table {
+      min-width: 0;
+    }
+
+    .totals-table-wrap th:first-child,
+    .totals-table-wrap td:first-child,
+    .table-scroller th:first-child,
+    .table-scroller td:first-child {
+      width: 4%;
+    }
+
+    .totals-table-wrap th:nth-child(2),
+    .totals-table-wrap td:nth-child(2),
+    .table-scroller th:nth-child(2),
+    .table-scroller td:nth-child(2) {
+      width: 14%;
+    }
+
+    .totals-table-wrap th:nth-child(3),
+    .totals-table-wrap td:nth-child(3),
+    .table-scroller th:nth-child(3),
+    .table-scroller td:nth-child(3) {
+      width: 20%;
+    }
+
+    .totals-table-wrap th:nth-child(4),
+    .totals-table-wrap td:nth-child(4),
+    .table-scroller th:nth-child(4),
+    .table-scroller td:nth-child(4) {
+      width: 12%;
+    }
+
+    .totals-table-wrap th:nth-child(5),
+    .totals-table-wrap td:nth-child(5),
+    .table-scroller th:nth-child(5),
+    .table-scroller td:nth-child(5) {
+      width: 10%;
+    }
+
+    .totals-table-wrap th:nth-child(6),
+    .totals-table-wrap td:nth-child(6),
+    .table-scroller th:nth-child(6),
+    .table-scroller td:nth-child(6) {
+      width: 12%;
+    }
+
+    .totals-table-wrap th:nth-child(7),
+    .totals-table-wrap td:nth-child(7),
+    .table-scroller th:nth-child(7),
+    .table-scroller td:nth-child(7) {
+      width: 10%;
+    }
+
+    .totals-table-wrap th:nth-child(8),
+    .totals-table-wrap td:nth-child(8),
+    .table-scroller th:nth-child(8),
+    .table-scroller td:nth-child(8),
+    .table-scroller th:nth-child(9),
+    .table-scroller td:nth-child(9) {
+      width: 9%;
+    }
+
+    .table-scroller td:nth-child(2),
+    .table-scroller td:nth-child(3),
+    .totals-table-wrap td:nth-child(2),
+    .totals-table-wrap td:nth-child(3) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     th,
@@ -196,12 +269,11 @@
             <input id="filterInput" type="text" placeholder="Filter by module type or label">
           </div>
           <div>
-            <label for="sortSelect">Sort</label>
-            <select id="sortSelect">
-              <option value="thread-frac-desc">CPU % diff (desc)</option>
-              <option value="thread-frac-asc">CPU % diff (asc)</option>
-              <option value="type-asc">Type (asc)</option>
-              <option value="label-asc">Label (asc)</option>
+            <label for="valueSelect">Main Table Values</label>
+            <select id="valueSelect">
+              <option value="diff">Diff</option>
+              <option value="pr">PR</option>
+              <option value="ib">IB</option>
             </select>
           </div>
         </div>
@@ -215,18 +287,19 @@
       </div>
 
       <div class="totals">
-        <p class="totals-title">Totals (IB / PR / PR - IB)</p>
+        <p class="totals-title">Totals</p>
         <div class="totals-table-wrap">
           <table>
             <thead>
               <tr>
+                <th></th>
                 <th>Type</th>
                 <th>Label</th>
-                <th class="num">Real Time</th>
-                <th class="num">CPU Time</th>
-                <th class="num">Allocated Memory</th>
-                <th class="num">Deallocated Memory</th>
-                <th class="num">Events</th>
+                <th class="num">Real Time Diff</th>
+                <th class="num">CPU Time Diff</th>
+                <th class="num">Alloc Memory Diff</th>
+                <th class="num">Dealloc Memory Diff</th>
+                <th class="num">Events Diff</th>
               </tr>
             </thead>
             <tbody id="totalBody"></tbody>
@@ -249,16 +322,64 @@
     </section>
   </div>
 
+  <style>
+    .expand-btn {
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      color: var(--ink-soft);
+      line-height: 1;
+    }
+    .expand-btn:hover { background: #e8f0e0; color: var(--ink); }
+
+    .detail-row td { padding: 0; border-bottom: 2px solid var(--accent); }
+    .detail-inner {
+      width: 100%;
+      padding: 10px 14px 14px;
+      background: #f6faf2;
+    }
+    .detail-inner table {
+      min-width: 0;
+      width: 100%;
+      table-layout: fixed;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.86rem;
+    }
+    .detail-inner th,
+    .detail-inner td {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .detail-inner th { background: #eaf2e4; font-size: 0.72rem; }
+    .detail-inner th:first-child,
+    .detail-inner td:first-child {
+      width: 72px;
+      white-space: nowrap;
+    }
+    .detail-inner th:not(:first-child),
+    .detail-inner td:not(:first-child) {
+      width: calc((100% - 72px) / 5);
+    }
+    .detail-inner td { border-bottom: 1px solid #dde8d5; }
+    .detail-inner tr:last-child td { border-bottom: 0; font-weight: 600; }
+  </style>
   <script>
     const state = {
       payload: null,
       filter: "",
-      sortKey: "thread-frac-desc"
+      sortKey: "cpu-frac-desc",
+      displayValue: "diff",
+      expandedModules: new Set()
     };
 
     const el = {
       filterInput: document.getElementById("filterInput"),
-      sortSelect: document.getElementById("sortSelect"),
+      valueSelect: document.getElementById("valueSelect"),
       legendBar: document.getElementById("legendBar"),
       totalBody: document.getElementById("totalBody"),
       modulesHead: document.getElementById("modulesHead"),
@@ -274,15 +395,25 @@
       });
     }
 
-    function metricTriple(metric, decimals, suffix) {
-      const unitSuffix = suffix || "";
-      return `${fmt(metric.ib, decimals)}${unitSuffix}<br>${fmt(metric.pr, decimals)}${unitSuffix}<br>${fmt(metric.diff, decimals)}${unitSuffix}`;
+    function metricTriple(metric, decimals) {
+      return `${fmt(metric.ib, decimals)}<br>${fmt(metric.pr, decimals)}<br>${fmt(metric.diff, decimals)}`;
+    }
+
+    function metricDisplayValue(metric, decimals) {
+      return fmt(metric[state.displayValue], decimals);
+    }
+
+    function metricDisplayPercent(metric, decimals) {
+      return fmt(metric[`frac_${state.displayValue}`], decimals);
+    }
+
+    function metricDisplayClass(metric) {
+      if (state.displayValue !== "diff") return "";
+      return thresholdClass(metric.diff);
     }
 
     function thresholdClass(value) {
-      if (typeof value !== "number" || Number.isNaN(value)) {
-        return "";
-      }
+      if (typeof value !== "number" || Number.isNaN(value)) return "";
       const warn = state.payload.threshold;
       const error = state.payload.errorThreshold;
       if (value > error) return "cell-error";
@@ -292,96 +423,323 @@
       return "";
     }
 
+    function moduleKey(module) {
+      return module.type + "::" + module.label;
+    }
+
+    function setSortKey(sortKey) {
+      state.sortKey = sortKey;
+    }
+
+    function setDisplayValue(displayValue) {
+      state.displayValue = displayValue;
+      el.valueSelect.value = displayValue;
+      renderTotals();
+      renderModulesTable();
+    }
+
+    function sortMetricValue(metric) {
+      return metric[state.displayValue] || 0;
+    }
+
+    function sortMetricPercent(metric) {
+      return metric[`frac_${state.displayValue}`] || 0;
+    }
+
     function sortedModules(modules) {
       const filtered = modules.filter((module) => {
         const f = state.filter.trim().toLowerCase();
         if (!f) return true;
         return module.type.toLowerCase().includes(f) || module.label.toLowerCase().includes(f);
       });
-
       filtered.sort((a, b) => {
+        const aRealTimeDiff = a.time_real.diff || 0;
+        const bRealTimeDiff = b.time_real.diff || 0;
+        const aRealFracDiff = a.time_real.frac_diff || 0;
+        const bRealFracDiff = b.time_real.frac_diff || 0;
+        const aCpuTimeDiff = a.time_thread.diff || 0;
+        const bCpuTimeDiff = b.time_thread.diff || 0;
+        const aCpuFracDiff = a.time_thread.frac_diff || 0;
+        const bCpuFracDiff = b.time_thread.frac_diff || 0;
+        const aAllocDiff = a.mem_alloc.diff || 0;
+        const bAllocDiff = b.mem_alloc.diff || 0;
+        const aFreeDiff = a.mem_free.diff || 0;
+        const bFreeDiff = b.mem_free.diff || 0;
+
+        const aRealTime = sortMetricValue(a.time_real);
+        const bRealTime = sortMetricValue(b.time_real);
+        const aRealFrac = sortMetricPercent(a.time_real);
+        const bRealFrac = sortMetricPercent(b.time_real);
+        const aCpuTime = sortMetricValue(a.time_thread);
+        const bCpuTime = sortMetricValue(b.time_thread);
+        const aCpuFrac = sortMetricPercent(a.time_thread);
+        const bCpuFrac = sortMetricPercent(b.time_thread);
+        const aAlloc = sortMetricValue(a.mem_alloc);
+        const bAlloc = sortMetricValue(b.mem_alloc);
+        const aFree = sortMetricValue(a.mem_free);
+        const bFree = sortMetricValue(b.mem_free);
+
         switch (state.sortKey) {
-          case "thread-frac-asc":
-            return (a.time_thread.frac_diff || 0) - (b.time_thread.frac_diff || 0);
           case "type-asc":
             return a.type.localeCompare(b.type) || a.label.localeCompare(b.label);
+          case "type-desc":
+            return b.type.localeCompare(a.type) || b.label.localeCompare(a.label);
           case "label-asc":
             return a.label.localeCompare(b.label) || a.type.localeCompare(b.type);
+          case "label-desc":
+            return b.label.localeCompare(a.label) || b.type.localeCompare(a.type);
+          case "real-time-diff-asc":
+          case "real-time-asc":
+            return aRealTime - bRealTime;
+          case "real-time-diff-desc":
+          case "real-time-desc":
+            return bRealTime - aRealTime;
+          case "real-frac-diff-asc":
+          case "real-frac-asc":
+            return aRealFrac - bRealFrac;
+          case "real-frac-diff-desc":
+          case "real-frac-desc":
+            return bRealFrac - aRealFrac;
+          case "cpu-time-diff-asc":
+          case "cpu-time-asc":
+            return aCpuTime - bCpuTime;
+          case "cpu-time-diff-desc":
+          case "cpu-time-desc":
+            return bCpuTime - aCpuTime;
+          case "cpu-frac-diff-asc":
+          case "thread-frac-asc":
+          case "cpu-frac-asc":
+            return aCpuFrac - bCpuFrac;
+          case "cpu-frac-diff-desc":
           case "thread-frac-desc":
+          case "cpu-frac-desc":
+            return bCpuFrac - aCpuFrac;
+          case "alloc-diff-asc":
+          case "alloc-asc":
+            return aAlloc - bAlloc;
+          case "alloc-diff-desc":
+          case "alloc-desc":
+            return bAlloc - aAlloc;
+          case "dealloc-diff-asc":
+          case "dealloc-asc":
+            return aFree - bFree;
+          case "dealloc-diff-desc":
+          case "dealloc-desc":
+            return bFree - aFree;
           default:
-            return (b.time_thread.frac_diff || 0) - (a.time_thread.frac_diff || 0);
+            return bCpuFracDiff - aCpuFracDiff;
         }
       });
-
       return filtered;
+    }
+
+    function buildTotalDetailRow(total) {
+      const COLSPAN = 8;
+      const tr = document.createElement("tr");
+      tr.className = "detail-row";
+      tr.innerHTML = `<td colspan="${COLSPAN}"></td>`;
+      const inner = document.createElement("div");
+      inner.className = "detail-inner";
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th></th>
+            <th class="num">Real Time</th>
+            <th class="num">CPU Time</th>
+            <th class="num">Alloc Memory</th>
+            <th class="num">Dealloc Memory</th>
+            <th class="num">Events</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>IB</td>
+            <td class="num mono">${fmt(total.time_real.ib, 2)}</td>
+            <td class="num mono">${fmt(total.time_thread.ib, 2)}</td>
+            <td class="num mono">${fmt(total.mem_alloc.ib, 0)}</td>
+            <td class="num mono">${fmt(total.mem_free.ib, 0)}</td>
+            <td class="num mono">${fmt(total.events.ib, 0)}</td>
+          </tr>
+          <tr>
+            <td>PR</td>
+            <td class="num mono">${fmt(total.time_real.pr, 2)}</td>
+            <td class="num mono">${fmt(total.time_thread.pr, 2)}</td>
+            <td class="num mono">${fmt(total.mem_alloc.pr, 0)}</td>
+            <td class="num mono">${fmt(total.mem_free.pr, 0)}</td>
+            <td class="num mono">${fmt(total.events.pr, 0)}</td>
+          </tr>
+          <tr>
+            <td>Diff   </td>
+            <td class="num mono">${fmt(total.time_real.diff, 2)}</td>
+            <td class="num mono">${fmt(total.time_thread.diff, 2)}</td>
+            <td class="num mono">${fmt(total.mem_alloc.diff, 0)}</td>
+            <td class="num mono">${fmt(total.mem_free.diff, 0)}</td>
+            <td class="num mono">${fmt(total.events.diff, 0)}</td>
+          </tr>
+        </tbody>
+      `;
+      inner.appendChild(table);
+      tr.firstElementChild.appendChild(inner);
+      return tr;
     }
 
     function renderTotals() {
       const total = state.payload.total;
+      const expanded = state.expandedModules.has("__total__");
+      el.totalBody.innerHTML = "";
       const row = document.createElement("tr");
       row.innerHTML = `
+        <td><button class="expand-btn" data-key="__total__">${expanded ? "▼" : "▶"}</button></td>
         <td>${total.type}</td>
         <td>${total.label}</td>
-        <td class="num mono">${metricTriple(total.time_real, 2, "")}</td>
-        <td class="num mono">${metricTriple(total.time_thread, 2, "")}</td>
-        <td class="num mono">${metricTriple(total.mem_alloc, 0, "")}</td>
-        <td class="num mono">${metricTriple(total.mem_free, 0, "")}</td>
-        <td class="num mono">${metricTriple(total.events, 0, "")}</td>
+        <td class="num mono">${metricDisplayValue(total.time_real, 2)}</td>
+        <td class="num mono">${metricDisplayValue(total.time_thread, 2)}</td>
+        <td class="num mono">${metricDisplayValue(total.mem_alloc, 0)}</td>
+        <td class="num mono">${metricDisplayValue(total.mem_free, 0)}</td>
+        <td class="num mono">${metricDisplayValue(total.events, 0)}</td>
       `;
-      el.totalBody.innerHTML = "";
       el.totalBody.appendChild(row);
+      if (expanded) {
+        el.totalBody.appendChild(buildTotalDetailRow(total));
+      }
+      el.totalBody.querySelector(".expand-btn").addEventListener("click", () => {
+        if (state.expandedModules.has("__total__")) {
+          state.expandedModules.delete("__total__");
+        } else {
+          state.expandedModules.add("__total__");
+        }
+        renderTotals();
+      });
+    }
+
+    function buildDetailRow(module, colspan) {
+      const tr = document.createElement("tr");
+      tr.className = "detail-row";
+      tr.innerHTML = `<td colspan="${colspan}"></td>`;
+
+      const inner = document.createElement("div");
+      inner.className = "detail-inner";
+
+      const table = document.createElement("table");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th></th>
+            <th class="num">Real Time</th>
+            <th class="num">Real % of Total</th>
+            <th class="num">CPU Time</th>
+            <th class="num">CPU % of Total</th>
+            <th class="num">Alloc Memory</th>
+            <th class="num">Dealloc Memory</th>
+            <th class="num">Events</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>IB</td>
+            <td class="num mono">${fmt(module.time_real.ib, 2)}</td>
+            <td class="num mono">${fmt(module.time_real.frac_ib, 2)}%</td>
+            <td class="num mono">${fmt(module.time_thread.ib, 2)}</td>
+            <td class="num mono">${fmt(module.time_thread.frac_ib, 2)}%</td>
+            <td class="num mono">${fmt(module.mem_alloc.ib, 0)}</td>
+            <td class="num mono">${fmt(module.mem_free.ib, 0)}</td>
+            <td class="num mono">${fmt(module.events.ib, 0)}</td>
+          </tr>
+          <tr>
+            <td>PR</td>
+            <td class="num mono">${fmt(module.time_real.pr, 2)}</td>
+            <td class="num mono">${fmt(module.time_real.frac_pr, 2)}%</td>
+            <td class="num mono">${fmt(module.time_thread.pr, 2)}</td>
+            <td class="num mono">${fmt(module.time_thread.frac_pr, 2)}%</td>
+            <td class="num mono">${fmt(module.mem_alloc.pr, 0)}</td>
+            <td class="num mono">${fmt(module.mem_free.pr, 0)}</td>
+            <td class="num mono">${fmt(module.events.pr, 0)}</td>
+          </tr>
+          <tr>
+            <td>Diff</td>
+            <td class="num mono">${fmt(module.time_real.diff, 2)}</td>
+            <td class="num mono">${fmt(module.time_real.frac_diff, 2)}%</td>
+            <td class="num mono">${fmt(module.time_thread.diff, 2)}</td>
+            <td class="num mono ${thresholdClass(module.time_thread.frac_diff)}">${fmt(module.time_thread.frac_diff, 2)}%</td>
+            <td class="num mono">${fmt(module.mem_alloc.diff, 0)}</td>
+            <td class="num mono">${fmt(module.mem_free.diff, 0)}</td>
+            <td class="num mono">${fmt(module.events.diff, 0)}</td>
+          </tr>
+        </tbody>
+      `;
+      inner.appendChild(table);
+      tr.firstElementChild.appendChild(inner);
+      return tr;
+    }
+
+    function toggleModuleExpanded(key) {
+      if (state.expandedModules.has(key)) {
+        state.expandedModules.delete(key);
+      } else {
+        state.expandedModules.add(key);
+      }
+      renderModulesTable();
     }
 
     function renderModulesTable() {
       const modules = sortedModules(state.payload.modules);
+      const COLSPAN = 9;
 
       el.modulesHead.innerHTML = `
-        <th class="sortable" data-sort="type-asc">Module Type</th>
-        <th class="sortable" data-sort="label-asc">Module Label</th>
-        <th class="num">Real Time<br><span class="mono">IB / PR / Diff</span></th>
-        <th class="num">Real % of Total<br><span class="mono">IB / PR / Diff</span></th>
-        <th class="num">CPU Time<br><span class="mono">IB / PR / Diff</span></th>
-        <th class="num sortable" data-sort="thread-frac-desc">CPU % of Total Diff</th>
-        <th class="num">Allocated Memory<br><span class="mono">IB / PR / Diff</span></th>
-        <th class="num">Deallocated Memory<br><span class="mono">IB / PR / Diff</span></th>
-        <th class="num">Events<br><span class="mono">IB / PR / Diff</span></th>
+        <th></th>
+        <th class="sortable" data-sort-base="type">Module Type</th>
+        <th class="sortable" data-sort-base="label">Module Label</th>
+        <th class="num sortable" data-sort-base="real-time">Real Time</th>
+        <th class="num sortable" data-sort-base="real-frac">Real % Total</th>
+        <th class="num sortable" data-sort-base="cpu-time">CPU Time</th>
+        <th class="num sortable" data-sort-base="cpu-frac">CPU % Total</th>
+        <th class="num sortable" data-sort-base="alloc">Alloc Memory</th>
+        <th class="num sortable" data-sort-base="dealloc">Dealloc Memory</th>
       `;
 
       el.modulesBody.innerHTML = "";
       if (!modules.length) {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="9">No module rows matched current filters.</td>`;
+        tr.innerHTML = `<td colspan="${COLSPAN}">No module rows matched current filters.</td>`;
         el.modulesBody.appendChild(tr);
         el.statusLine.textContent = "No modules matched current filters.";
         return;
       }
 
       modules.forEach((module) => {
+        const key = moduleKey(module);
+        const expanded = state.expandedModules.has(key);
+        const cpuFracClass = metricDisplayClass(module.time_thread);
+
         const tr = document.createElement("tr");
-        const cpuFracDiffClass = thresholdClass(module.time_thread.frac_diff);
         tr.innerHTML = `
+          <td><button class="expand-btn" data-key="${key}">${expanded ? "▼" : "▶"}</button></td>
           <td>${module.type}</td>
           <td>${module.label}</td>
-          <td class="num mono">${metricTriple(module.time_real, 2, "")}</td>
-          <td class="num mono">${fmt(module.time_real.frac_ib, 2)}%<br>${fmt(module.time_real.frac_pr, 2)}%<br>${fmt(module.time_real.frac_diff, 2)}%</td>
-          <td class="num mono">${metricTriple(module.time_thread, 2, "")}</td>
-          <td class="num mono ${cpuFracDiffClass}">${fmt(module.time_thread.frac_ib, 2)}%<br>${fmt(module.time_thread.frac_pr, 2)}%<br>${fmt(module.time_thread.frac_diff, 2)}%</td>
-          <td class="num mono">${metricTriple(module.mem_alloc, 0, "")}</td>
-          <td class="num mono">${metricTriple(module.mem_free, 0, "")}</td>
-          <td class="num mono">${metricTriple(module.events, 0, "")}</td>
+          <td class="num mono">${metricDisplayValue(module.time_real, 2)}</td>
+          <td class="num mono">${metricDisplayPercent(module.time_real, 2)}%</td>
+          <td class="num mono">${metricDisplayValue(module.time_thread, 2)}</td>
+          <td class="num mono ${cpuFracClass}">${metricDisplayPercent(module.time_thread, 2)}%</td>
+          <td class="num mono">${metricDisplayValue(module.mem_alloc, 0)}</td>
+          <td class="num mono">${metricDisplayValue(module.mem_free, 0)}</td>
         `;
         el.modulesBody.appendChild(tr);
+
+        if (expanded) {
+          el.modulesBody.appendChild(buildDetailRow(module, COLSPAN));
+        }
+      });
+
+      el.modulesBody.querySelectorAll(".expand-btn").forEach((btn) => {
+        btn.addEventListener("click", () => toggleModuleExpanded(btn.getAttribute("data-key")));
       });
 
       el.modulesHead.querySelectorAll("th.sortable").forEach((th) => {
         th.addEventListener("click", () => {
-          const target = th.getAttribute("data-sort");
-          if (target === "thread-frac-desc") {
-            state.sortKey = state.sortKey === "thread-frac-desc" ? "thread-frac-asc" : "thread-frac-desc";
-          } else {
-            state.sortKey = target;
-          }
-          el.sortSelect.value = state.sortKey;
+          const base = th.getAttribute("data-sort-base");
+          const descending = state.sortKey === `${base}-desc`;
+          setSortKey(descending ? `${base}-asc` : `${base}-desc`);
           renderModulesTable();
         });
       });
@@ -393,10 +751,10 @@
       const warn = state.payload.threshold;
       const error = state.payload.errorThreshold;
       el.legendBar.innerHTML = `
-        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--warn')};">Above warn threshold (${warn.toFixed(2)})</span>
-        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--error')};">Above error threshold (${error.toFixed(2)})</span>
-        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--good-soft')};">Below negative warn threshold (-${warn.toFixed(2)})</span>
-        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--good')};">Below negative error threshold (-${error.toFixed(2)})</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--warn')};">Above warn threshold (${warn.toFixed(2)}%)</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--error')};">Above error threshold (${error.toFixed(2)}%)</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--good-soft')};">Below negative warn threshold (-${warn.toFixed(2)}%)</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--good')};">Below negative error threshold (-${error.toFixed(2)}%)</span>
       `;
     }
 
@@ -411,9 +769,8 @@
         state.filter = el.filterInput.value;
         renderModulesTable();
       });
-      el.sortSelect.addEventListener("change", () => {
-        state.sortKey = el.sortSelect.value;
-        renderModulesTable();
+      el.valueSelect.addEventListener("change", () => {
+        setDisplayValue(el.valueSelect.value);
       });
     }
 

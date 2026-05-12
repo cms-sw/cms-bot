@@ -5,6 +5,132 @@ import json
 import os
 
 
+VIEWER_TEMPLATE = "resources_diff_viewer.html"
+
+
+def build_viewer_html(template_path, embedded_data, source_label):
+    with open(template_path, encoding="utf-8") as template_file:
+        content = template_file.read()
+
+    embedded_json = json.dumps(embedded_data).replace("</", "<\\/")
+
+    autoload_snippet = """
+    <script id="embedded-resources-diff-data" type="application/json">%s</script>
+    <script>
+        (function () {
+            var dataNode = document.getElementById("embedded-resources-diff-data");
+            if (!dataNode) {
+                return;
+            }
+            var embeddedData = JSON.parse(dataNode.textContent);
+            if (typeof loadFromObject === "function") {
+                loadFromObject(embeddedData, %s);
+            }
+        })();
+    </script>
+""" % (embedded_json, json.dumps(source_label))
+
+    if "</body>" in content:
+        content = content.replace("</body>", autoload_snippet + "</body>", 1)
+    return content
+
+
+def get_or_default(data, key, default=0):
+    value = data.get(key, default)
+    return value if isinstance(value, (int, float, str)) else default
+
+
+def build_summary_payload(ibdata, prdata, results, datamapib, datamappr, datamapres, threshold, error_threshold):
+    total_ib = ibdata.get("total", {})
+    total_pr = prdata.get("total", {})
+    total_res = results.get("total", {})
+
+    payload = {
+        "title": "FastTimerService Resources Difference",
+        "threshold": threshold,
+        "errorThreshold": error_threshold,
+        "total": {
+            "type": total_pr.get("type", ""),
+            "label": total_pr.get("label", ""),
+            "time_real": {
+                "ib": get_or_default(total_ib, "time_real", 0.0),
+                "pr": get_or_default(total_pr, "time_real", 0.0),
+                "diff": get_or_default(total_res, "time_real_diff", 0.0),
+            },
+            "time_thread": {
+                "ib": get_or_default(total_ib, "time_thread", 0.0),
+                "pr": get_or_default(total_pr, "time_thread", 0.0),
+                "diff": get_or_default(total_res, "time_thread_diff", 0.0),
+            },
+            "mem_alloc": {
+                "ib": get_or_default(total_ib, "mem_alloc", 0.0),
+                "pr": get_or_default(total_pr, "mem_alloc", 0.0),
+                "diff": get_or_default(total_res, "mem_alloc_diff", 0.0),
+            },
+            "mem_free": {
+                "ib": get_or_default(total_ib, "mem_free", 0.0),
+                "pr": get_or_default(total_pr, "mem_free", 0.0),
+                "diff": get_or_default(total_res, "mem_free_diff", 0.0),
+            },
+            "events": {
+                "ib": get_or_default(total_ib, "events", 0),
+                "pr": get_or_default(total_pr, "events", 0),
+                "diff": get_or_default(total_pr, "events", 0) - get_or_default(total_ib, "events", 0),
+            },
+        },
+        "modules": [],
+    }
+
+    for item in sorted(datamapres.items(), key=lambda x: x[1].get("time_thread_frac_diff", 0), reverse=True):
+        module_res = item[1]
+        key = module_res.get("type", "") + "|" + module_res.get("label", "")
+        if key == "|":
+            continue
+
+        module_ib = datamapib.get(key, {})
+        module_pr = datamappr.get(key, {})
+
+        payload["modules"].append(
+            {
+                "type": module_res.get("type", ""),
+                "label": module_res.get("label", ""),
+                "time_real": {
+                    "ib": get_or_default(module_ib, "time_real", 0.0),
+                    "pr": get_or_default(module_pr, "time_real", 0.0),
+                    "diff": get_or_default(module_res, "time_real_diff", 0.0),
+                    "frac_ib": get_or_default(module_ib, "time_real_frac", 0.0),
+                    "frac_pr": get_or_default(module_pr, "time_real_frac", 0.0),
+                    "frac_diff": get_or_default(module_res, "time_real_frac_diff", 0.0),
+                },
+                "time_thread": {
+                    "ib": get_or_default(module_ib, "time_thread", 0.0),
+                    "pr": get_or_default(module_pr, "time_thread", 0.0),
+                    "diff": get_or_default(module_res, "time_thread_diff", 0.0),
+                    "frac_ib": get_or_default(module_ib, "time_thread_frac", 0.0),
+                    "frac_pr": get_or_default(module_pr, "time_thread_frac", 0.0),
+                    "frac_diff": get_or_default(module_res, "time_thread_frac_diff", 0.0),
+                },
+                "mem_alloc": {
+                    "ib": get_or_default(module_ib, "mem_alloc", 0.0),
+                    "pr": get_or_default(module_pr, "mem_alloc", 0.0),
+                    "diff": get_or_default(module_res, "mem_alloc_diff", 0.0),
+                },
+                "mem_free": {
+                    "ib": get_or_default(module_ib, "mem_free", 0.0),
+                    "pr": get_or_default(module_pr, "mem_free", 0.0),
+                    "diff": get_or_default(module_res, "mem_free_diff", 0.0),
+                },
+                "events": {
+                    "ib": get_or_default(module_ib, "events", 0),
+                    "pr": get_or_default(module_pr, "events", 0),
+                    "diff": get_or_default(module_pr, "events", 0) - get_or_default(module_ib, "events", 0),
+                },
+            }
+        )
+
+    return payload
+
+
 def diff_from(metrics, data, data_total, dest, dest_total, res):
     for metric in metrics:
         dmetric = dest[metric] - data[metric]
@@ -122,141 +248,28 @@ datamapres = {module["type"] + "|" + module["label"]: module for module in resul
 
 threshold = 5.0
 error_threshold = 20.0
+output_dir = os.path.dirname(os.path.realpath(sys.argv[2]))
+output_base = "diff-" + os.path.basename(sys.argv[2])
 
+summaryFile = os.path.join(output_dir, output_base + ".html")
 
-summaryLines = []
-summaryLines += [
-    "<html>",
-    "<head><style>",
-    "table, th, td {border: 1px solid black;}</style>",
-    "<style> th, td {padding: 15px;}</style></head>",
-    "<body><h3>FastTimerService Resources Difference</h3><table>",
-    '</table><table><tr><td bgcolor="orange">',
-    "warn threshold %0.2f" % threshold,
-    '</td></tr><tr><td bgcolor="red">',
-    "error threshold %0.2f" % error_threshold,
-    '</td></tr><tr><td bgcolor="green">',
-    "warn threshold -%0.2f" % threshold,
-    '</td></tr><tr><td bgcolor="cyan">',
-    "warn threshold -%0.2f" % error_threshold,
-    "</td></tr>",
-    "<tr><td>metric:<BR>&lt;baseline&gt;<BR>&lt;pull request&gt;<BR>&lt;PR - baseline&gt; </td>",
-    "</tr></table>",
-    "<table>",
-    '<tr><td align="center">Type</td>',
-    '<td align="center">Label</td>',
-    '<td align="center">real time</td>',
-    '<td align="center">cpu time</td>',
-    '<td align="center">allocated memory </td>',
-    '<td align="center">deallocated memory </td>',
-    '<td align="center">events</td>',
-    "</tr>",
-    "<td>%s</td>" % prdata["total"]["type"],
-    "<td>%s</td>" % prdata["total"]["label"],
-    '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
-    % (
-        ibdata["total"]["time_real"],
-        prdata["total"]["time_real"],
-        results["total"]["time_real_diff"],
-    ),
-    '<td align="right">%0.2f<br>%0.2f<br>%0.2f</td>'
-    % (
-        ibdata["total"]["time_thread"],
-        prdata["total"]["time_thread"],
-        results["total"]["time_thread_diff"],
-    ),
-    '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-    % (
-        ibdata["total"]["mem_alloc"],
-        prdata["total"]["mem_alloc"],
-        results["total"]["mem_alloc_diff"],
-    ),
-    '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-    % (
-        ibdata["total"]["mem_free"],
-        prdata["total"]["mem_free"],
-        results["total"]["mem_free_diff"],
-    ),
-    "<td>%i<br>%i<br>%i</td>"
-    % (ibdata["total"]["events"], prdata["total"]["events"], results["total"]["events"]),
-    "</tr></table>",
-    '<table><tr><td align="center">Module type</td>',
-    '<td align="center">Module label</td>',
-    '<td align="center">real time</td>',
-    '<td align="center">percentage total<br>real time</td>',
-    '<td align="center">cpu time</td>',
-    '<td align="center">percentage total<br>cpu time</td>',
-    '<td align="center">allocated memory</td>',
-    '<td align="center">deallocated memory</td>',
-    '<td align="center">events</td>',
-    "</tr>",
-]
+payload = build_summary_payload(
+    ibdata=ibdata,
+    prdata=prdata,
+    results=results,
+    datamapib=datamapib,
+    datamappr=datamappr,
+    datamapres=datamapres,
+    threshold=threshold,
+    error_threshold=error_threshold,
+)
 
+viewer_template = os.path.join(os.path.dirname(os.path.realpath(__file__)), VIEWER_TEMPLATE)
+summaryHtml = build_viewer_html(viewer_template, payload, "embedded resources diff")
 
-for item in sorted(datamapres.items(), key=lambda x: x[1]["time_thread_frac_diff"], reverse=True):
-    key = item[1]["type"] + "|" + item[1]["label"]
-    if not key == "|":
-        moduleib = datamapib[key]
-        modulepr = datamappr[key]
-        moduleres = datamapres[key]
-        cellString = '<td align="right" '
-        color = ""
-        if moduleres["time_thread_frac_diff"] > threshold:
-            color = 'bgcolor="orange"'
-        if moduleres["time_thread_frac_diff"] > error_threshold:
-            color = 'bgcolor="red"'
-        if moduleres["time_thread_frac_diff"] < -1.0 * threshold:
-            color = 'bgcolor="cyan"'
-        if moduleres["time_thread_frac_diff"] < -1.0 * error_threshold:
-            color = 'bgcolor="green"'
-        cellString += color
-        cellString += ">"
-        summaryLines += [
-            "<tr>",
-            "<td> %s</td>" % moduleres["type"],
-            "<td> %s</td>" % moduleres["label"],
-            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
-            % (
-                moduleib["time_real"],
-                modulepr["time_real"],
-                moduleres["time_real_diff"],
-            ),
-            '<td align="right"> %0.2f%%<br> %0.2f%%<br> %0.2f%%</td>'
-            % (
-                moduleib["time_real_frac"],
-                modulepr["time_real_frac"],
-                moduleres["time_real_frac_diff"],
-            ),
-            '<td align="right"> %0.2f<br> %0.2f<br> %0.2f</td>'
-            % (
-                moduleib["time_thread"],
-                modulepr["time_thread"],
-                moduleres["time_thread_diff"],
-            ),
-            cellString
-            + "%0.2f%%<br> %0.2f%%<br> %0.2f%%</td>"
-            % (
-                moduleib["time_thread_frac"],
-                modulepr["time_thread_frac"],
-                moduleres["time_thread_frac_diff"],
-            ),
-            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (moduleib["mem_alloc"], modulepr["mem_alloc"], moduleres["mem_alloc_diff"]),
-            '<td align="right">%0.f<br>%0.f<br>%0.f</td>'
-            % (moduleib["mem_free"], modulepr["mem_free"], moduleres["mem_free_diff"]),
-            "<td>%i<br>%i<br>%i</td>"
-            % (moduleib["events"], modulepr["events"], moduleres["events"]),
-            "</tr>",
-        ]
+with open(summaryFile, "w", encoding="utf-8") as g:
+    g.write(summaryHtml)
 
-summaryLines += []
-summaryLines += ["</body></html>"]
-
-summaryFile = os.path.dirname(sys.argv[2]) + "/diff-" + os.path.basename(sys.argv[2]) + ".html"
-with open(summaryFile, "w") as g:
-    for summaryLine in summaryLines:
-        print(summaryLine, file=g)
-
-dumpfile = os.path.dirname(sys.argv[2]) + "/diff-" + os.path.basename(sys.argv[2])
+dumpfile = os.path.join(output_dir, output_base)
 with open(dumpfile, "w") as f:
     json.dump(results, f, indent=2)

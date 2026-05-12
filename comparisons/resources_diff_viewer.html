@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Resources Diff Viewer</title>
+  <style>
+    :root {
+      --bg: #edf3ea;
+      --panel: #fbfdf8;
+      --ink: #1f2a20;
+      --ink-soft: #556555;
+      --line: #cbd6c2;
+      --accent: #1a7f5a;
+      --warn: rgba(244, 185, 66, 0.24);
+      --error: rgba(215, 76, 47, 0.22);
+      --good: rgba(163, 214, 151, 0.7);
+      --good-soft: rgba(201, 231, 192, 0.55);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 8% 14%, rgba(254, 221, 161, 0.45) 0%, transparent 28%),
+        radial-gradient(circle at 90% 16%, rgba(158, 222, 201, 0.35) 0%, transparent 28%),
+        linear-gradient(145deg, #edf3e7 0%, #e8efe1 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1750px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 16px 0 28px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .hero,
+    .controls,
+    .legend,
+    .totals,
+    .status,
+    .table-wrap {
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .hero { border-top: 0; }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.2rem, 2.2vw, 1.9rem);
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid #bcc9b4;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .chip {
+      border: 1px solid #d8e0d0;
+      border-radius: 999px;
+      background: #fff;
+      padding: 6px 10px;
+    }
+
+    .totals-title {
+      margin: 0 0 8px;
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .totals-table-wrap,
+    .table-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1200px;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e3e9dd;
+      vertical-align: top;
+    }
+
+    th {
+      text-align: left;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+      background: #f2f7ed;
+      white-space: nowrap;
+    }
+
+    .sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sortable:hover {
+      color: var(--ink);
+    }
+
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .cell-warn { background: var(--warn); }
+    .cell-error { background: var(--error); }
+    .cell-good { background: var(--good-soft); }
+    .cell-great { background: var(--good); }
+
+    .status {
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+    }
+
+    .status.error { color: #a03623; }
+
+    @media (max-width: 900px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <div class="hero">
+        <h1>FastTimerService Resources Difference</h1>
+        <p>Interactive view of IB vs PR resources diff with sortable module rows and embedded JSON payload.</p>
+      </div>
+
+      <div class="controls">
+        <div class="controls-grid">
+          <div>
+            <label for="filterInput">Module Filter</label>
+            <input id="filterInput" type="text" placeholder="Filter by module type or label">
+          </div>
+          <div>
+            <label for="sortSelect">Sort</label>
+            <select id="sortSelect">
+              <option value="thread-frac-desc">CPU % diff (desc)</option>
+              <option value="thread-frac-asc">CPU % diff (asc)</option>
+              <option value="type-asc">Type (asc)</option>
+              <option value="label-asc">Label (asc)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend" id="legendBar">
+        <span class="chip">Warn threshold</span>
+        <span class="chip">Error threshold</span>
+        <span class="chip">Negative warn threshold</span>
+        <span class="chip">Negative error threshold</span>
+      </div>
+
+      <div class="totals">
+        <p class="totals-title">Totals (IB / PR / PR - IB)</p>
+        <div class="totals-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Label</th>
+                <th class="num">Real Time</th>
+                <th class="num">CPU Time</th>
+                <th class="num">Allocated Memory</th>
+                <th class="num">Deallocated Memory</th>
+                <th class="num">Events</th>
+              </tr>
+            </thead>
+            <tbody id="totalBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="status" id="statusLine">Waiting for data.</div>
+
+      <div class="table-wrap">
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr id="modulesHead"></tr>
+            </thead>
+            <tbody id="modulesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      payload: null,
+      filter: "",
+      sortKey: "thread-frac-desc"
+    };
+
+    const el = {
+      filterInput: document.getElementById("filterInput"),
+      sortSelect: document.getElementById("sortSelect"),
+      legendBar: document.getElementById("legendBar"),
+      totalBody: document.getElementById("totalBody"),
+      modulesHead: document.getElementById("modulesHead"),
+      modulesBody: document.getElementById("modulesBody"),
+      statusLine: document.getElementById("statusLine")
+    };
+
+    function fmt(value, decimals) {
+      if (typeof value !== "number" || Number.isNaN(value)) return "-";
+      return value.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function metricTriple(metric, decimals, suffix) {
+      const unitSuffix = suffix || "";
+      return `${fmt(metric.ib, decimals)}${unitSuffix}<br>${fmt(metric.pr, decimals)}${unitSuffix}<br>${fmt(metric.diff, decimals)}${unitSuffix}`;
+    }
+
+    function thresholdClass(value) {
+      if (typeof value !== "number" || Number.isNaN(value)) {
+        return "";
+      }
+      const warn = state.payload.threshold;
+      const error = state.payload.errorThreshold;
+      if (value > error) return "cell-error";
+      if (value > warn) return "cell-warn";
+      if (value < -error) return "cell-great";
+      if (value < -warn) return "cell-good";
+      return "";
+    }
+
+    function sortedModules(modules) {
+      const filtered = modules.filter((module) => {
+        const f = state.filter.trim().toLowerCase();
+        if (!f) return true;
+        return module.type.toLowerCase().includes(f) || module.label.toLowerCase().includes(f);
+      });
+
+      filtered.sort((a, b) => {
+        switch (state.sortKey) {
+          case "thread-frac-asc":
+            return (a.time_thread.frac_diff || 0) - (b.time_thread.frac_diff || 0);
+          case "type-asc":
+            return a.type.localeCompare(b.type) || a.label.localeCompare(b.label);
+          case "label-asc":
+            return a.label.localeCompare(b.label) || a.type.localeCompare(b.type);
+          case "thread-frac-desc":
+          default:
+            return (b.time_thread.frac_diff || 0) - (a.time_thread.frac_diff || 0);
+        }
+      });
+
+      return filtered;
+    }
+
+    function renderTotals() {
+      const total = state.payload.total;
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${total.type}</td>
+        <td>${total.label}</td>
+        <td class="num mono">${metricTriple(total.time_real, 2, "")}</td>
+        <td class="num mono">${metricTriple(total.time_thread, 2, "")}</td>
+        <td class="num mono">${metricTriple(total.mem_alloc, 0, "")}</td>
+        <td class="num mono">${metricTriple(total.mem_free, 0, "")}</td>
+        <td class="num mono">${metricTriple(total.events, 0, "")}</td>
+      `;
+      el.totalBody.innerHTML = "";
+      el.totalBody.appendChild(row);
+    }
+
+    function renderModulesTable() {
+      const modules = sortedModules(state.payload.modules);
+
+      el.modulesHead.innerHTML = `
+        <th class="sortable" data-sort="type-asc">Module Type</th>
+        <th class="sortable" data-sort="label-asc">Module Label</th>
+        <th class="num">Real Time<br><span class="mono">IB / PR / Diff</span></th>
+        <th class="num">Real % of Total<br><span class="mono">IB / PR / Diff</span></th>
+        <th class="num">CPU Time<br><span class="mono">IB / PR / Diff</span></th>
+        <th class="num sortable" data-sort="thread-frac-desc">CPU % of Total Diff</th>
+        <th class="num">Allocated Memory<br><span class="mono">IB / PR / Diff</span></th>
+        <th class="num">Deallocated Memory<br><span class="mono">IB / PR / Diff</span></th>
+        <th class="num">Events<br><span class="mono">IB / PR / Diff</span></th>
+      `;
+
+      el.modulesBody.innerHTML = "";
+      if (!modules.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="9">No module rows matched current filters.</td>`;
+        el.modulesBody.appendChild(tr);
+        el.statusLine.textContent = "No modules matched current filters.";
+        return;
+      }
+
+      modules.forEach((module) => {
+        const tr = document.createElement("tr");
+        const cpuFracDiffClass = thresholdClass(module.time_thread.frac_diff);
+        tr.innerHTML = `
+          <td>${module.type}</td>
+          <td>${module.label}</td>
+          <td class="num mono">${metricTriple(module.time_real, 2, "")}</td>
+          <td class="num mono">${fmt(module.time_real.frac_ib, 2)}%<br>${fmt(module.time_real.frac_pr, 2)}%<br>${fmt(module.time_real.frac_diff, 2)}%</td>
+          <td class="num mono">${metricTriple(module.time_thread, 2, "")}</td>
+          <td class="num mono ${cpuFracDiffClass}">${fmt(module.time_thread.frac_ib, 2)}%<br>${fmt(module.time_thread.frac_pr, 2)}%<br>${fmt(module.time_thread.frac_diff, 2)}%</td>
+          <td class="num mono">${metricTriple(module.mem_alloc, 0, "")}</td>
+          <td class="num mono">${metricTriple(module.mem_free, 0, "")}</td>
+          <td class="num mono">${metricTriple(module.events, 0, "")}</td>
+        `;
+        el.modulesBody.appendChild(tr);
+      });
+
+      el.modulesHead.querySelectorAll("th.sortable").forEach((th) => {
+        th.addEventListener("click", () => {
+          const target = th.getAttribute("data-sort");
+          if (target === "thread-frac-desc") {
+            state.sortKey = state.sortKey === "thread-frac-desc" ? "thread-frac-asc" : "thread-frac-desc";
+          } else {
+            state.sortKey = target;
+          }
+          el.sortSelect.value = state.sortKey;
+          renderModulesTable();
+        });
+      });
+
+      el.statusLine.textContent = `Showing ${modules.length.toLocaleString()} module rows.`;
+    }
+
+    function renderLegend() {
+      const warn = state.payload.threshold;
+      const error = state.payload.errorThreshold;
+      el.legendBar.innerHTML = `
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--warn')};">Above warn threshold (${warn.toFixed(2)})</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--error')};">Above error threshold (${error.toFixed(2)})</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--good-soft')};">Below negative warn threshold (-${warn.toFixed(2)})</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--good')};">Below negative error threshold (-${error.toFixed(2)})</span>
+      `;
+    }
+
+    function render() {
+      renderLegend();
+      renderTotals();
+      renderModulesTable();
+    }
+
+    function attachEvents() {
+      el.filterInput.addEventListener("input", () => {
+        state.filter = el.filterInput.value;
+        renderModulesTable();
+      });
+      el.sortSelect.addEventListener("change", () => {
+        state.sortKey = el.sortSelect.value;
+        renderModulesTable();
+      });
+    }
+
+    function loadFromObject(data, sourceLabel) {
+      if (!data || typeof data !== "object" || !Array.isArray(data.modules) || !data.total) {
+        throw new Error("Expected embedded resources diff payload.");
+      }
+      state.payload = data;
+      render();
+      el.statusLine.textContent = `Loaded ${data.modules.length.toLocaleString()} modules from ${sourceLabel}.`;
+    }
+
+    attachEvents();
+    window.loadFromObject = loadFromObject;
+  </script>
+</body>
+</html>

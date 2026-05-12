@@ -41,7 +41,7 @@ source $WORKSPACE/cms-bot/jenkins-artifacts
 # create folder for the baseline
 mkdir -p $WORKSPACE/baseline-hlt-p2-timing
 # get the csv files for the baseline
-get_jenkins_artifacts hlt-p2-timing/${COMPARISON_RELEASE}/${COMPARISON_ARCH} $WORKSPACE/baseline-hlt-p2-timing/
+get_jenkins_artifacts hlt-p2-timing/${COMPARISON_RELEASE}/${COMPARISON_ARCH}/ $WORKSPACE/baseline-hlt-p2-timing/
 
 # check if the comparison script is available and if it is produce comparison plots
 if which compareGPUMemoryProfiles.py >/dev/null 2>&1; then

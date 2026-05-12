@@ -339,6 +339,14 @@ fi
 
 WORKFLOWS_PR_LABELS=""
 scram -a $SCRAM_ARCH project $CMSSW_IB
+
+if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
+  if [ "$(uname -m)" = "x86_64" ] ; then
+    if [ -e $(grep 'RELEASETOP=' $CMSSW_IB/.SCRAM/${SCRAM_ARCH}/Environment  | sed 's|.*=||')/src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh ]; then
+      DO_HLT_P2_TIMING=true
+    fi
+  fi
+fi
 if $DO_COMPARISON ; then
   mkdir $WORKSPACE/ib-baseline-tests
   pushd $WORKSPACE/ib-baseline-tests
@@ -354,6 +362,7 @@ if $DO_COMPARISON ; then
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
+    echo "HLT_P2_TIMING=${DO_HLT_P2_TIMING}" >> run-baseline-${BUILD_ID}-01.default
 
     PR_LABELS=$(curl -s https://api.github.com/repos/${PR_REPO}/issues/${PR_NUMBER}/labels | grep '"name":' | sed 's|.*: *||;s|"||g;s|-pending||;s|-approved||;s|-rejected||' | tr ',\n' '  ' | tr '[a-z-]' '[A-Z_]')
     EX_WFS=""
@@ -1390,13 +1399,8 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ ${#SELECTED_GPU_TYPES[@]} -ne 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
     DO_GPU_TESTS=true
   fi
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
-    if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
-      if [ -e ${CMSSW_RELEASE_BASE}/src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh ]; then
-        DO_HLT_P2_TIMING=true
-        mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
-      fi
-    fi
+  if $DO_HLT_P2_TIMING ; then
+    mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_INTEGRATION$' | wc -l) -gt 0 ] ; then
     if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then

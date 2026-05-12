@@ -2,15 +2,26 @@
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 cd $LOCALRT
+source $WORKSPACE/cms-bot/jenkins-artifacts
+if has_jenkins_artifacts hlt-p2-timing/$RELEASE_FORMAT/${ARCHITECTURE}/status.txt ; then
+  echo "SKIPPED: Not running hlt-p2-timing as it is already run"
+  exit 0
+fi
 git cms-addpkg HLTrigger/Configuration
 cd src/HLTrigger/Configuration/python/HLT_75e33/test
 # Uncomment the following in case we have to use quick patch for patatrack-scripts
 #echo "git clone https://github.com/cms-externals/patatrack-scripts --depth 1" >> $WORKSPACE/run.sh
-timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1
-mv Phase2Timing_resources*.json $WORKSPACE/upload
+RES="passed"
+mkdir -p $WORKSPACE/upload
+timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1 || RES="failed"
+mv Phase2Timing_resources*.json $WORKSPACE/upload || RES="failed"
 if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
-    mv logs.Phase2_L1P2GT_HLT/gpu_memory.csv $WORKSPACE/upload/gpu_memory_ph2_hlt.csv
-    mv logs.Phase2_L1P2GT_HLT/gpu_usage.csv $WORKSPACE/upload/gpu_usage_ph2_hlt.csv
-    mv logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $WORKSPACE/upload/gpu_memory_ph2_ngt.csv
-    mv logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv $WORKSPACE/upload/gpu_usage_ph2_ngt.csv
+  (
+    mv logs.Phase2_L1P2GT_HLT/gpu_memory.csv      $WORKSPACE/upload/gpu_memory_ph2_hlt.csv &&
+    mv logs.Phase2_L1P2GT_HLT/gpu_usage.csv       $WORKSPACE/upload/gpu_usage_ph2_hlt.csv &&
+    mv logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $WORKSPACE/upload/gpu_memory_ph2_ngt.csv &&
+    mv logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv  $WORKSPACE/upload/gpu_usage_ph2_ngt.csv
+  ) || RES="failed"
 fi
+echo "${RES}" > $WORKSPACE/upload/status.txt
+send_jenkins_artifacts $WORKSPACE/upload hlt-p2-timing/$RELEASE_FORMAT/${ARCHITECTURE}/

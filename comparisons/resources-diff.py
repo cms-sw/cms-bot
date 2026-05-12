@@ -4,7 +4,6 @@ import sys
 import json
 import os
 
-
 VIEWER_TEMPLATE = "resources_diff_viewer.html"
 
 
@@ -40,7 +39,9 @@ def get_or_default(data, key, default=0):
     return value if isinstance(value, (int, float, str)) else default
 
 
-def build_summary_payload(ibdata, prdata, results, datamapib, datamappr, datamapres, threshold, error_threshold):
+def build_summary_payload(
+    ibdata, prdata, results, datamapib, datamappr, datamapres, threshold, error_threshold
+):
     total_ib = ibdata.get("total", {})
     total_pr = prdata.get("total", {})
     total_res = results.get("total", {})
@@ -75,13 +76,16 @@ def build_summary_payload(ibdata, prdata, results, datamapib, datamappr, datamap
             "events": {
                 "ib": get_or_default(total_ib, "events", 0),
                 "pr": get_or_default(total_pr, "events", 0),
-                "diff": get_or_default(total_pr, "events", 0) - get_or_default(total_ib, "events", 0),
+                "diff": get_or_default(total_pr, "events", 0)
+                - get_or_default(total_ib, "events", 0),
             },
         },
         "modules": [],
     }
 
-    for item in sorted(datamapres.items(), key=lambda x: x[1].get("time_thread_frac_diff", 0), reverse=True):
+    for item in sorted(
+        datamapres.items(), key=lambda x: x[1].get("time_thread_frac_diff", 0), reverse=True
+    ):
         module_res = item[1]
         key = module_res.get("type", "") + "|" + module_res.get("label", "")
         if key == "|":
@@ -123,7 +127,8 @@ def build_summary_payload(ibdata, prdata, results, datamapib, datamappr, datamap
                 "events": {
                     "ib": get_or_default(module_ib, "events", 0),
                     "pr": get_or_default(module_pr, "events", 0),
-                    "diff": get_or_default(module_pr, "events", 0) - get_or_default(module_ib, "events", 0),
+                    "diff": get_or_default(module_pr, "events", 0)
+                    - get_or_default(module_ib, "events", 0),
                 },
             }
         )

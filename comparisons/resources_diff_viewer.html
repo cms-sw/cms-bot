@@ -150,51 +150,29 @@
     .totals-table-wrap td:nth-child(2),
     .table-scroller th:nth-child(2),
     .table-scroller td:nth-child(2) {
-      width: 14%;
+      width: 18%;
     }
 
     .totals-table-wrap th:nth-child(3),
     .totals-table-wrap td:nth-child(3),
     .table-scroller th:nth-child(3),
     .table-scroller td:nth-child(3) {
-      width: 20%;
+      width: 36%;
     }
 
     .totals-table-wrap th:nth-child(4),
     .totals-table-wrap td:nth-child(4),
     .table-scroller th:nth-child(4),
-    .table-scroller td:nth-child(4) {
-      width: 12%;
-    }
-
+    .table-scroller td:nth-child(4),
     .totals-table-wrap th:nth-child(5),
     .totals-table-wrap td:nth-child(5),
     .table-scroller th:nth-child(5),
-    .table-scroller td:nth-child(5) {
-      width: 10%;
-    }
-
+    .table-scroller td:nth-child(5),
     .totals-table-wrap th:nth-child(6),
     .totals-table-wrap td:nth-child(6),
     .table-scroller th:nth-child(6),
     .table-scroller td:nth-child(6) {
-      width: 12%;
-    }
-
-    .totals-table-wrap th:nth-child(7),
-    .totals-table-wrap td:nth-child(7),
-    .table-scroller th:nth-child(7),
-    .table-scroller td:nth-child(7) {
-      width: 10%;
-    }
-
-    .totals-table-wrap th:nth-child(8),
-    .totals-table-wrap td:nth-child(8),
-    .table-scroller th:nth-child(8),
-    .table-scroller td:nth-child(8),
-    .table-scroller th:nth-child(9),
-    .table-scroller td:nth-child(9) {
-      width: 9%;
+      width: 14%;
     }
 
     .table-scroller td:nth-child(2),
@@ -269,11 +247,14 @@
             <input id="filterInput" type="text" placeholder="Filter by module type or label">
           </div>
           <div>
-            <label for="valueSelect">Main Table Values</label>
+            <label for="valueSelect">Main Table Metric</label>
             <select id="valueSelect">
-              <option value="diff">Diff</option>
-              <option value="pr">PR</option>
-              <option value="ib">IB</option>
+              <option value="real-time">Real Time</option>
+              <option value="real-frac">Real % Total</option>
+              <option value="cpu-time">CPU Time</option>
+              <option value="cpu-frac" selected>CPU % Total</option>
+              <option value="alloc">Alloc Memory</option>
+              <option value="dealloc">Dealloc Memory</option>
             </select>
           </div>
         </div>
@@ -287,7 +268,7 @@
       </div>
 
       <div class="totals">
-        <p class="totals-title">Totals</p>
+        <p class="totals-title" id="totalsTitle">Totals</p>
         <div class="totals-table-wrap">
           <table>
             <thead>
@@ -295,11 +276,9 @@
                 <th></th>
                 <th>Type</th>
                 <th>Label</th>
-                <th class="num">Real Time Diff</th>
-                <th class="num">CPU Time Diff</th>
-                <th class="num">Alloc Memory Diff</th>
-                <th class="num">Dealloc Memory Diff</th>
-                <th class="num">Events Diff</th>
+                <th class="num">IB</th>
+                <th class="num">PR</th>
+                <th class="num">Diff</th>
               </tr>
             </thead>
             <tbody id="totalBody"></tbody>
@@ -358,22 +337,36 @@
     .detail-inner th { background: #eaf2e4; font-size: 0.72rem; }
     .detail-inner th:first-child,
     .detail-inner td:first-child {
-      width: 72px;
+      width: 34%;
       white-space: nowrap;
     }
     .detail-inner th:not(:first-child),
     .detail-inner td:not(:first-child) {
-      width: calc((100% - 72px) / 5);
+      width: 22%;
     }
     .detail-inner td { border-bottom: 1px solid #dde8d5; }
     .detail-inner tr:last-child td { border-bottom: 0; font-weight: 600; }
   </style>
   <script>
+    const SELECTABLE_METRICS = [
+      { key: "real-time", label: "Real Time", metricKey: "time_real", valueType: "value", decimals: 2 },
+      { key: "real-frac", label: "Real % Total", metricKey: "time_real", valueType: "percent", decimals: 2, suffix: "%", threshold: true },
+      { key: "cpu-time", label: "CPU Time", metricKey: "time_thread", valueType: "value", decimals: 2 },
+      { key: "cpu-frac", label: "CPU % Total", metricKey: "time_thread", valueType: "percent", decimals: 2, suffix: "%", threshold: true },
+      { key: "alloc", label: "Alloc Memory", metricKey: "mem_alloc", valueType: "value", decimals: 0 },
+      { key: "dealloc", label: "Dealloc Memory", metricKey: "mem_free", valueType: "value", decimals: 0 }
+    ];
+
+    const DETAIL_METRICS = [
+      ...SELECTABLE_METRICS,
+      { key: "events", label: "Events", metricKey: "events", valueType: "value", decimals: 0 }
+    ];
+
     const state = {
       payload: null,
       filter: "",
-      sortKey: "cpu-frac-desc",
-      displayValue: "diff",
+      sortKey: "diff-desc",
+      selectedMetricKey: "cpu-frac",
       expandedModules: new Set()
     };
 
@@ -381,6 +374,7 @@
       filterInput: document.getElementById("filterInput"),
       valueSelect: document.getElementById("valueSelect"),
       legendBar: document.getElementById("legendBar"),
+      totalsTitle: document.getElementById("totalsTitle"),
       totalBody: document.getElementById("totalBody"),
       modulesHead: document.getElementById("modulesHead"),
       modulesBody: document.getElementById("modulesBody"),
@@ -395,21 +389,31 @@
       });
     }
 
-    function metricTriple(metric, decimals) {
-      return `${fmt(metric.ib, decimals)}<br>${fmt(metric.pr, decimals)}<br>${fmt(metric.diff, decimals)}`;
+    function getMetricOption(key) {
+      return SELECTABLE_METRICS.find((option) => option.key === key) || SELECTABLE_METRICS[0];
     }
 
-    function metricDisplayValue(metric, decimals) {
-      return fmt(metric[state.displayValue], decimals);
+    function metricValue(metric, option, variant) {
+      if (!metric) return NaN;
+      if (option.valueType === "percent") return metric[`frac_${variant}`];
+      return metric[variant];
     }
 
-    function metricDisplayPercent(metric, decimals) {
-      return fmt(metric[`frac_${state.displayValue}`], decimals);
+    function formatMetricValue(metric, option, variant) {
+      return `${fmt(metricValue(metric, option, variant), option.decimals)}${option.suffix || ""}`;
     }
 
-    function metricDisplayClass(metric) {
-      if (state.displayValue !== "diff") return "";
-      return thresholdClass(metric.frac_diff);
+    function formatTotalMetricValue(metric, option, variant) {
+      const value = metricValue(metric, option, variant);
+      if (option.valueType === "percent" && !Number.isFinite(Number(value))) {
+        return `100${option.suffix || ""}`;
+      }
+      return formatMetricValue(metric, option, variant);
+    }
+
+    function diffMetricClass(metric, option) {
+      if (!option.threshold) return "";
+      return thresholdClass(metricValue(metric, option, "diff"));
     }
 
     function thresholdClass(value) {
@@ -436,19 +440,16 @@
       return Number.isFinite(n) ? n : 0;
     }
 
-    function setDisplayValue(displayValue) {
-      state.displayValue = displayValue;
-      el.valueSelect.value = displayValue;
+    function setSelectedMetric(metricKey) {
+      state.selectedMetricKey = metricKey;
+      el.valueSelect.value = metricKey;
       renderTotals();
       renderModulesTable();
     }
 
-    function sortMetricValue(metric) {
-      return asNumber(metric[state.displayValue]);
-    }
-
-    function sortMetricPercent(metric) {
-      return asNumber(metric[`frac_${state.displayValue}`]);
+    function selectedMetricValue(module, variant, option) {
+      const selectedOption = option || getMetricOption(state.selectedMetricKey);
+      return asNumber(metricValue(module[selectedOption.metricKey], selectedOption, variant));
     }
 
     function sortedModules(modules) {
@@ -457,33 +458,8 @@
         if (!f) return true;
         return module.type.toLowerCase().includes(f) || module.label.toLowerCase().includes(f);
       });
+      const selectedOption = getMetricOption(state.selectedMetricKey);
       filtered.sort((a, b) => {
-        const aRealTimeDiff = a.time_real.diff || 0;
-        const bRealTimeDiff = b.time_real.diff || 0;
-        const aRealFracDiff = a.time_real.frac_diff || 0;
-        const bRealFracDiff = b.time_real.frac_diff || 0;
-        const aCpuTimeDiff = a.time_thread.diff || 0;
-        const bCpuTimeDiff = b.time_thread.diff || 0;
-        const aCpuFracDiff = a.time_thread.frac_diff || 0;
-        const bCpuFracDiff = b.time_thread.frac_diff || 0;
-        const aAllocDiff = a.mem_alloc.diff || 0;
-        const bAllocDiff = b.mem_alloc.diff || 0;
-        const aFreeDiff = a.mem_free.diff || 0;
-        const bFreeDiff = b.mem_free.diff || 0;
-
-        const aRealTime = sortMetricValue(a.time_real);
-        const bRealTime = sortMetricValue(b.time_real);
-        const aRealFrac = sortMetricPercent(a.time_real);
-        const bRealFrac = sortMetricPercent(b.time_real);
-        const aCpuTime = sortMetricValue(a.time_thread);
-        const bCpuTime = sortMetricValue(b.time_thread);
-        const aCpuFrac = sortMetricPercent(a.time_thread);
-        const bCpuFrac = sortMetricPercent(b.time_thread);
-        const aAlloc = sortMetricValue(a.mem_alloc);
-        const bAlloc = sortMetricValue(b.mem_alloc);
-        const aFree = sortMetricValue(a.mem_free);
-        const bFree = sortMetricValue(b.mem_free);
-
         switch (state.sortKey) {
           case "type-asc":
             return a.type.localeCompare(b.type) || a.label.localeCompare(b.label);
@@ -493,96 +469,55 @@
             return a.label.localeCompare(b.label) || a.type.localeCompare(b.type);
           case "label-desc":
             return b.label.localeCompare(a.label) || b.type.localeCompare(a.type);
-          case "real-time-diff-asc":
-          case "real-time-asc":
-            return aRealTime - bRealTime;
-          case "real-time-diff-desc":
-          case "real-time-desc":
-            return bRealTime - aRealTime;
-          case "real-frac-diff-asc":
-          case "real-frac-asc":
-            return aRealFrac - bRealFrac;
-          case "real-frac-diff-desc":
-          case "real-frac-desc":
-            return bRealFrac - aRealFrac;
-          case "cpu-time-diff-asc":
-          case "cpu-time-asc":
-            return aCpuTime - bCpuTime;
-          case "cpu-time-diff-desc":
-          case "cpu-time-desc":
-            return bCpuTime - aCpuTime;
-          case "cpu-frac-diff-asc":
-          case "thread-frac-asc":
-          case "cpu-frac-asc":
-            return aCpuFrac - bCpuFrac;
-          case "cpu-frac-diff-desc":
-          case "thread-frac-desc":
-          case "cpu-frac-desc":
-            return bCpuFrac - aCpuFrac;
-          case "alloc-diff-asc":
-          case "alloc-asc":
-            return aAlloc - bAlloc;
-          case "alloc-diff-desc":
-          case "alloc-desc":
-            return bAlloc - aAlloc;
-          case "dealloc-diff-asc":
-          case "dealloc-asc":
-            return aFree - bFree;
-          case "dealloc-diff-desc":
-          case "dealloc-desc":
-            return bFree - aFree;
+          case "ib-asc":
+            return selectedMetricValue(a, "ib", selectedOption) - selectedMetricValue(b, "ib", selectedOption);
+          case "ib-desc":
+            return selectedMetricValue(b, "ib", selectedOption) - selectedMetricValue(a, "ib", selectedOption);
+          case "pr-asc":
+            return selectedMetricValue(a, "pr", selectedOption) - selectedMetricValue(b, "pr", selectedOption);
+          case "pr-desc":
+            return selectedMetricValue(b, "pr", selectedOption) - selectedMetricValue(a, "pr", selectedOption);
+          case "diff-asc":
+            return selectedMetricValue(a, "diff", selectedOption) - selectedMetricValue(b, "diff", selectedOption);
+          case "diff-desc":
+            return selectedMetricValue(b, "diff", selectedOption) - selectedMetricValue(a, "diff", selectedOption);
           default:
-            return bCpuFracDiff - aCpuFracDiff;
+            return selectedMetricValue(b, "diff", selectedOption) - selectedMetricValue(a, "diff", selectedOption);
         }
       });
       return filtered;
     }
 
-    function buildTotalDetailRow(total) {
-      const COLSPAN = 8;
+    function buildDetailMetricsTable(entry, colspan, useTotalFallback = false) {
       const tr = document.createElement("tr");
       tr.className = "detail-row";
-      tr.innerHTML = `<td colspan="${COLSPAN}"></td>`;
+      tr.innerHTML = `<td colspan="${colspan}"></td>`;
       const inner = document.createElement("div");
       inner.className = "detail-inner";
       const table = document.createElement("table");
+      const rows = DETAIL_METRICS.map((option) => {
+        const metric = entry[option.metricKey];
+        const diffClass = diffMetricClass(metric, option);
+        const formatter = useTotalFallback ? formatTotalMetricValue : formatMetricValue;
+        return `
+          <tr>
+            <td>${option.label}</td>
+            <td class="num mono">${formatter(metric, option, "ib")}</td>
+            <td class="num mono">${formatter(metric, option, "pr")}</td>
+            <td class="num mono ${diffClass}">${formatter(metric, option, "diff")}</td>
+          </tr>
+        `;
+      }).join("");
       table.innerHTML = `
         <thead>
           <tr>
-            <th></th>
-            <th class="num">Real Time</th>
-            <th class="num">CPU Time</th>
-            <th class="num">Alloc Memory</th>
-            <th class="num">Dealloc Memory</th>
-            <th class="num">Events</th>
+            <th>Metric</th>
+            <th class="num">IB</th>
+            <th class="num">PR</th>
+            <th class="num">Diff</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>IB</td>
-            <td class="num mono">${fmt(total.time_real.ib, 2)}</td>
-            <td class="num mono">${fmt(total.time_thread.ib, 2)}</td>
-            <td class="num mono">${fmt(total.mem_alloc.ib, 0)}</td>
-            <td class="num mono">${fmt(total.mem_free.ib, 0)}</td>
-            <td class="num mono">${fmt(total.events.ib, 0)}</td>
-          </tr>
-          <tr>
-            <td>PR</td>
-            <td class="num mono">${fmt(total.time_real.pr, 2)}</td>
-            <td class="num mono">${fmt(total.time_thread.pr, 2)}</td>
-            <td class="num mono">${fmt(total.mem_alloc.pr, 0)}</td>
-            <td class="num mono">${fmt(total.mem_free.pr, 0)}</td>
-            <td class="num mono">${fmt(total.events.pr, 0)}</td>
-          </tr>
-          <tr>
-            <td>Diff   </td>
-            <td class="num mono">${fmt(total.time_real.diff, 2)}</td>
-            <td class="num mono">${fmt(total.time_thread.diff, 2)}</td>
-            <td class="num mono">${fmt(total.mem_alloc.diff, 0)}</td>
-            <td class="num mono">${fmt(total.mem_free.diff, 0)}</td>
-            <td class="num mono">${fmt(total.events.diff, 0)}</td>
-          </tr>
-        </tbody>
+        <tbody>${rows}</tbody>
       `;
       inner.appendChild(table);
       tr.firstElementChild.appendChild(inner);
@@ -592,21 +527,22 @@
     function renderTotals() {
       const total = state.payload.total;
       const expanded = state.expandedModules.has("__total__");
+      const selectedOption = getMetricOption(state.selectedMetricKey);
+      const selectedMetric = total[selectedOption.metricKey];
       el.totalBody.innerHTML = "";
+      el.totalsTitle.textContent = `Totals (${selectedOption.label})`;
       const row = document.createElement("tr");
       row.innerHTML = `
         <td><button class="expand-btn" data-key="__total__">${expanded ? "▼" : "▶"}</button></td>
         <td>${total.type}</td>
         <td>${total.label}</td>
-        <td class="num mono">${metricDisplayValue(total.time_real, 2)}</td>
-        <td class="num mono">${metricDisplayValue(total.time_thread, 2)}</td>
-        <td class="num mono">${metricDisplayValue(total.mem_alloc, 0)}</td>
-        <td class="num mono">${metricDisplayValue(total.mem_free, 0)}</td>
-        <td class="num mono">${metricDisplayValue(total.events, 0)}</td>
+        <td class="num mono">${formatTotalMetricValue(selectedMetric, selectedOption, "ib")}</td>
+        <td class="num mono">${formatTotalMetricValue(selectedMetric, selectedOption, "pr")}</td>
+        <td class="num mono ${diffMetricClass(selectedMetric, selectedOption)}">${formatTotalMetricValue(selectedMetric, selectedOption, "diff")}</td>
       `;
       el.totalBody.appendChild(row);
       if (expanded) {
-        el.totalBody.appendChild(buildTotalDetailRow(total));
+        el.totalBody.appendChild(buildDetailMetricsTable(total, 6, true));
       }
       el.totalBody.querySelector(".expand-btn").addEventListener("click", () => {
         if (state.expandedModules.has("__total__")) {
@@ -616,66 +552,6 @@
         }
         renderTotals();
       });
-    }
-
-    function buildDetailRow(module, colspan) {
-      const tr = document.createElement("tr");
-      tr.className = "detail-row";
-      tr.innerHTML = `<td colspan="${colspan}"></td>`;
-
-      const inner = document.createElement("div");
-      inner.className = "detail-inner";
-
-      const table = document.createElement("table");
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th></th>
-            <th class="num">Real Time</th>
-            <th class="num">Real % of Total</th>
-            <th class="num">CPU Time</th>
-            <th class="num">CPU % of Total</th>
-            <th class="num">Alloc Memory</th>
-            <th class="num">Dealloc Memory</th>
-            <th class="num">Events</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>IB</td>
-            <td class="num mono">${fmt(module.time_real.ib, 2)}</td>
-            <td class="num mono">${fmt(module.time_real.frac_ib, 2)}%</td>
-            <td class="num mono">${fmt(module.time_thread.ib, 2)}</td>
-            <td class="num mono">${fmt(module.time_thread.frac_ib, 2)}%</td>
-            <td class="num mono">${fmt(module.mem_alloc.ib, 0)}</td>
-            <td class="num mono">${fmt(module.mem_free.ib, 0)}</td>
-            <td class="num mono">${fmt(module.events.ib, 0)}</td>
-          </tr>
-          <tr>
-            <td>PR</td>
-            <td class="num mono">${fmt(module.time_real.pr, 2)}</td>
-            <td class="num mono">${fmt(module.time_real.frac_pr, 2)}%</td>
-            <td class="num mono">${fmt(module.time_thread.pr, 2)}</td>
-            <td class="num mono">${fmt(module.time_thread.frac_pr, 2)}%</td>
-            <td class="num mono">${fmt(module.mem_alloc.pr, 0)}</td>
-            <td class="num mono">${fmt(module.mem_free.pr, 0)}</td>
-            <td class="num mono">${fmt(module.events.pr, 0)}</td>
-          </tr>
-          <tr>
-            <td>Diff</td>
-            <td class="num mono">${fmt(module.time_real.diff, 2)}</td>
-            <td class="num mono">${fmt(module.time_real.frac_diff, 2)}%</td>
-            <td class="num mono">${fmt(module.time_thread.diff, 2)}</td>
-            <td class="num mono ${thresholdClass(module.time_thread.frac_diff)}">${fmt(module.time_thread.frac_diff, 2)}%</td>
-            <td class="num mono">${fmt(module.mem_alloc.diff, 0)}</td>
-            <td class="num mono">${fmt(module.mem_free.diff, 0)}</td>
-            <td class="num mono">${fmt(module.events.diff, 0)}</td>
-          </tr>
-        </tbody>
-      `;
-      inner.appendChild(table);
-      tr.firstElementChild.appendChild(inner);
-      return tr;
     }
 
     function toggleModuleExpanded(key) {
@@ -689,18 +565,16 @@
 
     function renderModulesTable() {
       const modules = sortedModules(state.payload.modules);
-      const COLSPAN = 9;
+      const COLSPAN = 6;
+      const selectedOption = getMetricOption(state.selectedMetricKey);
 
       el.modulesHead.innerHTML = `
         <th></th>
         <th class="sortable" data-sort-base="type">Module Type</th>
         <th class="sortable" data-sort-base="label">Module Label</th>
-        <th class="num sortable" data-sort-base="real-time">Real Time</th>
-        <th class="num sortable" data-sort-base="real-frac">Real % Total</th>
-        <th class="num sortable" data-sort-base="cpu-time">CPU Time</th>
-        <th class="num sortable" data-sort-base="cpu-frac">CPU % Total</th>
-        <th class="num sortable" data-sort-base="alloc">Alloc Memory</th>
-        <th class="num sortable" data-sort-base="dealloc">Dealloc Memory</th>
+        <th class="num sortable" data-sort-base="ib">IB</th>
+        <th class="num sortable" data-sort-base="pr">PR</th>
+        <th class="num sortable" data-sort-base="diff">Diff</th>
       `;
 
       el.modulesBody.innerHTML = "";
@@ -715,24 +589,22 @@
       modules.forEach((module) => {
         const key = moduleKey(module);
         const expanded = state.expandedModules.has(key);
-        const cpuFracClass = metricDisplayClass(module.time_thread);
+        const selectedMetric = module[selectedOption.metricKey];
+        const diffClass = diffMetricClass(selectedMetric, selectedOption);
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td><button class="expand-btn" data-key="${key}">${expanded ? "▼" : "▶"}</button></td>
           <td>${module.type}</td>
           <td>${module.label}</td>
-          <td class="num mono">${metricDisplayValue(module.time_real, 2)}</td>
-          <td class="num mono">${metricDisplayPercent(module.time_real, 2)}%</td>
-          <td class="num mono">${metricDisplayValue(module.time_thread, 2)}</td>
-          <td class="num mono ${cpuFracClass}">${metricDisplayPercent(module.time_thread, 2)}%</td>
-          <td class="num mono">${metricDisplayValue(module.mem_alloc, 0)}</td>
-          <td class="num mono">${metricDisplayValue(module.mem_free, 0)}</td>
+          <td class="num mono">${formatMetricValue(selectedMetric, selectedOption, "ib")}</td>
+          <td class="num mono">${formatMetricValue(selectedMetric, selectedOption, "pr")}</td>
+          <td class="num mono ${diffClass}">${formatMetricValue(selectedMetric, selectedOption, "diff")}</td>
         `;
         el.modulesBody.appendChild(tr);
 
         if (expanded) {
-          el.modulesBody.appendChild(buildDetailRow(module, COLSPAN));
+          el.modulesBody.appendChild(buildDetailMetricsTable(module, COLSPAN));
         }
       });
 
@@ -775,7 +647,7 @@
         renderModulesTable();
       });
       el.valueSelect.addEventListener("change", () => {
-        setDisplayValue(el.valueSelect.value);
+        setSelectedMetric(el.valueSelect.value);
       });
     }
 

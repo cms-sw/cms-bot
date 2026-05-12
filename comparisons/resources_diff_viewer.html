@@ -409,7 +409,7 @@
 
     function metricDisplayClass(metric) {
       if (state.displayValue !== "diff") return "";
-      return thresholdClass(metric.diff);
+      return thresholdClass(metric.frac_diff);
     }
 
     function thresholdClass(value) {
@@ -431,6 +431,11 @@
       state.sortKey = sortKey;
     }
 
+    function asNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
     function setDisplayValue(displayValue) {
       state.displayValue = displayValue;
       el.valueSelect.value = displayValue;
@@ -439,11 +444,11 @@
     }
 
     function sortMetricValue(metric) {
-      return metric[state.displayValue] || 0;
+      return asNumber(metric[state.displayValue]);
     }
 
     function sortMetricPercent(metric) {
-      return metric[`frac_${state.displayValue}`] || 0;
+      return asNumber(metric[`frac_${state.displayValue}`]);
     }
 
     function sortedModules(modules) {

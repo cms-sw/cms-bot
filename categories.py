@@ -157,7 +157,6 @@ CMSSW_L2 = {
     # PPD
     "abenecke": ["ppd"],
     "vlimant": ["ppd"],
-    "nothingface0": ["dqm"],
     "gabrielmscampos": ["dqm"],
     # ML
     "valsdav": ["ml", "egamma-pog"],

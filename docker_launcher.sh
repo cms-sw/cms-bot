@@ -126,8 +126,12 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   done
   HAS_DOCKER=false
   if [ "X$USE_SINGULARITY" != "Xtrue" ] ; then
+    DOCKER_CMD="docker"
     if [ $(id -Gn 2>/dev/null | grep docker | wc -l) -gt 0 ] ; then
-      HAS_DOCKER=$(docker --version >/dev/null 2>&1 && echo true || echo false)
+      HAS_DOCKER=$($DOCKER_CMD --version >/dev/null 2>&1 && echo true || echo false)
+    fi
+    if ! $HAS_DOCKER ; then
+      DOCKER_CMD="podman"
     fi
   fi
   CMD2RUN="export PATH=${XPATH}\$PATH:/usr/sbin;"
@@ -136,7 +140,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   fi
   CMD2RUN="${CMD2RUN}export X509_USER_PROXY=${X509_USER_PROXY}; if [ ! -e ${X509_USER_PROXY} ] ; then voms-proxy-init -voms cms -rfc -valid 24:00 || true ; voms-proxy-info || true; fi; echo \$HOME; cd $WORKSPACE; echo \$PATH; $@"
   if $HAS_DOCKER ; then
-    docker pull $DOCKER_IMG
+    $DOCKER_CMD pull $DOCKER_IMG
     set +x
     DOCKER_OPT="-e USER=$XUSER"
     case $XUSER in
@@ -152,11 +156,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     done
     if [ "X$KRB5CCNAME" != "X" ] ; then DOCKER_OPT="${DOCKER_OPT} -e KRB5CCNAME=$KRB5CCNAME" ; fi
     set -x
-    echo "Passing to docker the args: "$CMD2RUN
-    if [ $(docker run --help | grep '\-\-init ' | wc -l) -gt 0 ] ; then
+    echo "Passing to $DOCKER_CMD the args: "$CMD2RUN
+    if [ $($DOCKER_CMD run --help | grep '\-\-init ' | wc -l) -gt 0 ] ; then
       DOCKER_OPT="--init $DOCKER_OPT"
     fi
-    docker run --rm --net=host $DOCKER_OPT $DOCKER_IMG sh -c "$CMD2RUN"
+    $DOCKER_CMD run --rm --net=host $DOCKER_OPT $DOCKER_IMG sh -c "$CMD2RUN"
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     DOCKER_IMGX=""

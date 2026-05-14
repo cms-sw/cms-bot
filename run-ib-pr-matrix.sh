@@ -73,7 +73,7 @@ pushd "$WORKSPACE/matrix-results"
     nano )       MATRIX_ARGS="-w nano -i all ${MATRIX_ARGS}" ;;
     input )      MATRIX_ARGS="-i all --maxSteps=2 ${MATRIX_ARGS}" ; CMD_OPTS="-n 1 --prefix ${CMS_BOT_DIR}/pr_testing/retry-command.sh" ; export CMS_BOT_RETRY_COUNT=3 ;;
     * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-          NJOBS=1
+          [ $NJOBS -gt 4 ] && NJOBS=4
           MATRIX_ARGS="$(get_gpu_matrix_args) ${MATRIX_ARGS}"
         fi
         ;;
@@ -90,11 +90,6 @@ pushd "$WORKSPACE/matrix-results"
   # Check what workflows will be ran (without any --command option)
   if ! check_invalid_wf_lists "${MATRIX_ARGS}" ; then
     exit 1
-  fi
-  if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-    NJOBS=$(grep 'GPU no' $WORKSPACE/runTheMatrix.log | wc -l)
-    if [ $NJOBS -eq 0 ] ; then NJOBS=1 ; fi
-    [ $NJOBS -lt 4 ] && NJOBS=4
   fi
   rm -f $WORKSPACE/runTheMatrix.log
 

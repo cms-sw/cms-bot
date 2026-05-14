@@ -95,11 +95,11 @@ def gpuList(gpu_type, jobs, max_jobs=4):
         if "unsupported" not in line
     ]
     if supported_lines:
-      jobs = min (jobs, max_jobs)
-      xid = 0
-      while len(supported_lines)<max_parallel:
-        supported_lines.append(supported_lines[xid])
-        xid+=1
+        jobs = min(jobs, max_jobs)
+        xid = 0
+        while len(supported_lines) < jobs:
+            supported_lines.append(supported_lines[xid])
+            xid += 1
     return supported_lines
 
 

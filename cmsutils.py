@@ -70,7 +70,7 @@ def _memorySizeGB():
     return count
 
 
-def gpuList(gpu_type):
+def gpuList(gpu_type, jobs, max_jobs=4):
     """
     Returns the number of supported GPUs for the given type ('cuda' or 'rocm').
 
@@ -94,6 +94,12 @@ def gpuList(gpu_type):
         for i, line in enumerate(o.strip().splitlines())
         if "unsupported" not in line
     ]
+    if supported_lines:
+      jobs = min (jobs, max_jobs)
+      xid = 0
+      while len(supported_lines)<max_parallel:
+        supported_lines.append(supported_lines[xid])
+        xid+=1
     return supported_lines
 
 

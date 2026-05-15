@@ -23,6 +23,7 @@ if [ "${IS_EVOLUTION}" = "0" ]; then
   # COMMENT: excluded workflows read old format file that is not supported in EVOLUTION_X branch
   PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0
 fi
+PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0
 
 if [ "$CMSSW_VER" -ge 1601 ] ; then
   PR_TEST_MATRIX_EXTRAS_GPU=18634.402,18634.403,18634.406,18634.412,18634.422,18634.423 #2026 Wfs

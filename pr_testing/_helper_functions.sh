@@ -34,7 +34,7 @@ function get_cached_GH_JSON (){
 }
 
 function git_clone_and_merge (){
-    ERR=0
+    local ERR=0
     PR_METADATA_PATH=$1  # Absolute path to JSON format text with PR data from github
     # ---
     BASE_REPO_NAME=$(${CMSBOT_PYTHON_CMD} -c "import json,sys,codecs;obj=json.load(codecs.open('${PR_METADATA_PATH}',encoding='utf-8',errors='ignore'));print(obj['base']['repo']['name'])")

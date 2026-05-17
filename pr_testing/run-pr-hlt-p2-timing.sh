@@ -17,10 +17,10 @@ rm -rf $WORKSPACE/rundir/__pycache__
 
 upload_gpu_csvs() {
   mkdir -p $JENKINS_UPLOAD_DIR/hlt-p2-timing
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_hlt.csv
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_hlt.csv
-  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_ngt.csv
-  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_ngt.csv
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_hlt.csv || return 1
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_hlt.csv || return 1
+  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_ngt.csv || return 1
+  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_ngt.csv ||  return 1
 }
 
 ERR=0
@@ -30,7 +30,11 @@ pushd $WORKSPACE/rundir
   timeout $TIMEOUT bash -e ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${WORKSPACE}/hlt-p2-timing.log || ERR=1
   # if the release is greater or equal to CMSSW_17_0_X upload the csv files
   if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
-      upload_gpu_csvs || echo "ERROR" > $JENKINS_UPLOAD_DIR/hlt-p2-timing/status
+      if ! upload_gpu_csvs ; then
+         echo "ERROR: Failed to copy Generated CSV files" >> ${WORKSPACE}/hlt-p2-timing.log
+         echo "ERROR" > $JENKINS_UPLOAD_DIR/hlt-p2-timing/status
+		 ERR=1
+	  fi
   fi
   set +o pipefail
 popd
@@ -48,15 +52,19 @@ if which compareGPUMemoryProfiles.py >/dev/null 2>&1; then
 
     # first check if the baseline job succeeded
     if grep -q "passed" $WORKSPACE/baseline-hlt-p2-timing/status.txt; then
-	# run the comparison job for the HLT timing menu
-	compareGPUMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_hlt.csv $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv --label1 ${COMPARISON_RELEASE} --label2 "This PR" --cms-label "cmssw integration" --no-show --output hlt_gpu_memory_comparison
-	# run the comparison job for the NGT men
-	compareGPUMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_ngt.csv $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv --label1 ${COMPARISON_RELEASE} --label2 "This PR" --cms-label "cmssw integration" --no-show --output ngt_gpu_memory_comparison
-	# copy back the png figures on the output folder
-	cp hlt_gpu_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/
-	cp ngt_gpu_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/
+	  # run the comparison job for the HLT timing menu
+	  compareGPUMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_hlt.csv $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv \
+	    --label1 ${COMPARISON_RELEASE} --label2 "This PR" --cms-label "cmssw integration" \
+	    --no-show --output hlt_gpu_memory_comparison || ERR=1
+	  # run the comparison job for the NGT men
+	  compareGPUMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_ngt.csv $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv \
+	    --label1 ${COMPARISON_RELEASE} --label2 "This PR" --cms-label "cmssw integration" \
+	    --no-show --output ngt_gpu_memory_comparison  || ERR=1
+	  # copy back the png figures on the output folder
+	  cp hlt_gpu_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
+	  cp ngt_gpu_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
     else
-	echo "Baseline job didn't pass, not executing any comparison"
+	  echo "Baseline job didn't pass, not executing any comparison"
     fi
 else
     echo "compareGPUMemoryProfiles.py is NOT available"

@@ -555,7 +555,8 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--builders 2  --tag ${PR_NUM}"
+    [ "${CMDBUILD_JOBS}" = "" ] && CMDBUILD_JOBS=2
+    CMSBUILD_ARGS="--builders ${CMDBUILD_JOBS} --tag ${PR_NUM}"
     BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
     MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')
 

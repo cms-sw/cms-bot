@@ -542,6 +542,7 @@ CMSSW_CATEGORIES = {
         "DQM/EcalPreshowerMonitorClient",
         "DQM/EcalPreshowerMonitorModule",
         "DQM/GEM",
+        "DQM/HGCAL",
         "DQM/HLTEvF",
         "DQM/HLXMonitor",
         "DQM/HcalCommon",

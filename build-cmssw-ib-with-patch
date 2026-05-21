@@ -27,10 +27,11 @@ rm -rf $WORKSPACE/../build-cache &
 cd $WORKSPACE
 rm -rf ${WRKDIR}/SPECS
 
-BUILD_JOBS=3
-[ "$CMDBUILD_JOBS" != "" ] && BUILD_JOBS="$CMDBUILD_JOBS"
-BUILD_NPROC=$(nproc)
+CMSBUILD_OVERRIDE_ARGS=""
+[ "$CMSBUILD_JOBS" != "" ] && CMSBUILD_OVERRIDE_ARGS="--builders ${CMSBUILD_JOBS}"
 
+BUILD_NPROC=$(nproc)
+BUILD_JOBS=2
 case $ARCHITECTURE in
   *_mic_*) export BUILD_ARCH=`echo $ARCHITECTURE | cut -f1,2 -d_` ;;
   *_armv7hl_*) BUILD_JOBS=1; BUILD_NPROC=3 ;;
@@ -111,6 +112,7 @@ if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   EX_OPTS="--force-tag"
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
 fi
+CMSBUILD_CMD="${CMSBUILD_CMD} ${CMSBUILD_OVERRIDE_ARGS}"
 [ $(grep 'upload-package-store-s3' PKGTOOLS/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store-s3"
 
 ## build and upload revision based packages

@@ -555,8 +555,7 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    [ "${CMDBUILD_JOBS}" = "" ] && CMDBUILD_JOBS=2
-    CMSBUILD_ARGS="--builders ${CMDBUILD_JOBS} --tag ${PR_NUM}"
+    CMSBUILD_ARGS="--builders 2 --tag ${PR_NUM}"
     BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
     MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')
 
@@ -572,11 +571,14 @@ if ${BUILD_EXTERNAL} ; then
       if [ "$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$')" = "estats" ] ; then
         if [ ${PKG_TOOL_VERSION} -ge 34 ] ; then
           if ${CMS_BOT_DIR}/get-external-avg-stats.py ${ARCHITECTURE} > ${WORKSPACE}/externals-resource-usage.json ; then
-            CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json --builders ${NCPU}"
+            CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json"
+            CMSBUILD_JOBS="${NCPU}"
           fi
         fi
       fi
     fi
+    CMSBUILD_OVERRIDE_ARGS=""
+    [ "${CMSBUILD_JOBS}" != "" ] && CMSBUILD_OVERRIDE_ARGS="--builders ${CMSBUILD_JOBS}"
     if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
       [ "${CMSBOT_SET_ENV_NO_PACKAGE_STORE}" = "true" ] && UPLOAD_TO_PACKAGE_STORE=false
       if $UPLOAD_TO_PACKAGE_STORE ; then
@@ -589,7 +591,7 @@ if ${BUILD_EXTERNAL} ; then
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} -i $WORKSPACE/$BUILD_DIR $REF_REPO \
-        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
+        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}") ${CMSBUILD_OVERRIDE_ARGS}"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     if [ -e cmsdist/cmssw-tool-conf.spec ] ; then
       echo "#PR ${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec

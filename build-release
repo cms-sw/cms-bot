@@ -15,13 +15,16 @@ ISSUE_NUMBER=$5
 DRY_RUN_PARAM=$6
 CMSDIST_HASH=$7
 CMSBUILD_BUILDER=$8
-[ "${CMSBUILD_BUILDER}" = "" ] && CMSBUILD_BUILDER=2
 echo DATE=`date`
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
 mkdir -p $BUILD_DIR
 BUILD_NPROC=$(nproc)
 QUEUE=$CMSSW_QUEUE
+
+CMSBUILD_OVERRIDE_ARGS=""
+[ "${CMSBUILD_BUILDER}" != "" ] && CMSBUILD_OVERRIDE_ARGS="--builders ${CMSBUILD_BUILDER}"
+DEFAULT_BUILDER=2
 
 #Workaround to fix py3-tomlkit which fails to build it if finds .git in the working directory
 if [ -d .git ] ; then mv .git backup.git ; fi
@@ -84,7 +87,7 @@ pushd $BUILD_DIR
   fi
   sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE > $WORKSPACE/prepare-cmsdist.log 2>&1
   echo DATE=`date`
-  CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER} --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC"
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER} --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC --builders ${DEFAULT_BUILDER}"
   case `uname -s` in
     Darwin ) MD5_CMD=md5;;
     * )      MD5_CMD=md5sum;;
@@ -94,6 +97,7 @@ pushd $BUILD_DIR
   else
     CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
+  CMSBUILD_CMD="${CMSBUILD_CMD} ${CMSBUILD_OVERRIDE_ARGS}"
   if [ -f CMSDIST/fakesystem.spec ] ; then
     PYTHONPATH= $CMSBUILD_CMD -i fake             build  fakesystem
     PYTHONPATH= $CMSBUILD_CMD -i fake --sync-back upload fakesystem
@@ -105,16 +109,16 @@ pushd $BUILD_DIR
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
   [ -e CMSDIST/gcc-fixincludes.spec ] && TOOL_CONF_PACKAGES="gcc-fixincludes ${TOOL_CONF_PACKAGES}"
   EXT_FAILED=false
-  PYTHONPATH= $CMSBUILD_CMD --builders ${CMSBUILD_BUILDER} build $TOOL_CONF_PACKAGES || EXT_FAILED=true
+  PYTHONPATH= $CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXT_FAILED=true
   echo DATE=`date`
   if $EXT_FAILED ; then
     BLD_PKGS=$(ls RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
-    if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --builders ${CMSBUILD_BUILDER} --sync-back upload ${BLD_PKGS} ; fi
+    if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
     rm -rf  tmp
     exit 1
   fi
   if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-    PYTHONPATH= $CMSBUILD_CMD --builders ${CMSBUILD_BUILDER} --sync-back upload $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`

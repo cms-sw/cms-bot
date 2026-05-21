@@ -112,7 +112,7 @@ if [ "${PKG_TOOL_VERSION}"  -gt 31 ] ; then
   if [ "$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$')" = "estats" ] ; then
     if [ "${PKG_TOOL_VERSION}" -ge 34 ] ; then
       if ${CMS_BOT_DIR}/get-external-avg-stats.py ${ARCHITECTURE} > ${WORKSPACE}/externals-resource-usage.json ; then
-        CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json"
+        CMSBUILD_CMD="${CMSBUILD_CMD} --estats ${WORKSPACE}/externals-resource-usage.json"
         CMSBUILD_JOBS="${NCPU}"
       fi
     fi

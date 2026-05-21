@@ -105,11 +105,12 @@ fi
 
 CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
 EX_OPTS=""
-if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
+PKG_TOOL_VERSION=$(echo ${PKGTOOLS_TAG} | cut -d- -f 2)
+if [ "${PKG_TOOL_VERSION}"  -gt 31 ] ; then
   EX_OPTS="--force-tag"
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
   if [ "$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$')" = "estats" ] ; then
-    if [ ${PKG_TOOL_VERSION} -ge 34 ] ; then
+    if [ "${PKG_TOOL_VERSION}" -ge 34 ] ; then
       if ${CMS_BOT_DIR}/get-external-avg-stats.py ${ARCHITECTURE} > ${WORKSPACE}/externals-resource-usage.json ; then
         CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json"
         CMSBUILD_JOBS="${NCPU}"

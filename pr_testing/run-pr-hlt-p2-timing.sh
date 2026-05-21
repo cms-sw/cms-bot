@@ -17,10 +17,19 @@ rm -rf $WORKSPACE/rundir/__pycache__
 
 upload_gpu_csvs() {
   mkdir -p $JENKINS_UPLOAD_DIR/hlt-p2-timing
+
+  # HLT timing menu files
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/cpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_memory_ph2_hlt.csv || return 1
   cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_hlt.csv || return 1
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_hlt.csv || return 1
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_usage.csv  $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_hlt.csv || return 1
+
+  # HLT timing menu (on CPU) files
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_memory_ph2_hlt_onCPU.csv || return 1
+
+  # NGT Scouting menu files
+  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_memory_ph2_ngt.csv ||  return 1
   cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_ngt.csv || return 1
-  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_ngt.csv ||  return 1
+  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv  $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_ngt.csv ||  return 1
 }
 
 ERR=0
@@ -43,7 +52,7 @@ popd
 source $WORKSPACE/cms-bot/jenkins-artifacts
 
 # check if the comparison script is available and if it is produce comparison plots
-if which compareGPUMemoryProfiles.py >/dev/null 2>&1; then
+if which compareMemoryProfiles.py >/dev/null 2>&1; then
 
     # create folder for the baseline
     mkdir -p $WORKSPACE/baseline-hlt-p2-timing
@@ -53,21 +62,21 @@ if which compareGPUMemoryProfiles.py >/dev/null 2>&1; then
     # first check if the baseline job succeeded
     if grep -q "passed" $WORKSPACE/baseline-hlt-p2-timing/status.txt; then
 	  # run the comparison job for the HLT timing menu
-	  compareGPUMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_hlt.csv $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv \
-	    --label1 ${COMPARISON_RELEASE} --label2 "This PR" --cms-label "cmssw integration" \
-	    --no-show --output hlt_gpu_memory_comparison || ERR=1
-	  # run the comparison job for the NGT men
-	  compareGPUMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_ngt.csv $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv \
-	    --label1 ${COMPARISON_RELEASE} --label2 "This PR" --cms-label "cmssw integration" \
-	    --no-show --output ngt_gpu_memory_comparison  || ERR=1
+	  compareMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_hlt.csv $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv \
+	    --label1 ${COMPARISON_RELEASE} --label2 "${PULL_REQUEST}"  --cms-label "cmssw integration" \
+	    --no-show --gpu --output hlt_memory_comparison || ERR=1
+	  # run the comparison job for the NGT menu
+	  compareMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_ngt.csv $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv \
+	    --label1 ${COMPARISON_RELEASE} --label2 "${PULL_REQUEST}"  --cms-label "cmssw integration" \
+	    --no-show --gpu --output ngt_memory_comparison  || ERR=1
 	  # copy back the png figures on the output folder
-	  cp hlt_gpu_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
-	  cp ngt_gpu_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
+	  cp gpu_hlt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
+	  cp gpu_ngt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
     else
 	  echo "Baseline job didn't pass, not executing any comparison"
     fi
 else
-    echo "compareGPUMemoryProfiles.py is NOT available"
+    echo "compareMemoryProfiles.py is NOT available"
 fi
 
 touch ${RESULTS_DIR}/11-hlt-p2-timing-report.res ${RESULTS_DIR}/11-hlt-p2-timing-failed.res
@@ -101,7 +110,7 @@ if [ $missing -eq 0 ]; then
   echo "HLT_P2_TIMING;SUCCESS,HLT Phase 2 timing Test,See Chart,${CHART_URL}" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   echo "HLT_P2_TIMING_LOG;OK,HLT Phase 2 timing Test Log,See Logs,hlt-p2-timing.log" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
-      echo "HLT_P2_TIMING_CSV;OK,HLT Phase 2 timing CSV files,See Logs,hlt-p2-timing" >> ${RESULTS_DIR}/hlt-p2-timing.txt
+      echo "HLT_P2_TIMING_CSV;OK,HLT Phase 2 hardware usage,See Logs,hlt-p2-timing" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   fi
   echo -e "**HLT P2 Timing**: [chart](${CHART_URL})" > ${RESULTS_DIR}/11-hlt-p2-timing-report.res
 

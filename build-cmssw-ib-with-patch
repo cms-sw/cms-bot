@@ -27,9 +27,6 @@ rm -rf $WORKSPACE/../build-cache &
 cd $WORKSPACE
 rm -rf ${WRKDIR}/SPECS
 
-CMSBUILD_OVERRIDE_ARGS=""
-[ "$CMSBUILD_JOBS" != "" ] && CMSBUILD_OVERRIDE_ARGS="--builders ${CMSBUILD_JOBS}"
-
 BUILD_NPROC=$(nproc)
 BUILD_JOBS=2
 case $ARCHITECTURE in
@@ -111,7 +108,17 @@ EX_OPTS=""
 if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   EX_OPTS="--force-tag"
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
+  if [ "$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$')" = "estats" ] ; then
+    if [ ${PKG_TOOL_VERSION} -ge 34 ] ; then
+      if ${CMS_BOT_DIR}/get-external-avg-stats.py ${ARCHITECTURE} > ${WORKSPACE}/externals-resource-usage.json ; then
+        CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json"
+        CMSBUILD_JOBS="${NCPU}"
+      fi
+    fi
+  fi
 fi
+CMSBUILD_OVERRIDE_ARGS=""
+[ "$CMSBUILD_JOBS" != "" ] && CMSBUILD_OVERRIDE_ARGS="--builders ${CMSBUILD_JOBS}"
 CMSBUILD_CMD="${CMSBUILD_CMD} ${CMSBUILD_OVERRIDE_ARGS}"
 [ $(grep 'upload-package-store-s3' PKGTOOLS/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store-s3"
 

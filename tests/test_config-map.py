@@ -4,6 +4,35 @@ import re
 
 KEYS_RE = "(IB_TEST_TYPE|BUILD_OPTS|CMS_BOT_BRANCH|CVMFS_INSTALL_IMAGE|DEBUG_EXTERNALS|SKIP_TESTS|REQUIRED_TEST|FORCE_FULL_IB|SLAVE_LABELS|SINGULARITY|IB_ONLY|BUILD_DAY|NO_IB|SCRAM_ARCH|RELEASE_QUEUE|BUILD_PATCH_RELEASE|PKGTOOLS_TAG|CMSDIST_TAG|RELEASE_BRANCH|ADDITIONAL_TESTS|PR_TESTS|DISABLED|ALWAYS_TAG_CMSSW|DO_STATIC_CHECKS|PROD_ARCH|ENABLE_DEBUG|PRS_TEST_CLANG|MESOS_QUEUE|DO_NOT_INSTALL|BUILD_HOUR|IB_WEB_PAGE|DOCKER_IMG)"
 
+errors = []
+
+
+def check_value(key, value):
+    print("Checking", key, value)
+    if key == "BUILD_OPTS":
+        for item in value.split(","):
+            if item in [
+                "estats",
+                "frame_pointer",
+                "no-biglib",
+                "no-lto",
+                "no-vecgeom",
+                "warnings",
+            ]:
+                continue
+            elif re.match("^(cpp)\d+$", item):
+                continue
+            elif re.match("^(builders):\d+$", item):
+                continue
+            elif re.match("^(microarchs):x86-64-v\d$", item):
+                continue
+            elif re.match("^(system|without):[a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+)*$", item):
+                continue
+            else:
+                errors.append("Invalid item '%s' in '%s=%s'" % (item, key, value))
+    return
+
+
 if __name__ == "__main__":
     for l in open("config.map").read().split("\n"):
         if not l:
@@ -12,5 +41,8 @@ if __name__ == "__main__":
         for p in l.split(";"):
             assert "=" in p
             key, value = p.split("=")
-            print(key, value)
-            assert re.match(KEYS_RE, key)
+            check_value(key, value)
+
+if errors:
+    print("\n".join(errors))
+    exit(1)

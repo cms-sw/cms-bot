@@ -64,7 +64,8 @@ pushd $BUILD_DIR/CMSDIST
   git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE
   [ -f ${CMSBUILD_OPTS_FILE} ] && source ${CMSBUILD_OPTS_FILE}
   if [ $(echo $CMSSW_X_Y_Z | grep patch | wc -l) -eq 0 ] ; then
-    [ "${BUILD_OPTS}" = "" ]     || echo "BUILD_OPTS=\"${BUILD_OPTS}\""         >> ${CMSBUILD_OPTS_FILE}
+    XBUILD_OPTS=$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep -v '^builders:' | tr '\n' ',' | sed -e 's|,$||')
+    [ "${XBUILD_OPTS}" = "" ]     || echo "BUILD_OPTS=\"${XBUILD_OPTS}\""       >> ${CMSBUILD_OPTS_FILE}
     [ "${MULTIARCH_OPTS}" = "" ] || echo "MULTIARCH_OPTS=\"${MULTIARCH_OPTS}\"" >> ${CMSBUILD_OPTS_FILE}
     if [ -e ${CMSBUILD_OPTS_FILE} ] ; then
       (git add ${CMSBUILD_OPTS_FILE} ; git commit -m 'Added build options' ${CMSBUILD_OPTS_FILE}) || true

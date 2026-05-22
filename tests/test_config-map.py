@@ -10,7 +10,13 @@ errors = []
 def check_value(key, value):
     print("Checking", key, value)
     if key == "BUILD_OPTS":
+        seen = []
         for item in value.split(","):
+            iname = item.split(":", 1)[0]
+            if iname in seen:
+                errors.append("ERROR: Duplicate item '%s' in '%s=%s'" % (iname, key, value))
+            else:
+                seen.append(iname)
             if item in [
                 "estats",
                 "frame_pointer",

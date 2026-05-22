@@ -26,13 +26,13 @@ def check_value(key, value):
                 "warnings",
             ]:
                 continue
-            elif re.match("^(cpp)\d+$", item):
+            elif re.match(r"^(cpp)\d+$", item):
                 continue
-            elif re.match("^(builders):\d+$", item):
+            elif re.match(r"^(builders):\d+$", item):
                 continue
-            elif re.match("^(microarchs):x86-64-v\d$", item):
+            elif re.match(r"^(microarchs):x86-64-v\d$", item):
                 continue
-            elif re.match("^(system|without):[a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+)*$", item):
+            elif re.match(r"^(system|without):[a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+)*$", item):
                 continue
             else:
                 errors.append("Invalid item '%s' in '%s=%s'" % (item, key, value))

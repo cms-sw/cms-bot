@@ -624,9 +624,12 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
     prs = []
     for pr_num in notes:
         pr = {"is_merge_commit": False, "from_merge_commit": False}
-        if notes[pr_num]["branch"] != "master":
-            if notes[pr_num]["branch"] != branch:
-                pr["from_merge_commit"] = True
+        pr_branch = (
+            notes[pr_num]["branch"] if notes[pr_num]["branch"] != "master" else CMSSW_DEVEL_BRANCH
+        )
+        print("Forward port? ", pr_num, pr_branch, branch)
+        if pr_branch != branch:
+            pr["from_merge_commit"] = True
         pr["number"] = pr_num
         pr["hash"] = notes[pr_num]["hash"]
         pr["author_login"] = notes[pr_num]["author"]

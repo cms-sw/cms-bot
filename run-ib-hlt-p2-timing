@@ -17,10 +17,13 @@ timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1 || RES="fail
 mv Phase2Timing_resources*.json $WORKSPACE/upload || RES="failed"
 if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
   (
-    mv logs.Phase2_L1P2GT_HLT/gpu_memory.csv      $WORKSPACE/upload/gpu_memory_ph2_hlt.csv &&
-    mv logs.Phase2_L1P2GT_HLT/gpu_usage.csv       $WORKSPACE/upload/gpu_usage_ph2_hlt.csv &&
-    mv logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $WORKSPACE/upload/gpu_memory_ph2_ngt.csv &&
-    mv logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv  $WORKSPACE/upload/gpu_usage_ph2_ngt.csv
+    mv logs.Phase2_L1P2GT_HLT/cpu_memory.csv       $WORKSPACE/upload/cpu_memory_ph2_hlt.csv &&
+    mv logs.Phase2_L1P2GT_HLT/gpu_memory.csv       $WORKSPACE/upload/gpu_memory_ph2_hlt.csv &&
+    mv logs.Phase2_L1P2GT_HLT/gpu_usage.csv        $WORKSPACE/upload/gpu_usage_ph2_hlt.csv &&
+    mv logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv $WORKSPACE/upload/cpu_memory_ph2_hlt_onCPU.csv &&
+    mv logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv  $WORKSPACE/upload/cpu_memory_ph2_ngt.csv &&
+    mv logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv  $WORKSPACE/upload/gpu_memory_ph2_ngt.csv &&
+    mv logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv   $WORKSPACE/upload/gpu_usage_ph2_ngt.csv
   ) || RES="failed"
 fi
 echo "${RES}" > $WORKSPACE/upload/status.txt

@@ -72,6 +72,7 @@ QUERY_SHA_HASH=$(echo -n "${QUERY}${DAS_EX_OPTS}" | sha256sum | sed 's| .*$||;s|
 QUERY_SHA=$(echo "${QUERY_SHA_HASH}" | sed 's|^\(..\)|\1/\1|')
 QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/${QUERY_SHA}"
 DAS_QUERY_DIR=das_query/$$
+ENABLE_DEBUG=false
 if [ "X${LOCALRT}" != "X" ] ; then DAS_QUERY_DIR="${LOCALRT}/${DAS_QUERY_DIR}" ; fi
 rm -rf ${DAS_QUERY_DIR}
 mkdir -p ${DAS_QUERY_DIR}
@@ -82,6 +83,9 @@ if [ "${FORMAT}" = "json" ]  ; then
   if [ "${QUERY_RESULTS}" = "" ] ; then
     sleep 1
     ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+    if grep -q 'failed to parse X509 proxy' ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ; then
+      ENABLE_DEBUG=true
+    fi
   else
     echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
@@ -90,6 +94,9 @@ else
   if [ "${QUERY_RESULTS}" = "" ] ; then
     sleep 1
     ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+    if grep -q 'failed to parse X509 proxy' ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ; then
+      ENABLE_DEBUG=true
+    fi
   else
     echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
@@ -103,4 +110,15 @@ if [ "$LIMIT_RESULTS" = "YES" ] ; then
 else
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
 fi
-rm -f ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info >/dev/null 2>&1 || true
+if ! $ENABLE_DEBUG ; then
+  rm -f ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info >/dev/null 2>&1 || true
+else
+  echo "============ DEBUG ========" >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+  echo "============ ENV   ========" >>${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+  env >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+  echo "============ VOMS  ========" >>${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+  voms-proxy-info >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out || true
+  if [ "${X509_USER_PROXY}" != "" ] ; then
+    ls -l "${X509_USER_PROXY}" >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out || true
+  fi
+fi

@@ -61,17 +61,34 @@ if which compareMemoryProfiles.py >/dev/null 2>&1; then
 
     # first check if the baseline job succeeded
     if grep -q "passed" $WORKSPACE/baseline-hlt-p2-timing/status.txt; then
-	  # run the comparison job for the HLT timing menu
+	  # run the GPU comparison job for the HLT timing menu
 	  compareMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_hlt.csv $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv \
 	    --label1 ${COMPARISON_RELEASE} --label2 "${PULL_REQUEST}"  --cms-label "cmssw integration" \
 	    --no-show --gpu --output hlt_memory_comparison || ERR=1
-	  # run the comparison job for the NGT menu
+	  # run the GPU comparison job for the NGT menu
 	  compareMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/gpu_memory_ph2_ngt.csv $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv \
 	    --label1 ${COMPARISON_RELEASE} --label2 "${PULL_REQUEST}"  --cms-label "cmssw integration" \
 	    --no-show --gpu --output ngt_memory_comparison  || ERR=1
+	  # run the CPU comparison job for the HLT timing menu
+	  compareMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/cpu_memory_ph2_hlt.csv $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/cpu_memory.csv \
+	    --label1 ${COMPARISON_RELEASE} --label2 "${PULL_REQUEST}"  --cms-label "cmssw integration" \
+	    --no-show --output hlt_memory_comparison || ERR=1
+	  # run the CPU comparison job for the NGT menu
+	  compareMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/cpu_memory_ph2_ngt.csv $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv \
+	    --label1 ${COMPARISON_RELEASE} --label2 "${PULL_REQUEST}"  --cms-label "cmssw integration" \
+	    --no-show --output ngt_memory_comparison  || ERR=1
+	  # run the CPU comparison job for the HL timing menu (on CPU)
+	  compareMemoryProfiles.py $WORKSPACE/baseline-hlt-p2-timing/cpu_memory_ph2_hlt_onCPU.csv $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv \
+	    --label1 ${COMPARISON_RELEASE} --label2 "${PULL_REQUEST}"  --cms-label "cmssw integration" \
+	    --no-show --output hltOnCPU_memory_comparison  || ERR=1
+
 	  # copy back the png figures on the output folder
 	  cp gpu_hlt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
 	  cp gpu_ngt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
+
+	  cp cpu_hlt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
+	  cp cpu_ngt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
+	  cp cpu_hltOnCPU_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
     else
 	  echo "Baseline job didn't pass, not executing any comparison"
     fi

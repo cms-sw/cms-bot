@@ -72,7 +72,7 @@ QUERY_SHA_HASH=$(echo -n "${QUERY}${DAS_EX_OPTS}" | sha256sum | sed 's| .*$||;s|
 QUERY_SHA=$(echo "${QUERY_SHA_HASH}" | sed 's|^\(..\)|\1/\1|')
 QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/${QUERY_SHA}"
 DAS_QUERY_DIR=das_query/$$
-ENABLE_DEBUG=false
+ENABLE_DEBUG=true
 if [ "X${LOCALRT}" != "X" ] ; then DAS_QUERY_DIR="${LOCALRT}/${DAS_QUERY_DIR}" ; fi
 rm -rf ${DAS_QUERY_DIR}
 mkdir -p ${DAS_QUERY_DIR}

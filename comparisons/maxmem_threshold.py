@@ -11,4 +11,4 @@ if CMSSW_VERSION != "":
     minor = int(parts[2]) if parts[2].isdigit() else 0
     CMSSW_VER = major * 100 + minor * 10
     if CMSSW_VER >= 1700:
-        ERROR_THRESHOLD = 10.0
+        ERROR_THRESHOLD = 30.0

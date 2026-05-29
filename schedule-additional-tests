@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 THISDIR=$(dirname $0)
-source ${THISDIR}/cmsrep.sh
+source ${THISDIR}/ci-cd_config.sh
 CONFIG_MAP=${THISDIR}/config.map
 if [ "X$PROFILING_WORKFLOWS" = "X" ] ; then
   PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')

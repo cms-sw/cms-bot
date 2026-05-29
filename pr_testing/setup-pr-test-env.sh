@@ -14,7 +14,7 @@ fi
 export CMSSW_VERSION_NUMBER=$(echo x0${CMSSW_MAJOR}x0${CMSSW_MINOR} | sed -r -e 's|x[0]*([0-9][0-9])|\1|g;s|^0||')
 
 if [ "$WORKSPACE" = "" ] ; then export WORKSPACE=$(/bin/pwd -P) ; fi
-source ${CMS_BOT_DIR}/cmsrep.sh
+source ${CMS_BOT_DIR}/ci-cd_config.sh
 source ${PR_TESTING_DIR}/_helper_functions.sh
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh

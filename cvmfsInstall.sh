@@ -50,7 +50,7 @@ function install_package() {
   fi
 }
 
-source $(dirname $0)/cmsrep.sh
+source $(dirname $0)/ci-cd_config.sh
 CMS_BOT_DIR=$(dirname $(realpath $0))
 source ${CMS_BOT_DIR}/cvmfs_deployment/utils.sh
 CVMFS_INSTALL=false

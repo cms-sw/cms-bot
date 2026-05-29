@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 
 [ -f ib-weeks ] || exit 1
-source $(dirname $0)/cmsrep.sh
+source $(dirname $0)/ci-cd_config.sh
 WEEK_NO="nweek-${CMS_WEEK_NUM}"
 WEEK_FOUND=`grep "^$WEEK_NO\$" ib-weeks | wc -l`
 

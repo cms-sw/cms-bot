@@ -2,7 +2,7 @@
 export WORKSPACE=$(/bin/pwd -P)
 export KEEP_SOURCE_GIT=true
 export BUILD_DIR=externals
-source $(dirname $0)/cmsrep.sh
+source $(dirname $0)/ci-cd_config.sh
 ARCH=""
 CMSDIST_BR=""
 PRS=""

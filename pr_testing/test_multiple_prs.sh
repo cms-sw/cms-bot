@@ -86,7 +86,7 @@ CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils
-source ${CMS_BOT_DIR}/cmsrep.sh
+source ${CMS_BOT_DIR}/ci-cd_config.sh
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common

@@ -6,7 +6,7 @@
 # ARCHITECTURE: architecture for the upload
 # ISSUE_NUMBER: the number of the issue that triggered the upload
 # DRY_RUN_PARAM: parameter that to use dry-run
-source $WORKSPACE/cmsrep.sh
+source $WORKSPACE/ci-cd_config.sh
 CMSSW_X_Y_Z=$1
 ARCHITECTURE=$2
 ISSUE_NUMBER=$3

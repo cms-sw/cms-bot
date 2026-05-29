@@ -1647,6 +1647,7 @@ fi
 
 if [ "${DO_HLT_P2_TIMING}" = "true" ] ;  then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt_p2_timing.prop
+  echo "HLT_P2_HOST=${HLT_P2_HOST}" >> $WORKSPACE/run-hlt_p2_timing.prop
 fi
 
 if [ "${DO_HLT_P2_INTEGRATION}" = "true" ] ;  then

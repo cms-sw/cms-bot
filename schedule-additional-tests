@@ -27,6 +27,9 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
   if [ "$x" == "baseline" ]; then
     echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> ${pfile}
   fi
+  if [ "$x" == "hlt-p2-timing" ] ; then
+    echo "HLT_P2_HOST=${HLT_P2_HOST}" >> ${pfile}
+  fi
   if [ "$x" = "profiling" ] ; then
     for wf in $PROFILING_WORKFLOWS; do
       nfile=$WORKSPACE/auto-$x-${wf}-properties

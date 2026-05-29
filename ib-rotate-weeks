@@ -40,7 +40,7 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   echo "CMSDIST_HASH="                    >> ${pfile}
   echo "INSTALL_PACKAGES=${PKGS}"         >> ${pfile}
   idx=1
-  for arch in amd64 ppc64le aarch64 ; do
+  for arch in amd64 ppc64le aarch64 riscv64 ; do
     [ "$parch" != "${arch}" ] || continue
     sarch=$(echo $oarch | sed "s|_${parch}_|_${arch}_|")
     xreg=""

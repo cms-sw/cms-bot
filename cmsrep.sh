@@ -1,4 +1,4 @@
-HLT_P2_HOST="cms-hlt-l4-01"
+HLT_P2_HOST="cms-hlt && singularity && x86_64 && nvidia_l4"
 CMSREP_SERVER=cmsrep.cern.ch
 CMSREP_IB_SERVER=cmsrep.cern.ch
 CMSBUILD_OPTS_FILE="etc/build_options.sh"

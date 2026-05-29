@@ -1,2 +1,1 @@
-nvidia_t4
 nvidia_l4

@@ -87,8 +87,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     fi
   fi
   case $DOCKER_IMG in
-    cmssw/*:aarch64) DOCKER_IMG="${DOCKER_IMG}-d20260519" ;;
-    cmssw/*:x86_64) DOCKER_IMG="${DOCKER_IMG}-d20260519" ;;
+    cmssw/el8:*) DOCKER_IMG="${DOCKER_IMG}-d20260519" ;;
+    cmssw/el9:*) DOCKER_IMG="${DOCKER_IMG}-d20260513" ;;
+    cmssw/el10:*) DOCKER_IMG="${DOCKER_IMG}-d20260513" ;;
     * )
   esac
   BUILD_BASEDIR=$(dirname $WORKSPACE)

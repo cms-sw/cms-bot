@@ -32807,6 +32807,16 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_16_1_1_patch3",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
             }
           ]
         },

@@ -113,7 +113,7 @@
     .grid {
       display: grid;
       gap: 12px;
-      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      grid-template-columns: repeat(5, minmax(160px, 1fr));
     }
 
     label {
@@ -488,6 +488,14 @@
               <option value="adiff-asc">PR - baseline ascending</option>
             </select>
           </div>
+          <div>
+            <label for="aggregationSelect">Aggregation</label>
+            <select id="aggregationSelect">
+              <option value="max" selected>max</option>
+              <option value="min">min</option>
+              <option value="abs-max">abs(max)</option>
+            </select>
+          </div>
           <label class="checkbox" for="hideZeroRows">
             <input id="hideZeroRows" type="checkbox">
             Hide workflows with only zero values
@@ -553,6 +561,12 @@
       { key: "pdiff", label: "100 * (PR - baseline) / baseline", unit: "%" }
     ];
 
+    const AGGREGATIONS = [
+      { key: "max", label: "max" },
+      { key: "min", label: "min" },
+      { key: "abs-max", label: "abs(max)" }
+    ];
+
     const state = {
       payload: null,
       workflows: [],
@@ -560,6 +574,7 @@
       search: "",
       quantityKey: "max memory",
       sortKey: "workflow-asc",
+      aggregationKey: "max",
       expandedWorkflows: new Set(),
       detailSortKey: "step",
       detailSortDir: "asc"
@@ -569,6 +584,7 @@
       workflowSearch: document.getElementById("workflowSearch"),
       quantitySelect: document.getElementById("quantitySelect"),
       sortSelect: document.getElementById("sortSelect"),
+      aggregationSelect: document.getElementById("aggregationSelect"),
       hideZeroRows: document.getElementById("hideZeroRows"),
       loadedCount: document.getElementById("loadedCount"),
       visibleCount: document.getElementById("visibleCount"),
@@ -611,6 +627,20 @@
 
     function fieldName(quantityKey, legendKey) {
       return `${quantityKey} ${legendKey}`;
+    }
+
+    function currentAggregation() {
+      return AGGREGATIONS.find((aggregation) => aggregation.key === state.aggregationKey) || AGGREGATIONS[0];
+    }
+
+    function aggregatedNumericValue(value) {
+      if (typeof value !== "number" || Number.isNaN(value)) {
+        return value;
+      }
+      if (state.aggregationKey === "abs-max") {
+        return Math.abs(value);
+      }
+      return value;
     }
 
     function formatValue(value, quantity, legend) {
@@ -690,7 +720,7 @@
         case "pdiff-asc": {
           const legendKey = state.sortKey.split("-")[0];
           const sortField = fieldName(currentQuantity().key, legendKey);
-          return compareMaybeNumbers(maxStepValue(left, sortField).value, maxStepValue(right, sortField).value)
+          return compareMaybeNumbers(aggregateStepValue(left, sortField).value, aggregateStepValue(right, sortField).value)
             || workflowNumber(left.name) - workflowNumber(right.name)
             || left.name.localeCompare(right.name);
         }
@@ -700,7 +730,7 @@
         case "pdiff-desc": {
           const legendKey = state.sortKey.split("-")[0];
           const sortField = fieldName(currentQuantity().key, legendKey);
-          return compareMaybeNumbers(maxStepValue(right, sortField).value, maxStepValue(left, sortField).value)
+          return compareMaybeNumbers(aggregateStepValue(right, sortField).value, aggregateStepValue(left, sortField).value)
             || workflowNumber(left.name) - workflowNumber(right.name)
             || left.name.localeCompare(right.name);
         }
@@ -731,7 +761,7 @@
       renderTable();
     }
 
-    function maxStepValue(row, selectedField) {
+    function aggregateStepValue(row, selectedField) {
       let bestValue = null;
       let bestStepData = null;
 
@@ -741,7 +771,30 @@
         if (typeof value !== "number" || Number.isNaN(value)) {
           continue;
         }
-        if (bestValue === null || value > bestValue) {
+
+        if (bestValue === null) {
+          bestValue = value;
+          bestStepData = stepData;
+          continue;
+        }
+
+        if (state.aggregationKey === "min") {
+          if (value < bestValue) {
+            bestValue = value;
+            bestStepData = stepData;
+          }
+          continue;
+        }
+
+        if (state.aggregationKey === "abs-max") {
+          if (Math.abs(value) > Math.abs(bestValue)) {
+            bestValue = Math.abs(value);
+            bestStepData = stepData;
+          }
+          continue;
+        }
+
+        if (value > bestValue) {
           bestValue = value;
           bestStepData = stepData;
         }
@@ -821,10 +874,10 @@
           workflow: workflowName,
           step,
           stepOrder: stepNumber(step),
-          baseline: stepData[fieldName(quantity.key, "base")],
-          pullRequest: stepData[fieldName(quantity.key, "pr")],
-          absoluteDiff: stepData[fieldName(quantity.key, "adiff")],
-          percentDiff: stepData[fieldName(quantity.key, "pdiff")]
+          baseline: aggregatedNumericValue(stepData[fieldName(quantity.key, "base")]),
+          pullRequest: aggregatedNumericValue(stepData[fieldName(quantity.key, "pr")]),
+          absoluteDiff: aggregatedNumericValue(stepData[fieldName(quantity.key, "adiff")]),
+          percentDiff: aggregatedNumericValue(stepData[fieldName(quantity.key, "pdiff")])
         };
       });
 
@@ -880,6 +933,7 @@
 
     function buildDetailTable(workflowName, steps) {
       const quantity = currentQuantity();
+      const aggregation = currentAggregation();
       const detailRows = getDetailRows(workflowName, steps);
       const percentLegend = LEGENDS.find((legend) => legend.key === "pdiff");
       const numberLegend = { key: "base", unit: quantity.unit };
@@ -892,10 +946,10 @@
                 <tr>
                   <th class="sortable" data-sort-key="workflow">Workflow${detailSortIndicator("workflow")}</th>
                   <th class="sortable" data-sort-key="step">Step${detailSortIndicator("step")}</th>
-                  <th class="sortable th-num" data-sort-key="baseline">Baseline${detailSortIndicator("baseline")}</th>
-                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request${detailSortIndicator("pullRequest")}</th>
-                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline${detailSortIndicator("absoluteDiff")}</th>
-                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff${detailSortIndicator("percentDiff")}</th>
+                  <th class="sortable th-num" data-sort-key="baseline">Baseline (${aggregation.label})${detailSortIndicator("baseline")}</th>
+                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request (${aggregation.label})${detailSortIndicator("pullRequest")}</th>
+                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline (${aggregation.label})${detailSortIndicator("absoluteDiff")}</th>
+                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff (${aggregation.label})${detailSortIndicator("percentDiff")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -934,6 +988,7 @@
       const rows = getWorkflowRows();
       const peak = peakSignal(rows, selectedField);
       const adiffLegend = LEGENDS.find((legend) => legend.key === "adiff") || LEGENDS[0];
+      const aggregation = currentAggregation();
 
       el.loadedCount.textContent = state.workflows.length.toLocaleString();
       el.visibleCount.textContent = rows.length.toLocaleString();
@@ -957,7 +1012,7 @@
         const legendHead = document.createElement("th");
         legendHead.className = "sortable th-num";
         legendHead.setAttribute("data-sort-key", legend.key);
-        legendHead.textContent = `${legend.label} (max)${mainSortIndicator(legend.key)}`;
+        legendHead.textContent = `${legend.label} (${aggregation.label})${mainSortIndicator(legend.key)}`;
         el.tableHeadRow.appendChild(legendHead);
       }
 
@@ -985,7 +1040,7 @@
 
         for (const legend of LEGENDS) {
           const legendField = fieldName(quantity.key, legend.key);
-          const maxValue = maxStepValue(row, legendField);
+          const maxValue = aggregateStepValue(row, legendField);
           const maxValueCell = document.createElement("td");
           maxValueCell.className = cellClass(quantity, legend, maxValue.stepData, maxValue.value);
           maxValueCell.textContent = formatValue(maxValue.value, quantity, legend);
@@ -1014,7 +1069,7 @@
       });
       attachDetailSortHandlers();
 
-      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label}, sorted by ${mainSortColumn() === "workflow" ? "workflow" : mainSortColumn() + " max"}.`, false);
+      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label}, sorted by ${mainSortColumn() === "workflow" ? "workflow" : mainSortColumn() + " " + aggregation.label}.`, false);
     }
 
     function populateSelectors() {
@@ -1023,6 +1078,10 @@
         .join("");
       el.quantitySelect.value = state.quantityKey;
       el.sortSelect.value = state.sortKey;
+      el.aggregationSelect.innerHTML = AGGREGATIONS
+        .map((aggregation) => `<option value="${escapeHtml(aggregation.key)}">${escapeHtml(aggregation.label)}</option>`)
+        .join("");
+      el.aggregationSelect.value = state.aggregationKey;
     }
 
     function attachEvents() {
@@ -1038,6 +1097,11 @@
 
       el.sortSelect.addEventListener("change", () => {
         state.sortKey = el.sortSelect.value;
+        renderTable();
+      });
+
+      el.aggregationSelect.addEventListener("change", () => {
+        state.aggregationKey = el.aggregationSelect.value;
         renderTable();
       });
 

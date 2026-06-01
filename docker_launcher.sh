@@ -86,12 +86,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       export DOCKER_IMG="${DOCKER_IMG}:${IMG_ARCH}"
     fi
   fi
-  case $DOCKER_IMG in
-    cmssw/el8:*) DOCKER_IMG="${DOCKER_IMG}-d20260519" ;;
-    cmssw/el9:*) DOCKER_IMG="${DOCKER_IMG}-d20260513" ;;
-    cmssw/el10:*) DOCKER_IMG="${DOCKER_IMG}-d20260513" ;;
-    * )
-  esac
   BUILD_BASEDIR=$(dirname $WORKSPACE)
   export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
   MOUNT_POINTS="/cvmfs,/tmp,$(echo $WORKSPACE | cut -d/ -f1,2),/var/run/user,/run/user,${EXTRA_MOUNTS}"

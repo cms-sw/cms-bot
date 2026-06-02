@@ -131,6 +131,16 @@ EOF
     echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Module Event Alloc Monitor</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleEventAllocMonitor.circles.json'| sort -V ) ; do
+    BASENAME=$(basename $f)
+    mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
+    cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
+    AMP="&"
+    echo "<td><a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${BASENAME//.json/}${AMP}resource=AvgTempSize${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">IB $BASENAME</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    echo "<a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=AvgTempSize${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">PR $BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  done
+  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   echo "<tr><td>Module Event Alloc Monitor Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleEventAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)

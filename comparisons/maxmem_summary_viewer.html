@@ -564,7 +564,6 @@
     const AGGREGATIONS = [
       { key: "max", label: "max" },
       { key: "min", label: "min" },
-      { key: "abs-max", label: "abs(max)" }
     ];
 
     const state = {
@@ -636,9 +635,6 @@
     function aggregatedNumericValue(value) {
       if (typeof value !== "number" || Number.isNaN(value)) {
         return value;
-      }
-      if (state.aggregationKey === "abs-max") {
-        return Math.abs(value);
       }
       return value;
     }
@@ -785,15 +781,6 @@
           }
           continue;
         }
-
-        if (state.aggregationKey === "abs-max") {
-          if (Math.abs(value) > Math.abs(bestValue)) {
-            bestValue = Math.abs(value);
-            bestStepData = stepData;
-          }
-          continue;
-        }
-
         if (value > bestValue) {
           bestValue = value;
           bestStepData = stepData;
@@ -810,25 +797,25 @@
         return classes.join(" ");
       }
 
-      if (legend.key === "adiff" || legend.key === "pdiff") {
-        if (value > 0) {
-          classes.push("delta-up");
-        } else if (value < 0) {
-          classes.push("delta-down");
+      const thresholdEligibleQuantity = quantity.key !== "nallocated" && quantity.key !== "leaked alloc";
+      if ((legend.key === "adiff" || legend.key === "pdiff") && thresholdEligibleQuantity) {
+        const warnThreshold = Number((stepData && stepData.threshold) ?? state.payload.defaultWarnThreshold);
+        const errorThreshold = Number((stepData && stepData.error_threshold) ?? state.payload.defaultErrorThreshold);
+        let comparisonValue = value;
+        if (legend.key === "pdiff") {
+          const baseValue = Number(stepData && stepData[fieldName(quantity.key, "base")]);
+          comparisonValue = Number.isFinite(baseValue) ? (value * baseValue) / 100 : NaN;
         }
-      }
-
-      if (quantity.key === "max memory" && legend.key === "adiff") {
-        const warnThreshold = stepData.threshold || state.payload.defaultWarnThreshold;
-        const errorThreshold = stepData.error_threshold || state.payload.defaultErrorThreshold;
-        if (value > errorThreshold) {
-          classes.push("threshold-error");
-        } else if (value > warnThreshold) {
-          classes.push("threshold-warn");
-        } else if (value < -errorThreshold) {
-          classes.push("threshold-great");
-        } else if (value < -warnThreshold) {
-          classes.push("threshold-good");
+        if (Number.isFinite(comparisonValue)) {
+          if (Number.isFinite(errorThreshold) && comparisonValue > errorThreshold) {
+            classes.push("threshold-error");
+          } else if (Number.isFinite(warnThreshold) && comparisonValue > warnThreshold) {
+            classes.push("threshold-warn");
+          } else if (Number.isFinite(errorThreshold) && comparisonValue < -errorThreshold) {
+            classes.push("threshold-great");
+          } else if (Number.isFinite(warnThreshold) && comparisonValue < -warnThreshold) {
+            classes.push("threshold-good");
+          }
         }
       }
 
@@ -874,6 +861,7 @@
           workflow: workflowName,
           step,
           stepOrder: stepNumber(step),
+          stepData,
           baseline: aggregatedNumericValue(stepData[fieldName(quantity.key, "base")]),
           pullRequest: aggregatedNumericValue(stepData[fieldName(quantity.key, "pr")]),
           absoluteDiff: aggregatedNumericValue(stepData[fieldName(quantity.key, "adiff")]),
@@ -936,6 +924,7 @@
       const aggregation = currentAggregation();
       const detailRows = getDetailRows(workflowName, steps);
       const percentLegend = LEGENDS.find((legend) => legend.key === "pdiff");
+      const adiffLegend = LEGENDS.find((legend) => legend.key === "adiff");
       const numberLegend = { key: "base", unit: quantity.unit };
       return `
         <div class="detail-wrap">
@@ -959,8 +948,8 @@
                     <td class="td-step">${escapeHtml(detailRow.step.replace("step", "Step "))}</td>
                     <td class="td-num ${detailRow.baseline == null ? "cell-empty" : ""}">${formatValue(detailRow.baseline, quantity, numberLegend)}</td>
                     <td class="td-num ${detailRow.pullRequest == null ? "cell-empty" : ""}">${formatValue(detailRow.pullRequest, quantity, numberLegend)}</td>
-                    <td class="td-num ${detailRow.absoluteDiff == null ? "cell-empty" : detailRow.absoluteDiff > 0 ? "delta-up" : detailRow.absoluteDiff < 0 ? "delta-down" : ""}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)}</td>
-                    <td class="td-num ${detailRow.percentDiff == null ? "cell-empty" : detailRow.percentDiff > 0 ? "delta-up" : detailRow.percentDiff < 0 ? "delta-down" : ""}">${formatValue(detailRow.percentDiff, quantity, percentLegend)}</td>
+                    <td class="td-num ${cellClass(quantity, adiffLegend, detailRow.stepData, detailRow.absoluteDiff)}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)}</td>
+                    <td class="td-num ${cellClass(quantity, percentLegend, detailRow.stepData, detailRow.percentDiff)}">${formatValue(detailRow.percentDiff, quantity, percentLegend)}</td>
                   </tr>
                 `).join("")}
               </tbody>
@@ -997,9 +986,7 @@
         ? "-"
         : `${formatValue(peak.value, quantity, adiffLegend)}${adiffLegend.unit || quantity.unit ? ` ${adiffLegend.unit || quantity.unit}` : ""} @ ${peak.workflow} ${peak.step}`;
 
-      el.thresholdNote.textContent = quantity.key === "max memory"
-        ? `Threshold highlighting uses warn ${state.payload.defaultWarnThreshold} MB and error ${state.payload.defaultErrorThreshold} MB defaults unless a step overrides them.`
-        : "Threshold highlighting is applied to max memory PR - baseline values.";
+      el.thresholdNote.textContent = `Threshold highlighting uses warn ${state.payload.defaultWarnThreshold} and error ${state.payload.defaultErrorThreshold} defaults unless a step overrides them. For percent diff, thresholds are applied after converting percent back to absolute delta using baseline.`;
 
       el.tableHeadRow.innerHTML = "";
       const workflowHead = document.createElement("th");

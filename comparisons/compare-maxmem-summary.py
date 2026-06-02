@@ -195,7 +195,7 @@ def compare_maxmem_summary(**kwargs):
                     "leaked alloc adiff": nlallocated_adiff,
                     "leaked alloc pdiff": nlallocated_pdiff,
                     "threshold": threshold,
-                    "error_threshold": error_threshold
+                    "error_threshold": error_threshold,
                 }
     dumpfile = "maxmem-summary.json"
     with open(dumpfile, "w") as f:

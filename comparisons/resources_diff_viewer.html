@@ -71,7 +71,7 @@
 
     .controls-grid {
       display: grid;
-      grid-template-columns: 1fr 220px 200px;
+      grid-template-columns: 1fr 220px;
       gap: 12px;
     }
 
@@ -257,14 +257,6 @@
               <option value="dealloc">Dealloc Memory</option>
             </select>
           </div>
-          <div>
-            <label for="aggregationSelect">Aggregation</label>
-            <select id="aggregationSelect">
-              <option value="max" selected>max</option>
-              <option value="min">min</option>
-              <option value="abs-max">abs(max)</option>
-            </select>
-          </div>
         </div>
       </div>
 
@@ -370,25 +362,17 @@
       { key: "events", label: "Events", metricKey: "events", valueType: "value", decimals: 0 }
     ];
 
-    const AGGREGATION_OPTIONS = [
-      { key: "max", label: "max" },
-      { key: "min", label: "min" },
-      { key: "abs-max", label: "abs(max)" }
-    ];
-
     const state = {
       payload: null,
       filter: "",
       sortKey: "diff-desc",
       selectedMetricKey: "cpu-frac",
-      selectedAggregationKey: "max",
       expandedModules: new Set()
     };
 
     const el = {
       filterInput: document.getElementById("filterInput"),
       valueSelect: document.getElementById("valueSelect"),
-      aggregationSelect: document.getElementById("aggregationSelect"),
       legendBar: document.getElementById("legendBar"),
       totalsTitle: document.getElementById("totalsTitle"),
       totalBody: document.getElementById("totalBody"),
@@ -409,58 +393,10 @@
       return SELECTABLE_METRICS.find((option) => option.key === key) || SELECTABLE_METRICS[0];
     }
 
-    function getAggregationOption(key) {
-      return AGGREGATION_OPTIONS.find((option) => option.key === key) || AGGREGATION_OPTIONS[0];
-    }
-
-    function valueFromCandidates(candidates) {
-      const values = candidates
-        .map((candidate) => Number(candidate))
-        .filter((value) => Number.isFinite(value));
-      if (!values.length) return NaN;
-
-      switch (state.selectedAggregationKey) {
-        case "min":
-          return Math.min(...values);
-        case "abs-max": {
-          const absMax = Math.max(...values.map((value) => Math.abs(value)));
-          return Number.isFinite(absMax) ? absMax : NaN;
-        }
-        case "max":
-        default:
-          return Math.max(...values);
-      }
-    }
-
-    function metricFieldCandidates(metric, baseKey) {
-      if (!metric || typeof metric !== "object") return [];
-
-      const candidates = [];
-      const direct = metric[baseKey];
-      if (Array.isArray(direct)) {
-        candidates.push(...direct);
-      } else if (direct && typeof direct === "object") {
-        candidates.push(direct.max, direct.min, direct.abs_max, direct.absMax);
-      } else {
-        candidates.push(direct);
-      }
-
-      candidates.push(
-        metric[`${baseKey}_max`],
-        metric[`${baseKey}_min`],
-        metric[`${baseKey}_abs_max`],
-        metric[`${baseKey}_absMax`]
-      );
-
-      return candidates;
-    }
-
     function metricValue(metric, option, variant) {
       if (!metric) return NaN;
-      const baseKey = option.valueType === "percent" ? `frac_${variant}` : variant;
-      const aggregated = valueFromCandidates(metricFieldCandidates(metric, baseKey));
-      if (!Number.isNaN(aggregated)) return aggregated;
-      return Number(metric[baseKey]);
+      if (option.valueType === "percent") return metric[`frac_${variant}`];
+      return metric[variant];
     }
 
     function formatMetricValue(metric, option, variant) {
@@ -507,13 +443,6 @@
     function setSelectedMetric(metricKey) {
       state.selectedMetricKey = metricKey;
       el.valueSelect.value = metricKey;
-      renderTotals();
-      renderModulesTable();
-    }
-
-    function setSelectedAggregation(aggregationKey) {
-      state.selectedAggregationKey = aggregationKey;
-      el.aggregationSelect.value = aggregationKey;
       renderTotals();
       renderModulesTable();
     }
@@ -599,10 +528,9 @@
       const total = state.payload.total;
       const expanded = state.expandedModules.has("__total__");
       const selectedOption = getMetricOption(state.selectedMetricKey);
-      const aggregationOption = getAggregationOption(state.selectedAggregationKey);
       const selectedMetric = total[selectedOption.metricKey];
       el.totalBody.innerHTML = "";
-      el.totalsTitle.textContent = `Totals (${selectedOption.label}, ${aggregationOption.label})`;
+      el.totalsTitle.textContent = `Totals (${selectedOption.label})`;
       const row = document.createElement("tr");
       row.innerHTML = `
         <td><button class="expand-btn" data-key="__total__">${expanded ? "▼" : "▶"}</button></td>
@@ -720,9 +648,6 @@
       });
       el.valueSelect.addEventListener("change", () => {
         setSelectedMetric(el.valueSelect.value);
-      });
-      el.aggregationSelect.addEventListener("change", () => {
-        setSelectedAggregation(el.aggregationSelect.value);
       });
     }
 

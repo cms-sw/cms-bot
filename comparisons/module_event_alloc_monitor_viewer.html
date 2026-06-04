@@ -529,29 +529,6 @@
       fileName: ""
     };
 
-    const QUANTITY_ORDER = ["added", "nAlloc", "nDealloc", "max1Alloc", "maxTemp"];
-    const TRANSITION_ORDER = [
-      "construction",
-      "begin job",
-      "begin stream",
-      "global begin run",
-      "stream begin run",
-      "global begin luminosity block",
-      "stream begin luminosity block",
-      "event",
-      "event setup",
-      "get next transition",
-      "clear event",
-      "global end lumi",
-      "global end run",
-      "global write lumi",
-      "global write run",
-      "write process block",
-      "end stream",
-      "end job",
-      "destruction",
-    ];
-
     const el = {
       fileInput: document.getElementById("fileInput"),
       defaultFile: document.getElementById("defaultFile"),
@@ -929,33 +906,14 @@
         }
       }
 
-      const transitionRank = new Map(TRANSITION_ORDER.map((name, index) => [name, index]));
       Object.keys(grouped).forEach((quantity) => {
-        grouped[quantity].sort((a, b) => {
-          const aRank = transitionRank.has(a) ? transitionRank.get(a) : Number.MAX_SAFE_INTEGER;
-          const bRank = transitionRank.has(b) ? transitionRank.get(b) : Number.MAX_SAFE_INTEGER;
-          if (aRank !== bRank) {
-            return aRank - bRank;
-          }
-          return a.localeCompare(b);
-        });
+        grouped[quantity].sort((a, b) => a.localeCompare(b));
       });
 
-      const known = QUANTITY_ORDER.filter((q) => grouped[q]);
-      const extra = Object.keys(grouped).filter((q) => !QUANTITY_ORDER.includes(q)).sort();
       return {
         byQuantity: grouped,
-        quantities: [...known, ...extra]
+        quantities: Object.keys(grouped).sort()
       };
-    }
-
-    function chooseDefaultQuantity(quantities) {
-      for (const wanted of QUANTITY_ORDER) {
-        if (quantities.includes(wanted)) {
-          return wanted;
-        }
-      }
-      return quantities[0] || "";
     }
 
     function chooseDefaultGroup(groups) {
@@ -996,7 +954,7 @@
         opt.textContent = quantityLabel(quantity);
         el.quantitySelect.appendChild(opt);
       }
-      el.quantitySelect.value = chooseDefaultQuantity(quantities);
+      el.quantitySelect.value = quantities[0] || "";
     }
 
     function getSelectedFieldBase() {

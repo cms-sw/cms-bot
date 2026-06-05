@@ -103,6 +103,7 @@ def format(s, **kwds):
     return s % kwds
 
 
+CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
 BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
@@ -1322,9 +1323,11 @@ def process_pr(
         # signatures it requires.
         if cmssw_repo or not external_repo:
             if cmssw_repo:
-                if pr.base.ref == "master" or pr.base.ref in forward_ports_map.GIT_REPO_FWPORTS[
-                    "cmssw"
-                ].get(CMSSW_DEVEL_BRANCH, []):
+                if (
+                    pr.base.ref in CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS
+                    or pr.base.ref
+                    in forward_ports_map.GIT_REPO_FWPORTS["cmssw"].get(CMSSW_DEVEL_BRANCH, [])
+                ):
                     signing_categories.add("code-checks")
                 updateMilestone(repo, issue, pr, dryRun)
             chg_files = get_changed_files(repo, pr)

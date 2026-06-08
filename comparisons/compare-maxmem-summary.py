@@ -80,8 +80,8 @@ def build_summary_payload(workflows, results_url):
         "orderedWorkflows": ordered_workflows,
         "orderedSteps": ordered_steps,
         "resultsURL": results_url,
-        "defaultWarnThreshold": maxmem_threshold.WARN_THRESHOLD,
-        "defaultErrorThreshold": maxmem_threshold.ERROR_THRESHOLD,
+        "defaultWarnThreshold": float(maxmem_threshold.WARN_THRESHOLD),
+        "defaultErrorThreshold": float(maxmem_threshold.ERROR_THRESHOLD),
     }
 
 
@@ -111,6 +111,7 @@ def compare_maxmem_summary(**kwargs):
         max_memory_pdiff_dict = jsonDict["max memory pdiffs"]
         workflow = jsonDict["workflow"]
         threshold = float(jsonDict["threshold"])
+        error_threshold = float(jsonDict["error_threshold"])
         if workflow not in workflows:
             workflows[workflow] = {}
             for step in max_memory_pr_dict.keys():
@@ -194,6 +195,7 @@ def compare_maxmem_summary(**kwargs):
                     "leaked alloc adiff": nlallocated_adiff,
                     "leaked alloc pdiff": nlallocated_pdiff,
                     "threshold": threshold,
+                    "error_threshold": error_threshold,
                 }
     dumpfile = "maxmem-summary.json"
     with open(dumpfile, "w") as f:

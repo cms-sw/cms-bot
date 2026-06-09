@@ -60,6 +60,7 @@ EOF
   export RUNALLSTEPS=1
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_allocmon.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/runall_eventallocmon.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_vtune.sh $CMSSW_VERSION || true
   if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Error: failed to run profiling"
@@ -126,6 +127,33 @@ EOF
     if grep "Error: input files describe different metrics" $f.log ; then
         echo "IB and PR files describe different metrics, comparing to self for diff<BR>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $f $f >$f.log || true
+    fi
+    echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+  done
+  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Module Event Alloc Monitor</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleEventAllocMonitor.circles.json'| sort -V ) ; do
+    BASENAME=$(basename $f)
+    mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
+    cp -p $f $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/ || true
+    AMP="&"
+    echo "<td><a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${BASENAME//.json/}${AMP}resource=AvgTempSize${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">IB $BASENAME</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+    echo "<a target=\"_blank\" href=\"/circles/web/piechart.php?data_name=profiling${AMP}filter=${CMSSW_VERSION}${AMP}local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=AvgTempSize${AMP}colours=default${AMP}groups=packages${AMP}threshold=0\">PR $BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  done
+  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Module Event Alloc Monitor Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleEventAllocMonitor.circles.json'| sort -V ) ; do
+    BASENAME=$(basename $f)
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PWD/$CMSSW_VERSION-$BASENAME || true
+    if ! [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
+      echo "<td>IB file not found, skipping diff</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      continue
+    fi
+    $CMS_BOT_DIR/comparisons/moduleEventAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
+    echo "<td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    if grep "Error: input files describe different metrics" $f.log ; then
+        echo "IB and PR files describe different metrics, comparing to self for diff<BR>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      $CMS_BOT_DIR/comparisons/moduleEventAllocMonitor-circles-diff.py $f $f >$f.log || true
     fi
     echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done

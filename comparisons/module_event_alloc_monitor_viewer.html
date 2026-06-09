@@ -1,0 +1,1379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Module Event Allocation Monitor Viewer</title>
+
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --ink: #1d232a;
+      --ink-soft: #4a525c;
+      --paper: #fffaf3;
+      --card: #fffdf8;
+      --line: #dacfbf;
+      --accent: #0e8f7a;
+      --accent-soft: #a4ddd5;
+      --up: #0b8a6a;
+      --down: #c53d20;
+      --shadow: 0 10px 30px rgba(35, 41, 48, 0.12);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 8% 20%, #ffe7b8 0%, transparent 33%),
+        radial-gradient(circle at 85% 10%, #cdeef4 0%, transparent 40%),
+        linear-gradient(140deg, #efe6d6 0%, #f4efe6 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: 100%;
+      margin: 0;
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 1.2rem 1.2rem 1.4rem;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -45px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 40px;
+      transform: rotate(22deg);
+      background: linear-gradient(135deg, #9adfd2, #f6d9a3);
+      opacity: 0.45;
+      z-index: -1;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.2vw, 2rem);
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin: 0.45rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      padding: 1rem 1.2rem 1.2rem;
+      display: grid;
+      gap: 0.8rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 25%);
+    }
+
+    .grid {
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+    }
+
+    .grid > * {
+      min-width: 0;
+    }
+
+    .row-break {
+      grid-column: 1 / -1;
+      height: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    button {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.92rem;
+      border-radius: 10px;
+      border: 1px solid #c7bcae;
+      padding: 0.55rem 0.65rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input[type="file"] {
+      width: 100%;
+      font-size: 0.86rem;
+      color: var(--ink-soft);
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #fdfefe, #edf9f6);
+      border-color: #a9cfc8;
+      font-weight: 600;
+    }
+
+    button:hover {
+      filter: brightness(0.98);
+    }
+
+    .dropzone {
+      border: 1.5px dashed #86b9af;
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+      color: var(--ink-soft);
+      background: #f5fcfa;
+      transition: 150ms ease;
+    }
+
+    .dropzone-inline {
+      grid-column: 4 / -1;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dropzone.drag {
+      border-color: var(--accent);
+      background: #def4ef;
+      color: #1d4039;
+      transform: translateY(-1px);
+    }
+
+    .stats {
+      display: grid;
+      gap: 0.8rem;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 35%);
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid #ddd1c1;
+      border-radius: 12px;
+      padding: 0.7rem 0.8rem;
+    }
+
+    .stat .k {
+      color: var(--ink-soft);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat .v {
+      margin-top: 0.25rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    .table-wrap {
+      padding: 0 1.2rem 1.2rem;
+    }
+
+    .table-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      max-height: 100%;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+      font-size: 0.88rem;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f4f8f7;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      color: #2d3a3f;
+      font-weight: 700;
+      padding: 0.6rem 0.7rem;
+      z-index: 2;
+    }
+
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    thead th.sortable:hover {
+      background: #ebf3f1;
+    }
+
+    thead th.th-num,
+    .detail-table th.th-num {
+      text-align: right;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #efe4d5;
+      padding: 0.48rem 0.7rem;
+      vertical-align: top;
+    }
+
+    tbody tr:hover {
+      background: #faf5ec;
+    }
+
+    tbody tr.expandable {
+      cursor: pointer;
+    }
+
+    tbody tr.expanded {
+      background: #f2faf8;
+    }
+
+    .expand-icon {
+      display: inline-block;
+      width: 1.1em;
+      color: #3f5d5a;
+      font-size: 0.8em;
+    }
+
+    .detail-row td {
+      background: #fff8ee;
+      border-bottom: 1px solid #e8d9c4;
+      padding: 0;
+    }
+
+    .detail-wrap {
+      padding: 0.65rem 0.8rem 0.8rem;
+    }
+
+    .detail-title {
+      margin: 0 0 0.45rem;
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .detail-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .detail-table th,
+    .detail-table td {
+      border-bottom: 1px solid #eddcc6;
+      padding: 0.35rem 0.45rem;
+      text-align: left;
+    }
+
+    .detail-table th {
+      background: #f9efe1;
+      color: #374247;
+      position: static;
+    }
+
+    .mono {
+      font-family: monospace;
+      white-space: nowrap;
+    }
+
+    td.mono {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      background: #e7f5f2;
+      border: 1px solid #c2dfd8;
+      color: #19574c;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.74rem;
+      line-height: 1.2;
+    }
+
+    .bar-cell {
+      min-width: 180px;
+    }
+
+    .bar-track {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: #f0e7dc;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      transform: translateX(-50%);
+      border-radius: 999px;
+    }
+
+    .up {
+      background: linear-gradient(90deg, #e67f67, #c53d20);
+    }
+
+    .down {
+      background: linear-gradient(90deg, #41bd97, #0b8a6a);
+    }
+
+    .pager {
+      padding: 0.75rem 0;
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .pager button {
+      width: auto;
+      min-width: 76px;
+      padding: 0.45rem 0.75rem;
+    }
+
+    .empty {
+      padding: 1.2rem;
+      color: var(--ink-soft);
+    }
+
+    .error {
+      color: #8d2f1f;
+      font-weight: 600;
+    }
+
+    @media (max-width: 980px) {
+      .row-break {
+        display: none;
+      }
+
+      .dropzone-inline {
+        grid-column: 1 / -1;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(100px, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .wrap {
+        padding: 0.75rem;
+      }
+
+      .grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel">
+      <div class="hero">
+        <h1>Module Event Allocation Monitor Viewer</h1>
+        <p class="sub">Inspect module-level metrics from moduleEventAllocMonitor diff JSON files.</p>
+      </div>
+
+      <div class="controls">
+        <div class="grid">
+          <div>
+            <label for="fileInput">Load JSON file</label>
+            <input id="fileInput" type="file" accept=".json,application/json">
+          </div>
+          <div>
+            <label for="defaultFile">Auto-load file name</label>
+            <input id="defaultFile" type="text" value="">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="autoLoadBtn" type="button">Try Auto-Load</button>
+          </div>
+          <div id="dropzone" class="dropzone dropzone-inline">Drag and drop a JSON file here</div>
+          <div class="row-break" aria-hidden="true"></div>
+          <div>
+            <label for="search">Search label/type</label>
+            <input id="search" type="text" placeholder="e.g. JetMonitor or PromptMonitoring">
+          </div>
+          <div>
+            <label for="typeFilter">Filter type</label>
+            <select id="typeFilter"></select>
+          </div>
+          <div>
+            <label for="quantitySelect">Quantity</label>
+            <select id="quantitySelect"></select>
+          </div>
+          <div>
+            <label for="sortBy">Sort</label>
+            <select id="sortBy">
+              <option value="abs-desc">Abs(diff) high to low</option>
+              <option value="label-asc">Label A to Z</option>
+              <option value="label-desc">Label Z to A</option>
+              <option value="type-asc">Type A to Z</option>
+              <option value="type-desc">Type Z to A</option>
+              <option value="ib-desc">IB high to low</option>
+              <option value="ib-asc">IB low to high</option>
+              <option value="pr-desc">PR high to low</option>
+              <option value="pr-asc">PR low to high</option>
+              <option value="metric-desc">Diff high to low</option>
+              <option value="metric-asc">Diff low to high</option>
+            </select>
+          </div>
+          <div>
+            <label for="minAbs">Min abs(diff)</label>
+            <input id="minAbs" type="number" step="any" value="0">
+          </div>
+          <div>
+            <label for="rowsPerPage">Rows per page</label>
+            <input id="rowsPerPage" type="number" min="10" step="10" value="100">
+          </div>
+        </div>
+        <div id="status" class="sub">No data loaded yet.</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Modules</div><div id="statModules" class="v">0</div></div>
+        <div class="stat"><div class="k">Types</div><div id="statTypes" class="v">0</div></div>
+        <div class="stat"><div class="k">Diff Mean</div><div id="statMean" class="v">0</div></div>
+        <div class="stat"><div class="k">Max |Diff|</div><div id="statMaxAbs" class="v">0</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="pager">
+          <button id="prevBtn" type="button">Prev</button>
+          <button id="nextBtn" type="button">Next</button>
+          <span id="pageInfo">Page 0/0</span>
+        </div>
+
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr>
+                <th id="colLabel" class="sortable" style="width: 25%;">Label</th>
+                <th id="colType" class="sortable" style="width: 12%;">Type</th>
+                <th id="colIB" class="sortable th-num" style="width: 14%;">IB</th>
+                <th id="colPR" class="sortable th-num" style="width: 14%;">PR</th>
+                <th id="colDiff" class="sortable th-num" style="width: 14%;">diff</th>
+                <th style="width: 10%;">Visual</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div id="empty" class="empty">Load a JSON file to begin.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      modules: [],
+      filtered: [],
+      fieldGroupsByQuantity: {},
+      quantityUnits: {},
+      quantities: [],
+      expandedRows: new Set(),
+      eventSetupSort: { column: "key", direction: "asc" },
+      page: 1,
+      maxAbsMetric: 1,
+      fileName: ""
+    };
+
+    const el = {
+      fileInput: document.getElementById("fileInput"),
+      defaultFile: document.getElementById("defaultFile"),
+      autoLoadBtn: document.getElementById("autoLoadBtn"),
+      search: document.getElementById("search"),
+      typeFilter: document.getElementById("typeFilter"),
+      quantitySelect: document.getElementById("quantitySelect"),
+      sortBy: document.getElementById("sortBy"),
+      minAbs: document.getElementById("minAbs"),
+      rowsPerPage: document.getElementById("rowsPerPage"),
+      dropzone: document.getElementById("dropzone"),
+      status: document.getElementById("status"),
+      statModules: document.getElementById("statModules"),
+      statTypes: document.getElementById("statTypes"),
+      statMean: document.getElementById("statMean"),
+      statMaxAbs: document.getElementById("statMaxAbs"),
+      colLabel: document.getElementById("colLabel"),
+      colType: document.getElementById("colType"),
+      colIB: document.getElementById("colIB"),
+      colPR: document.getElementById("colPR"),
+      colDiff: document.getElementById("colDiff"),
+      tbody: document.getElementById("tbody"),
+      empty: document.getElementById("empty"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      pageInfo: document.getElementById("pageInfo")
+    };
+
+    function fmtNumber(value, quantity) {
+      if (value === null || value === undefined || Number.isNaN(value)) {
+        return "-";
+      }
+      return value.toLocaleString(undefined, {
+        maximumFractionDigits: 1
+      });
+    }
+
+    function metricNumber(value) {
+      const numeric = Number(value);
+      if (Number.isFinite(numeric)) {
+        return numeric;
+      }
+      if (value && typeof value === "object") {
+        const total = Number(value.total);
+        if (Number.isFinite(total)) {
+          return total;
+        }
+      }
+      return NaN;
+    }
+
+    function toNumber(val) {
+      const n = metricNumber(val);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function rowKey(row) {
+      return `${row.label || ""}|${row.type || ""}|${row.record || ""}`;
+    }
+
+    function metricDisplayValue(row, key, quantity) {
+      if (!Object.prototype.hasOwnProperty.call(row, key)) {
+        return "-";
+      }
+      const value = metricNumber(row[key]);
+      return Number.isFinite(value) ? fmtNumber(value, quantity) : "-";
+    }
+
+    function hasOnlyFlatMetrics() {
+      return (
+        state.quantities.length > 0 &&
+        state.quantities.every((quantity) => {
+          const groups = state.fieldGroupsByQuantity[quantity] || [];
+          return groups.length === 1 && groups[0] === "(none)";
+        })
+      );
+    }
+
+    function buildExpandedMetricsRows(row, quantity) {
+      if (hasOnlyFlatMetrics()) {
+        const rows = [];
+        for (const metricQuantity of state.quantities) {
+          const ibKey = `${metricQuantity} IB`;
+          const prKey = `${metricQuantity} PR`;
+          const diffKey = `${metricQuantity} diff`;
+          const hasAny =
+            Object.prototype.hasOwnProperty.call(row, ibKey) ||
+            Object.prototype.hasOwnProperty.call(row, prKey) ||
+            Object.prototype.hasOwnProperty.call(row, diffKey);
+          if (!hasAny) {
+            continue;
+          }
+          rows.push(
+            `<tr><td>${escapeHtml(quantityLabel(metricQuantity))}</td><td class="mono">${metricDisplayValue(row, ibKey, metricQuantity)}</td><td class="mono">${metricDisplayValue(row, prKey, metricQuantity)}</td><td class="mono">${metricDisplayValue(row, diffKey, metricQuantity)}</td></tr>`
+          );
+        }
+        if (!rows.length) {
+          return '<tr><td colspan="4" class="mono">No metric details available.</td></tr>';
+        }
+        return rows.join("");
+      }
+
+      const rows = [];
+      const groups = state.fieldGroupsByQuantity[quantity] || [];
+      const hasRecord = row.record !== undefined && row.record !== null && String(row.record).trim() !== "";
+      for (const group of groups) {
+          const groupLower = String(group).toLowerCase();
+          const fieldBase = group === "(none)" ? quantity : `${quantity} ${group}`;
+          const ibKey = `${fieldBase} IB`;
+          const prKey = `${fieldBase} PR`;
+          const diffKey = `${fieldBase} diff`;
+          const hasEventSetupDictionary =
+            groupLower === "event setup" &&
+            [row[ibKey], row[prKey], row[diffKey]].some((value) => {
+              return value && typeof value === "object" && Object.prototype.hasOwnProperty.call(value, "total");
+            });
+          const keepEventSetupTotalRow = groupLower === "event setup" && (hasRecord || hasEventSetupDictionary);
+          if (groupLower === "total") {
+            continue;
+          }
+          if (hasRecord) {
+            if (groupLower !== "event setup") {
+              continue;
+            }
+          } else if (groupLower === "event setup" && !hasEventSetupDictionary) {
+            continue;
+          }
+          const hasIB = Object.prototype.hasOwnProperty.call(row, ibKey);
+          const hasPR = Object.prototype.hasOwnProperty.call(row, prKey);
+          const hasDiff = Object.prototype.hasOwnProperty.call(row, diffKey);
+          const hasAny = hasIB || hasPR || hasDiff;
+          if (!hasAny) {
+            continue;
+          }
+          const ibValue = metricNumber(row[ibKey]);
+          const prValue = metricNumber(row[prKey]);
+          const diffValue = metricNumber(row[diffKey]);
+          const hasNumericIB = hasIB && Number.isFinite(ibValue);
+          const hasNumericPR = hasPR && Number.isFinite(prValue);
+          const hasNumericDiff = hasDiff && Number.isFinite(diffValue);
+          const missingOrNonNumericCount =
+            (hasNumericIB ? 0 : 1) +
+            (hasNumericPR ? 0 : 1) +
+            (hasNumericDiff ? 0 : 1);
+          const presentNumericValues = [];
+          if (hasNumericIB) {
+            presentNumericValues.push(ibValue);
+          }
+          if (hasNumericPR) {
+            presentNumericValues.push(prValue);
+          }
+          if (hasNumericDiff) {
+            presentNumericValues.push(diffValue);
+          }
+          const missingAndRemainingZero =
+            missingOrNonNumericCount > 0 &&
+            presentNumericValues.length > 0 &&
+            presentNumericValues.every((v) => v === 0);
+          if (missingAndRemainingZero && !keepEventSetupTotalRow) {
+            continue;
+          }
+          const allZero =
+            Number.isFinite(ibValue) &&
+            Number.isFinite(prValue) &&
+            Number.isFinite(diffValue) &&
+            ibValue === 0 &&
+            prValue === 0 &&
+            diffValue === 0;
+          if (allZero) {
+            continue;
+          }
+          rows.push(
+            `<tr><td>${escapeHtml(quantity)}</td><td class="mono">${metricDisplayValue(row, ibKey, quantity)}</td><td class="mono">${metricDisplayValue(row, prKey, quantity)}</td><td class="mono">${metricDisplayValue(row, diffKey, quantity)}</td></tr>`
+          );
+        }
+      if (!rows.length) {
+        return '<tr><td colspan="4" class="mono">No details available.</td></tr>';
+      }
+      return rows.join("");
+    }
+
+    function eventSetupEntries(value) {
+      if (!value || typeof value !== "object") {
+        return null;
+      }
+      const keys = Object.keys(value).filter((k) => k !== "total");
+      if (!keys.length) {
+        return null;
+      }
+      return keys;
+    }
+
+    function buildEventSetupDetailTable(row, quantity) {
+      const ibKey = `${quantity} event setup IB`;
+      const prKey = `${quantity} event setup PR`;
+      const diffKey = `${quantity} event setup diff`;
+      const ibMap = row[ibKey] && typeof row[ibKey] === "object" ? row[ibKey] : null;
+      const prMap = row[prKey] && typeof row[prKey] === "object" ? row[prKey] : null;
+      const diffMap = row[diffKey] && typeof row[diffKey] === "object" ? row[diffKey] : null;
+
+      const keySet = new Set();
+      [ibMap, prMap, diffMap].forEach((map) => {
+        const keys = eventSetupEntries(map);
+        if (!keys) {
+          return;
+        }
+        keys.forEach((k) => keySet.add(k));
+      });
+
+      const keys = [...keySet];
+      if (!keys.length) {
+        return "";
+      }
+
+      const entries = keys.map((k) => {
+        const ibValue = ibMap ? metricNumber(ibMap[k]) : NaN;
+        const prValue = prMap ? metricNumber(prMap[k]) : NaN;
+        const diffValue = diffMap ? metricNumber(diffMap[k]) : NaN;
+        return { key: k, ibValue, prValue, diffValue };
+      });
+
+      const sortState = state.eventSetupSort || { column: "key", direction: "asc" };
+      const direction = sortState.direction === "desc" ? -1 : 1;
+      entries.sort((a, b) => {
+        const col = sortState.column;
+        if (col === "key") {
+          return direction * a.key.localeCompare(b.key);
+        }
+        const av = col === "ib" ? a.ibValue : col === "pr" ? a.prValue : a.diffValue;
+        const bv = col === "ib" ? b.ibValue : col === "pr" ? b.prValue : b.diffValue;
+        const aFinite = Number.isFinite(av);
+        const bFinite = Number.isFinite(bv);
+        if (!aFinite && !bFinite) {
+          return a.key.localeCompare(b.key);
+        }
+        if (!aFinite) {
+          return 1;
+        }
+        if (!bFinite) {
+          return -1;
+        }
+        if (av === bv) {
+          return a.key.localeCompare(b.key);
+        }
+        return direction * (av - bv);
+      });
+
+      function sortArrow(column) {
+        if (sortState.column !== column) {
+          return "";
+        }
+        return sortState.direction === "desc" ? " ▼" : " ▲";
+      }
+
+      const rows = entries.map((entry) => {
+        const ibText = Number.isFinite(entry.ibValue) ? fmtNumber(entry.ibValue, quantity) : "-";
+        const prText = Number.isFinite(entry.prValue) ? fmtNumber(entry.prValue, quantity) : "-";
+        const diffText = Number.isFinite(entry.diffValue) ? fmtNumber(entry.diffValue, quantity) : "-";
+        return `<tr><td>${escapeHtml(entry.key)}</td><td class="mono">${ibText}</td><td class="mono">${prText}</td><td class="mono">${diffText}</td></tr>`;
+      });
+
+      return `
+        <p class="detail-title">Event setup dictionary entries (${escapeHtml(quantity)})</p>
+        <table class="detail-table">
+          <colgroup>
+            <col style="width: 40%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+            <col style="width: 20%;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="sortable es-sortable" data-es-sort="key">Key${sortArrow("key")}</th>
+              <th class="sortable es-sortable th-num" data-es-sort="ib">IB${sortArrow("ib")}</th>
+              <th class="sortable es-sortable th-num" data-es-sort="pr">PR${sortArrow("pr")}</th>
+              <th class="sortable es-sortable th-num" data-es-sort="diff">Diff${sortArrow("diff")}</th>
+            </tr>
+          </thead>
+          <tbody>${rows.join("")}</tbody>
+        </table>
+      `;
+    }
+
+    function toggleRowExpanded(key) {
+      if (state.expandedRows.has(key)) {
+        state.expandedRows.delete(key);
+      } else {
+        state.expandedRows.add(key);
+      }
+      renderTable();
+    }
+
+    function extractModules(data) {
+      if (data && Array.isArray(data.modules)) {
+        return data.modules;
+      }
+
+      if (Array.isArray(data)) {
+        return data;
+      }
+
+      return [];
+    }
+
+    function extractQuantityUnits(data) {
+      const quantityUnits = {};
+      if (!data || !Array.isArray(data.resources)) {
+        return quantityUnits;
+      }
+
+      for (const resource of data.resources) {
+        if (!resource || typeof resource.name !== "string") {
+          continue;
+        }
+        const quantity = resource.name.trim().split(/\s+/)[0];
+        if (!quantity || quantityUnits[quantity]) {
+          continue;
+        }
+
+        let unit = typeof resource.unit === "string" ? resource.unit : "";
+        unit = unit.replace(/\s*(IB|PR|diff)\s*$/, "").trim();
+        if (unit) {
+          quantityUnits[quantity] = unit;
+        }
+      }
+
+      return quantityUnits;
+    }
+
+    function quantityLabel(quantity) {
+      const unit = state.quantityUnits[quantity];
+      return unit ? `${quantity} (${unit})` : quantity;
+    }
+
+    function collectFieldGroups(modules) {
+      const map = new Map();
+      for (const mod of modules) {
+        Object.keys(mod).forEach((k) => {
+          const m = k.match(/^(.*) (IB|PR|diff)$/);
+          if (!m) {
+            return;
+          }
+          const base = m[1];
+          const part = m[2];
+          if (!map.has(base)) {
+            map.set(base, { IB: false, PR: false, diff: false, hasNumeric: false });
+          }
+          const flags = map.get(base);
+          flags[part] = true;
+          if (Number.isFinite(metricNumber(mod[k]))) {
+            flags.hasNumeric = true;
+          }
+        });
+      }
+
+      const grouped = {};
+      for (const [base, flags] of map.entries()) {
+        if (flags.IB && flags.PR && flags.diff && flags.hasNumeric) {
+          const idx = base.indexOf(" ");
+          const quantity = idx > 0 ? base.slice(0, idx) : base;
+          const group = idx > 0 ? base.slice(idx + 1) : "(none)";
+          if (!grouped[quantity]) {
+            grouped[quantity] = [];
+          }
+          grouped[quantity].push(group);
+        }
+      }
+
+      Object.keys(grouped).forEach((quantity) => {
+        grouped[quantity].sort((a, b) => a.localeCompare(b));
+      });
+
+      return {
+        byQuantity: grouped,
+        quantities: Object.keys(grouped).sort()
+      };
+    }
+
+    function chooseDefaultGroup(groups) {
+      const byPreference = ["total", "event", "construction", "begin job"];
+      for (const wanted of byPreference) {
+        if (groups.includes(wanted)) {
+          return wanted;
+        }
+      }
+      return groups[0] || "";
+    }
+
+    function setStatus(message, isError = false) {
+      el.status.textContent = message;
+      el.status.className = isError ? "sub error" : "sub";
+    }
+
+    function populateTypeFilter(modules) {
+      const types = [...new Set(modules.map((m) => m.type || "(none)"))].sort();
+      el.typeFilter.innerHTML = "";
+      const all = document.createElement("option");
+      all.value = "";
+      all.textContent = "All types";
+      el.typeFilter.appendChild(all);
+      for (const t of types) {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        el.typeFilter.appendChild(opt);
+      }
+    }
+
+    function populateQuantitySelect(quantities) {
+      el.quantitySelect.innerHTML = "";
+      for (const quantity of quantities) {
+        const opt = document.createElement("option");
+        opt.value = quantity;
+        opt.textContent = quantityLabel(quantity);
+        el.quantitySelect.appendChild(opt);
+      }
+      el.quantitySelect.value = quantities[0] || "";
+    }
+
+    function getSelectedFieldBase() {
+      const quantity = el.quantitySelect.value;
+      const groups = state.fieldGroupsByQuantity[quantity] || [];
+      const group = chooseDefaultGroup(groups);
+      if (!quantity || !group) {
+        return "";
+      }
+      if (group === "(none)") {
+        return quantity;
+      }
+      return `${quantity} ${group}`;
+    }
+
+    function updateColumnHeaders(fieldBase) {
+      const arrow = {
+        "label-desc": " ▼",
+        "label-asc": " ▲",
+        "type-desc": " ▼",
+        "type-asc": " ▲",
+        "ib-desc": " ▼",
+        "ib-asc": " ▲",
+        "pr-desc": " ▼",
+        "pr-asc": " ▲",
+        "metric-desc": " ▼",
+        "metric-asc": " ▲"
+      };
+      const sortBy = el.sortBy.value;
+      const quantity = fieldBase.split(" ")[0];
+      const unit = state.quantityUnits[quantity] ? ` [${state.quantityUnits[quantity]}]` : "";
+
+      el.colLabel.textContent = `Label${arrow[sortBy] && sortBy.startsWith("label-") ? arrow[sortBy] : ""}`;
+      el.colType.textContent = `Type${arrow[sortBy] && sortBy.startsWith("type-") ? arrow[sortBy] : ""}`;
+
+      el.colIB.textContent = `${fieldBase} IB${unit}${arrow[sortBy] && sortBy.startsWith("ib-") ? arrow[sortBy] : ""}`;
+      el.colPR.textContent = `${fieldBase} PR${unit}${arrow[sortBy] && sortBy.startsWith("pr-") ? arrow[sortBy] : ""}`;
+      el.colDiff.textContent = `${fieldBase} diff${unit}${arrow[sortBy] && sortBy.startsWith("metric-") ? arrow[sortBy] : ""}`;
+    }
+
+    function updateStats(rows, fieldBase) {
+      const diffKey = `${fieldBase} diff`;
+      const quantity = fieldBase.split(" ")[0];
+      const values = rows.map((r) => toNumber(r[diffKey]));
+      const count = values.length;
+      const mean = count ? values.reduce((a, b) => a + b, 0) / count : 0;
+      const maxAbs = count ? Math.max(...values.map((v) => Math.abs(v))) : 0;
+      const types = new Set(rows.map((r) => r.type || "(none)")).size;
+
+      state.maxAbsMetric = Math.max(maxAbs, 1e-9);
+
+      el.statModules.textContent = count.toLocaleString();
+      el.statTypes.textContent = types.toLocaleString();
+      el.statMean.textContent = fmtNumber(mean, quantity);
+      el.statMaxAbs.textContent = fmtNumber(maxAbs, quantity);
+    }
+
+    function applyFilters() {
+      const q = el.search.value.trim().toLowerCase();
+      const type = el.typeFilter.value;
+      const fieldBase = getSelectedFieldBase();
+      if (!fieldBase) {
+        state.filtered = [];
+        updateColumnHeaders("(field)");
+        updateStats([], "");
+        renderTable();
+        return;
+      }
+      const diffKey = `${fieldBase} diff`;
+      const ibKey = `${fieldBase} IB`;
+      const prKey = `${fieldBase} PR`;
+      const minAbs = Math.abs(toNumber(el.minAbs.value));
+
+      updateColumnHeaders(fieldBase || "(field)");
+
+      const rows = state.modules.filter((m) => {
+        if (type && (m.type || "(none)") !== type) {
+          return false;
+        }
+
+        if (q) {
+          const hay = `${m.label || ""} ${m.type || ""} ${m.record || ""}`.toLowerCase();
+          if (!hay.includes(q)) {
+            return false;
+          }
+        }
+
+        if (Math.abs(toNumber(m[diffKey])) < minAbs) {
+          return false;
+        }
+
+        return true;
+      });
+
+      rows.sort((a, b) => {
+        switch (el.sortBy.value) {
+          case "label-asc":
+            return String(a.label || "").localeCompare(String(b.label || ""));
+          case "label-desc":
+            return String(b.label || "").localeCompare(String(a.label || ""));
+          case "type-asc":
+            return String(a.type || "").localeCompare(String(b.type || ""));
+          case "type-desc":
+            return String(b.type || "").localeCompare(String(a.type || ""));
+          case "ib-asc":
+            return toNumber(a[ibKey]) - toNumber(b[ibKey]);
+          case "ib-desc":
+            return toNumber(b[ibKey]) - toNumber(a[ibKey]);
+          case "pr-asc":
+            return toNumber(a[prKey]) - toNumber(b[prKey]);
+          case "pr-desc":
+            return toNumber(b[prKey]) - toNumber(a[prKey]);
+          case "metric-asc":
+            return toNumber(a[diffKey]) - toNumber(b[diffKey]);
+          case "metric-desc":
+            return toNumber(b[diffKey]) - toNumber(a[diffKey]);
+          case "abs-desc":
+          default: {
+            const byFixedMetric = Math.abs(toNumber(b[diffKey])) - Math.abs(toNumber(a[diffKey]));
+            if (byFixedMetric !== 0) {
+              return byFixedMetric;
+            }
+            return String(a.label || "").localeCompare(String(b.label || ""));
+          }
+        }
+      });
+
+      state.filtered = rows;
+      const pageCount = Math.max(1, Math.ceil(rows.length / Math.max(20, toNumber(el.rowsPerPage.value) || 120)));
+      state.page = Math.min(state.page, pageCount);
+
+      updateStats(rows, fieldBase);
+      renderTable();
+    }
+
+    function barStyle(value) {
+      const abs = Math.abs(value);
+      const pct = Math.min(100, (abs / state.maxAbsMetric) * 100);
+      const side = value >= 0 ? "up" : "down";
+      const left = value >= 0 ? "50%" : `${50 - pct / 2}%`;
+      return { pct, side, left };
+    }
+
+    function renderTable() {
+      const fieldBase = getSelectedFieldBase();
+      if (!fieldBase) {
+        el.tbody.innerHTML = "";
+        el.empty.style.display = "block";
+        el.pageInfo.textContent = "Page 0/0";
+        el.prevBtn.disabled = true;
+        el.nextBtn.disabled = true;
+        return;
+      }
+      const ibKey = `${fieldBase} IB`;
+      const prKey = `${fieldBase} PR`;
+      const diffKey = `${fieldBase} diff`;
+      const rowsPerPage = Math.max(20, toNumber(el.rowsPerPage.value) || 120);
+      const pageCount = Math.max(1, Math.ceil(state.filtered.length / rowsPerPage));
+      state.page = Math.min(Math.max(1, state.page), pageCount);
+
+      const start = (state.page - 1) * rowsPerPage;
+      const pageRows = state.filtered.slice(start, start + rowsPerPage);
+
+      el.tbody.innerHTML = "";
+      el.empty.style.display = pageRows.length ? "none" : "block";
+
+      const quantity = fieldBase.split(" ")[0];
+      const detailTitle = hasOnlyFlatMetrics()
+        ? "All module metrics"
+        : `Transitions for quantity: ${escapeHtml(el.quantitySelect.value)}`;
+
+      for (const row of pageRows) {
+        const tr = document.createElement("tr");
+        const ibValue = toNumber(row[ibKey]);
+        const prValue = toNumber(row[prKey]);
+        const diffValue = toNumber(row[diffKey]);
+        const visual = barStyle(diffValue);
+        const key = rowKey(row);
+        const isExpanded = state.expandedRows.has(key);
+
+        tr.className = isExpanded ? "expandable expanded" : "expandable";
+        tr.setAttribute("aria-expanded", String(isExpanded));
+
+        tr.innerHTML = `
+          <td title="${(row.label || "").replaceAll('"', "&quot;")}"><span class="expand-icon">${isExpanded ? "▼" : "▶"}</span>${row.label || ""}</td>
+          <td><span class="pill">${row.type || "(none)"}</span></td>
+          <td class="mono">${fmtNumber(ibValue, quantity)}</td>
+          <td class="mono">${fmtNumber(prValue, quantity)}</td>
+          <td class="mono">${fmtNumber(diffValue, quantity)}</td>
+          <td class="bar-cell">
+            <div class="bar-track">
+              <div class="bar-fill ${visual.side}" style="left:${visual.left}; width:${visual.pct}%;"></div>
+            </div>
+          </td>
+        `;
+        tr.addEventListener("click", () => toggleRowExpanded(key));
+        el.tbody.appendChild(tr);
+
+        if (isExpanded) {
+          const eventSetupDetail = buildEventSetupDetailTable(row, el.quantitySelect.value);
+          const detailTr = document.createElement("tr");
+          detailTr.className = "detail-row";
+          detailTr.innerHTML = `
+            <td colspan="6">
+              <div class="detail-wrap">
+                <p class="detail-title">${detailTitle}</p>
+                <table class="detail-table">
+                  <colgroup>
+                    <col style="width: 35%;">
+                    <col style="width: 21.666%;">
+                    <col style="width: 21.666%;">
+                    <col style="width: 21.666%;">
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Quantity</th>
+                      <th class="th-num">IB</th>
+                      <th class="th-num">PR</th>
+                      <th class="th-num">Diff</th>
+                    </tr>
+                  </thead>
+                  <tbody>${buildExpandedMetricsRows(row, el.quantitySelect.value)}</tbody>
+                </table>
+                ${eventSetupDetail}
+              </div>
+            </td>
+          `;
+          el.tbody.appendChild(detailTr);
+        }
+      }
+
+      const from = state.filtered.length ? start + 1 : 0;
+      const to = Math.min(start + pageRows.length, state.filtered.length);
+      el.pageInfo.textContent = `Page ${state.page}/${pageCount} | Rows ${from}-${to} of ${state.filtered.length}`;
+      el.prevBtn.disabled = state.page <= 1;
+      el.nextBtn.disabled = state.page >= pageCount;
+    }
+
+    function loadFromObject(data, sourceLabel) {
+      const modules = extractModules(data);
+      if (!modules.length || typeof modules[0] !== "object") {
+        throw new Error("No module records found. Expected an object with a modules array.");
+      }
+
+      state.modules = modules;
+      state.quantityUnits = extractQuantityUnits(data);
+      const groupedFields = collectFieldGroups(modules);
+      state.fieldGroupsByQuantity = groupedFields.byQuantity;
+      state.quantities = groupedFields.quantities;
+      state.page = 1;
+
+      if (!state.quantities.length) {
+        throw new Error("No IB/PR/diff transitions found in module records.");
+      }
+
+      populateTypeFilter(modules);
+      populateQuantitySelect(state.quantities);
+      applyFilters();
+
+      setStatus(`Loaded ${modules.length.toLocaleString()} modules from ${sourceLabel}.`);
+    }
+
+    async function loadFromText(text, sourceLabel) {
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`Invalid JSON in ${sourceLabel}: ${err.message}`);
+      }
+      loadFromObject(data, sourceLabel);
+    }
+
+    async function tryAutoLoad(fileName) {
+      const name = fileName.trim();
+      if (!name) {
+        setStatus("Please enter a file name to auto-load.", true);
+        return;
+      }
+
+      try {
+        const res = await fetch(name, { cache: "no-store" });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const text = await res.text();
+        await loadFromText(text, name);
+      } catch (err) {
+        setStatus(
+          `Auto-load failed (${err.message}). If this page is opened with file://, browser fetch may be blocked. Use file picker or drag-and-drop.`,
+          true
+        );
+      }
+    }
+
+    function getFileParamFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("file") || params.get("url") || params.get("json") || "";
+    }
+
+    function wireEvents() {
+      function toggleSort(descValue, ascValue) {
+        el.sortBy.value = el.sortBy.value === descValue ? ascValue : descValue;
+        state.page = 1;
+        applyFilters();
+      }
+
+      function toggleEventSetupSort(column) {
+        if (!column) {
+          return;
+        }
+        if (state.eventSetupSort.column === column) {
+          state.eventSetupSort.direction = state.eventSetupSort.direction === "desc" ? "asc" : "desc";
+        } else {
+          state.eventSetupSort.column = column;
+          state.eventSetupSort.direction = column === "key" ? "asc" : "desc";
+        }
+        renderTable();
+      }
+
+      el.fileInput.addEventListener("change", async (evt) => {
+        const file = evt.target.files && evt.target.files[0];
+        if (!file) {
+          return;
+        }
+        const text = await file.text();
+        try {
+          await loadFromText(text, file.name);
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+
+      el.autoLoadBtn.addEventListener("click", () => {
+        tryAutoLoad(el.defaultFile.value);
+      });
+
+      el.quantitySelect.addEventListener("change", () => {
+        state.page = 1;
+        applyFilters();
+      });
+
+      [el.search, el.typeFilter, el.sortBy, el.minAbs, el.rowsPerPage].forEach((node) => {
+        const eventName = node.tagName === "INPUT" ? "input" : "change";
+        node.addEventListener(eventName, () => {
+          state.page = 1;
+          applyFilters();
+        });
+      });
+
+      el.colIB.addEventListener("click", () => toggleSort("ib-desc", "ib-asc"));
+      el.colPR.addEventListener("click", () => toggleSort("pr-desc", "pr-asc"));
+      el.colDiff.addEventListener("click", () => toggleSort("metric-desc", "metric-asc"));
+      el.colLabel.addEventListener("click", () => toggleSort("label-desc", "label-asc"));
+      el.colType.addEventListener("click", () => toggleSort("type-desc", "type-asc"));
+
+      el.tbody.addEventListener("click", (evt) => {
+        const header = evt.target.closest("th.es-sortable");
+        if (!header) {
+          return;
+        }
+        toggleEventSetupSort(header.dataset.esSort || "");
+      });
+
+      el.prevBtn.addEventListener("click", () => {
+        state.page = Math.max(1, state.page - 1);
+        renderTable();
+      });
+
+      el.nextBtn.addEventListener("click", () => {
+        state.page += 1;
+        renderTable();
+      });
+
+      ["dragenter", "dragover"].forEach((evtName) => {
+        el.dropzone.addEventListener(evtName, (evt) => {
+          evt.preventDefault();
+          el.dropzone.classList.add("drag");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((evtName) => {
+        el.dropzone.addEventListener(evtName, (evt) => {
+          evt.preventDefault();
+          el.dropzone.classList.remove("drag");
+        });
+      });
+
+      el.dropzone.addEventListener("drop", async (evt) => {
+        const file = evt.dataTransfer && evt.dataTransfer.files && evt.dataTransfer.files[0];
+        if (!file) {
+          return;
+        }
+        try {
+          const text = await file.text();
+          await loadFromText(text, file.name);
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+    }
+
+    function boot() {
+      wireEvents();
+      el.typeFilter.innerHTML = '<option value="">All types</option>';
+      el.sortBy.disabled = false;
+      el.sortBy.value = "abs-desc";
+      el.sortBy.title = "Default sort: abs(added total diff) high to low.";
+      el.quantitySelect.innerHTML = "";
+      renderTable();
+
+      const fileFromUrl = getFileParamFromUrl().trim();
+      if (fileFromUrl) {
+        el.defaultFile.value = fileFromUrl;
+        setStatus(`Trying URL parameter file: ${fileFromUrl}`);
+        tryAutoLoad(fileFromUrl);
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-architecture=el8_amd64_gcc13;label=CMSSW_20_1_X;type=Development;state=IB;prodarch=1;
+architecture=el9_amd64_gcc13;label=CMSSW_20_1_X;type=Development;state=IB;prodarch=1;
 architecture=el8_amd64_gcc13;label=CMSSW_20_0_X;type=Development;state=IB;prodarch=1;
 architecture=el8_amd64_gcc13;label=CMSSW_17_0_X;type=Development;state=IB;prodarch=1;
 architecture=el8_amd64_gcc13;label=CMSSW_16_1_X;type=Development;state=IB;prodarch=1;

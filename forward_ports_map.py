@@ -134,7 +134,8 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/g4
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/cudart")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/g14")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/rootmaster"] = ["IB/CMSSW_20_1_X/rootmodule"]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/root640"] = ["IB/CMSSW_20_1_X/gcc16"]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/root640"] = ["IB/CMSSW_20_1_X/root640-gcc15"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/g4"] = ["IB/CMSSW_20_1_X/g4adept"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/g14"] = ["IB/CMSSW_20_1_X/g15"]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/g15"] = ["IB/CMSSW_20_1_X/gcc16"]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/g15"] = ["IB/CMSSW_20_1_X/root640-gcc15"]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/root640-gcc15"] = ["IB/CMSSW_20_1_X/gcc16"]

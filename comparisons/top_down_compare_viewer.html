@@ -413,8 +413,8 @@
   <main class="wrap">
     <section class="panel">
       <div class="hero">
-        <h1>Top-Down JSON Compare Viewer</h1>
-        <p class="sub">Compare function timing values across two top-down JSON snapshots with sortable deltas.</p>
+        <h1>Vtune Event Loop Compare Viewer</h1>
+        <p class="sub">Compare children of ::doEvent for IB and PR</p>
       </div>
 
       <div class="controls">
@@ -438,26 +438,17 @@
           <div>
             <label for="sortBy">Sort</label>
             <select id="sortBy">
-              <option value="abs-delta-desc">Abs(delta time) high to low</option>
               <option value="delta-desc">Delta time high to low</option>
               <option value="delta-asc">Delta time low to high</option>
               <option value="delta-parent-desc">Delta %parent high to low</option>
               <option value="delta-parent-asc">Delta %parent low to high</option>
-              <option value="delta-total-desc">Delta %total high to low</option>
+              <option value="delta-total-desc" selected>Delta %total high to low</option>
               <option value="delta-total-asc">Delta %total low to high</option>
-              <option value="a-desc">IB total_time high to low</option>
-              <option value="a-asc">IB total_time low to high</option>
-              <option value="delta-pct-desc">Delta % high to low</option>
-              <option value="delta-pct-asc">Delta % low to high</option>
               <option value="function-asc">Function A to Z</option>
               <option value="function-desc">Function Z to A</option>
               <option value="parent-asc">Parent A to Z</option>
               <option value="parent-desc">Parent Z to A</option>
             </select>
-          </div>
-          <div>
-            <label for="minAbsDelta">Min abs(delta time)</label>
-            <input id="minAbsDelta" type="number" step="any" value="0">
           </div>
           <div>
             <label for="rowsPerPage">Rows per page</label>
@@ -529,7 +520,6 @@
       search: document.getElementById("search"),
       statusFilter: document.getElementById("statusFilter"),
       sortBy: document.getElementById("sortBy"),
-      minAbsDelta: document.getElementById("minAbsDelta"),
       rowsPerPage: document.getElementById("rowsPerPage"),
       sourceA: document.getElementById("sourceA"),
       sourceB: document.getElementById("sourceB"),
@@ -648,13 +638,18 @@
         const delta = bTime - aTime;
         const deltaPct = aTime > EPS ? (delta / aTime) * 100 : null;
 
+        const aPctTotal = a ? safeNumber(a.pct_of_total) : null;
+        const bPctTotal = b ? safeNumber(b.pct_of_total) : null;
+        const deltaPctTotal =
+          aPctTotal !== null && bPctTotal !== null ? bPctTotal - aPctTotal : null;
+
         let status = "same";
         if (a && !b) {
           status = "only-a";
         } else if (!a && b) {
           status = "only-b";
-        } else if (Math.abs(delta) > EPS) {
-          status = delta > 0 ? "increased" : "decreased";
+        } else if (deltaPctTotal !== null && Math.abs(deltaPctTotal) > EPS) {
+          status = deltaPctTotal > 0 ? "increased" : "decreased";
         }
 
         merged.push({
@@ -666,8 +661,8 @@
           delta_pct: deltaPct,
           a_pct_parent: a ? safeNumber(a.pct_of_parent) : null,
           b_pct_parent: b ? safeNumber(b.pct_of_parent) : null,
-          a_pct_total: a ? safeNumber(a.pct_of_total) : null,
-          b_pct_total: b ? safeNumber(b.pct_of_total) : null,
+          a_pct_total: aPctTotal,
+          b_pct_total: bPctTotal,
           status
         });
       }
@@ -683,18 +678,12 @@
     function applyFilters() {
       const query = el.search.value.trim().toLowerCase();
       const statusFilter = el.statusFilter.value;
-      const minAbsDelta = Math.abs(safeNumber(el.minAbsDelta.value));
-
       let rows = state.rows.filter((row) => {
         if (statusFilter === "in-a-and-b") {
           if (row.status === "only-a" || row.status === "only-b") {
             return false;
           }
         } else if (statusFilter && row.status !== statusFilter) {
-          return false;
-        }
-
-        if (Math.abs(row.delta_time) < minAbsDelta) {
           return false;
         }
 
@@ -708,7 +697,11 @@
 
       rows = sortRows(rows, el.sortBy.value);
       state.filtered = rows;
-      state.maxAbsDelta = Math.max(1e-9, ...rows.map((r) => Math.abs(r.delta_time)));
+      state.maxAbsDelta = Math.max(1e-9, ...rows.map((r) =>
+        r.a_pct_total !== null && r.b_pct_total !== null
+          ? Math.abs(r.b_pct_total - r.a_pct_total)
+          : 0
+      ));
 
       const pageCount = Math.max(1, Math.ceil(rows.length / rowsPerPage()));
       state.page = Math.min(pageCount, Math.max(1, state.page));
@@ -854,7 +847,6 @@
       } else {
         el.empty.style.display = "none";
         el.tbody.innerHTML = pageRows.map((row) => {
-          const bar = barStyle(row.delta_time);
           const rowKey = combinedKey(row.parent_function, row.function);
           const isExpanded = state.expandedRows.has(rowKey);
           const pctParentDiff =
@@ -865,6 +857,7 @@
             Number.isFinite(row.a_pct_total) && Number.isFinite(row.b_pct_total)
               ? row.b_pct_total - row.a_pct_total
               : NaN;
+          const bar = barStyle(Number.isFinite(pctTotalDiff) ? pctTotalDiff : 0);
           return `
             <tr class="expandable ${isExpanded ? "expanded" : ""}" data-row-key="${escapeHtml(rowKey)}" aria-expanded="${isExpanded ? "true" : "false"}">
               <td title="${escapeHtml(row.parent_function)}">${escapeHtml(row.parent_function)}</td>
@@ -1009,7 +1002,7 @@
     }
 
     function wireEvents() {
-      [el.search, el.statusFilter, el.sortBy, el.minAbsDelta, el.rowsPerPage].forEach((node) => {
+      [el.search, el.statusFilter, el.sortBy, el.rowsPerPage].forEach((node) => {
         const eventName = node.tagName === "INPUT" ? "input" : "change";
         node.addEventListener(eventName, () => {
           state.page = 1;

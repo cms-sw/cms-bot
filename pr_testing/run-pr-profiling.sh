@@ -113,6 +113,31 @@ EOF
     echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)/:$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)/\"IB - PR $(basename $d)</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Event Loop Reports</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'sorted_RES_CPU_step*.html' | sort -V ) ; do
+    BASENAME=$(basename $f)
+    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$BASENAME $PWD/$CMSSW_VERSION-$BASENAME|| true
+    if [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
+      echo "<td><a target=\"_blank\" href=\"/profiling/$CMSSW_VERSION/$SCRAM_ARCH/$PROFILING_WORKFLOW/$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    else
+      echo "<td>IB top-down html file not found</td><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    fi
+    echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/$BASENAME\">PR ${BASENAME/.html/}</href>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+  done
+  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+
+  echo "<tr><td>Event Loop Report Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'sorted_RES_CPU_step*.json' | sort -V ) ; do
+    BASENAME=$(basename $f)
+    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$BASENAME $PWD/$CMSSW_VERSION-$BASENAME || true
+    if [ -f $PWD/$CMSSW_VERSION-$BASENAME ];then
+      $CMS_BOT_DIR/comparisons/top-down-embed.py $CMSSW_VERSION-$BASENAME $BASENAME -o diff-${BASENAME/.json/.html} || true
+      echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME\">diff-$BASENAME/.json/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    else
+      echo "<td>IB top-down json file not found</td><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    fi
+  done
+  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   echo "<tr><td>Module Alloc Monitor</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
@@ -140,6 +165,7 @@ EOF
     echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  if [ $(ls -1 step*_moduleEventAllocMonitor.circles.json 2>/dev/null) -gt 0 ]; then
   echo "<tr><td>Module Event Alloc Monitor</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleEventAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
@@ -166,6 +192,7 @@ EOF
     fi
     echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
+  fi
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name '*.json.gz' -o -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html' | grep -v 'r-step') ; do
     d=$(dirname $f)

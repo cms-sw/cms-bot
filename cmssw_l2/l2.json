@@ -90,6 +90,15 @@
       "start_date": 1377043200
     }
   ],
+  "EltonSh": [
+    {
+      "category": [
+        "alca",
+        "db"
+      ],
+      "start_date": 1781049600
+    }
+  ],
   "ErnestaP": [
     {
       "category": [
@@ -494,6 +503,7 @@
         "alca",
         "db"
       ],
+      "end_date": 1781049600,
       "start_date": 1726790400
     }
   ],

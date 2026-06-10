@@ -234,6 +234,79 @@
       background: #faf5ec;
     }
 
+    tbody tr.expandable {
+      cursor: pointer;
+    }
+
+    tbody tr.expanded {
+      background: #f8f3e8;
+    }
+
+    .expand-icon {
+      display: inline-block;
+      width: 1.1rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      transform: translateY(-0.04rem);
+    }
+
+    .detail-row td {
+      padding-top: 0;
+      background: #fffdf7;
+    }
+
+    .detail-wrap {
+      margin: 0 0 0.7rem;
+      padding: 0.7rem 0.8rem 0.85rem;
+      border: 1px solid #e3dacd;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fffaf1, #fffefb);
+    }
+
+    .detail-title {
+      margin: 0 0 0.55rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .detail-table-wrap {
+      overflow: hidden;
+      border: 1px solid #e3dacd;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .detail-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 0.84rem;
+    }
+
+    .detail-table th,
+    .detail-table td {
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid #efe4d5;
+    }
+
+    .detail-table thead th {
+      position: static;
+      background: #f7f3eb;
+      color: var(--ink-soft);
+      font-size: 0.74rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .detail-table td {
+      background: #fff;
+    }
+
     .mono {
       font-variant-numeric: tabular-nums;
       text-align: right;
@@ -354,11 +427,12 @@
             <label for="statusFilter">Filter status</label>
             <select id="statusFilter">
               <option value="">All statuses</option>
+              <option value="in-a-and-b" selected>in IB and PR</option>
               <option value="same">same</option>
               <option value="increased">increased</option>
               <option value="decreased">decreased</option>
-              <option value="only-a">only in A</option>
-              <option value="only-b">only in B</option>
+              <option value="only-a">only in IB</option>
+              <option value="only-b">only in PR</option>
             </select>
           </div>
           <div>
@@ -367,10 +441,12 @@
               <option value="abs-delta-desc">Abs(delta time) high to low</option>
               <option value="delta-desc">Delta time high to low</option>
               <option value="delta-asc">Delta time low to high</option>
-              <option value="a-desc">A total_time high to low</option>
-              <option value="a-asc">A total_time low to high</option>
-              <option value="b-desc">B total_time high to low</option>
-              <option value="b-asc">B total_time low to high</option>
+              <option value="delta-parent-desc">Delta %parent high to low</option>
+              <option value="delta-parent-asc">Delta %parent low to high</option>
+              <option value="delta-total-desc">Delta %total high to low</option>
+              <option value="delta-total-asc">Delta %total low to high</option>
+              <option value="a-desc">IB total_time high to low</option>
+              <option value="a-asc">IB total_time low to high</option>
               <option value="delta-pct-desc">Delta % high to low</option>
               <option value="delta-pct-asc">Delta % low to high</option>
               <option value="function-asc">Function A to Z</option>
@@ -390,8 +466,8 @@
         </div>
 
         <div class="badge-row">
-          <span id="sourceA" class="badge">A: embedded</span>
-          <span id="sourceB" class="badge">B: embedded</span>
+          <span id="sourceA" class="badge">IB: embedded</span>
+          <span id="sourceB" class="badge">PR: embedded</span>
           <span id="status" class="badge">Waiting for embedded payload.</span>
         </div>
       </div>
@@ -399,8 +475,8 @@
       <div class="stats">
         <div class="stat"><div class="k">Compared Rows</div><div id="statRows" class="v">0</div></div>
         <div class="stat"><div class="k">Changed Rows</div><div id="statChanged" class="v">0</div></div>
-        <div class="stat"><div class="k">Only In A</div><div id="statOnlyA" class="v">0</div></div>
-        <div class="stat"><div class="k">Only In B</div><div id="statOnlyB" class="v">0</div></div>
+        <div class="stat"><div class="k">Only In IB</div><div id="statOnlyA" class="v">0</div></div>
+        <div class="stat"><div class="k">Only In PR</div><div id="statOnlyB" class="v">0</div></div>
         <div class="stat"><div class="k">Sum Delta Time</div><div id="statSumDelta" class="v">0</div></div>
       </div>
 
@@ -417,14 +493,9 @@
               <tr>
                 <th id="colParent" class="sortable">Parent Function</th>
                 <th id="colFunction" class="sortable">Function</th>
-                <th id="colA" class="sortable th-num">A total_time</th>
-                <th id="colB" class="sortable th-num">B total_time</th>
-                <th id="colDelta" class="sortable th-num">Delta</th>
-                <th id="colDeltaPct" class="sortable th-num">Delta %</th>
-                <th class="th-num">A % parent</th>
-                <th class="th-num">B % parent</th>
-                <th class="th-num">A % total</th>
-                <th class="th-num">B % total</th>
+                <th id="colDeltaTime" class="sortable th-num">Delta total_time</th>
+                <th id="colDeltaParent" class="sortable th-num">Delta %parent</th>
+                <th id="colDeltaTotal" class="sortable th-num">Delta %total</th>
                 <th>Status</th>
                 <th>Visual</th>
               </tr>
@@ -447,6 +518,7 @@
       payloadB: null,
       rows: [],
       filtered: [],
+      expandedRows: new Set(),
       page: 1,
       maxAbsDelta: 1,
       summaryA: null,
@@ -469,10 +541,9 @@
       statSumDelta: document.getElementById("statSumDelta"),
       colParent: document.getElementById("colParent"),
       colFunction: document.getElementById("colFunction"),
-      colA: document.getElementById("colA"),
-      colB: document.getElementById("colB"),
-      colDelta: document.getElementById("colDelta"),
-      colDeltaPct: document.getElementById("colDeltaPct"),
+      colDeltaTime: document.getElementById("colDeltaTime"),
+      colDeltaParent: document.getElementById("colDeltaParent"),
+      colDeltaTotal: document.getElementById("colDeltaTotal"),
       tbody: document.getElementById("tbody"),
       empty: document.getElementById("empty"),
       prevBtn: document.getElementById("prevBtn"),
@@ -615,7 +686,11 @@
       const minAbsDelta = Math.abs(safeNumber(el.minAbsDelta.value));
 
       let rows = state.rows.filter((row) => {
-        if (statusFilter && row.status !== statusFilter) {
+        if (statusFilter === "in-a-and-b") {
+          if (row.status === "only-a" || row.status === "only-b") {
+            return false;
+          }
+        } else if (statusFilter && row.status !== statusFilter) {
           return false;
         }
 
@@ -649,11 +724,36 @@
     function sortRows(rows, mode) {
       const sorted = [...rows];
       sorted.sort((a, b) => {
+        const aParentDiff =
+          Number.isFinite(a.a_pct_parent) && Number.isFinite(a.b_pct_parent)
+            ? a.b_pct_parent - a.a_pct_parent
+            : NaN;
+        const bParentDiff =
+          Number.isFinite(b.a_pct_parent) && Number.isFinite(b.b_pct_parent)
+            ? b.b_pct_parent - b.a_pct_parent
+            : NaN;
+        const aTotalDiff =
+          Number.isFinite(a.a_pct_total) && Number.isFinite(a.b_pct_total)
+            ? a.b_pct_total - a.a_pct_total
+            : NaN;
+        const bTotalDiff =
+          Number.isFinite(b.a_pct_total) && Number.isFinite(b.b_pct_total)
+            ? b.b_pct_total - b.a_pct_total
+            : NaN;
+
         switch (mode) {
           case "delta-desc":
             return b.delta_time - a.delta_time;
           case "delta-asc":
             return a.delta_time - b.delta_time;
+          case "delta-parent-desc":
+            return safeNumber(bParentDiff) - safeNumber(aParentDiff);
+          case "delta-parent-asc":
+            return safeNumber(aParentDiff) - safeNumber(bParentDiff);
+          case "delta-total-desc":
+            return safeNumber(bTotalDiff) - safeNumber(aTotalDiff);
+          case "delta-total-asc":
+            return safeNumber(aTotalDiff) - safeNumber(bTotalDiff);
           case "a-desc":
             return b.a_total_time - a.a_total_time;
           case "a-asc":
@@ -662,10 +762,6 @@
             return b.b_total_time - a.b_total_time;
           case "b-asc":
             return a.b_total_time - b.b_total_time;
-          case "delta-pct-desc":
-            return (safeNumber(b.delta_pct) - safeNumber(a.delta_pct));
-          case "delta-pct-asc":
-            return (safeNumber(a.delta_pct) - safeNumber(b.delta_pct));
           case "function-asc":
             return a.function.localeCompare(b.function);
           case "function-desc":
@@ -726,12 +822,21 @@
 
     function statusLabel(status) {
       if (status === "only-a") {
-        return "only in A";
+        return "only in IB";
       }
       if (status === "only-b") {
-        return "only in B";
+        return "only in PR";
       }
       return status;
+    }
+
+    function toggleRowExpanded(key) {
+      if (state.expandedRows.has(key)) {
+        state.expandedRows.delete(key);
+      } else {
+        state.expandedRows.add(key);
+      }
+      renderTable();
     }
 
     function renderTable() {
@@ -750,18 +855,23 @@
         el.empty.style.display = "none";
         el.tbody.innerHTML = pageRows.map((row) => {
           const bar = barStyle(row.delta_time);
+          const rowKey = combinedKey(row.parent_function, row.function);
+          const isExpanded = state.expandedRows.has(rowKey);
+          const pctParentDiff =
+            Number.isFinite(row.a_pct_parent) && Number.isFinite(row.b_pct_parent)
+              ? row.b_pct_parent - row.a_pct_parent
+              : NaN;
+          const pctTotalDiff =
+            Number.isFinite(row.a_pct_total) && Number.isFinite(row.b_pct_total)
+              ? row.b_pct_total - row.a_pct_total
+              : NaN;
           return `
-            <tr>
+            <tr class="expandable ${isExpanded ? "expanded" : ""}" data-row-key="${escapeHtml(rowKey)}" aria-expanded="${isExpanded ? "true" : "false"}">
               <td title="${escapeHtml(row.parent_function)}">${escapeHtml(row.parent_function)}</td>
-              <td title="${escapeHtml(row.function)}">${escapeHtml(row.function)}</td>
-              <td class="mono">${fmtNum(row.a_total_time, 6)}</td>
-              <td class="mono">${fmtNum(row.b_total_time, 6)}</td>
-              <td class="mono">${fmtNum(row.delta_time, 6)}</td>
-              <td class="mono">${fmtPct(row.delta_pct)}</td>
-              <td class="mono">${fmtPct(row.a_pct_parent)}</td>
-              <td class="mono">${fmtPct(row.b_pct_parent)}</td>
-              <td class="mono">${fmtPct(row.a_pct_total)}</td>
-              <td class="mono">${fmtPct(row.b_pct_total)}</td>
+              <td title="${escapeHtml(row.function)}"><span class="expand-icon">${isExpanded ? "▼" : "▶"}</span>${escapeHtml(row.function)}</td>
+              <td class="mono ${row.delta_time > 0 ? "up" : row.delta_time < 0 ? "down" : ""}">${fmtNum(row.delta_time, 6)}</td>
+              <td class="mono ${pctParentDiff > 0 ? "up" : pctParentDiff < 0 ? "down" : ""}">${fmtPct(pctParentDiff)}</td>
+              <td class="mono ${pctTotalDiff > 0 ? "up" : pctTotalDiff < 0 ? "down" : ""}">${fmtPct(pctTotalDiff)}</td>
               <td class="status-cell ${statusClass(row.status)}">${statusLabel(row.status)}</td>
               <td class="bar-cell">
                 <div class="bar-track">
@@ -769,8 +879,60 @@
                 </div>
               </td>
             </tr>
+            ${isExpanded ? `<tr class="detail-row">
+              <td colspan="7">
+                <div class="detail-wrap">
+                  <div class="detail-title">Values for ${escapeHtml(row.function)}</div>
+                  <div class="detail-table-wrap">
+                    <table class="detail-table">
+                      <colgroup>
+                        <col style="width: 40%;">
+                        <col style="width: 20%;">
+                        <col style="width: 20%;">
+                        <col style="width: 22%;">
+                      </colgroup>
+                      <thead>
+                        <tr>
+                          <th>Value</th>
+                          <th class="th-num">IB</th>
+                          <th class="th-num">PR</th>
+                          <th class="th-num">IB - PR</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>total_time</td>
+                          <td class="mono">${fmtNum(row.a_total_time, 6)}</td>
+                          <td class="mono">${fmtNum(row.b_total_time, 6)}</td>
+                          <td class="mono ${row.delta_time > 0 ? "up" : row.delta_time < 0 ? "down" : ""}">${fmtNum(row.delta_time, 6)}</td>
+                        </tr>
+                        <tr>
+                          <td>pct_of_parent</td>
+                          <td class="mono">${fmtPct(row.a_pct_parent)}</td>
+                          <td class="mono">${fmtPct(row.b_pct_parent)}</td>
+                          <td class="mono ${pctParentDiff > 0 ? "up" : pctParentDiff < 0 ? "down" : ""}">${fmtPct(pctParentDiff)}</td>
+                        </tr>
+                        <tr>
+                          <td>pct_of_total</td>
+                          <td class="mono">${fmtPct(row.a_pct_total)}</td>
+                          <td class="mono">${fmtPct(row.b_pct_total)}</td>
+                          <td class="mono ${pctTotalDiff > 0 ? "up" : pctTotalDiff < 0 ? "down" : ""}">${fmtPct(pctTotalDiff)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </td>
+            </tr>` : ""}
           `;
         }).join("");
+
+        el.tbody.querySelectorAll("tr.expandable").forEach((tr) => {
+          tr.addEventListener("click", () => {
+            const key = tr.getAttribute("data-row-key") || "";
+            toggleRowExpanded(key);
+          });
+        });
       }
 
       const from = totalRows ? start + 1 : 0;
@@ -797,7 +959,7 @@
         state.filtered = [];
         renderStats([]);
         renderTable();
-        setStatus("Load two files to compare.");
+        setStatus("Waiting for embedded payload.");
         return;
       }
 
@@ -810,33 +972,33 @@
       const aCpu = safeNumber(state.summaryA?.total_cpu_time);
       const bCpu = safeNumber(state.summaryB?.total_cpu_time);
       setStatus(
-        `Compared ${state.rows.length.toLocaleString()} unique function keys | A children: ${aRows.toLocaleString()} | B children: ${bRows.toLocaleString()} | total_cpu_time delta: ${fmtNum(bCpu - aCpu, 6)}`
+        `Compared ${state.rows.length.toLocaleString()} unique function keys | IB children: ${aRows.toLocaleString()} | PR children: ${bRows.toLocaleString()} | total_cpu_time delta: ${fmtNum(bCpu - aCpu, 6)}`
       );
     }
 
     async function loadAFromText(text, sourceLabel) {
       state.payloadA = await parseText(text, sourceLabel);
       state.sourceA = sourceLabel;
-      el.sourceA.textContent = `A: ${sourceLabel}`;
+      el.sourceA.textContent = `IB: ${sourceLabel}`;
       recompute();
     }
 
     async function loadBFromText(text, sourceLabel) {
       state.payloadB = await parseText(text, sourceLabel);
       state.sourceB = sourceLabel;
-      el.sourceB.textContent = `B: ${sourceLabel}`;
+      el.sourceB.textContent = `PR: ${sourceLabel}`;
       recompute();
     }
 
-    function loadFromObjects(dataA, dataB, sourceLabelA = "embedded A", sourceLabelB = "embedded B") {
+    function loadFromObjects(dataA, dataB, sourceLabelA = "embedded IB", sourceLabelB = "embedded PR") {
       normalizePayload(dataA);
       normalizePayload(dataB);
       state.payloadA = dataA;
       state.payloadB = dataB;
       state.sourceA = sourceLabelA;
       state.sourceB = sourceLabelB;
-      el.sourceA.textContent = `A: ${sourceLabelA}`;
-      el.sourceB.textContent = `B: ${sourceLabelB}`;
+      el.sourceA.textContent = `IB: ${sourceLabelA}`;
+      el.sourceB.textContent = `PR: ${sourceLabelB}`;
       recompute();
     }
 
@@ -860,10 +1022,9 @@
       });
 
       el.colFunction.addEventListener("click", () => toggleSort("function-desc", "function-asc"));
-      el.colA.addEventListener("click", () => toggleSort("a-desc", "a-asc"));
-      el.colB.addEventListener("click", () => toggleSort("b-desc", "b-asc"));
-      el.colDelta.addEventListener("click", () => toggleSort("delta-desc", "delta-asc"));
-      el.colDeltaPct.addEventListener("click", () => toggleSort("delta-pct-desc", "delta-pct-asc"));
+      el.colDeltaTime.addEventListener("click", () => toggleSort("delta-desc", "delta-asc"));
+      el.colDeltaParent.addEventListener("click", () => toggleSort("delta-parent-desc", "delta-parent-asc"));
+      el.colDeltaTotal.addEventListener("click", () => toggleSort("delta-total-desc", "delta-total-asc"));
 
       el.prevBtn.addEventListener("click", () => {
         state.page = Math.max(1, state.page - 1);

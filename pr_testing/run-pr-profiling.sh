@@ -168,7 +168,8 @@ EOF
     mkdir -p $WORKSPACE/vtune-profiles/$d || true
     rsync -auv $d/ $WORKSPACE/vtune-profiles/$d/ || true
     echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)\">IB $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
-    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR $(basename $d)/</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)/:$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)/\"IB - PR $(basename $d)</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   popd

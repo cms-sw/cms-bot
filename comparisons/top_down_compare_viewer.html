@@ -1,0 +1,2168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Top-Down JSON Compare Viewer</title>
+
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --ink: #1d232a;
+      --ink-soft: #4a525c;
+      --paper: #fffaf3;
+      --card: #fffdf8;
+      --line: #dacfbf;
+      --accent: #0e8f7a;
+      --accent-soft: #a4ddd5;
+      --up: #0b8a6a;
+      --down: #c53d20;
+      --shadow: 0 10px 30px rgba(35, 41, 48, 0.12);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 8% 20%, #ffe7b8 0%, transparent 33%),
+        radial-gradient(circle at 85% 10%, #cdeef4 0%, transparent 40%),
+        linear-gradient(140deg, #efe6d6 0%, #f4efe6 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: 100%;
+      margin: 0;
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 1.2rem 1.2rem 1.4rem;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -45px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 40px;
+      transform: rotate(22deg);
+      background: linear-gradient(135deg, #9adfd2, #f6d9a3);
+      opacity: 0.45;
+      z-index: -1;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.2vw, 2rem);
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin: 0.45rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      padding: 1rem 1.2rem 1.2rem;
+      display: grid;
+      gap: 0.8rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 25%);
+    }
+
+    .grid {
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+    }
+
+    .grid > * {
+      min-width: 0;
+    }
+
+    .row-break {
+      grid-column: 1 / -1;
+      height: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    button {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.92rem;
+      border-radius: 10px;
+      border: 1px solid #c7bcae;
+      padding: 0.55rem 0.65rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input[type="file"] {
+      width: 100%;
+      font-size: 0.86rem;
+      color: var(--ink-soft);
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #fdfefe, #edf9f6);
+      border-color: #a9cfc8;
+      font-weight: 600;
+    }
+
+    button:hover {
+      filter: brightness(0.98);
+    }
+
+    .dropzone {
+      border: 1.5px dashed #86b9af;
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+      color: var(--ink-soft);
+      background: #f5fcfa;
+      transition: 150ms ease;
+    }
+
+    .dropzone-inline {
+      grid-column: 4 / -1;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dropzone.drag {
+      border-color: var(--accent);
+      background: #def4ef;
+      color: #1d4039;
+      transform: translateY(-1px);
+    }
+
+    .status.error {
+      color: var(--down);
+    }
+
+    .stats {
+      display: grid;
+      gap: 0.8rem;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 35%);
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid #ddd1c1;
+      border-radius: 12px;
+      padding: 0.7rem 0.8rem;
+    }
+
+    .stat .k {
+      color: var(--ink-soft);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat .v {
+      margin-top: 0.25rem;
+      font-size: 1.12rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .table-wrap {
+      padding: 0 1.2rem 1.2rem;
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pager button {
+      width: auto;
+      min-width: 80px;
+      padding: 0.4rem 0.7rem;
+    }
+
+    .pager .info {
+      color: var(--ink-soft);
+      font-size: 0.88rem;
+    }
+
+    .table-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      max-height: calc(100vh - 320px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1320px;
+      font-size: 0.86rem;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f4f8f7;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      color: #2d3a3f;
+      font-weight: 700;
+      padding: 0.6rem 0.7rem;
+      z-index: 2;
+      white-space: nowrap;
+    }
+
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    thead th.sortable:hover {
+      background: #ebf3f1;
+    }
+
+    thead th.th-num {
+      text-align: right;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #efe4d5;
+      padding: 0.48rem 0.7rem;
+      vertical-align: top;
+    }
+
+    tbody tr:hover {
+      background: #faf5ec;
+    }
+
+    td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      white-space: nowrap;
+    }
+
+    .function-cell {
+      min-width: 360px;
+      word-break: break-word;
+    }
+
+    .parent-cell {
+      min-width: 260px;
+      color: var(--ink-soft);
+    }
+
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid #dfd3c3;
+      padding: 0.1rem 0.5rem;
+      background: #fff9ef;
+      color: #6a5b4d;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .up {
+      color: var(--up);
+      font-weight: 700;
+    }
+
+    .down {
+      color: var(--down);
+      font-weight: 700;
+    }
+
+    .bar-track {
+      position: relative;
+      height: 8px;
+      border-radius: 999px;
+      background: #f0eee8;
+      border: 1px solid #e3dacd;
+      overflow: hidden;
+      margin-top: 0.2rem;
+    }
+
+    .bar-mid {
+      position: absolute;
+      inset: 0 auto 0 50%;
+      width: 1px;
+      background: #ccbca6;
+    }
+
+    .bar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+    }
+
+    .bar-fill.up {
+      background: #9adacb;
+    }
+
+    .bar-fill.down {
+      background: #efb3a5;
+    }
+
+    .empty {
+      display: none;
+      padding: 1.2rem;
+      text-align: center;
+      color: var(--ink-soft);
+    }
+
+    @media (max-width: 1180px) {
+      .grid {
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+      }
+
+      .dropzone-inline {
+        grid-column: 1 / -1;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .wrap {
+        padding: 0.75rem;
+      }
+
+      .grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel">
+      <div class="hero">
+        <h1>Top-Down JSON Compare Viewer</h1>
+        <p class="sub">Compare children values between two top-down JSON files with sortable diffs.</p>
+      </div>
+
+      <div class="controls">
+        <div class="grid">
+          <div>
+            <label for="fileInputA">Load JSON A</label>
+            <input id="fileInputA" type="file" accept=".json,application/json">
+          </div>
+          <div>
+            <label for="fileInputB">Load JSON B</label>
+            <input id="fileInputB" type="file" accept=".json,application/json">
+          </div>
+          <div>
+            <label for="autoFileA">Auto-load file A</label>
+            <input id="autoFileA" type="text" value="step3-34434.21.top-down-1.json">
+          </div>
+          <div>
+            <label for="autoFileB">Auto-load file B</label>
+            <input id="autoFileB" type="text" value="step3-34434.21.top-down-2.json">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="autoLoadBtn" type="button">Try Auto-Load Both</button>
+          </div>
+          <div id="dropzone" class="dropzone dropzone-inline">Drag and drop up to two JSON files here</div>
+
+          <div class="row-break" aria-hidden="true"></div>
+
+          <div>
+            <label for="search">Search function</label>
+            <input id="search" type="text" placeholder="e.g. MuonIdProducer or TrackProducer">
+          </div>
+          <div>
+            <label for="parentFilter">Parent function</label>
+            <select id="parentFilter"></select>
+          </div>
+          <div>
+            <label for="minAbsDiff">Min abs(total_time diff)</label>
+            <input id="minAbsDiff" type="number" step="any" value="0">
+          </div>
+          <div>
+            <label for="sortBy">Sort</label>
+            <select id="sortBy">
+              <option value="abs-desc">Abs(diff) high to low</option>
+              <option value="diff-desc">Diff high to low</option>
+              <option value="diff-asc">Diff low to high</option>
+              <option value="a-desc">A total_time high to low</option>
+              <option value="b-desc">B total_time high to low</option>
+              <option value="pct-desc">Pct diff high to low</option>
+              <option value="pct-asc">Pct diff low to high</option>
+              <option value="func-asc">Function A to Z</option>
+              <option value="func-desc">Function Z to A</option>
+            </select>
+          </div>
+          <div>
+            <label for="rowsPerPage">Rows per page</label>
+            <input id="rowsPerPage" type="number" min="20" step="20" value="120">
+          </div>
+          <div>
+            <label for="changedOnly">Show</label>
+            <select id="changedOnly">
+              <option value="all">All rows</option>
+              <option value="changed">Changed rows only</option>
+              <option value="only-a">Only in A</option>
+              <option value="only-b">Only in B</option>
+            </select>
+          </div>
+        </div>
+        <div id="status" class="sub status">Load both files to begin comparison.</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Rows Compared</div><div id="statRows" class="v">0</div></div>
+        <div class="stat"><div class="k">Changed Rows</div><div id="statChanged" class="v">0</div></div>
+        <div class="stat"><div class="k">Only in A</div><div id="statOnlyA" class="v">0</div></div>
+        <div class="stat"><div class="k">Only in B</div><div id="statOnlyB" class="v">0</div></div>
+        <div class="stat"><div class="k">Mean |Diff|</div><div id="statMeanAbs" class="v">0</div></div>
+        <div class="stat"><div class="k">Max |Diff|</div><div id="statMaxAbs" class="v">0</div></div>
+        <div class="stat"><div class="k">A Total CPU</div><div id="statATotalCpu" class="v">0</div></div>
+        <div class="stat"><div class="k">B Total CPU</div><div id="statBTotalCpu" class="v">0</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="pager">
+          <button id="prevBtn" type="button">Prev</button>
+          <button id="nextBtn" type="button">Next</button>
+          <span id="pageInfo" class="info">Page 0/0</span>
+        </div>
+
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr>
+                <th id="colParent" class="sortable" style="width: 18%;">Parent</th>
+                <th id="colFunction" class="sortable" style="width: 26%;">Function</th>
+                <th id="colStatus" class="sortable" style="width: 8%;">Status</th>
+                <th id="colA" class="sortable th-num" style="width: 8%;">A total</th>
+                <th id="colB" class="sortable th-num" style="width: 8%;">B total</th>
+                <th id="colDiff" class="sortable th-num" style="width: 8%;">Diff</th>
+                <th id="colPctDiff" class="sortable th-num" style="width: 8%;">Diff %</th>
+                <th class="th-num" style="width: 6%;">A % parent</th>
+                <th class="th-num" style="width: 6%;">B % parent</th>
+                <th class="th-num" style="width: 6%;">A % total</th>
+                <th class="th-num" style="width: 6%;">B % total</th>
+                <th style="width: 8%;">Visual</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div id="empty" class="empty">Load two JSON files to compare values.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      fileA: null,
+      fileB: null,
+      fileNameA: "",
+      fileNameB: "",
+      rows: [],
+      filtered: [],
+      page: 1,
+      maxAbsDiff: 1
+    };
+
+    const el = {
+      fileInputA: document.getElementById("fileInputA"),
+      fileInputB: document.getElementById("fileInputB"),
+      autoFileA: document.getElementById("autoFileA"),
+      autoFileB: document.getElementById("autoFileB"),
+      autoLoadBtn: document.getElementById("autoLoadBtn"),
+      dropzone: document.getElementById("dropzone"),
+      search: document.getElementById("search"),
+      parentFilter: document.getElementById("parentFilter"),
+      minAbsDiff: document.getElementById("minAbsDiff"),
+      sortBy: document.getElementById("sortBy"),
+      rowsPerPage: document.getElementById("rowsPerPage"),
+      changedOnly: document.getElementById("changedOnly"),
+      status: document.getElementById("status"),
+      tbody: document.getElementById("tbody"),
+      empty: document.getElementById("empty"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      pageInfo: document.getElementById("pageInfo"),
+      statRows: document.getElementById("statRows"),
+      statChanged: document.getElementById("statChanged"),
+      statOnlyA: document.getElementById("statOnlyA"),
+      statOnlyB: document.getElementById("statOnlyB"),
+      statMeanAbs: document.getElementById("statMeanAbs"),
+      statMaxAbs: document.getElementById("statMaxAbs"),
+      statATotalCpu: document.getElementById("statATotalCpu"),
+      statBTotalCpu: document.getElementById("statBTotalCpu"),
+      colParent: document.getElementById("colParent"),
+      colFunction: document.getElementById("colFunction"),
+      colStatus: document.getElementById("colStatus"),
+      colA: document.getElementById("colA"),
+      colB: document.getElementById("colB"),
+      colDiff: document.getElementById("colDiff"),
+      colPctDiff: document.getElementById("colPctDiff")
+    };
+
+    function fmt(value, frac = 6) {
+      if (!Number.isFinite(value)) {
+        return "-";
+      }
+      return value.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: frac
+      });
+    }
+
+    function fmtPct(value, frac = 3) {
+      if (!Number.isFinite(value)) {
+        return "-";
+      }
+      return `${fmt(value, frac)}%`;
+    }
+
+    function toNum(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : NaN;
+    }
+
+    function setStatus(message, isError = false) {
+      el.status.textContent = message;
+      el.status.className = isError ? "sub status error" : "sub status";
+    }
+
+    function normalizeChildren(fileObj) {
+      if (!fileObj || !Array.isArray(fileObj.children)) {
+        throw new Error("Expected an object with a children array.");
+      }
+
+      const map = new Map();
+      for (const child of fileObj.children) {
+        if (!child || typeof child !== "object") {
+          continue;
+        }
+        const parent = String(child.parent_function || "").trim();
+        const func = String(child.function || "").trim();
+        if (!parent || !func) {
+          continue;
+        }
+        const key = `${parent}||${func}`;
+        if (!map.has(key)) {
+          map.set(key, {
+            parent_function: parent,
+            function: func,
+            total_time: 0,
+            pct_of_parent: 0,
+            pct_of_total: 0,
+            n: 0
+          });
+        }
+        const row = map.get(key);
+        row.total_time += Number(toNum(child.total_time) || 0);
+        row.pct_of_parent += Number(toNum(child.pct_of_parent) || 0);
+        row.pct_of_total += Number(toNum(child.pct_of_total) || 0);
+        row.n += 1;
+      }
+
+      const out = new Map();
+      for (const [key, row] of map.entries()) {
+        const n = row.n || 1;
+        out.set(key, {
+          parent_function: row.parent_function,
+          function: row.function,
+          total_time: row.total_time,
+          pct_of_parent: row.pct_of_parent / n,
+          pct_of_total: row.pct_of_total / n
+        });
+      }
+      return out;
+    }
+
+    function buildRows() {
+      if (!state.fileA || !state.fileB) {
+        state.rows = [];
+        return;
+      }
+
+      const aMap = normalizeChildren(state.fileA);
+      const bMap = normalizeChildren(state.fileB);
+      const keys = new Set([...aMap.keys(), ...bMap.keys()]);
+
+      const rows = [];
+      for (const key of keys) {
+        const a = aMap.get(key) || null;
+        const b = bMap.get(key) || null;
+        const aTotal = a ? a.total_time : NaN;
+        const bTotal = b ? b.total_time : NaN;
+        const aVal = Number.isFinite(aTotal) ? aTotal : 0;
+        const bVal = Number.isFinite(bTotal) ? bTotal : 0;
+        const diff = bVal - aVal;
+        const pctDiff = Number.isFinite(aTotal) && aTotal !== 0 ? (diff / aTotal) * 100 : NaN;
+
+        let status = "both";
+        if (a && !b) {
+          status = "only-a";
+        } else if (!a && b) {
+          status = "only-b";
+        }
+
+        rows.push({
+          parent_function: (a || b).parent_function,
+          function: (a || b).function,
+          status,
+          a_total: aTotal,
+          b_total: bTotal,
+          diff,
+          abs_diff: Math.abs(diff),
+          pct_diff: pctDiff,
+          a_pct_parent: a ? a.pct_of_parent : NaN,
+          b_pct_parent: b ? b.pct_of_parent : NaN,
+          a_pct_total: a ? a.pct_of_total : NaN,
+          b_pct_total: b ? b.pct_of_total : NaN
+        });
+      }
+
+      state.rows = rows;
+    }
+
+    function populateParentFilter() {
+      const parents = [...new Set(state.rows.map((r) => r.parent_function))].sort((a, b) => a.localeCompare(b));
+      const current = el.parentFilter.value;
+      el.parentFilter.innerHTML = "";
+
+      const allOpt = document.createElement("option");
+      allOpt.value = "";
+      allOpt.textContent = "All parents";
+      el.parentFilter.appendChild(allOpt);
+
+      for (const parent of parents) {
+        const opt = document.createElement("option");
+        opt.value = parent;
+        opt.textContent = parent;
+        el.parentFilter.appendChild(opt);
+      }
+
+      if (parents.includes(current)) {
+        el.parentFilter.value = current;
+      }
+    }
+
+    function sortRows(rows) {
+      const mode = el.sortBy.value;
+      rows.sort((a, b) => {
+        switch (mode) {
+          case "diff-desc":
+            return b.diff - a.diff;
+          case "diff-asc":
+            return a.diff - b.diff;
+          case "a-desc":
+            return (b.a_total || 0) - (a.a_total || 0);
+          case "b-desc":
+            return (b.b_total || 0) - (a.b_total || 0);
+          case "pct-desc":
+            return (b.pct_diff || -Infinity) - (a.pct_diff || -Infinity);
+          case "pct-asc":
+            return (a.pct_diff || Infinity) - (b.pct_diff || Infinity);
+          case "func-asc":
+            return a.function.localeCompare(b.function);
+          case "func-desc":
+            return b.function.localeCompare(a.function);
+          case "abs-desc":
+          default: {
+            const d = b.abs_diff - a.abs_diff;
+            if (d !== 0) {
+              return d;
+            }
+            return a.function.localeCompare(b.function);
+          }
+        }
+      });
+    }
+
+    function applyFilters() {
+      const q = el.search.value.trim().toLowerCase();
+      const parent = el.parentFilter.value;
+      const mode = el.changedOnly.value;
+      const minAbsDiff = Math.abs(Number(el.minAbsDiff.value || 0));
+
+      const rows = state.rows.filter((row) => {
+        if (parent && row.parent_function !== parent) {
+          return false;
+        }
+
+        if (q) {
+          const hay = `${row.function} ${row.parent_function}`.toLowerCase();
+          if (!hay.includes(q)) {
+            return false;
+          }
+        }
+
+        if (row.abs_diff < minAbsDiff) {
+          return false;
+        }
+
+        if (mode === "changed" && row.status !== "both") {
+          return false;
+        }
+        if (mode === "only-a" && row.status !== "only-a") {
+          return false;
+        }
+        if (mode === "only-b" && row.status !== "only-b") {
+          return false;
+        }
+
+        return true;
+      });
+
+      sortRows(rows);
+      state.filtered = rows;
+      state.page = 1;
+      updateStats();
+      renderTable();
+    }
+
+    function updateStats() {
+      const rows = state.rows;
+      const changedRows = rows.filter((r) => r.status === "both");
+      const onlyA = rows.filter((r) => r.status === "only-a").length;
+      const onlyB = rows.filter((r) => r.status === "only-b").length;
+
+      const absDiffs = changedRows.map((r) => Math.abs(r.diff));
+      const maxAbs = absDiffs.length ? Math.max(...absDiffs) : 0;
+      const meanAbs = absDiffs.length ? absDiffs.reduce((a, b) => a + b, 0) / absDiffs.length : 0;
+      state.maxAbsDiff = Math.max(maxAbs, 1e-9);
+
+      el.statRows.textContent = rows.length.toLocaleString();
+      el.statChanged.textContent = changedRows.length.toLocaleString();
+      el.statOnlyA.textContent = onlyA.toLocaleString();
+      el.statOnlyB.textContent = onlyB.toLocaleString();
+      el.statMeanAbs.textContent = fmt(meanAbs, 6);
+      el.statMaxAbs.textContent = fmt(maxAbs, 6);
+
+      const aTotalCpu = toNum(state.fileA && state.fileA.summary && state.fileA.summary.total_cpu_time);
+      const bTotalCpu = toNum(state.fileB && state.fileB.summary && state.fileB.summary.total_cpu_time);
+      el.statATotalCpu.textContent = fmt(aTotalCpu, 6);
+      el.statBTotalCpu.textContent = fmt(bTotalCpu, 6);
+    }
+
+    function barForRow(row) {
+      const pct = Math.min(100, (Math.abs(row.diff) / state.maxAbsDiff) * 100);
+      const isUp = row.diff >= 0;
+      const left = isUp ? 50 : 50 - pct / 2;
+      return { pct, isUp, left };
+    }
+
+    function statusPill(status) {
+      if (status === "only-a") {
+        return '<span class="pill">only A</span>';
+      }
+      if (status === "only-b") {
+        return '<span class="pill">only B</span>';
+      }
+      return '<span class="pill">both</span>';
+    }
+
+    function renderTable() {
+      const rowsPerPage = Math.max(20, Number(el.rowsPerPage.value || 120));
+      const totalRows = state.filtered.length;
+      const pageCount = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+      state.page = Math.min(Math.max(1, state.page), pageCount);
+
+      const start = (state.page - 1) * rowsPerPage;
+      const pageRows = state.filtered.slice(start, start + rowsPerPage);
+
+      el.tbody.innerHTML = "";
+      el.empty.style.display = pageRows.length ? "none" : "block";
+
+      for (const row of pageRows) {
+        const tr = document.createElement("tr");
+        const bar = barForRow(row);
+        const diffClass = row.diff > 0 ? "up" : row.diff < 0 ? "down" : "";
+
+        tr.innerHTML = `
+          <td class="parent-cell">${row.parent_function}</td>
+          <td class="function-cell">${row.function}</td>
+          <td>${statusPill(row.status)}</td>
+          <td class="num">${fmt(row.a_total, 6)}</td>
+          <td class="num">${fmt(row.b_total, 6)}</td>
+          <td class="num ${diffClass}">${fmt(row.diff, 6)}</td>
+          <td class="num ${diffClass}">${fmtPct(row.pct_diff, 3)}</td>
+          <td class="num">${fmtPct(row.a_pct_parent, 3)}</td>
+          <td class="num">${fmtPct(row.b_pct_parent, 3)}</td>
+          <td class="num">${fmtPct(row.a_pct_total, 3)}</td>
+          <td class="num">${fmtPct(row.b_pct_total, 3)}</td>
+          <td>
+            <div class="bar-track">
+              <div class="bar-mid"></div>
+              <div class="bar-fill ${bar.isUp ? "up" : "down"}" style="left:${bar.left}%; width:${bar.pct}%;"></div>
+            </div>
+          </td>
+        `;
+        el.tbody.appendChild(tr);
+      }
+
+      const from = totalRows ? start + 1 : 0;
+      const to = Math.min(start + pageRows.length, totalRows);
+      el.pageInfo.textContent = `Page ${state.page}/${pageCount} | Rows ${from}-${to} of ${totalRows}`;
+      el.prevBtn.disabled = state.page <= 1;
+      el.nextBtn.disabled = state.page >= pageCount;
+    }
+
+    async function loadOneFromText(text, sourceLabel, slot) {
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`Invalid JSON in ${sourceLabel}: ${err.message}`);
+      }
+      if (!data || !Array.isArray(data.children)) {
+        throw new Error(`Invalid top-down payload in ${sourceLabel}. Expected children array.`);
+      }
+
+      if (slot === "a") {
+        state.fileA = data;
+        state.fileNameA = sourceLabel;
+      } else {
+        state.fileB = data;
+        state.fileNameB = sourceLabel;
+      }
+    }
+
+    function renderAfterLoad() {
+      if (!state.fileA || !state.fileB) {
+        const aState = state.fileA ? `A loaded from ${state.fileNameA}` : "A not loaded";
+        const bState = state.fileB ? `B loaded from ${state.fileNameB}` : "B not loaded";
+        setStatus(`${aState}; ${bState}.`, false);
+        state.rows = [];
+        state.filtered = [];
+        renderTable();
+        return;
+      }
+
+      buildRows();
+      populateParentFilter();
+      applyFilters();
+      setStatus(`Loaded A: ${state.fileNameA} | B: ${state.fileNameB}.`, false);
+    }
+
+    async function tryAutoLoad(fileNameA, fileNameB) {
+      const nameA = fileNameA.trim();
+      const nameB = fileNameB.trim();
+      if (!nameA || !nameB) {
+        setStatus("Please provide both auto-load file names.", true);
+        return;
+      }
+
+      try {
+        const [resA, resB] = await Promise.all([
+          fetch(nameA, { cache: "no-store" }),
+          fetch(nameB, { cache: "no-store" })
+        ]);
+
+        if (!resA.ok) {
+          throw new Error(`File A HTTP ${resA.status}`);
+        }
+        if (!resB.ok) {
+          throw new Error(`File B HTTP ${resB.status}`);
+        }
+
+        const [textA, textB] = await Promise.all([resA.text(), resB.text()]);
+        await loadOneFromText(textA, nameA, "a");
+        await loadOneFromText(textB, nameB, "b");
+        renderAfterLoad();
+      } catch (err) {
+        setStatus(
+          `Auto-load failed (${err.message}). If opened with file://, browser fetch may be blocked. Use file picker or drag-and-drop.`,
+          true
+        );
+      }
+    }
+
+    function getFileParamsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const fileA = params.get("fileA") || params.get("a") || "";
+      const fileB = params.get("fileB") || params.get("b") || "";
+      return { fileA, fileB };
+    }
+
+    function wireEvents() {
+      el.fileInputA.addEventListener("change", async (evt) => {
+        const file = evt.target.files && evt.target.files[0];
+        if (!file) {
+          return;
+        }
+        try {
+          const text = await file.text();
+          await loadOneFromText(text, file.name, "a");
+          renderAfterLoad();
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+
+      el.fileInputB.addEventListener("change", async (evt) => {
+        const file = evt.target.files && evt.target.files[0];
+        if (!file) {
+          return;
+        }
+        try {
+          const text = await file.text();
+          await loadOneFromText(text, file.name, "b");
+          renderAfterLoad();
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+
+      el.autoLoadBtn.addEventListener("click", () => {
+        tryAutoLoad(el.autoFileA.value, el.autoFileB.value);
+      });
+
+      [el.search, el.parentFilter, el.minAbsDiff, el.sortBy, el.rowsPerPage, el.changedOnly].forEach((node) => {
+        const eventName = node.tagName === "INPUT" ? "input" : "change";
+        node.addEventListener(eventName, () => {
+          applyFilters();
+        });
+      });
+
+      el.colParent.addEventListener("click", () => {
+        el.sortBy.value = "func-asc";
+        applyFilters();
+      });
+
+      el.colFunction.addEventListener("click", () => {
+        el.sortBy.value = el.sortBy.value === "func-asc" ? "func-desc" : "func-asc";
+        applyFilters();
+      });
+
+      el.colStatus.addEventListener("click", () => {
+        const curr = el.changedOnly.value;
+        if (curr === "all") {
+          el.changedOnly.value = "changed";
+        } else if (curr === "changed") {
+          el.changedOnly.value = "only-a";
+        } else if (curr === "only-a") {
+          el.changedOnly.value = "only-b";
+        } else {
+          el.changedOnly.value = "all";
+        }
+        applyFilters();
+      });
+
+      el.colA.addEventListener("click", () => {
+        el.sortBy.value = "a-desc";
+        applyFilters();
+      });
+
+      el.colB.addEventListener("click", () => {
+        el.sortBy.value = "b-desc";
+        applyFilters();
+      });
+
+      el.colDiff.addEventListener("click", () => {
+        el.sortBy.value = el.sortBy.value === "diff-desc" ? "diff-asc" : "diff-desc";
+        applyFilters();
+      });
+
+      el.colPctDiff.addEventListener("click", () => {
+        el.sortBy.value = el.sortBy.value === "pct-desc" ? "pct-asc" : "pct-desc";
+        applyFilters();
+      });
+
+      el.prevBtn.addEventListener("click", () => {
+        state.page = Math.max(1, state.page - 1);
+        renderTable();
+      });
+
+      el.nextBtn.addEventListener("click", () => {
+        state.page += 1;
+        renderTable();
+      });
+
+      ["dragenter", "dragover"].forEach((evtName) => {
+        el.dropzone.addEventListener(evtName, (evt) => {
+          evt.preventDefault();
+          el.dropzone.classList.add("drag");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((evtName) => {
+        el.dropzone.addEventListener(evtName, (evt) => {
+          evt.preventDefault();
+          el.dropzone.classList.remove("drag");
+        });
+      });
+
+      el.dropzone.addEventListener("drop", async (evt) => {
+        const files = evt.dataTransfer && evt.dataTransfer.files ? [...evt.dataTransfer.files].slice(0, 2) : [];
+        if (!files.length) {
+          return;
+        }
+
+        try {
+          if (files[0]) {
+            await loadOneFromText(await files[0].text(), files[0].name, "a");
+          }
+          if (files[1]) {
+            await loadOneFromText(await files[1].text(), files[1].name, "b");
+          }
+          renderAfterLoad();
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+    }
+
+    function boot() {
+      wireEvents();
+      el.parentFilter.innerHTML = '<option value="">All parents</option>';
+      renderTable();
+
+      const params = getFileParamsFromUrl();
+      if (params.fileA) {
+        el.autoFileA.value = params.fileA;
+      }
+      if (params.fileB) {
+        el.autoFileB.value = params.fileB;
+      }
+
+      if (el.autoFileA.value && el.autoFileB.value) {
+        setStatus("Trying auto-load from configured file names.");
+        tryAutoLoad(el.autoFileA.value, el.autoFileB.value);
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Top-Down JSON Compare Viewer</title>
+
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --ink: #1d232a;
+      --ink-soft: #4a525c;
+      --paper: #fffaf3;
+      --card: #fffdf8;
+      --line: #dacfbf;
+      --accent: #0e8f7a;
+      --accent-soft: #a4ddd5;
+      --up: #0b8a6a;
+      --down: #c53d20;
+      --shadow: 0 10px 30px rgba(35, 41, 48, 0.12);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 8% 20%, #ffe7b8 0%, transparent 33%),
+        radial-gradient(circle at 85% 10%, #cdeef4 0%, transparent 40%),
+        linear-gradient(140deg, #efe6d6 0%, #f4efe6 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: 100%;
+      margin: 0;
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 1.2rem 1.2rem 1.4rem;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -45px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 40px;
+      transform: rotate(22deg);
+      background: linear-gradient(135deg, #9adfd2, #f6d9a3);
+      opacity: 0.45;
+      z-index: -1;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.2vw, 2rem);
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin: 0.45rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      padding: 1rem 1.2rem 1.2rem;
+      display: grid;
+      gap: 0.8rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 25%);
+    }
+
+    .grid {
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+    }
+
+    .grid > * {
+      min-width: 0;
+    }
+
+    .row-break {
+      grid-column: 1 / -1;
+      height: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    button {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.92rem;
+      border-radius: 10px;
+      border: 1px solid #c7bcae;
+      padding: 0.55rem 0.65rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input[type="file"] {
+      width: 100%;
+      font-size: 0.86rem;
+      color: var(--ink-soft);
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #fdfefe, #edf9f6);
+      border-color: #a9cfc8;
+      font-weight: 600;
+    }
+
+    button:hover {
+      filter: brightness(0.98);
+    }
+
+    .dropzone {
+      border: 1.5px dashed #86b9af;
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+      color: var(--ink-soft);
+      background: #f5fcfa;
+      transition: 150ms ease;
+      grid-column: 5 / -1;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dropzone.drag {
+      border-color: var(--accent);
+      background: #def4ef;
+      color: #1d4039;
+      transform: translateY(-1px);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
+    }
+
+    .badge {
+      border: 1px solid #d5cab9;
+      background: #fff;
+      border-radius: 999px;
+      padding: 0.28rem 0.6rem;
+      white-space: nowrap;
+    }
+
+    .stats {
+      display: grid;
+      gap: 0.8rem;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 35%);
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid #ddd1c1;
+      border-radius: 12px;
+      padding: 0.7rem 0.8rem;
+    }
+
+    .stat .k {
+      color: var(--ink-soft);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat .v {
+      margin-top: 0.25rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .table-wrap {
+      padding: 0 1.2rem 1.2rem;
+    }
+
+    .pager {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.6rem;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .pager button {
+      width: auto;
+      min-width: 70px;
+      padding: 0.4rem 0.65rem;
+    }
+
+    .table-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      max-height: 72vh;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1300px;
+      font-size: 0.86rem;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f4f8f7;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      color: #2d3a3f;
+      font-weight: 700;
+      padding: 0.6rem 0.7rem;
+      z-index: 2;
+      white-space: nowrap;
+    }
+
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    thead th.sortable:hover {
+      background: #ebf3f1;
+    }
+
+    .th-num {
+      text-align: right;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #efe4d5;
+      padding: 0.48rem 0.7rem;
+      vertical-align: top;
+    }
+
+    tbody tr:hover {
+      background: #faf5ec;
+    }
+
+    .mono {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .status-cell {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-same {
+      color: var(--ink-soft);
+    }
+
+    .status-left {
+      color: #4866b0;
+    }
+
+    .status-right {
+      color: #8851a8;
+    }
+
+    .status-up {
+      color: var(--down);
+    }
+
+    .status-down {
+      color: var(--up);
+    }
+
+    .bar-cell {
+      width: 110px;
+    }
+
+    .bar-track {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: #f2ebe0;
+      overflow: hidden;
+    }
+
+    .bar-track::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #cbbca8;
+    }
+
+    .bar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+      opacity: 0.9;
+    }
+
+    .bar-fill.up {
+      background: #db775f;
+    }
+
+    .bar-fill.down {
+      background: #40a88f;
+    }
+
+    .empty {
+      padding: 1.3rem;
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .error {
+      color: var(--down);
+    }
+
+    @media (max-width: 1200px) {
+      .grid {
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+      }
+
+      .dropzone {
+        grid-column: 1 / -1;
+      }
+
+      .stats {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .wrap {
+        padding: 0.75rem;
+      }
+
+      .grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .dropzone {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel">
+      <div class="hero">
+        <h1>Top-Down JSON Compare Viewer</h1>
+        <p class="sub">Compare function timing values across two top-down JSON snapshots with sortable deltas.</p>
+      </div>
+
+      <div class="controls">
+        <div class="grid">
+          <div>
+            <label for="fileInputA">Load JSON A</label>
+            <input id="fileInputA" type="file" accept=".json,application/json">
+          </div>
+          <div>
+            <label for="fileInputB">Load JSON B</label>
+            <input id="fileInputB" type="file" accept=".json,application/json">
+          </div>
+          <div>
+            <label for="defaultFileA">Auto-load file A</label>
+            <input id="defaultFileA" type="text" value="step3-34434.21.top-down-1.json">
+          </div>
+          <div>
+            <label for="defaultFileB">Auto-load file B</label>
+            <input id="defaultFileB" type="text" value="step3-34434.21.top-down-2.json">
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="autoLoadBtn" type="button">Try Auto-Load Both</button>
+          </div>
+          <div id="dropzone" class="dropzone">Drag two JSON files here</div>
+
+          <div class="row-break" aria-hidden="true"></div>
+
+          <div>
+            <label for="search">Search function/parent</label>
+            <input id="search" type="text" placeholder="e.g. MuonIdProducer or EDProducerAdaptorBase">
+          </div>
+          <div>
+            <label for="statusFilter">Filter status</label>
+            <select id="statusFilter">
+              <option value="">All statuses</option>
+              <option value="same">same</option>
+              <option value="increased">increased</option>
+              <option value="decreased">decreased</option>
+              <option value="only-a">only in A</option>
+              <option value="only-b">only in B</option>
+            </select>
+          </div>
+          <div>
+            <label for="sortBy">Sort</label>
+            <select id="sortBy">
+              <option value="abs-delta-desc">Abs(delta time) high to low</option>
+              <option value="delta-desc">Delta time high to low</option>
+              <option value="delta-asc">Delta time low to high</option>
+              <option value="a-desc">A total_time high to low</option>
+              <option value="b-desc">B total_time high to low</option>
+              <option value="delta-pct-desc">Delta % high to low</option>
+              <option value="delta-pct-asc">Delta % low to high</option>
+              <option value="function-asc">Function A to Z</option>
+              <option value="parent-asc">Parent A to Z</option>
+            </select>
+          </div>
+          <div>
+            <label for="minAbsDelta">Min abs(delta time)</label>
+            <input id="minAbsDelta" type="number" step="any" value="0">
+          </div>
+          <div>
+            <label for="rowsPerPage">Rows per page</label>
+            <input id="rowsPerPage" type="number" min="20" step="20" value="120">
+          </div>
+        </div>
+
+        <div class="badge-row">
+          <span id="sourceA" class="badge">A: not loaded</span>
+          <span id="sourceB" class="badge">B: not loaded</span>
+          <span id="status" class="badge">Load two files to compare.</span>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Compared Rows</div><div id="statRows" class="v">0</div></div>
+        <div class="stat"><div class="k">Changed Rows</div><div id="statChanged" class="v">0</div></div>
+        <div class="stat"><div class="k">Only In A</div><div id="statOnlyA" class="v">0</div></div>
+        <div class="stat"><div class="k">Only In B</div><div id="statOnlyB" class="v">0</div></div>
+        <div class="stat"><div class="k">Sum Delta Time</div><div id="statSumDelta" class="v">0</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="pager">
+          <button id="prevBtn" type="button">Prev</button>
+          <button id="nextBtn" type="button">Next</button>
+          <span id="pageInfo">Page 0/0</span>
+        </div>
+
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr>
+                <th id="colParent" class="sortable">Parent Function</th>
+                <th id="colFunction" class="sortable">Function</th>
+                <th id="colA" class="sortable th-num">A total_time</th>
+                <th id="colB" class="sortable th-num">B total_time</th>
+                <th id="colDelta" class="sortable th-num">Delta</th>
+                <th id="colDeltaPct" class="sortable th-num">Delta %</th>
+                <th class="th-num">A % parent</th>
+                <th class="th-num">B % parent</th>
+                <th class="th-num">A % total</th>
+                <th class="th-num">B % total</th>
+                <th>Status</th>
+                <th>Visual</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div id="empty" class="empty">Load two JSON files to begin.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const EPS = 1e-12;
+
+    const state = {
+      sourceA: "",
+      sourceB: "",
+      payloadA: null,
+      payloadB: null,
+      rows: [],
+      filtered: [],
+      page: 1,
+      maxAbsDelta: 1,
+      summaryA: null,
+      summaryB: null
+    };
+
+    const el = {
+      fileInputA: document.getElementById("fileInputA"),
+      fileInputB: document.getElementById("fileInputB"),
+      defaultFileA: document.getElementById("defaultFileA"),
+      defaultFileB: document.getElementById("defaultFileB"),
+      autoLoadBtn: document.getElementById("autoLoadBtn"),
+      dropzone: document.getElementById("dropzone"),
+      search: document.getElementById("search"),
+      statusFilter: document.getElementById("statusFilter"),
+      sortBy: document.getElementById("sortBy"),
+      minAbsDelta: document.getElementById("minAbsDelta"),
+      rowsPerPage: document.getElementById("rowsPerPage"),
+      sourceA: document.getElementById("sourceA"),
+      sourceB: document.getElementById("sourceB"),
+      status: document.getElementById("status"),
+      statRows: document.getElementById("statRows"),
+      statChanged: document.getElementById("statChanged"),
+      statOnlyA: document.getElementById("statOnlyA"),
+      statOnlyB: document.getElementById("statOnlyB"),
+      statSumDelta: document.getElementById("statSumDelta"),
+      colParent: document.getElementById("colParent"),
+      colFunction: document.getElementById("colFunction"),
+      colA: document.getElementById("colA"),
+      colB: document.getElementById("colB"),
+      colDelta: document.getElementById("colDelta"),
+      colDeltaPct: document.getElementById("colDeltaPct"),
+      tbody: document.getElementById("tbody"),
+      empty: document.getElementById("empty"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      pageInfo: document.getElementById("pageInfo")
+    };
+
+    function safeNumber(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function fmtNum(v, digits = 6) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) {
+        return "-";
+      }
+      return n.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function fmtPct(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) {
+        return "-";
+      }
+      return `${fmtNum(n, 3)}%`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function combinedKey(parent, func) {
+      return `${parent || ""}\u241f${func || ""}`;
+    }
+
+    function normalizePayload(payload) {
+      if (!payload || !Array.isArray(payload.children)) {
+        throw new Error("Expected top-down JSON with a children array.");
+      }
+
+      const byKey = new Map();
+
+      for (const child of payload.children) {
+        const parent = String(child.parent_function || "");
+        const func = String(child.function || "");
+        const key = combinedKey(parent, func);
+        if (!byKey.has(key)) {
+          byKey.set(key, {
+            parent_function: parent,
+            function: func,
+            total_time: 0,
+            pct_of_parent: 0,
+            pct_of_total: 0,
+            count: 0
+          });
+        }
+        const entry = byKey.get(key);
+        entry.total_time += safeNumber(child.total_time);
+        entry.pct_of_parent += safeNumber(child.pct_of_parent);
+        entry.pct_of_total += safeNumber(child.pct_of_total);
+        entry.count += 1;
+      }
+
+      return {
+        rows: [...byKey.values()],
+        summary: payload.summary || {},
+        source_file: payload.source_file || ""
+      };
+    }
+
+    function mergeRows() {
+      if (!state.payloadA || !state.payloadB) {
+        state.rows = [];
+        return;
+      }
+
+      const left = normalizePayload(state.payloadA);
+      const right = normalizePayload(state.payloadB);
+      state.summaryA = left.summary;
+      state.summaryB = right.summary;
+
+      const mapA = new Map(left.rows.map((row) => [combinedKey(row.parent_function, row.function), row]));
+      const mapB = new Map(right.rows.map((row) => [combinedKey(row.parent_function, row.function), row]));
+      const keySet = new Set([...mapA.keys(), ...mapB.keys()]);
+
+      const merged = [];
+      for (const key of keySet) {
+        const a = mapA.get(key);
+        const b = mapB.get(key);
+
+        const aTime = a ? safeNumber(a.total_time) : 0;
+        const bTime = b ? safeNumber(b.total_time) : 0;
+        const delta = bTime - aTime;
+        const deltaPct = aTime > EPS ? (delta / aTime) * 100 : null;
+
+        let status = "same";
+        if (a && !b) {
+          status = "only-a";
+        } else if (!a && b) {
+          status = "only-b";
+        } else if (Math.abs(delta) > EPS) {
+          status = delta > 0 ? "increased" : "decreased";
+        }
+
+        merged.push({
+          parent_function: a?.parent_function || b?.parent_function || "",
+          function: a?.function || b?.function || "",
+          a_total_time: aTime,
+          b_total_time: bTime,
+          delta_time: delta,
+          delta_pct: deltaPct,
+          a_pct_parent: a ? safeNumber(a.pct_of_parent) : null,
+          b_pct_parent: b ? safeNumber(b.pct_of_parent) : null,
+          a_pct_total: a ? safeNumber(a.pct_of_total) : null,
+          b_pct_total: b ? safeNumber(b.pct_of_total) : null,
+          status
+        });
+      }
+
+      state.rows = merged;
+    }
+
+    function setStatus(message, isError = false) {
+      el.status.textContent = message;
+      el.status.className = isError ? "badge error" : "badge";
+    }
+
+    function applyFilters() {
+      const query = el.search.value.trim().toLowerCase();
+      const statusFilter = el.statusFilter.value;
+      const minAbsDelta = Math.abs(safeNumber(el.minAbsDelta.value));
+
+      let rows = state.rows.filter((row) => {
+        if (statusFilter && row.status !== statusFilter) {
+          return false;
+        }
+
+        if (Math.abs(row.delta_time) < minAbsDelta) {
+          return false;
+        }
+
+        if (!query) {
+          return true;
+        }
+
+        const hay = `${row.parent_function} ${row.function}`.toLowerCase();
+        return hay.includes(query);
+      });
+
+      rows = sortRows(rows, el.sortBy.value);
+      state.filtered = rows;
+      state.maxAbsDelta = Math.max(1e-9, ...rows.map((r) => Math.abs(r.delta_time)));
+
+      const pageCount = Math.max(1, Math.ceil(rows.length / rowsPerPage()));
+      state.page = Math.min(pageCount, Math.max(1, state.page));
+
+      renderStats(rows);
+      renderTable();
+    }
+
+    function rowsPerPage() {
+      return Math.max(20, safeNumber(el.rowsPerPage.value) || 120);
+    }
+
+    function sortRows(rows, mode) {
+      const sorted = [...rows];
+      sorted.sort((a, b) => {
+        switch (mode) {
+          case "delta-desc":
+            return b.delta_time - a.delta_time;
+          case "delta-asc":
+            return a.delta_time - b.delta_time;
+          case "a-desc":
+            return b.a_total_time - a.a_total_time;
+          case "b-desc":
+            return b.b_total_time - a.b_total_time;
+          case "delta-pct-desc":
+            return (safeNumber(b.delta_pct) - safeNumber(a.delta_pct));
+          case "delta-pct-asc":
+            return (safeNumber(a.delta_pct) - safeNumber(b.delta_pct));
+          case "function-asc":
+            return a.function.localeCompare(b.function);
+          case "parent-asc":
+            return a.parent_function.localeCompare(b.parent_function);
+          case "abs-delta-desc":
+          default: {
+            const d = Math.abs(b.delta_time) - Math.abs(a.delta_time);
+            if (Math.abs(d) > EPS) {
+              return d;
+            }
+            return a.function.localeCompare(b.function);
+          }
+        }
+      });
+      return sorted;
+    }
+
+    function renderStats(rows) {
+      const changed = rows.filter((r) => r.status === "increased" || r.status === "decreased").length;
+      const onlyA = rows.filter((r) => r.status === "only-a").length;
+      const onlyB = rows.filter((r) => r.status === "only-b").length;
+      const sumDelta = rows.reduce((acc, r) => acc + r.delta_time, 0);
+
+      el.statRows.textContent = rows.length.toLocaleString();
+      el.statChanged.textContent = changed.toLocaleString();
+      el.statOnlyA.textContent = onlyA.toLocaleString();
+      el.statOnlyB.textContent = onlyB.toLocaleString();
+      el.statSumDelta.textContent = fmtNum(sumDelta, 6);
+    }
+
+    function barStyle(delta) {
+      const abs = Math.abs(delta);
+      const pct = Math.min(100, (abs / state.maxAbsDelta) * 100);
+      const side = delta >= 0 ? "up" : "down";
+      const left = delta >= 0 ? "50%" : `${50 - pct / 2}%`;
+      return { pct, side, left };
+    }
+
+    function statusClass(status) {
+      if (status === "same") {
+        return "status-same";
+      }
+      if (status === "only-a") {
+        return "status-left";
+      }
+      if (status === "only-b") {
+        return "status-right";
+      }
+      if (status === "increased") {
+        return "status-up";
+      }
+      return "status-down";
+    }
+
+    function statusLabel(status) {
+      if (status === "only-a") {
+        return "only in A";
+      }
+      if (status === "only-b") {
+        return "only in B";
+      }
+      return status;
+    }
+
+    function renderTable() {
+      const totalRows = state.filtered.length;
+      const perPage = rowsPerPage();
+      const pageCount = Math.max(1, Math.ceil(totalRows / perPage));
+      state.page = Math.min(Math.max(1, state.page), pageCount);
+
+      const start = (state.page - 1) * perPage;
+      const pageRows = state.filtered.slice(start, start + perPage);
+
+      if (!pageRows.length) {
+        el.empty.style.display = "block";
+        el.tbody.innerHTML = "";
+      } else {
+        el.empty.style.display = "none";
+        el.tbody.innerHTML = pageRows.map((row) => {
+          const bar = barStyle(row.delta_time);
+          return `
+            <tr>
+              <td title="${escapeHtml(row.parent_function)}">${escapeHtml(row.parent_function)}</td>
+              <td title="${escapeHtml(row.function)}">${escapeHtml(row.function)}</td>
+              <td class="mono">${fmtNum(row.a_total_time, 6)}</td>
+              <td class="mono">${fmtNum(row.b_total_time, 6)}</td>
+              <td class="mono">${fmtNum(row.delta_time, 6)}</td>
+              <td class="mono">${fmtPct(row.delta_pct)}</td>
+              <td class="mono">${fmtPct(row.a_pct_parent)}</td>
+              <td class="mono">${fmtPct(row.b_pct_parent)}</td>
+              <td class="mono">${fmtPct(row.a_pct_total)}</td>
+              <td class="mono">${fmtPct(row.b_pct_total)}</td>
+              <td class="status-cell ${statusClass(row.status)}">${statusLabel(row.status)}</td>
+              <td class="bar-cell">
+                <div class="bar-track">
+                  <div class="bar-fill ${bar.side}" style="left:${bar.left}; width:${bar.pct}%;"></div>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      const from = totalRows ? start + 1 : 0;
+      const to = Math.min(start + pageRows.length, totalRows);
+      el.pageInfo.textContent = `Page ${state.page}/${pageCount} | Rows ${from}-${to} of ${totalRows}`;
+      el.prevBtn.disabled = state.page <= 1;
+      el.nextBtn.disabled = state.page >= pageCount;
+    }
+
+    async function parseText(text, sourceLabel) {
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`Invalid JSON in ${sourceLabel}: ${err.message}`);
+      }
+      normalizePayload(data);
+      return data;
+    }
+
+    function recompute() {
+      if (!state.payloadA || !state.payloadB) {
+        state.rows = [];
+        state.filtered = [];
+        renderStats([]);
+        renderTable();
+        setStatus("Load two files to compare.");
+        return;
+      }
+
+      mergeRows();
+      state.page = 1;
+      applyFilters();
+
+      const aRows = Array.isArray(state.payloadA.children) ? state.payloadA.children.length : 0;
+      const bRows = Array.isArray(state.payloadB.children) ? state.payloadB.children.length : 0;
+      const aCpu = safeNumber(state.summaryA?.total_cpu_time);
+      const bCpu = safeNumber(state.summaryB?.total_cpu_time);
+      setStatus(
+        `Compared ${state.rows.length.toLocaleString()} unique function keys | A children: ${aRows.toLocaleString()} | B children: ${bRows.toLocaleString()} | total_cpu_time delta: ${fmtNum(bCpu - aCpu, 6)}`
+      );
+    }
+
+    async function loadAFromText(text, sourceLabel) {
+      state.payloadA = await parseText(text, sourceLabel);
+      state.sourceA = sourceLabel;
+      el.sourceA.textContent = `A: ${sourceLabel}`;
+      recompute();
+    }
+
+    async function loadBFromText(text, sourceLabel) {
+      state.payloadB = await parseText(text, sourceLabel);
+      state.sourceB = sourceLabel;
+      el.sourceB.textContent = `B: ${sourceLabel}`;
+      recompute();
+    }
+
+    async function tryAutoLoad() {
+      const aName = el.defaultFileA.value.trim();
+      const bName = el.defaultFileB.value.trim();
+
+      if (!aName || !bName) {
+        setStatus("Please provide both auto-load file names.", true);
+        return;
+      }
+
+      try {
+        const [aRes, bRes] = await Promise.all([
+          fetch(aName, { cache: "no-store" }),
+          fetch(bName, { cache: "no-store" })
+        ]);
+
+        if (!aRes.ok) {
+          throw new Error(`A fetch failed: HTTP ${aRes.status}`);
+        }
+        if (!bRes.ok) {
+          throw new Error(`B fetch failed: HTTP ${bRes.status}`);
+        }
+
+        const [aText, bText] = await Promise.all([aRes.text(), bRes.text()]);
+        await loadAFromText(aText, aName);
+        await loadBFromText(bText, bName);
+      } catch (err) {
+        setStatus(
+          `Auto-load failed (${err.message}). If opened with file://, browser fetch may be blocked. Use file inputs or drag-and-drop.`,
+          true
+        );
+      }
+    }
+
+    function getFileParamsFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const a = params.get("a") || params.get("fileA") || "";
+      const b = params.get("b") || params.get("fileB") || "";
+      return { a, b };
+    }
+
+    async function loadFileIntoSlot(file, slot) {
+      if (!file) {
+        return;
+      }
+      const text = await file.text();
+      if (slot === "A") {
+        await loadAFromText(text, file.name);
+      } else {
+        await loadBFromText(text, file.name);
+      }
+    }
+
+    function toggleSort(descValue, ascValue) {
+      el.sortBy.value = el.sortBy.value === descValue ? ascValue : descValue;
+      state.page = 1;
+      applyFilters();
+    }
+
+    function wireEvents() {
+      el.fileInputA.addEventListener("change", async (evt) => {
+        const file = evt.target.files && evt.target.files[0];
+        if (!file) {
+          return;
+        }
+        try {
+          await loadFileIntoSlot(file, "A");
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+
+      el.fileInputB.addEventListener("change", async (evt) => {
+        const file = evt.target.files && evt.target.files[0];
+        if (!file) {
+          return;
+        }
+        try {
+          await loadFileIntoSlot(file, "B");
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+
+      el.autoLoadBtn.addEventListener("click", () => {
+        tryAutoLoad();
+      });
+
+      [el.search, el.statusFilter, el.sortBy, el.minAbsDelta, el.rowsPerPage].forEach((node) => {
+        const eventName = node.tagName === "INPUT" ? "input" : "change";
+        node.addEventListener(eventName, () => {
+          state.page = 1;
+          applyFilters();
+        });
+      });
+
+      el.colParent.addEventListener("click", () => {
+        toggleSort("parent-desc", "parent-asc");
+        if (el.sortBy.value === "parent-desc") {
+          el.sortBy.value = "parent-asc";
+          applyFilters();
+        }
+      });
+
+      el.colFunction.addEventListener("click", () => toggleSort("function-desc", "function-asc"));
+      el.colA.addEventListener("click", () => toggleSort("a-desc", "a-asc"));
+      el.colB.addEventListener("click", () => toggleSort("b-desc", "b-asc"));
+      el.colDelta.addEventListener("click", () => toggleSort("delta-desc", "delta-asc"));
+      el.colDeltaPct.addEventListener("click", () => toggleSort("delta-pct-desc", "delta-pct-asc"));
+
+      el.prevBtn.addEventListener("click", () => {
+        state.page = Math.max(1, state.page - 1);
+        renderTable();
+      });
+
+      el.nextBtn.addEventListener("click", () => {
+        state.page += 1;
+        renderTable();
+      });
+
+      ["dragenter", "dragover"].forEach((evtName) => {
+        el.dropzone.addEventListener(evtName, (evt) => {
+          evt.preventDefault();
+          el.dropzone.classList.add("drag");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((evtName) => {
+        el.dropzone.addEventListener(evtName, (evt) => {
+          evt.preventDefault();
+          el.dropzone.classList.remove("drag");
+        });
+      });
+
+      el.dropzone.addEventListener("drop", async (evt) => {
+        const files = [...(evt.dataTransfer?.files || [])].filter((f) => f.name.toLowerCase().endsWith(".json"));
+        if (!files.length) {
+          return;
+        }
+
+        try {
+          if (files.length === 1) {
+            const slot = state.payloadA ? "B" : "A";
+            await loadFileIntoSlot(files[0], slot);
+          } else {
+            const ordered = [...files].sort((a, b) => a.name.localeCompare(b.name));
+            await loadFileIntoSlot(ordered[0], "A");
+            await loadFileIntoSlot(ordered[1], "B");
+          }
+        } catch (err) {
+          setStatus(err.message, true);
+        }
+      });
+    }
+
+    function boot() {
+      wireEvents();
+      renderStats([]);
+      renderTable();
+
+      const params = getFileParamsFromUrl();
+      if (params.a) {
+        el.defaultFileA.value = params.a;
+      }
+      if (params.b) {
+        el.defaultFileB.value = params.b;
+      }
+      if (params.a || params.b) {
+        tryAutoLoad();
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

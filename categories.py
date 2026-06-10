@@ -95,7 +95,7 @@ CMSSW_L2 = {
     "ssekmen": ["fastsim"],
     "francescobrivio": ["db"],
     "tvami": ["analysis"],
-    "atpathak": ["alca", "db"],
+    "EltonSh": ["alca", "db"],
     "perrotta": ["alca", "db"],
     "arunhep": ["alca", "db"],
     "JanChyczynski": ["alca", "db"],

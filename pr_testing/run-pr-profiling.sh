@@ -108,9 +108,9 @@ EOF
   for d in $(find $PROFILING_WORKFLOW -type d -name 'r-step*' | sort -V ) ; do
     mkdir -p $WORKSPACE/vtune-profiles/$d || true
     rsync -auv $d/ $WORKSPACE/vtune-profiles/$d/ || true
-    echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)\">IB $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
-    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
-    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)/:$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)/\"IB - PR $(basename $d)</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)\">IB     $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR     $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)/:/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)/\">IB - PR $(basename $d)</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   echo "<tr><td>Event Loop Reports</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
@@ -120,9 +120,9 @@ EOF
     if [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
       echo "<td><a target=\"_blank\" href=\"/profiling/$CMSSW_VERSION/$SCRAM_ARCH/$PROFILING_WORKFLOW/$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     else
-      echo "<td>IB top-down html file not found</td><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      echo "<td>IB top-down html file not found<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     fi
-    echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/$BASENAME\">PR ${BASENAME/.html/}</href>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/$BASENAME\">PR ${BASENAME/.html/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
 

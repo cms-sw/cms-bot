@@ -116,7 +116,7 @@ EOF
   echo "<tr><td>Event Loop Reports</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'sorted_RES_CPU_step*.html' | sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$BASENAME $PWD/$CMSSW_VERSION-$BASENAME|| true
+    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $PWD/$CMSSW_VERSION-$BASENAME|| true
     if [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
       echo "<td><a target=\"_blank\" href=\"/profiling/$CMSSW_VERSION/$SCRAM_ARCH/$PROFILING_WORKFLOW/$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     else
@@ -129,7 +129,7 @@ EOF
   echo "<tr><td>Event Loop Report Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'sorted_RES_CPU_step*.json' | sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$BASENAME $PWD/$CMSSW_VERSION-$BASENAME || true
+    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $PWD/$CMSSW_VERSION-$BASENAME || true
     if [ -f $PWD/$CMSSW_VERSION-$BASENAME ];then
       $CMS_BOT_DIR/comparisons/top-down-embed.py $CMSSW_VERSION-$BASENAME $BASENAME -o diff-${BASENAME/.json/.html} || true
       echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME\">diff-$BASENAME/.json/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true

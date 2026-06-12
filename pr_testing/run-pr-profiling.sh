@@ -100,7 +100,7 @@ EOF
       echo "<td>IB file not found, skipping diff</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       continue
     fi
-    $CMS_BOT_DIR/comparisons/resources-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
+    $CMS_BOT_DIR/comparisons/resources-diff.py $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

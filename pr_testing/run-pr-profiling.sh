@@ -118,7 +118,7 @@ EOF
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $PWD/$CMSSW_VERSION-$BASENAME|| true
     if [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
-      echo "<td><a target=\"_blank\" href=\"/profiling/$CMSSW_VERSION/$SCRAM_ARCH/$PROFILING_WORKFLOW/$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      echo "<td><a target=\"_blank\" href=\"SDT/jenkins_artifacts/profiling/$CMSSW_VERSION/$SCRAM_ARCH/$PROFILING_WORKFLOW/$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     else
       echo "<td>IB top-down html file not found<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     fi
@@ -132,7 +132,7 @@ EOF
     get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $PWD/$CMSSW_VERSION-$BASENAME || true
     if [ -f $PWD/$CMSSW_VERSION-$BASENAME ];then
       $CMS_BOT_DIR/comparisons/top-down-embed.py $CMSSW_VERSION-$BASENAME $BASENAME -o diff-${BASENAME/.json/.html} || true
-      echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME\">diff-$BASENAME/.json/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME\">diff-${BASENAME/.json/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     else
       echo "<td>IB top-down json file not found</td><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     fi

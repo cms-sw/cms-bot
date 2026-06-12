@@ -1,0 +1,67 @@
+{
+  "test_name": "test_backport",
+  "action_count": 6,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "edit_issue",
+      "details": {
+        "issue_number": 26,
+        "milestone": "CMSSW_14_1_X"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 26,
+        "labels": [
+          "backport",
+          "code-checks-approved",
+          "new-package-pending",
+          "orp-pending",
+          "pending-signatures",
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 26,
+        "body": "A new Pull Request was created by  iarspider for master.\n\nIt involves the following packages:\n\n- README (**new**)\n\n\nThe following packages do not have a category, yet:\n\nREADME\nPlease create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py to assign category\n can you please review it and eventually sign? Thanks.\niarspider you are the release manager for this.\n- Backported from #24\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "551c95f59caff42369887b5fee86583fe2bff161",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/26/jenkins"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "551c95f59caff42369887b5fee86583fe2bff161",
+        "state": "success",
+        "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/26#issuecomment-2761373098",
+        "description": "See details",
+        "context": "cms/26/code-checks"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 26,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"README::131bcdaf098c6224cd0a7e3771661b9ba99eaa04\":{\"cats\":[],\"ts\":\"2025-03-28T13:08:22Z\"}}} -->"
+      }
+    }
+  ]
+}

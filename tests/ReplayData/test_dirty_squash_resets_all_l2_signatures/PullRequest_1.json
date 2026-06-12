@@ -1,0 +1,51 @@
+{
+  "id": 1,
+  "number": 1,
+  "title": "Test PR #1",
+  "body": "Test PR body",
+  "state": "open",
+  "merged": false,
+  "mergeable": true,
+  "head": {
+    "sha": "original_commit",
+    "ref": "feature"
+  },
+  "base": {
+    "sha": "base123",
+    "ref": "master"
+  },
+  "user": {
+    "login": "testuser",
+    "id": 1
+  },
+  "files": [
+    {
+      "filename": "Package/Core/main.py",
+      "sha": "old_sha_111",
+      "status": "modified"
+    },
+    {
+      "filename": "Package/Analysis/data.py",
+      "sha": "old_sha_222",
+      "status": "modified"
+    }
+  ],
+  "commits": [
+    {
+      "sha": "original_commit",
+      "commit": {
+        "message": "Original",
+        "author": {
+          "date": "2024-01-01T10:00:00Z",
+          "name": "Author",
+          "email": "a@b.com"
+        },
+        "committer": {
+          "date": "2024-01-01T10:00:00Z",
+          "name": "Author",
+          "email": "a@b.com"
+        }
+      }
+    }
+  ]
+}

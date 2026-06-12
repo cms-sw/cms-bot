@@ -1,0 +1,13 @@
+{
+  "comments": [
+    {
+      "id": 100,
+      "body": "+1",
+      "user": {
+        "login": "alice",
+        "id": 2
+      },
+      "created_at": "2024-01-01T10:00:00Z"
+    }
+  ]
+}

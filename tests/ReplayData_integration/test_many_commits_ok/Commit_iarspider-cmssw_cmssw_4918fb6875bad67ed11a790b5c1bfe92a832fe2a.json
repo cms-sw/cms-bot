@@ -1,0 +1,98 @@
+{
+  "sha": "4918fb6875bad67ed11a790b5c1bfe92a832fe2a",
+  "node_id": "C_kwDOF83__NoAKDQ5MThmYjY4NzViYWQ2N2VkMTFhNzkwYjVjMWJmZTkyYTgzMmZlMmE",
+  "commit": {
+    "author": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:12Z"
+    },
+    "committer": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:12Z"
+    },
+    "message": "Dummy commit",
+    "tree": {
+      "sha": "e2e914419a2c8ebc16b720e183468948811227e5",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/e2e914419a2c8ebc16b720e183468948811227e5"
+    },
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/4918fb6875bad67ed11a790b5c1bfe92a832fe2a",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null
+    }
+  },
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/4918fb6875bad67ed11a790b5c1bfe92a832fe2a",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/4918fb6875bad67ed11a790b5c1bfe92a832fe2a",
+  "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/4918fb6875bad67ed11a790b5c1bfe92a832fe2a/comments",
+  "author": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "72c450fe9fad9b732c752fda13eae5358150ac6c",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/72c450fe9fad9b732c752fda13eae5358150ac6c",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/72c450fe9fad9b732c752fda13eae5358150ac6c"
+    }
+  ],
+  "stats": {
+    "total": 1,
+    "additions": 1,
+    "deletions": 0
+  },
+  "files": [
+    {
+      "sha": "5cd06205a6bb4174c50304aa4343871572503e1e",
+      "filename": "Alignment/CommonAlignmentProducer/python/AlignmentTracksFromVertexCompositeCandidateSelector_cfi.py",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/4918fb6875bad67ed11a790b5c1bfe92a832fe2a/Alignment%2FCommonAlignmentProducer%2Fpython%2FAlignmentTracksFromVertexCompositeCandidateSelector_cfi.py",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/4918fb6875bad67ed11a790b5c1bfe92a832fe2a/Alignment%2FCommonAlignmentProducer%2Fpython%2FAlignmentTracksFromVertexCompositeCandidateSelector_cfi.py",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Alignment%2FCommonAlignmentProducer%2Fpython%2FAlignmentTracksFromVertexCompositeCandidateSelector_cfi.py?ref=4918fb6875bad67ed11a790b5c1bfe92a832fe2a",
+      "patch": "@@ -2,3 +2,4 @@\n \n from Alignment.CommonAlignmentProducer.alignmentTrackFromVertexCompositeCandidateSelectorModule_cfi import alignmentTrackFromVertexCompositeCandidateSelectorModule\n AlignmentTracksFromVertexCompositeCandidateSelector = alignmentTrackFromVertexCompositeCandidateSelectorModule.clone()\n+# dummy dummy"
+    }
+  ]
+}

@@ -96,7 +96,7 @@ py-version = "3.6"
 
 # When enabled, pylint would attempt to guess common misconfiguration and emit
 # user-friendly hints instead of false-positive error messages.
-suggestion-mode = true
+# suggestion-mode = true
 
 # Allow loading of arbitrary C extensions. Extensions are imported into the
 # active Python interpreter and may run arbitrary code.
@@ -370,7 +370,7 @@ confidence = ["HIGH", "CONTROL_FLOW", "INFERENCE", "INFERENCE_FAILURE", "UNDEFIN
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable = ["raw-checker-failed", "bad-inline-option", "locally-disabled", "file-ignored", "suppressed-message", "useless-suppression", "deprecated-pragma", "use-symbolic-message-instead", "use-implicit-booleaness-not-comparison-to-string", "use-implicit-booleaness-not-comparison-to-zero", "missing-function-docstring", "unspecified-encoding", "line-too-long", "too-many-return-statements", "too-many-branches", "too-many-statements", "invalid-name", "missing-module-docstring", "too-many-lines", "too-many-arguments", "too-many-nested-blocks", "ungrouped-imports", "too-many-locals"]
+disable = ["invalid-name", "logging-fstring-interpolation", "too-many-positional-arguments", "raw-checker-failed", "bad-inline-option", "locally-disabled", "file-ignored", "suppressed-message", "useless-suppression", "deprecated-pragma", "use-symbolic-message-instead", "use-implicit-booleaness-not-comparison-to-string", "use-implicit-booleaness-not-comparison-to-zero", "missing-function-docstring", "unspecified-encoding", "line-too-long", "too-many-return-statements", "too-many-branches", "too-many-statements", "invalid-name", "missing-module-docstring", "too-many-lines", "too-many-arguments", "too-many-nested-blocks", "ungrouped-imports", "too-many-locals"]
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

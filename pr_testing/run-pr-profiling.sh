@@ -118,7 +118,7 @@ EOF
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $PWD/$CMSSW_VERSION-$BASENAME|| true
     if [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
-      echo "<td><a target=\"_blank\" href=\"SDT/jenkins_artifacts/profiling/$CMSSW_VERSION/$SCRAM_ARCH/$PROFILING_WORKFLOW/$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"SDT/jenkins_artifacts/profiling/$CMSSW_VERSION/$SCRAM_ARCH/$PROFILING_WORKFLOW/$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     else
       echo "<td>IB top-down html file not found<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     fi

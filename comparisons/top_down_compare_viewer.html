@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Top-Down JSON Compare Viewer</title>
+
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --ink: #1d232a;
+      --ink-soft: #4a525c;
+      --paper: #fffaf3;
+      --card: #fffdf8;
+      --line: #dacfbf;
+      --accent: #0e8f7a;
+      --accent-soft: #a4ddd5;
+      --up: #0b8a6a;
+      --down: #c53d20;
+      --shadow: 0 10px 30px rgba(35, 41, 48, 0.12);
+      --radius: 16px;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 1.2rem 1.2rem 1.4rem;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -45px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 40px;
+      transform: rotate(22deg);
+      background: linear-gradient(135deg, #9adfd2, #f6d9a3);
+      opacity: 0.45;
+      z-index: -1;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.2vw, 2rem);
+      letter-spacing: 0.01em;
+    }
+
+    .sub {
+      margin: 0.45rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      padding: 1rem 1.2rem 1.2rem;
+      display: grid;
+      gap: 0.8rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 25%);
+    }
+
+    .grid {
+      display: grid;
+      gap: 0.7rem;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+    }
+
+    .grid > * {
+      min-width: 0;
+    }
+
+    .row-break {
+      grid-column: 1 / -1;
+      height: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    button {
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.92rem;
+      border-radius: 10px;
+      border: 1px solid #c7bcae;
+      padding: 0.55rem 0.65rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button {
+      cursor: pointer;
+      background: linear-gradient(180deg, #fdfefe, #edf9f6);
+      border-color: #a9cfc8;
+      font-weight: 600;
+    }
+
+    button:hover {
+      filter: brightness(0.98);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
+    }
+
+    .badge {
+      border: 1px solid #d5cab9;
+      background: #fff;
+      border-radius: 999px;
+      padding: 0.28rem 0.6rem;
+      white-space: nowrap;
+    }
+
+    .stats {
+      display: grid;
+      gap: 0.8rem;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--line);
+      background: color-mix(in oklab, var(--paper), #ffffff 35%);
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid #ddd1c1;
+      border-radius: 12px;
+      padding: 0.7rem 0.8rem;
+    }
+
+    .stat .k {
+      color: var(--ink-soft);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat .v {
+      margin-top: 0.25rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .table-wrap {
+      padding: 0 1.2rem 1.2rem;
+    }
+
+    .pager {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.6rem;
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .pager button {
+      width: auto;
+      min-width: 70px;
+      padding: 0.4rem 0.65rem;
+    }
+
+    .table-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      max-height: 72vh;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1300px;
+      font-size: 0.86rem;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f4f8f7;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      color: #2d3a3f;
+      font-weight: 700;
+      padding: 0.6rem 0.7rem;
+      z-index: 2;
+      white-space: nowrap;
+    }
+
+    thead th.sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    thead th.sortable:hover {
+      background: #ebf3f1;
+    }
+
+    .th-num {
+      text-align: right;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #efe4d5;
+      padding: 0.48rem 0.7rem;
+      vertical-align: top;
+    }
+
+    tbody tr:hover {
+      background: #faf5ec;
+    }
+
+    tbody tr.expandable {
+      cursor: pointer;
+    }
+
+    tbody tr.expanded {
+      background: #f8f3e8;
+    }
+
+    .expand-icon {
+      display: inline-block;
+      width: 1.1rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      transform: translateY(-0.04rem);
+    }
+
+    .detail-row td {
+      padding-top: 0;
+      background: #fffdf7;
+    }
+
+    .detail-wrap {
+      margin: 0 0 0.7rem;
+      padding: 0.7rem 0.8rem 0.85rem;
+      border: 1px solid #e3dacd;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fffaf1, #fffefb);
+    }
+
+    .detail-title {
+      margin: 0 0 0.55rem;
+      color: var(--ink-soft);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .detail-table-wrap {
+      overflow: hidden;
+      border: 1px solid #e3dacd;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .detail-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 0.84rem;
+    }
+
+    .detail-table th,
+    .detail-table td {
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid #efe4d5;
+    }
+
+    .detail-table thead th {
+      position: static;
+      background: #f7f3eb;
+      color: var(--ink-soft);
+      font-size: 0.74rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .detail-table td {
+      background: #fff;
+    }
+
+    .mono {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .status-cell {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-same {
+      color: var(--ink-soft);
+    }
+
+    .status-left {
+      color: #4866b0;
+    }
+
+    .status-right {
+      color: #8851a8;
+    }
+
+    .status-up {
+      color: var(--down);
+    }
+
+    .status-down {
+      color: var(--up);
+    }
+
+    .bar-cell {
+      width: 110px;
+    }
+
+    .bar-track {
+      position: relative;
+      height: 10px;
+      border-radius: 999px;
+      background: #f2ebe0;
+      overflow: hidden;
+    }
+
+    .bar-track::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #cbbca8;
+    }
+
+    .bar-fill {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-radius: 999px;
+      opacity: 0.9;
+    }
+
+    .bar-fill.up {
+      background: #db775f;
+    }
+
+    .bar-fill.down {
+      background: #40a88f;
+    }
+
+    .empty {
+      padding: 1.3rem;
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .error {
+      color: var(--down);
+    }
+
+    @media (max-width: 1200px) {
+      .grid {
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+      }
+
+      .stats {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .wrap {
+        padding: 0.75rem;
+      }
+
+      .grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel">
+      <div class="hero">
+        <h1>Vtune Event Loop Compare Viewer</h1>
+        <p class="sub">Compare children of ::doEvent for IB and PR</p>
+      </div>
+
+      <div class="controls">
+        <div class="grid">
+          <div>
+            <label for="search">Search function/parent</label>
+            <input id="search" type="text" placeholder="e.g. MuonIdProducer or EDProducerAdaptorBase">
+          </div>
+          <div>
+            <label for="statusFilter">Filter status</label>
+            <select id="statusFilter">
+              <option value="">All statuses</option>
+              <option value="in-a-and-b" selected>in IB and PR</option>
+              <option value="same">same</option>
+              <option value="increased">increased</option>
+              <option value="decreased">decreased</option>
+              <option value="only-a">only in IB</option>
+              <option value="only-b">only in PR</option>
+            </select>
+          </div>
+          <div>
+            <label for="sortBy">Sort</label>
+            <select id="sortBy">
+              <option value="delta-desc">Delta time high to low</option>
+              <option value="delta-asc">Delta time low to high</option>
+              <option value="delta-parent-desc">Delta %parent high to low</option>
+              <option value="delta-parent-asc">Delta %parent low to high</option>
+              <option value="delta-total-desc" selected>Delta %total high to low</option>
+              <option value="delta-total-asc">Delta %total low to high</option>
+              <option value="function-asc">Function A to Z</option>
+              <option value="function-desc">Function Z to A</option>
+              <option value="parent-asc">Parent A to Z</option>
+              <option value="parent-desc">Parent Z to A</option>
+            </select>
+          </div>
+          <div>
+            <label for="rowsPerPage">Rows per page</label>
+            <input id="rowsPerPage" type="number" min="20" step="20" value="120">
+          </div>
+        </div>
+
+        <div class="badge-row">
+          <span id="sourceA" class="badge">IB: embedded</span>
+          <span id="sourceB" class="badge">PR: embedded</span>
+          <span id="status" class="badge">Waiting for embedded payload.</span>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="k">Compared Rows</div><div id="statRows" class="v">0</div></div>
+        <div class="stat"><div class="k">Changed Rows</div><div id="statChanged" class="v">0</div></div>
+        <div class="stat"><div class="k">Only In IB</div><div id="statOnlyA" class="v">0</div></div>
+        <div class="stat"><div class="k">Only In PR</div><div id="statOnlyB" class="v">0</div></div>
+        <div class="stat"><div class="k">Sum Delta Time</div><div id="statSumDelta" class="v">0</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="pager">
+          <button id="prevBtn" type="button">Prev</button>
+          <button id="nextBtn" type="button">Next</button>
+          <span id="pageInfo">Page 0/0</span>
+        </div>
+
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr>
+                <th id="colParent" class="sortable">Parent Function</th>
+                <th id="colFunction" class="sortable">Function</th>
+                <th id="colDeltaTime" class="sortable th-num">Delta total_time</th>
+                <th id="colDeltaParent" class="sortable th-num">Delta %parent</th>
+                <th id="colDeltaTotal" class="sortable th-num">Delta %total</th>
+                <th>Status</th>
+                <th>Visual</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div id="empty" class="empty">Load two JSON files to begin.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const EPS = 1e-12;
+
+    const state = {
+      sourceA: "",
+      sourceB: "",
+      payloadA: null,
+      payloadB: null,
+      rows: [],
+      filtered: [],
+      expandedRows: new Set(),
+      page: 1,
+      maxAbsDelta: 1,
+      summaryA: null,
+      summaryB: null
+    };
+
+    const el = {
+      search: document.getElementById("search"),
+      statusFilter: document.getElementById("statusFilter"),
+      sortBy: document.getElementById("sortBy"),
+      rowsPerPage: document.getElementById("rowsPerPage"),
+      sourceA: document.getElementById("sourceA"),
+      sourceB: document.getElementById("sourceB"),
+      status: document.getElementById("status"),
+      statRows: document.getElementById("statRows"),
+      statChanged: document.getElementById("statChanged"),
+      statOnlyA: document.getElementById("statOnlyA"),
+      statOnlyB: document.getElementById("statOnlyB"),
+      statSumDelta: document.getElementById("statSumDelta"),
+      colParent: document.getElementById("colParent"),
+      colFunction: document.getElementById("colFunction"),
+      colDeltaTime: document.getElementById("colDeltaTime"),
+      colDeltaParent: document.getElementById("colDeltaParent"),
+      colDeltaTotal: document.getElementById("colDeltaTotal"),
+      tbody: document.getElementById("tbody"),
+      empty: document.getElementById("empty"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      pageInfo: document.getElementById("pageInfo")
+    };
+
+    function safeNumber(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function fmtNum(v, digits = 6) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) {
+        return "-";
+      }
+      return n.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: digits
+      });
+    }
+
+    function fmtPct(v) {
+      const n = Number(v);
+      if (!Number.isFinite(n)) {
+        return "-";
+      }
+      return `${fmtNum(n, 3)}%`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function combinedKey(parent, func) {
+      return `${parent || ""}\u241f${func || ""}`;
+    }
+
+    function normalizePayload(payload) {
+      if (!payload || !Array.isArray(payload.children)) {
+        throw new Error("Expected top-down JSON with a children array.");
+      }
+
+      const byKey = new Map();
+
+      for (const child of payload.children) {
+        const parent = String(child.parent_function || "");
+        const func = String(child.function || "");
+        const key = combinedKey(parent, func);
+        if (!byKey.has(key)) {
+          byKey.set(key, {
+            parent_function: parent,
+            function: func,
+            total_time: 0,
+            pct_of_parent: 0,
+            pct_of_total: 0,
+            count: 0
+          });
+        }
+        const entry = byKey.get(key);
+        entry.total_time += safeNumber(child.total_time);
+        entry.pct_of_parent += safeNumber(child.pct_of_parent);
+        entry.pct_of_total += safeNumber(child.pct_of_total);
+        entry.count += 1;
+      }
+
+      return {
+        rows: [...byKey.values()],
+        summary: payload.summary || {},
+        source_file: payload.source_file || ""
+      };
+    }
+
+    function mergeRows() {
+      if (!state.payloadA || !state.payloadB) {
+        state.rows = [];
+        return;
+      }
+
+      const left = normalizePayload(state.payloadA);
+      const right = normalizePayload(state.payloadB);
+      state.summaryA = left.summary;
+      state.summaryB = right.summary;
+
+      const mapA = new Map(left.rows.map((row) => [combinedKey(row.parent_function, row.function), row]));
+      const mapB = new Map(right.rows.map((row) => [combinedKey(row.parent_function, row.function), row]));
+      const keySet = new Set([...mapA.keys(), ...mapB.keys()]);
+
+      const merged = [];
+      for (const key of keySet) {
+        const a = mapA.get(key);
+        const b = mapB.get(key);
+
+        const aTime = a ? safeNumber(a.total_time) : 0;
+        const bTime = b ? safeNumber(b.total_time) : 0;
+        const delta = bTime - aTime;
+        const deltaPct = aTime > EPS ? (delta / aTime) * 100 : null;
+
+        const aPctTotal = a ? safeNumber(a.pct_of_total) : null;
+        const bPctTotal = b ? safeNumber(b.pct_of_total) : null;
+        const deltaPctTotal =
+          aPctTotal !== null && bPctTotal !== null ? bPctTotal - aPctTotal : null;
+
+        let status = "same";
+        if (a && !b) {
+          status = "only-a";
+        } else if (!a && b) {
+          status = "only-b";
+        } else if (deltaPctTotal !== null && Math.abs(deltaPctTotal) > EPS) {
+          status = deltaPctTotal > 0 ? "increased" : "decreased";
+        }
+
+        merged.push({
+          parent_function: a?.parent_function || b?.parent_function || "",
+          function: a?.function || b?.function || "",
+          a_total_time: aTime,
+          b_total_time: bTime,
+          delta_time: delta,
+          delta_pct: deltaPct,
+          a_pct_parent: a ? safeNumber(a.pct_of_parent) : null,
+          b_pct_parent: b ? safeNumber(b.pct_of_parent) : null,
+          a_pct_total: aPctTotal,
+          b_pct_total: bPctTotal,
+          status
+        });
+      }
+
+      state.rows = merged;
+    }
+
+    function setStatus(message, isError = false) {
+      el.status.textContent = message;
+      el.status.className = isError ? "badge error" : "badge";
+    }
+
+    function applyFilters() {
+      const query = el.search.value.trim().toLowerCase();
+      const statusFilter = el.statusFilter.value;
+      let rows = state.rows.filter((row) => {
+        if (statusFilter === "in-a-and-b") {
+          if (row.status === "only-a" || row.status === "only-b") {
+            return false;
+          }
+        } else if (statusFilter && row.status !== statusFilter) {
+          return false;
+        }
+
+        if (!query) {
+          return true;
+        }
+
+        const hay = `${row.parent_function} ${row.function}`.toLowerCase();
+        return hay.includes(query);
+      });
+
+      rows = sortRows(rows, el.sortBy.value);
+      state.filtered = rows;
+      state.maxAbsDelta = Math.max(1e-9, ...rows.map((r) =>
+        r.a_pct_total !== null && r.b_pct_total !== null
+          ? Math.abs(r.b_pct_total - r.a_pct_total)
+          : 0
+      ));
+
+      const pageCount = Math.max(1, Math.ceil(rows.length / rowsPerPage()));
+      state.page = Math.min(pageCount, Math.max(1, state.page));
+
+      renderStats(rows);
+      renderTable();
+    }
+
+    function rowsPerPage() {
+      return Math.max(20, safeNumber(el.rowsPerPage.value) || 120);
+    }
+
+    function sortRows(rows, mode) {
+      const sorted = [...rows];
+      sorted.sort((a, b) => {
+        const aParentDiff =
+          Number.isFinite(a.a_pct_parent) && Number.isFinite(a.b_pct_parent)
+            ? a.b_pct_parent - a.a_pct_parent
+            : NaN;
+        const bParentDiff =
+          Number.isFinite(b.a_pct_parent) && Number.isFinite(b.b_pct_parent)
+            ? b.b_pct_parent - b.a_pct_parent
+            : NaN;
+        const aTotalDiff =
+          Number.isFinite(a.a_pct_total) && Number.isFinite(a.b_pct_total)
+            ? a.b_pct_total - a.a_pct_total
+            : NaN;
+        const bTotalDiff =
+          Number.isFinite(b.a_pct_total) && Number.isFinite(b.b_pct_total)
+            ? b.b_pct_total - b.a_pct_total
+            : NaN;
+
+        switch (mode) {
+          case "delta-desc":
+            return b.delta_time - a.delta_time;
+          case "delta-asc":
+            return a.delta_time - b.delta_time;
+          case "delta-parent-desc":
+            return safeNumber(bParentDiff) - safeNumber(aParentDiff);
+          case "delta-parent-asc":
+            return safeNumber(aParentDiff) - safeNumber(bParentDiff);
+          case "delta-total-desc":
+            return safeNumber(bTotalDiff) - safeNumber(aTotalDiff);
+          case "delta-total-asc":
+            return safeNumber(aTotalDiff) - safeNumber(bTotalDiff);
+          case "a-desc":
+            return b.a_total_time - a.a_total_time;
+          case "a-asc":
+            return a.a_total_time - b.a_total_time;
+          case "b-desc":
+            return b.b_total_time - a.b_total_time;
+          case "b-asc":
+            return a.b_total_time - b.b_total_time;
+          case "function-asc":
+            return a.function.localeCompare(b.function);
+          case "function-desc":
+            return b.function.localeCompare(a.function);
+          case "parent-asc":
+            return a.parent_function.localeCompare(b.parent_function);
+          case "parent-desc":
+            return b.parent_function.localeCompare(a.parent_function);
+          case "abs-delta-desc":
+          default: {
+            const d = Math.abs(b.delta_time) - Math.abs(a.delta_time);
+            if (Math.abs(d) > EPS) {
+              return d;
+            }
+            return a.function.localeCompare(b.function);
+          }
+        }
+      });
+      return sorted;
+    }
+
+    function renderStats(rows) {
+      const changed = rows.filter((r) => r.status === "increased" || r.status === "decreased").length;
+      const onlyA = rows.filter((r) => r.status === "only-a").length;
+      const onlyB = rows.filter((r) => r.status === "only-b").length;
+      const sumDelta = rows.reduce((acc, r) => acc + r.delta_time, 0);
+
+      el.statRows.textContent = rows.length.toLocaleString();
+      el.statChanged.textContent = changed.toLocaleString();
+      el.statOnlyA.textContent = onlyA.toLocaleString();
+      el.statOnlyB.textContent = onlyB.toLocaleString();
+      el.statSumDelta.textContent = fmtNum(sumDelta, 6);
+    }
+
+    function barStyle(delta) {
+      const abs = Math.abs(delta);
+      const pct = Math.min(100, (abs / state.maxAbsDelta) * 100);
+      const side = delta >= 0 ? "up" : "down";
+      const left = delta >= 0 ? "50%" : `${50 - pct / 2}%`;
+      return { pct, side, left };
+    }
+
+    function statusClass(status) {
+      if (status === "same") {
+        return "status-same";
+      }
+      if (status === "only-a") {
+        return "status-left";
+      }
+      if (status === "only-b") {
+        return "status-right";
+      }
+      if (status === "increased") {
+        return "status-up";
+      }
+      return "status-down";
+    }
+
+    function statusLabel(status) {
+      if (status === "only-a") {
+        return "only in IB";
+      }
+      if (status === "only-b") {
+        return "only in PR";
+      }
+      return status;
+    }
+
+    function toggleRowExpanded(key) {
+      if (state.expandedRows.has(key)) {
+        state.expandedRows.delete(key);
+      } else {
+        state.expandedRows.add(key);
+      }
+      renderTable();
+    }
+
+    function renderTable() {
+      const totalRows = state.filtered.length;
+      const perPage = rowsPerPage();
+      const pageCount = Math.max(1, Math.ceil(totalRows / perPage));
+      state.page = Math.min(Math.max(1, state.page), pageCount);
+
+      const start = (state.page - 1) * perPage;
+      const pageRows = state.filtered.slice(start, start + perPage);
+
+      if (!pageRows.length) {
+        el.empty.style.display = "block";
+        el.tbody.innerHTML = "";
+      } else {
+        el.empty.style.display = "none";
+        el.tbody.innerHTML = pageRows.map((row) => {
+          const rowKey = combinedKey(row.parent_function, row.function);
+          const isExpanded = state.expandedRows.has(rowKey);
+          const pctParentDiff =
+            Number.isFinite(row.a_pct_parent) && Number.isFinite(row.b_pct_parent)
+              ? row.b_pct_parent - row.a_pct_parent
+              : NaN;
+          const pctTotalDiff =
+            Number.isFinite(row.a_pct_total) && Number.isFinite(row.b_pct_total)
+              ? row.b_pct_total - row.a_pct_total
+              : NaN;
+          const bar = barStyle(Number.isFinite(pctTotalDiff) ? pctTotalDiff : 0);
+          return `
+            <tr class="expandable ${isExpanded ? "expanded" : ""}" data-row-key="${escapeHtml(rowKey)}" aria-expanded="${isExpanded ? "true" : "false"}">
+              <td title="${escapeHtml(row.parent_function)}">${escapeHtml(row.parent_function)}</td>
+              <td title="${escapeHtml(row.function)}"><span class="expand-icon">${isExpanded ? "▼" : "▶"}</span>${escapeHtml(row.function)}</td>
+              <td class="mono ${row.delta_time > 0 ? "up" : row.delta_time < 0 ? "down" : ""}">${fmtNum(row.delta_time, 6)}</td>
+              <td class="mono ${pctParentDiff > 0 ? "up" : pctParentDiff < 0 ? "down" : ""}">${fmtPct(pctParentDiff)}</td>
+              <td class="mono ${pctTotalDiff > 0 ? "up" : pctTotalDiff < 0 ? "down" : ""}">${fmtPct(pctTotalDiff)}</td>
+              <td class="status-cell ${statusClass(row.status)}">${statusLabel(row.status)}</td>
+              <td class="bar-cell">
+                <div class="bar-track">
+                  <div class="bar-fill ${bar.side}" style="left:${bar.left}; width:${bar.pct}%;"></div>
+                </div>
+              </td>
+            </tr>
+            ${isExpanded ? `<tr class="detail-row">
+              <td colspan="7">
+                <div class="detail-wrap">
+                  <div class="detail-title">Values for ${escapeHtml(row.function)}</div>
+                  <div class="detail-table-wrap">
+                    <table class="detail-table">
+                      <colgroup>
+                        <col style="width: 40%;">
+                        <col style="width: 20%;">
+                        <col style="width: 20%;">
+                        <col style="width: 22%;">
+                      </colgroup>
+                      <thead>
+                        <tr>
+                          <th>Value</th>
+                          <th class="th-num">IB</th>
+                          <th class="th-num">PR</th>
+                          <th class="th-num">IB - PR</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>total_time</td>
+                          <td class="mono">${fmtNum(row.a_total_time, 6)}</td>
+                          <td class="mono">${fmtNum(row.b_total_time, 6)}</td>
+                          <td class="mono ${row.delta_time > 0 ? "up" : row.delta_time < 0 ? "down" : ""}">${fmtNum(row.delta_time, 6)}</td>
+                        </tr>
+                        <tr>
+                          <td>pct_of_parent</td>
+                          <td class="mono">${fmtPct(row.a_pct_parent)}</td>
+                          <td class="mono">${fmtPct(row.b_pct_parent)}</td>
+                          <td class="mono ${pctParentDiff > 0 ? "up" : pctParentDiff < 0 ? "down" : ""}">${fmtPct(pctParentDiff)}</td>
+                        </tr>
+                        <tr>
+                          <td>pct_of_total</td>
+                          <td class="mono">${fmtPct(row.a_pct_total)}</td>
+                          <td class="mono">${fmtPct(row.b_pct_total)}</td>
+                          <td class="mono ${pctTotalDiff > 0 ? "up" : pctTotalDiff < 0 ? "down" : ""}">${fmtPct(pctTotalDiff)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </td>
+            </tr>` : ""}
+          `;
+        }).join("");
+
+        el.tbody.querySelectorAll("tr.expandable").forEach((tr) => {
+          tr.addEventListener("click", () => {
+            const key = tr.getAttribute("data-row-key") || "";
+            toggleRowExpanded(key);
+          });
+        });
+      }
+
+      const from = totalRows ? start + 1 : 0;
+      const to = Math.min(start + pageRows.length, totalRows);
+      el.pageInfo.textContent = `Page ${state.page}/${pageCount} | Rows ${from}-${to} of ${totalRows}`;
+      el.prevBtn.disabled = state.page <= 1;
+      el.nextBtn.disabled = state.page >= pageCount;
+    }
+
+    async function parseText(text, sourceLabel) {
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`Invalid JSON in ${sourceLabel}: ${err.message}`);
+      }
+      normalizePayload(data);
+      return data;
+    }
+
+    function recompute() {
+      if (!state.payloadA || !state.payloadB) {
+        state.rows = [];
+        state.filtered = [];
+        renderStats([]);
+        renderTable();
+        setStatus("Waiting for embedded payload.");
+        return;
+      }
+
+      mergeRows();
+      state.page = 1;
+      applyFilters();
+
+      const aRows = Array.isArray(state.payloadA.children) ? state.payloadA.children.length : 0;
+      const bRows = Array.isArray(state.payloadB.children) ? state.payloadB.children.length : 0;
+      const aCpu = safeNumber(state.summaryA?.total_cpu_time);
+      const bCpu = safeNumber(state.summaryB?.total_cpu_time);
+      setStatus(
+        `Compared ${state.rows.length.toLocaleString()} unique function keys | IB children: ${aRows.toLocaleString()} | PR children: ${bRows.toLocaleString()} | total_cpu_time delta: ${fmtNum(bCpu - aCpu, 6)}`
+      );
+    }
+
+    async function loadAFromText(text, sourceLabel) {
+      state.payloadA = await parseText(text, sourceLabel);
+      state.sourceA = sourceLabel;
+      el.sourceA.textContent = `IB: ${sourceLabel}`;
+      recompute();
+    }
+
+    async function loadBFromText(text, sourceLabel) {
+      state.payloadB = await parseText(text, sourceLabel);
+      state.sourceB = sourceLabel;
+      el.sourceB.textContent = `PR: ${sourceLabel}`;
+      recompute();
+    }
+
+    function loadFromObjects(dataA, dataB, sourceLabelA = "embedded IB", sourceLabelB = "embedded PR") {
+      normalizePayload(dataA);
+      normalizePayload(dataB);
+      state.payloadA = dataA;
+      state.payloadB = dataB;
+      state.sourceA = sourceLabelA;
+      state.sourceB = sourceLabelB;
+      el.sourceA.textContent = `IB: ${sourceLabelA}`;
+      el.sourceB.textContent = `PR: ${sourceLabelB}`;
+      recompute();
+    }
+
+    function toggleSort(descValue, ascValue) {
+      el.sortBy.value = el.sortBy.value === descValue ? ascValue : descValue;
+      state.page = 1;
+      applyFilters();
+    }
+
+    function wireEvents() {
+      [el.search, el.statusFilter, el.sortBy, el.rowsPerPage].forEach((node) => {
+        const eventName = node.tagName === "INPUT" ? "input" : "change";
+        node.addEventListener(eventName, () => {
+          state.page = 1;
+          applyFilters();
+        });
+      });
+
+      el.colParent.addEventListener("click", () => {
+        toggleSort("parent-desc", "parent-asc");
+      });
+
+      el.colFunction.addEventListener("click", () => toggleSort("function-desc", "function-asc"));
+      el.colDeltaTime.addEventListener("click", () => toggleSort("delta-desc", "delta-asc"));
+      el.colDeltaParent.addEventListener("click", () => toggleSort("delta-parent-desc", "delta-parent-asc"));
+      el.colDeltaTotal.addEventListener("click", () => toggleSort("delta-total-desc", "delta-total-asc"));
+
+      el.prevBtn.addEventListener("click", () => {
+        state.page = Math.max(1, state.page - 1);
+        renderTable();
+      });
+
+      el.nextBtn.addEventListener("click", () => {
+        state.page += 1;
+        renderTable();
+      });
+    }
+
+    function boot() {
+      wireEvents();
+      renderStats([]);
+      renderTable();
+
+      window.loadFromObjects = loadFromObjects;
+
+      if (window.TOP_DOWN_COMPARE_EMBEDDED &&
+          window.TOP_DOWN_COMPARE_EMBEDDED.a &&
+          window.TOP_DOWN_COMPARE_EMBEDDED.b) {
+        const embedded = window.TOP_DOWN_COMPARE_EMBEDDED;
+        try {
+          loadFromObjects(
+            embedded.a,
+            embedded.b,
+            embedded.labelA || "embedded A",
+            embedded.labelB || "embedded B"
+          );
+        } catch (err) {
+          setStatus(`Embedded payload failed: ${err.message}`, true);
+        }
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

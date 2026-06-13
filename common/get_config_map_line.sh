@@ -54,9 +54,18 @@ SUB_FILTERED_LINES=${FILTERED_LINES}
 if [ ${F_L_NUMBER} -gt 1 ] ; then
   # There should be only 1 production architecture
   SUB_FILTERED_LINES=$(echo ${FILTERED_LINES} | tr '#' '\n' | grep 'PROD_ARCH=1' | tr '\n' '#')
-  if [ $(echo ${SUB_FILTERED_LINES} | tr '#' '\n' | grep -c "$ARCH_MATCH" ) -eq 0 ] ; then
+  cnt=$(echo ${SUB_FILTERED_LINES} | tr '#' '\n' | grep -c "$ARCH_MATCH")
+  if [ $cnt -eq 0 ] ; then
     # If it is not production architecture, there should be only 1 more PR_TEST line
     SUB_FILTERED_LINES=$(echo ${FILTERED_LINES} | tr '#' '\n' | grep 'PR_TESTS=1' | tr '\n' '#')
+    cnt=$(echo ${SUB_FILTERED_LINES} | tr '#' '\n' | grep -c "$ARCH_MATCH")
+    if [ $cnt -eq 0 ] ; then
+      SUB_FILTERED_LINES=${FILTERED_LINES}
+      cnt=${F_L_NUMBER}
+    fi
+  fi
+  if [ $cnt -gt 1 ] ; then
+    SUB_FILTERED_LINES=$(echo ${SUB_FILTERED_LINES} | tr '#' '\n' | head -1 | tr '\n' '#')
   fi
 fi
 

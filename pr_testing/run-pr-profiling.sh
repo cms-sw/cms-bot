@@ -132,8 +132,8 @@ EOF
     BASENAME=$(basename $f)
     get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $CMSSW_VERSION-$BASENAME || true
     if [ -f $CMSSW_VERSION-$BASENAME ] ; then
-      cp -p $PWD/$CMSSW_VERSION-$BASENAME $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/ || true
-      $CMS_BOT_DIR/comparisons/top-down-embed.py $CMSSW_VERSION-$BASENAME $BASENAME -o diff-${BASENAME/.json/.html} || true
+      cp -p $CMSSW_VERSION-$BASENAME $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/ || true
+      $CMS_BOT_DIR/comparisons/top-down-embed.py $CMSSW_VERSION-$BASENAME $f -o $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/diff-${BASENAME/.json/.html} || true
       echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME\">diff-${BASENAME/.json/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     else
       echo "<td>IB RES-CPU json file not found</td><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true

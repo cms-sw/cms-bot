@@ -95,12 +95,12 @@ EOF
   echo "<tr><td>Fast Timer Service Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_cpu.resources.json' | sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME || true
-    if ! [ -f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME ] ; then
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PWD/$CMSSW_VERSION-$BASENAME || true
+    if ! [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
       echo "<td>IB file not found, skipping diff</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       continue
     fi
-    $CMS_BOT_DIR/comparisons/resources-diff.py $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME $f >$f.log || true
+    $CMS_BOT_DIR/comparisons/resources-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
@@ -116,9 +116,9 @@ EOF
   echo "<tr><td>Event Loop Reports</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'sorted_RES_CPU_step*.html' | sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME|| true
-    if [ -f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME ] ; then
-      cp -p $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/ || true
+    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $CMSSW_VERSION-$BASENAME|| true
+    if [ -f $CMSSW_VERSION-$BASENAME ] ; then
+      cp -p $CMSSW_VERSION-$BASENAME $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/ || true
       echo "<td><a target=\"_blank\" href=\"$PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     else
       echo "<td>IB RES-CPU html file not found<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
@@ -127,14 +127,14 @@ EOF
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
 
-  echo "<tr><td>Event Loop Report Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Event Loop Reports Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'sorted_RES_CPU_step*.json' | sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME || true
-    if [ -f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME ] ; then
-      cp -p $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/ || true
+    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $CMSSW_VERSION-$BASENAME || true
+    if [ -f $CMSSW_VERSION-$BASENAME ] ; then
+      cp -p $PWD/$CMSSW_VERSION-$BASENAME $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/ || true
       $CMS_BOT_DIR/comparisons/top-down-embed.py $CMSSW_VERSION-$BASENAME $BASENAME -o diff-${BASENAME/.json/.html} || true
-      echo "<td><a target=\"_blank\" href=\"/${PROFILING_WORKFLOW}/diff-$BASENAME\">diff-${BASENAME/.json/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+      echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME\">diff-${BASENAME/.json/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     else
       echo "<td>IB RES-CPU json file not found</td><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     fi
@@ -153,12 +153,12 @@ EOF
   echo "<tr><td>Module Alloc Monitor Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME || true
-    if ! [ -f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME ] ; then
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PWD/$CMSSW_VERSION-$BASENAME || true
+    if ! [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
       echo "<td>IB file not found, skipping diff</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       continue
     fi
-    $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME $f >$f.log || true
+    $CMS_BOT_DIR/comparisons/moduleAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     if grep "Error: input files describe different metrics" $f.log ; then
         echo "IB and PR files describe different metrics, comparing to self for diff<BR>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
@@ -181,12 +181,12 @@ EOF
   echo "<tr><td>Module Event Alloc Monitor Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleEventAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
-    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME || true
-    if ! [ -f $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME ] ; then
+    get_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$f $PWD/$CMSSW_VERSION-$BASENAME || true
+    if ! [ -f $PWD/$CMSSW_VERSION-$BASENAME ] ; then
       echo "<td>IB file not found, skipping diff</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
       continue
     fi
-    $CMS_BOT_DIR/comparisons/moduleEventAllocMonitor-circles-diff.py $PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME $f >$f.log || true
+    $CMS_BOT_DIR/comparisons/moduleEventAllocMonitor-circles-diff.py $CMSSW_VERSION-$BASENAME $f >$f.log || true
     echo "<td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
     if grep "Error: input files describe different metrics" $f.log ; then
         echo "IB and PR files describe different metrics, comparing to self for diff<BR>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true

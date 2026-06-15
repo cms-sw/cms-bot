@@ -410,7 +410,7 @@ class RemapRules:
                 warning(f"{src} does not exist")
                 continue
             mode = stat.S_IMODE(os.stat(src).st_mode)
-            with open(src, "r") as f:
+            with open(src, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
             for pattern, replace in reps:
                 content = content.replace(pattern, replace)

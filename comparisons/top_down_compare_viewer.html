@@ -414,7 +414,7 @@
     <section class="panel">
       <div class="hero">
         <h1>Vtune Event Loop Compare Viewer</h1>
-        <p class="sub">Compare children of ::doEvent for IB and PR</p>
+        <p class="sub">Compare children of edm::stream::EDProducerAdaptorBase::doEvent, edm::global::EDProducerBase::doEvent, edm::one::EDProducerBase::doEvent, edm::limited::EDProducerBase::doEvent for IB and PR</p>
       </div>
 
       <div class="controls">
@@ -426,8 +426,8 @@
           <div>
             <label for="statusFilter">Filter status</label>
             <select id="statusFilter">
-              <option value="">All statuses</option>
-              <option value="in-a-and-b" selected>in IB and PR</option>
+              <option value="" selected>All statuses</option>
+              <option value="in-a-and-b">in IB and PR</option>
               <option value="same">same</option>
               <option value="increased">increased</option>
               <option value="decreased">decreased</option>
@@ -488,7 +488,6 @@
                 <th id="colDeltaParent" class="sortable th-num">Delta % of parent</th>
                 <th id="colDeltaTotal" class="sortable th-num">Delta % of total</th>
                 <th>Status</th>
-                <th>Visual</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -511,7 +510,6 @@
       filtered: [],
       expandedRows: new Set(),
       page: 1,
-      maxAbsDelta: 1,
       summaryA: null,
       summaryB: null
     };
@@ -697,11 +695,6 @@
 
       rows = sortRows(rows, el.sortBy.value);
       state.filtered = rows;
-      state.maxAbsDelta = Math.max(1e-9, ...rows.map((r) =>
-        r.a_pct_total !== null && r.b_pct_total !== null
-          ? Math.abs(r.b_pct_total - r.a_pct_total)
-          : 0
-      ));
 
       const pageCount = Math.max(1, Math.ceil(rows.length / rowsPerPage()));
       state.page = Math.min(pageCount, Math.max(1, state.page));
@@ -789,14 +782,6 @@
       el.statSumDelta.textContent = fmtNum(sumDelta, 6);
     }
 
-    function barStyle(delta) {
-      const abs = Math.abs(delta);
-      const pct = Math.min(100, (abs / state.maxAbsDelta) * 100);
-      const side = delta >= 0 ? "up" : "down";
-      const left = delta >= 0 ? "50%" : `${50 - pct / 2}%`;
-      return { pct, side, left };
-    }
-
     function statusClass(status) {
       if (status === "same") {
         return "status-same";
@@ -857,7 +842,6 @@
             Number.isFinite(row.a_pct_total) && Number.isFinite(row.b_pct_total)
               ? row.b_pct_total - row.a_pct_total
               : NaN;
-          const bar = barStyle(Number.isFinite(pctTotalDiff) ? pctTotalDiff : 0);
           return `
             <tr class="expandable ${isExpanded ? "expanded" : ""}" data-row-key="${escapeHtml(rowKey)}" aria-expanded="${isExpanded ? "true" : "false"}">
               <td title="${escapeHtml(row.parent_function)}">${escapeHtml(row.parent_function)}</td>
@@ -866,14 +850,9 @@
               <td class="mono ${pctParentDiff > 0 ? "up" : pctParentDiff < 0 ? "down" : ""}">${fmtPct(pctParentDiff)}</td>
               <td class="mono ${pctTotalDiff > 0 ? "up" : pctTotalDiff < 0 ? "down" : ""}">${fmtPct(pctTotalDiff)}</td>
               <td class="status-cell ${statusClass(row.status)}">${statusLabel(row.status)}</td>
-              <td class="bar-cell">
-                <div class="bar-track">
-                  <div class="bar-fill ${bar.side}" style="left:${bar.left}; width:${bar.pct}%;"></div>
-                </div>
-              </td>
             </tr>
             ${isExpanded ? `<tr class="detail-row">
-              <td colspan="7">
+              <td colspan="6">
                 <div class="detail-wrap">
                   <div class="detail-title">Values for ${escapeHtml(row.function)}</div>
                   <div class="detail-table-wrap">

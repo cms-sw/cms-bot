@@ -484,9 +484,9 @@
               <tr>
                 <th id="colParent" class="sortable">Parent Function</th>
                 <th id="colFunction" class="sortable">Function</th>
-                <th id="colDeltaTime" class="sortable th-num">Delta total_time</th>
-                <th id="colDeltaParent" class="sortable th-num">Delta %parent</th>
-                <th id="colDeltaTotal" class="sortable th-num">Delta %total</th>
+                <th id="colDeltaTime" class="sortable th-num">Delta total time</th>
+                <th id="colDeltaParent" class="sortable th-num">Delta % of parent</th>
+                <th id="colDeltaTotal" class="sortable th-num">Delta % of total</th>
                 <th>Status</th>
                 <th>Visual</th>
               </tr>
@@ -894,19 +894,19 @@
                       </thead>
                       <tbody>
                         <tr>
-                          <td>total_time</td>
+                          <td>Total time</td>
                           <td class="mono">${fmtNum(row.a_total_time, 6)}</td>
                           <td class="mono">${fmtNum(row.b_total_time, 6)}</td>
                           <td class="mono ${row.delta_time > 0 ? "up" : row.delta_time < 0 ? "down" : ""}">${fmtNum(row.delta_time, 6)}</td>
                         </tr>
                         <tr>
-                          <td>pct_of_parent</td>
+                          <td>Percentage of parent time</td>
                           <td class="mono">${fmtPct(row.a_pct_parent)}</td>
                           <td class="mono">${fmtPct(row.b_pct_parent)}</td>
                           <td class="mono ${pctParentDiff > 0 ? "up" : pctParentDiff < 0 ? "down" : ""}">${fmtPct(pctParentDiff)}</td>
                         </tr>
                         <tr>
-                          <td>pct_of_total</td>
+                          <td>Percentage of total time</td>
                           <td class="mono">${fmtPct(row.a_pct_total)}</td>
                           <td class="mono">${fmtPct(row.b_pct_total)}</td>
                           <td class="mono ${pctTotalDiff > 0 ? "up" : pctTotalDiff < 0 ? "down" : ""}">${fmtPct(pctTotalDiff)}</td>

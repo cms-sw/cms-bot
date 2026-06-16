@@ -1,14 +1,16 @@
 #!/bin/bash -ex
 function process_ubsan()
 {
+  local dir="$1"
   ibtag=$(echo ${dir} | sed 's/\/pyRelValPartialLogs//')
   ibtag=`basename $ibtag`
+  arch=$(echo $dir | cut -d/ -f5)
   ubdir="/data/sdt/SDT/jenkins-artifacts/ubsan_logs/$ibtag"
   mkdir -p ${ubdir}
   ublog1="${ubdir}/full_runtime_errors.log"
   ublog2="${ubdir}/ubsan_runtime_errors.log"
   ublog3="${ubdir}/ubsan_runtime_errors_ignored.log"
-  grep ': runtime error:' */step?.log  | grep '/CMSSW_\|log:src/' | sed 's|_.*\/\(step[1-9][0-9]*\).*.log:|/\1:|;s|:.*/CMSSW_[^/]*/|:|;s|:src/|:|' > ${ublog1}
+  grep -a ': runtime error:' */step?.log  | grep '/CMSSW_\|log:src/' | sed -E  -e 's#^(([0-9][0-9]*(\.[0-9][0-9]*|))_.*/(step[0-9]*\.log)):#<a href="@IB_URL@/\1">\2/\4</a>:#;s#:.*/CMSSW_[^/]*/#:#;s#:src/#:#' > ${ublog1}
   for u in $(cat ${ublog1} | sed 's|^[^:]*:||;s| .*||' | sort -u) ; do
     md5=$(echo "$u" | md5sum | sed 's| .*||')
     c2=$(echo $md5 | cut -c1,2)
@@ -37,6 +39,10 @@ function process_ubsan()
     echo "</body></html>" >> ${ubdir}/ignored.html
     mv ${ublog3}.tmp ${ublog3}
   fi
+  [ -e ${ublog1} ] && sed -i -e "s|@IB_URL@/|https://cmssdt.cern.ch/SDT/cgi-bin/logreader/${arch}/${ibtag}/pyRelValMatrixLogs/run/|" ${ublog1}
+  for log in $(find ${ubdir}/logs -name log) ; do
+     sed -i -e "s|@IB_URL@/|https://cmssdt.cern.ch/SDT/cgi-bin/logreader/${arch}/${ibtag}/pyRelValMatrixLogs/run/|" $log
+  done
   ln -s $ibtag $(echo ${ubdir} | sed 's|_UBSAN_X|_X|')
 }
 

@@ -99,12 +99,10 @@ class Component:
                 f"the '{name}' component is not available for the '{os_arch}' architecture"
             )
         package = component[os_arch]
-        if 'cuda_variant' in component:
-          if len(component['cuda_variant'])>1:
-            raise RuntimeError(
-              f"the '{name}' component has multiple variants."
-            )
-          package = package['cuda%s' % component['cuda_variant'][0]]
+        if "cuda_variant" in component:
+            if len(component["cuda_variant"]) > 1:
+                raise RuntimeError(f"the '{name}' component has multiple variants.")
+            package = package["cuda%s" % component["cuda_variant"][0]]
         print("Package :", package)
         self.path = package["relative_path"]
         self.size = int(package["size"])

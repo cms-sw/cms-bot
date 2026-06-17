@@ -4952,3 +4952,4 @@ architecture=el9_amd64_gcc14;label=CMSSW_20_0_0_pre1;type=Development;state=Anno
 architecture=slc7_amd64_gcc700;label=CMSSW_10_6_49;type=Production;state=Announced;prodarch=1;
 architecture=el9_amd64_gcc12;label=CMSSW_14_0_24;type=Production;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc12;label=CMSSW_14_0_24;type=Production;state=Announced;prodarch=1;
+architecture=slc7_amd64_gcc12;label=CMSSW_14_0_24;type=Production;state=Announced;prodarch=0;

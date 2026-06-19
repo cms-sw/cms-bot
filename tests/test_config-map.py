@@ -34,6 +34,10 @@ def check_value(key, value):
                 continue
             elif re.match(r"^(system|without):[a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+)*$", item):
                 continue
+            elif re.match(r"^(debug:[a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+)*$", item):
+                continue
+            elif re.match(r"^(stdcxx:[a-zA-Z0-9_-]+@\d+(:[a-zA-Z0-9_-]+@\d+)*$", item):
+                continue
             else:
                 errors.append("Invalid item '%s' in '%s=%s'" % (item, key, value))
     return

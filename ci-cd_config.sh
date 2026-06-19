@@ -19,6 +19,8 @@ function cmsbuild_args()
       case $x in
         upload_store ) ;;
         estats ) ;;
+        debug:* )      arg="${arg} --define \'cms_debug_packages=$(echo $x    | sed 's|^debug:||')\'" ;;
+        stdcxx:* )     arg="${arg} --define \'cms_override_standard=$(echo $x | sed 's|^stdcxx:||;s|:|,|g')\'" ;;
         without:* )    arg="${arg} --build-without=$(echo $x    | sed 's|^without:||;s|:|,|g')" ;;
         system:* )     arg="${arg} --use-system-tools=$(echo $x | sed 's|^system:||;s|:|,|g')" ;;
         microarchs:* ) arg="${arg} --vectorization=$(echo $x    | sed 's|^microarchs:||;s|:|,|g')" ;;

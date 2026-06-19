@@ -1812,6 +1812,7 @@ CMSSW_CATEGORIES = {
         "DataFormats/NanoAOD",
         "DataFormats/PatCandidates",
         "DPGAnalysis/HcalNanoAOD",
+        "DPGAnalysis/HGCalNanoAOD",
         "DPGAnalysis/L1TNanoAOD",
         "DPGAnalysis/Phase2L1TNanoAOD",
         "DPGAnalysis/MuonTools",

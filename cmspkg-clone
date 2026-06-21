@@ -16,7 +16,7 @@ popd
 mdir=$(echo $CLONE_DIR | cut -d/ -f1,2)
 df -h $mdir
 mkdir -p $CLONE_DIR/cmssw $CLONE_DIR/cmssw/repos/.obj_store/RPMS
-
+[ "${KEEP_REPO}" != "" ] || KEEP_REPO=".*"
 CMSREP="curl -L -s http://cmsrep.cern.ch/cmssw/repos"
 if [ "X${REPOSITORY}" = "X" ] ; then
   echo "Starting cleanup process ..."
@@ -27,14 +27,12 @@ if [ "X${REPOSITORY}" = "X" ] ; then
     if [ -d $CLONE_DIR/cmssw/repos ] ; then
       for repo_dir in $(find $CLONE_DIR/cmssw/repos -mindepth 1 -maxdepth 1 -type d | grep -v '/\.obj_store') ; do
         repo=$(basename $repo_dir)
-        if [ "${EXCLUDE_REPO}" != "" ] ; then
-          if [ $(echo $repo | grep -E "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
-            if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
-              echo "Deleting excluded repository $repo"
-              rm -rf $CLONE_DIR/cmssw/repos/$repo
-            fi
-            continue
+        if [ $(echo $repo | grep -E "^${KEEP_REPO}$" | wc -l) -eq 0 ] ; then
+          if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
+            echo "Deleting excluded repository $repo"
+            rm -rf $CLONE_DIR/cmssw/repos/$repo
           fi
+          continue
         fi
         if [ $(echo "$REPOSITORY" | tr ' ' '\n' | grep "^$repo\$" | wc -l) -eq 1 ] ; then
           ARCHS=$(${CMSREP}/${repo} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | sort | uniq)
@@ -88,15 +86,13 @@ fi
 echo "Starting backup process ...."
 TOTAL_REPOS=0
 ERR=0
-for repo in $(echo ${REPOSITORY} | tr ' ' '\n' | grep -v '^cms.week[0-9].PR_[0-9a-f]\{8\}$') ; do
-  if [ "${EXCLUDE_REPO}" != "" ] ; then
-    if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
-      if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
-        echo "Deleting excluded repository $repo"
-        rm -rf $CLONE_DIR/cmssw/repos/$repo
-      fi
-      continue
+for repo in $(echo ${REPOSITORY} | tr ' ' '\n') ; do
+  if [ $(echo $repo | grep -E "^${KEEP_REPO}$" | wc -l) -eq 0 ] ; then
+    if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
+      echo "Deleting excluded repository $repo"
+      rm -rf $CLONE_DIR/cmssw/repos/$repo
     fi
+    continue
   fi
   ARCHS="${ARCHITECTURE}"
   if [ "X${ARCHS}" = "X" ] ; then

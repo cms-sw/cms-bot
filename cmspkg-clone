@@ -5,12 +5,15 @@ function cleanup_unused(){
     for arch_dir in $(find $CLONE_DIR/cmssw/repos/.obj_store/RPMS -mindepth 1 -maxdepth 1 -mtime -1 -type d) ; do
       arch=$(basename ${arch_dir})
       echo "  Checking architecture ${arch}"
-      if [ $(find ${arch_dir} -mindepth 3 -maxdepth 3 -name '*.rpm' -type f | wc -l) -eq 0 ] ; then
+      find ${arch_dir} -mindepth 3 -maxdepth 3 -name '*.rpm' -type f > rpms.txt
+      RPM_CNT=$(cat rpms.txt | wc -l)
+      echo "  Found RPMS: $RPM_CNT"
+      if [ $RPM_CNT -eq 0 ] ; then
         echo "  Empty architecture $arch"
         rm -rf ${arch_dir}
       else
         DEL_FILES=0
-        for rpm in $(find ${arch_dir} -mindepth 3 -maxdepth 3 -name '*.rpm' -type f) ; do
+        for rpm in $(cat rpms.txt) ; do
           [ $(ls -l $rpm | awk '{print $2}') -gt 1 ] && continue
           let DEL_FILES=$DEL_FILES+1
           echo  "    Remove($DEL_FILES): $rpm"
@@ -27,6 +30,7 @@ function cleanup_unused(){
           done
         fi
       fi
+      rm rpms.txt
     done
   fi
 }

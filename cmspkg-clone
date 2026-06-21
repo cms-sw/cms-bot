@@ -26,6 +26,10 @@ function cleanup_unused(){
   fi
 }
 
+function cmspkg_run(){
+  curl -L -s "http://cmsrep.cern.ch/cgi-bin/$1" | grep 'href=' | sed "s|.*/cgi-bin/$1/||;s|'.*||" | grep -v '^$' | grep "^$2$" | sort | tr '\n' ' '
+}
+
 echo "============================================="
 date
 echo "============================================="
@@ -44,10 +48,10 @@ mdir=$(echo $CLONE_DIR | cut -d/ -f1,2)
 df -h $mdir
 mkdir -p $CLONE_DIR/cmssw $CLONE_DIR/cmssw/repos/.obj_store/RPMS
 [ "${KEEP_REPO}" != "" ] || KEEP_REPO=".*"
-CMSREP="curl -L -s http://cmsrep.cern.ch/cmssw/repos"
+echo "Backing up repos which match: ${KEEP_REPO}"
 if [ "X${REPOSITORY}" = "X" ] ; then
   echo "Starting cleanup process ..."
-  REPOSITORY=$(${CMSREP} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | grep -v tmp | sort | uniq | tr '\n' ' ')
+  REPOSITORY=$(cmspkg_run repos '.*')
   echo "Found repositories: $REPOSITORY"
   echo "Searching for obsolete repositories ...."
   if [ "X${REPOSITORY}" != "X" ] ; then
@@ -62,11 +66,12 @@ if [ "X${REPOSITORY}" = "X" ] ; then
           continue
         fi
         if [ $(echo "$REPOSITORY" | tr ' ' '\n' | grep "^$repo\$" | wc -l) -eq 1 ] ; then
-          ARCHS=$(${CMSREP}/${repo} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | sort | uniq)
+          ARCHS=$(cmspkg_run repos/${repo} '[a-z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*')
+          echo "  Found archs: ${ARCHS}"
           for arch_dir in $(find ${repo_dir} -mindepth 1 -maxdepth 1 -type d) ; do
             arch=$(basename ${arch_dir})
             if [ "${arch}" = "drivers" ] ; then continue; fi
-            if [ $(echo "$ARCHS" | grep "^$arch\$" | wc -l) -eq 0 ] ; then
+            if [ $(echo "$ARCHS" | tr ' ' '\n' | grep "^$arch\$" | wc -l) -eq 0 ] ; then
               echo "  Deleting ${repo}/${arch}"
               rm -rf ${arch_dir}
               touch $CLONE_DIR/cmssw/repos/.obj_store/RPMS/${arch}
@@ -100,7 +105,7 @@ for repo in $(echo ${REPOSITORY} | tr ' ' '\n') ; do
   fi
   ARCHS="${ARCHITECTURE}"
   if [ "X${ARCHS}" = "X" ] ; then
-    ARCHS=$(${CMSREP}/${repo} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | grep '^[a-z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*$' | sort)
+    ARCHS=$(cmspkg_run repos/${repo} '^[a-z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*_[a-z][a-zA-Z0-9]*$')
   fi
   for arch in $ARCHS ; do
     echo "Checking $repo $arch"

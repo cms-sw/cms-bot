@@ -28,7 +28,7 @@ if [ "X${REPOSITORY}" = "X" ] ; then
       for repo_dir in $(find $CLONE_DIR/cmssw/repos -mindepth 1 -maxdepth 1 -type d | grep -v '/\.obj_store') ; do
         repo=$(basename $repo_dir)
         if [ "${EXCLUDE_REPO}" != "" ] ; then
-          if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
+          if [ $(echo $repo | grep -E "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
             if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
               echo "Deleting excluded repository $repo"
               rm -rf $CLONE_DIR/cmssw/repos/$repo

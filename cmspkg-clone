@@ -65,12 +65,13 @@ echo "============================================="
 [ "$1" = "" ] && exit 1
 CLONE_DIR=$1
 mkdir -p $CLONE_DIR
-cd $CLONE_DIR
-if [ ! -d cmspkg ] ; then
-  git clone https://github.com/cms-sw/cmspkg.git
-fi
-pushd cmspkg
-  git pull --rebase
+pushd $CLONE_DIR
+  if [ ! -d cmspkg ] ; then
+    git clone https://github.com/cms-sw/cmspkg.git
+  fi
+  pushd cmspkg
+    git pull --rebase
+  popd
 popd
 
 mdir=$(echo $CLONE_DIR | cut -d/ -f1,2)

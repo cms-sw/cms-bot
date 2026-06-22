@@ -2,7 +2,7 @@
 function cleanup_unused(){
   if [ "${CMSPKG_DELETE_UNUSED}" != "false" ] ; then
     echo "Searching for obsolete RPMS in Object Store"
-    for arch_dir in $(find $CLONE_DIR/cmssw/repos/.obj_store/RPMS -mindepth 1 -maxdepth 1 -mtime -1 -type d) ; do
+    for arch_dir in $(find $CLONE_DIR/cmssw/repos/.obj_store/RPMS -mindepth 1 -maxdepth 1 -type d) ; do
       arch=$(basename ${arch_dir})
       echo "  Checking architecture ${arch}"
       find ${arch_dir} -mindepth 3 -maxdepth 3 -name '*.rpm' -type f > rpms.txt

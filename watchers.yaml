@@ -571,11 +571,15 @@ fabferro:
 - Geometry/VeryForwardRPTopology
 - RecoCTPPS
 forthommel:
+- CalibPPS
+- DQM/CTPPS
 - EventFilter/CTPPSRawToDigi
 - GeneratorInterface/CepGenInterface
-- RecoHGCal
+- Geometry/VeryForwardData
+- Geometry/VeryForwardGeometry
+- Geometry/VeryForwardGeometryBuilder
 - RecoPPS
-- SimPPS/DirectSimProducer
+- SimPPS
 fwyzard:
 - EventFilter/Configuration
 - EventFilter/OnlineMetaDataRawToDigi

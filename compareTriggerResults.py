@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Script to compare the content of edm::TriggerResults collections in EDM files across multiple workflows
  - CMSSW dependencies: edmDumpEventContent, hltDiff
@@ -152,6 +152,9 @@ def compareTriggerResults(**kwargs):
         if verbosity >= 0:
             WARNING(
                 "compareTriggerResults -- found zero inputs to be compared (no outputs produced)"
+            )
+            print(
+                "SUMMARY TriggerResults: WARNING - found zero edm::TriggerResults collections to compare (no outputs produced)"
             )
         return -1
 

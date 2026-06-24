@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Script to compare the content of edm::TriggerResults collections in EDM files across multiple workflows
  - CMSSW dependencies: edmDumpEventContent, hltDiff
@@ -20,14 +20,14 @@ def WARNING(message):
 
 
 def get_output(cmds, permissive=False):
-    prc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    prc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     out, err = prc.communicate()
     if (not permissive) and prc.returncode:
         KILL(
             "get_output -- shell command failed (execute command to reproduce the error):\n"
             + " " * 14
             + "> "
-            + cmd
+            + " ".join(cmds)
         )
     return (out, err)
 
@@ -152,6 +152,9 @@ def compareTriggerResults(**kwargs):
         if verbosity >= 0:
             WARNING(
                 "compareTriggerResults -- found zero inputs to be compared (no outputs produced)"
+            )
+            print(
+                "SUMMARY TriggerResults: WARNING - found zero edm::TriggerResults collections to compare (no outputs produced)"
             )
         return -1
 

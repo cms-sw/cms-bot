@@ -104,6 +104,42 @@ EOF
     echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Vtune Profiles</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  for d in $(find $PROFILING_WORKFLOW -type d -name 'r-step*' | sort -V ) ; do
+    mkdir -p $WORKSPACE/vtune-profiles/$d || true
+    rsync -auv $d/ $WORKSPACE/vtune-profiles/$d/ || true
+    echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)\">IB     $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR     $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)/:$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)/\">IB - PR $(basename $d)</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+  done
+  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  echo "<tr><td>Event Loop Reports</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'sorted_RES_CPU_step*.html' | sort -V ) ; do
+    BASENAME=$(basename $f)
+    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $CMSSW_VERSION-$BASENAME|| true
+    if [ -f $CMSSW_VERSION-$BASENAME ] ; then
+      cp -p $CMSSW_VERSION-$BASENAME $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/ || true
+      echo "<td><a target=\"_blank\" href=\"$PROFILING_WORKFLOW/$CMSSW_VERSION-$BASENAME\">IB ${BASENAME/.html/}<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    else
+      echo "<td>IB RES-CPU html file not found<br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    fi
+    echo "<a target=\"_blank\" href=\"$PROFILING_WORKFLOW/$BASENAME\">PR ${BASENAME/.html/}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+  done
+  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+
+  echo "<tr><td>Event Loop Reports Comparison</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  for f in $(find $PROFILING_WORKFLOW -type f -name 'sorted_RES_CPU_step*.json' | sort -V ) ; do
+    BASENAME=$(basename $f)
+    get_jenkins_artifacts profiling/$CMSSW_VERSION/$SCRAM_ARCH/$f $CMSSW_VERSION-$BASENAME || true
+    if [ -f $CMSSW_VERSION-$BASENAME ] ; then
+      cp -p $CMSSW_VERSION-$BASENAME $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/ || true
+      $CMS_BOT_DIR/comparisons/top-down-embed.py $CMSSW_VERSION-$BASENAME $f -o $WORKSPACE/upload/profiling/$PROFILING_WORKFLOW/diff-${BASENAME/.json/.html} || true
+      echo "<td><a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-${BASENAME/.json/.html}\">diff-${BASENAME/.json/.html}</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    else
+      echo "<td>IB RES-CPU json file not found</td><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
+    fi
+  done
+  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   echo "<tr><td>Module Alloc Monitor</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
@@ -131,6 +167,7 @@ EOF
     echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  if [ $(ls -1 step*_moduleEventAllocMonitor.circles.json 2>/dev/null) -gt 0 ]; then
   echo "<tr><td>Module Event Alloc Monitor</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   for f in $(find $PROFILING_WORKFLOW -type f -name 'step*_moduleEventAllocMonitor.circles.json'| sort -V ) ; do
     BASENAME=$(basename $f)
@@ -157,20 +194,13 @@ EOF
     fi
     echo "<a target=\"_blank\" href=\"${PROFILING_WORKFLOW}/diff-$BASENAME.html\">diff-$BASENAME</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
   done
+  fi
   echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*.json.gz' -o -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html' | grep -v 'r-step') ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name '*.gz' -o -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*' -o -name '*.json' -o -name '*.html' | grep -v 'r-step') ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
   done
-  echo "<tr><td>Vtune Profiles</td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-  for d in $(find $PROFILING_WORKFLOW -type d -name 'r-step*' | sort -V ) ; do
-    mkdir -p $WORKSPACE/vtune-profiles/$d || true
-    rsync -auv $d/ $WORKSPACE/vtune-profiles/$d/ || true
-    echo "<td><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$(basename $d)\">IB $(basename $d)/</a><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
-    echo "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"/vtune/ui/$CMSSW_VERSION/$ARCHITECTURE/$PROFILING_WORKFLOW/$UPLOAD_UNIQ_ID/$(basename $d)\">PR $(basename $d)/</a></td>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html || true
-  done
-  echo "</tr>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   popd
   echo "</table>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   echo "<a href=\"$PROFILING_WORKFLOW\"> profiling logs</a>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

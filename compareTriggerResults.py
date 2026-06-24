@@ -20,7 +20,9 @@ def WARNING(message):
 
 
 def get_output(cmds, permissive=False):
-    prc = subprocess.Popen(cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    prc = subprocess.Popen(
+        cmds, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
+    )
     out, err = prc.communicate()
     if (not permissive) and prc.returncode:
         KILL(

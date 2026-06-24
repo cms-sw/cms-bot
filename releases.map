@@ -4960,3 +4960,4 @@ architecture=slc7_amd64_gcc10;label=CMSSW_12_4_26;type=Production;state=Announce
 architecture=el9_amd64_gcc11;label=CMSSW_13_0_25;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc11;label=CMSSW_13_0_25;type=Production;state=Announced;prodarch=0;
 architecture=el8_aarch64_gcc13;label=CMSSW_16_0_8;type=Production;state=Announced;prodarch=0;
+architecture=el9_amd64_gcc13;label=CMSSW_16_0_8;type=Production;state=Announced;prodarch=0;default_micro_arch=x86-64-v3;

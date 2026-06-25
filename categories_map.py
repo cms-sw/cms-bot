@@ -932,6 +932,7 @@ CMSSW_CATEGORIES = {
         "HeterogeneousCore/ROCmUtilities",
         "HeterogeneousCore/SonicCore",
         "HeterogeneousCore/SonicTriton",
+        "HeterogeneousCore/TestModules",
         "HeterogeneousCore/TrivialSerialisation",
         "HeterogeneousTest/AlpakaDevice",
         "HeterogeneousTest/AlpakaKernel",

@@ -799,8 +799,10 @@ CMSSW_CATEGORIES = {
         "GeneratorInterface/TauolaInterface",
         "GeneratorInterface/ThePEGInterface",
         "IOMC/ParticleGuns",
+        "PhysicsTools/TruthInfo",
         "SimDataFormats/GeneratorProducts",
         "SimDataFormats/HTXS",
+        "SimDataFormats/TruthInfo",
         "Validation/EventGenerator",
     ],
     "geometry": [

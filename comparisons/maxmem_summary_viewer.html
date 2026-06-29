@@ -983,8 +983,7 @@
       el.stepCount.textContent = state.steps.length.toLocaleString();
       el.peakValue.textContent = peak.value === null
         ? "-"
-        : `${formatValue(peak.value, quantity, adiffLegend)}${adiffLegend.unit || quantity.unit ? ` ${adiffLegend.unit || quantity.unit}` : ""} @ ${peak.workflow} ${peak.step}`;
-
+: `${formatValue(peak.value, quantity, adiffLegend)}${adiffLegend.unit || quantity.unit ? ` ${adiffLegend.unit || quantity.unit}` : ""} (${quantity.label}) @ ${peak.workflow} ${peak.step}`;
       el.thresholdNote.textContent = `Threshold highlighting uses warn ${state.payload.defaultWarnThreshold} and error ${state.payload.defaultErrorThreshold} defaults unless a step overrides them. For percent diff, thresholds are applied after converting percent back to absolute delta using baseline.`;
 
       el.tableHeadRow.innerHTML = "";

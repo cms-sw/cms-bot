@@ -570,8 +570,8 @@
       workflows: [],
       steps: [],
       search: "",
-      quantityKey: "max memory",
-      sortKey: "workflow-asc",
+      quantityKey: "req memory",
+      sortKey: "adiff-desc",
       aggregationKey: "max",
       expandedWorkflows: new Set(),
       detailSortKey: "step",
@@ -789,6 +789,44 @@
       return { value: bestValue, stepData: bestStepData };
     }
 
+    function findAutoSelectedErrorQuantity(payload) {
+      if (!payload || typeof payload !== "object" || !payload.workflows) {
+        return null;
+      }
+
+      const candidates = ["max memory", "req memory", "leak memory"];
+      let bestQuantity = null;
+      let bestExcess = -Infinity;
+      let bestValue = -Infinity;
+
+      for (const workflowName of Object.keys(payload.workflows)) {
+        const stepsByName = payload.workflows[workflowName] || {};
+        for (const stepName of Object.keys(stepsByName)) {
+          const stepData = stepsByName[stepName] || {};
+          const errorThreshold = Number((stepData && stepData.error_threshold) ?? payload.defaultErrorThreshold);
+          if (!Number.isFinite(errorThreshold)) {
+            continue;
+          }
+
+          for (const quantityKey of candidates) {
+            const absoluteDiff = Number(stepData[fieldName(quantityKey, "adiff")]);
+            if (!Number.isFinite(absoluteDiff) || absoluteDiff <= errorThreshold) {
+              continue;
+            }
+
+            const excess = absoluteDiff - errorThreshold;
+            if (excess > bestExcess || (excess === bestExcess && absoluteDiff > bestValue)) {
+              bestExcess = excess;
+              bestValue = absoluteDiff;
+              bestQuantity = quantityKey;
+            }
+          }
+        }
+      }
+
+      return bestQuantity;
+    }
+
     function cellClass(quantity, legend, stepData, value) {
       const classes = ["cell-num"];
       if (value === undefined || value === null || Number.isNaN(value)) {
@@ -954,8 +992,10 @@
                 </tr>
               </thead>
               <tbody>
-                ${detailRows.map((detailRow) => `
-                  <tr>
+                ${detailRows.map((detailRow) => {
+                  const thresholdClass = rowThresholdClass(quantity, detailRow.stepData, detailRow.absoluteDiff);
+                  return `
+                  <tr class="${thresholdClass}">
                     <td>${escapeHtml(detailRow.workflow)}</td>
                     <td class="td-step">${escapeHtml(detailRow.step.replace("step", "Step "))}</td>
                     <td class="td-num ${detailRow.baseline == null ? "cell-empty" : ""}">${formatValue(detailRow.baseline, quantity, numberLegend)}</td>
@@ -963,7 +1003,8 @@
                     <td class="td-num ${cellClass(quantity, adiffLegend, detailRow.stepData, detailRow.absoluteDiff)}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)}</td>
                     <td class="td-num ${cellClass(quantity, percentLegend, detailRow.stepData, detailRow.percentDiff)}">${formatValue(detailRow.percentDiff, quantity, percentLegend)}</td>
                   </tr>
-                `).join("")}
+                `;
+                }).join("")}
               </tbody>
             </table>
           </div>
@@ -1122,6 +1163,12 @@
       state.steps = Array.isArray(data.orderedSteps)
         ? data.orderedSteps.slice().sort((left, right) => stepNumber(left) - stepNumber(right))
         : Array.from(new Set(state.workflows.flatMap((workflow) => Object.keys(data.workflows[workflow] || {})))).sort((left, right) => stepNumber(left) - stepNumber(right));
+
+      const autoQuantity = findAutoSelectedErrorQuantity(data);
+      if (autoQuantity) {
+        state.quantityKey = autoQuantity;
+        state.sortKey = "adiff-desc";
+      }
 
       if (typeof data.resultsURL === "string" && data.resultsURL.trim()) {
         el.resultsLink.href = data.resultsURL;

@@ -998,7 +998,9 @@
         const legendHead = document.createElement("th");
         legendHead.className = "sortable th-num";
         legendHead.setAttribute("data-sort-key", legend.key);
-        legendHead.textContent = `${legend.label} (${aggregation.label})${mainSortIndicator(legend.key)}`;
+        const unit = legend.unit || quantity.unit;
+        const unitPart = unit ? `, ${unit}` : "";
+        legendHead.textContent = `${legend.label} (${aggregation.label}${unitPart})${mainSortIndicator(legend.key)}`;
         el.tableHeadRow.appendChild(legendHead);
       }
 

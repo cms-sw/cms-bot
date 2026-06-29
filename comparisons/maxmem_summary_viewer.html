@@ -414,6 +414,22 @@
       background: rgba(163, 214, 151, 0.7);
     }
 
+    .detail-table tr.threshold-warn > td {
+      background: rgba(244, 185, 66, 0.22);
+    }
+
+    .detail-table tr.threshold-error > td {
+      background: rgba(215, 76, 47, 0.2);
+    }
+
+    .detail-table tr.threshold-good > td {
+      background: rgba(201, 231, 192, 0.55);
+    }
+
+    .detail-table tr.threshold-great > td {
+      background: rgba(163, 214, 151, 0.7);
+    }
+
     .status {
       padding: 0 22px 16px;
       color: var(--ink-soft);
@@ -956,19 +972,34 @@
       return 0;
     }
 
-    function rowThresholdClass(quantity, stepData, absoluteDiff) {
-      if (typeof absoluteDiff !== "number" || !Number.isFinite(absoluteDiff)) return "";
+    function detailRowThresholdClass(quantity, stepData, absoluteDiff) {
+      if (typeof absoluteDiff !== "number" || !Number.isFinite(absoluteDiff)) {
+        return "";
+      }
+
       const thresholdEligibleQuantity = quantity.key !== "nallocated" && quantity.key !== "leaked alloc";
-      if (!thresholdEligibleQuantity) return "";
+      if (!thresholdEligibleQuantity) {
+        return "";
+      }
+
       const warnThreshold = Number((stepData && stepData.threshold) ?? state.payload.defaultWarnThreshold);
       const errorThreshold = Number((stepData && stepData.error_threshold) ?? state.payload.defaultErrorThreshold);
-      if (Number.isFinite(errorThreshold) && absoluteDiff > errorThreshold) return "threshold-error";
-      if (Number.isFinite(warnThreshold) && absoluteDiff > warnThreshold) return "threshold-warn";
-      if (Number.isFinite(errorThreshold) && absoluteDiff < -errorThreshold) return "threshold-great";
-      if (Number.isFinite(warnThreshold) && absoluteDiff < -warnThreshold) return "threshold-good";
+
+      if (Number.isFinite(errorThreshold) && absoluteDiff > errorThreshold) {
+        return "threshold-error";
+      }
+      if (Number.isFinite(warnThreshold) && absoluteDiff > warnThreshold) {
+        return "threshold-warn";
+      }
+      if (Number.isFinite(errorThreshold) && absoluteDiff < -errorThreshold) {
+        return "threshold-great";
+      }
+      if (Number.isFinite(warnThreshold) && absoluteDiff < -warnThreshold) {
+        return "threshold-good";
+      }
       return "";
     }
-    
+
     function buildDetailTable(workflowName, steps) {
       const quantity = currentQuantity();
       const aggregation = currentAggregation();
@@ -993,7 +1024,7 @@
               </thead>
               <tbody>
                 ${detailRows.map((detailRow) => {
-                  const thresholdClass = rowThresholdClass(quantity, detailRow.stepData, detailRow.absoluteDiff);
+                  const thresholdClass = detailRowThresholdClass(quantity, detailRow.stepData, detailRow.absoluteDiff);
                   return `
                   <tr class="${thresholdClass}">
                     <td>${escapeHtml(detailRow.workflow)}</td>

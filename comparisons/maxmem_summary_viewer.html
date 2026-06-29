@@ -1007,6 +1007,7 @@
       const percentLegend = LEGENDS.find((legend) => legend.key === "pdiff");
       const adiffLegend = LEGENDS.find((legend) => legend.key === "adiff");
       const numberLegend = { key: "base", unit: quantity.unit };
+      const unitPart = quantity.unit ? `, ${quantity.unit}` : "";
       return `
         <div class="detail-wrap">
           <p class="detail-title">All steps for ${escapeHtml(workflowName)}. Click a header to sort this expanded table.</p>
@@ -1016,10 +1017,10 @@
                 <tr>
                   <th class="sortable" data-sort-key="workflow">Workflow${detailSortIndicator("workflow")}</th>
                   <th class="sortable" data-sort-key="step">Step${detailSortIndicator("step")}</th>
-                  <th class="sortable th-num" data-sort-key="baseline">Baseline (${aggregation.label})${detailSortIndicator("baseline")}</th>
-                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request (${aggregation.label})${detailSortIndicator("pullRequest")}</th>
-                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline (${aggregation.label})${detailSortIndicator("absoluteDiff")}</th>
-                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff (${aggregation.label})${detailSortIndicator("percentDiff")}</th>
+                  <th class="sortable th-num" data-sort-key="baseline">Baseline (${aggregation.label}${unitPart})${detailSortIndicator("baseline")}</th>
+                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request (${aggregation.label}${unitPart})${detailSortIndicator("pullRequest")}</th>
+                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline (${aggregation.label}${unitPart})${detailSortIndicator("absoluteDiff")}</th>
+                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff (${aggregation.label}, %)${detailSortIndicator("percentDiff")}</th>
                 </tr>
               </thead>
               <tbody>

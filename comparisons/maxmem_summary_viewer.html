@@ -918,6 +918,19 @@
       return 0;
     }
 
+    function rowThresholdClass(quantity, stepData, absoluteDiff) {
+      if (typeof absoluteDiff !== "number" || !Number.isFinite(absoluteDiff)) return "";
+      const thresholdEligibleQuantity = quantity.key !== "nallocated" && quantity.key !== "leaked alloc";
+      if (!thresholdEligibleQuantity) return "";
+      const warnThreshold = Number((stepData && stepData.threshold) ?? state.payload.defaultWarnThreshold);
+      const errorThreshold = Number((stepData && stepData.error_threshold) ?? state.payload.defaultErrorThreshold);
+      if (Number.isFinite(errorThreshold) && absoluteDiff > errorThreshold) return "threshold-error";
+      if (Number.isFinite(warnThreshold) && absoluteDiff > warnThreshold) return "threshold-warn";
+      if (Number.isFinite(errorThreshold) && absoluteDiff < -errorThreshold) return "threshold-great";
+      if (Number.isFinite(warnThreshold) && absoluteDiff < -warnThreshold) return "threshold-good";
+      return "";
+    }
+    
     function buildDetailTable(workflowName, steps) {
       const quantity = currentQuantity();
       const aggregation = currentAggregation();

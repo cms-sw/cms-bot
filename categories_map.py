@@ -340,6 +340,7 @@ CMSSW_CATEGORIES = {
         "PerfTools/EdmEvent",
         "PerfTools/JeProf",
         "PerfTools/MaxMemoryPreload",
+        "PerfTools/Perfetto",
         "Utilities/DCacheAdaptor",
         "Utilities/DavixAdaptor",
         "Utilities/General",

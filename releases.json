@@ -33263,6 +33263,17 @@
                 }
               ]
             }
+          ],
+          "CMSSW_8_0": [
+            {
+              "label": "CMSSW_8_0_37_UL",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc530",
+                  "prodarch": 0
+                }
+              ]
+            }
           ]
         },
         "CANDIDATE": {

@@ -414,6 +414,22 @@
       background: rgba(163, 214, 151, 0.7);
     }
 
+    .detail-table tr.threshold-warn > td {
+      background: rgba(244, 185, 66, 0.22);
+    }
+
+    .detail-table tr.threshold-error > td {
+      background: rgba(215, 76, 47, 0.2);
+    }
+
+    .detail-table tr.threshold-good > td {
+      background: rgba(201, 231, 192, 0.55);
+    }
+
+    .detail-table tr.threshold-great > td {
+      background: rgba(163, 214, 151, 0.7);
+    }
+
     .status {
       padding: 0 22px 16px;
       color: var(--ink-soft);
@@ -570,8 +586,8 @@
       workflows: [],
       steps: [],
       search: "",
-      quantityKey: "max memory",
-      sortKey: "workflow-asc",
+      quantityKey: "req memory",
+      sortKey: "adiff-desc",
       aggregationKey: "max",
       expandedWorkflows: new Set(),
       detailSortKey: "step",
@@ -789,6 +805,44 @@
       return { value: bestValue, stepData: bestStepData };
     }
 
+    function findAutoSelectedErrorQuantity(payload) {
+      if (!payload || typeof payload !== "object" || !payload.workflows) {
+        return null;
+      }
+
+      const candidates = ["max memory", "req memory", "leak memory"];
+      let bestQuantity = null;
+      let bestExcess = -Infinity;
+      let bestValue = -Infinity;
+
+      for (const workflowName of Object.keys(payload.workflows)) {
+        const stepsByName = payload.workflows[workflowName] || {};
+        for (const stepName of Object.keys(stepsByName)) {
+          const stepData = stepsByName[stepName] || {};
+          const errorThreshold = Number((stepData && stepData.error_threshold) ?? payload.defaultErrorThreshold);
+          if (!Number.isFinite(errorThreshold)) {
+            continue;
+          }
+
+          for (const quantityKey of candidates) {
+            const absoluteDiff = Number(stepData[fieldName(quantityKey, "adiff")]);
+            if (!Number.isFinite(absoluteDiff) || absoluteDiff <= errorThreshold) {
+              continue;
+            }
+
+            const excess = absoluteDiff - errorThreshold;
+            if (excess > bestExcess || (excess === bestExcess && absoluteDiff > bestValue)) {
+              bestExcess = excess;
+              bestValue = absoluteDiff;
+              bestQuantity = quantityKey;
+            }
+          }
+        }
+      }
+
+      return bestQuantity;
+    }
+
     function cellClass(quantity, legend, stepData, value) {
       const classes = ["cell-num"];
       if (value === undefined || value === null || Number.isNaN(value)) {
@@ -918,6 +972,34 @@
       return 0;
     }
 
+    function detailRowThresholdClass(quantity, stepData, absoluteDiff) {
+      if (typeof absoluteDiff !== "number" || !Number.isFinite(absoluteDiff)) {
+        return "";
+      }
+
+      const thresholdEligibleQuantity = quantity.key !== "nallocated" && quantity.key !== "leaked alloc";
+      if (!thresholdEligibleQuantity) {
+        return "";
+      }
+
+      const warnThreshold = Number((stepData && stepData.threshold) ?? state.payload.defaultWarnThreshold);
+      const errorThreshold = Number((stepData && stepData.error_threshold) ?? state.payload.defaultErrorThreshold);
+
+      if (Number.isFinite(errorThreshold) && absoluteDiff > errorThreshold) {
+        return "threshold-error";
+      }
+      if (Number.isFinite(warnThreshold) && absoluteDiff > warnThreshold) {
+        return "threshold-warn";
+      }
+      if (Number.isFinite(errorThreshold) && absoluteDiff < -errorThreshold) {
+        return "threshold-great";
+      }
+      if (Number.isFinite(warnThreshold) && absoluteDiff < -warnThreshold) {
+        return "threshold-good";
+      }
+      return "";
+    }
+
     function buildDetailTable(workflowName, steps) {
       const quantity = currentQuantity();
       const aggregation = currentAggregation();
@@ -925,6 +1007,7 @@
       const percentLegend = LEGENDS.find((legend) => legend.key === "pdiff");
       const adiffLegend = LEGENDS.find((legend) => legend.key === "adiff");
       const numberLegend = { key: "base", unit: quantity.unit };
+      const unitPart = quantity.unit ? `, ${quantity.unit}` : "";
       return `
         <div class="detail-wrap">
           <p class="detail-title">All steps for ${escapeHtml(workflowName)}. Click a header to sort this expanded table.</p>
@@ -934,15 +1017,17 @@
                 <tr>
                   <th class="sortable" data-sort-key="workflow">Workflow${detailSortIndicator("workflow")}</th>
                   <th class="sortable" data-sort-key="step">Step${detailSortIndicator("step")}</th>
-                  <th class="sortable th-num" data-sort-key="baseline">Baseline (${aggregation.label})${detailSortIndicator("baseline")}</th>
-                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request (${aggregation.label})${detailSortIndicator("pullRequest")}</th>
-                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline (${aggregation.label})${detailSortIndicator("absoluteDiff")}</th>
-                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff (${aggregation.label})${detailSortIndicator("percentDiff")}</th>
+                  <th class="sortable th-num" data-sort-key="baseline">Baseline (${aggregation.label}${unitPart})${detailSortIndicator("baseline")}</th>
+                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request (${aggregation.label}${unitPart})${detailSortIndicator("pullRequest")}</th>
+                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline (${aggregation.label}${unitPart})${detailSortIndicator("absoluteDiff")}</th>
+                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff (${aggregation.label}, %)${detailSortIndicator("percentDiff")}</th>
                 </tr>
               </thead>
               <tbody>
-                ${detailRows.map((detailRow) => `
-                  <tr>
+                ${detailRows.map((detailRow) => {
+                  const thresholdClass = detailRowThresholdClass(quantity, detailRow.stepData, detailRow.absoluteDiff);
+                  return `
+                  <tr class="${thresholdClass}">
                     <td>${escapeHtml(detailRow.workflow)}</td>
                     <td class="td-step">${escapeHtml(detailRow.step.replace("step", "Step "))}</td>
                     <td class="td-num ${detailRow.baseline == null ? "cell-empty" : ""}">${formatValue(detailRow.baseline, quantity, numberLegend)}</td>
@@ -950,7 +1035,8 @@
                     <td class="td-num ${cellClass(quantity, adiffLegend, detailRow.stepData, detailRow.absoluteDiff)}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)}</td>
                     <td class="td-num ${cellClass(quantity, percentLegend, detailRow.stepData, detailRow.percentDiff)}">${formatValue(detailRow.percentDiff, quantity, percentLegend)}</td>
                   </tr>
-                `).join("")}
+                `;
+                }).join("")}
               </tbody>
             </table>
           </div>
@@ -983,8 +1069,7 @@
       el.stepCount.textContent = state.steps.length.toLocaleString();
       el.peakValue.textContent = peak.value === null
         ? "-"
-        : `${formatValue(peak.value, quantity, adiffLegend)}${adiffLegend.unit || quantity.unit ? ` ${adiffLegend.unit || quantity.unit}` : ""} @ ${peak.workflow} ${peak.step}`;
-
+: `${formatValue(peak.value, quantity, adiffLegend)}${adiffLegend.unit || quantity.unit ? ` ${adiffLegend.unit || quantity.unit}` : ""} (${quantity.label}) @ ${peak.workflow} ${peak.step}`;
       el.thresholdNote.textContent = `Threshold highlighting uses warn ${state.payload.defaultWarnThreshold} and error ${state.payload.defaultErrorThreshold} defaults unless a step overrides them. For percent diff, thresholds are applied after converting percent back to absolute delta using baseline.`;
 
       el.tableHeadRow.innerHTML = "";
@@ -998,7 +1083,9 @@
         const legendHead = document.createElement("th");
         legendHead.className = "sortable th-num";
         legendHead.setAttribute("data-sort-key", legend.key);
-        legendHead.textContent = `${legend.label} (${aggregation.label})${mainSortIndicator(legend.key)}`;
+        const unit = legend.unit || quantity.unit;
+        const unitPart = unit ? `, ${unit}` : "";
+        legendHead.textContent = `${legend.label} (${aggregation.label}${unitPart})${mainSortIndicator(legend.key)}`;
         el.tableHeadRow.appendChild(legendHead);
       }
 
@@ -1108,6 +1195,12 @@
       state.steps = Array.isArray(data.orderedSteps)
         ? data.orderedSteps.slice().sort((left, right) => stepNumber(left) - stepNumber(right))
         : Array.from(new Set(state.workflows.flatMap((workflow) => Object.keys(data.workflows[workflow] || {})))).sort((left, right) => stepNumber(left) - stepNumber(right));
+
+      const autoQuantity = findAutoSelectedErrorQuantity(data);
+      if (autoQuantity) {
+        state.quantityKey = autoQuantity;
+        state.sortKey = "adiff-desc";
+      }
 
       if (typeof data.resultsURL === "string" && data.resultsURL.trim()) {
         el.resultsLink.href = data.resultsURL;

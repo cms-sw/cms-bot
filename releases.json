@@ -19550,8 +19550,8 @@
               "label": "CMSSW_8_0_37_UL",
               "architectures": [
                 {
-                  "architecture": "slc6_amd64_gcc530",
-                  "prodarch": 0
+                  "architecture": "slc7_amd64_gcc530",
+                  "prodarch": 1
                 }
               ]
             }
@@ -33278,8 +33278,8 @@
               "label": "CMSSW_8_0_37_UL",
               "architectures": [
                 {
-                  "architecture": "slc7_amd64_gcc530",
-                  "prodarch": 1
+                  "architecture": "slc6_amd64_gcc530",
+                  "prodarch": 0
                 }
               ]
             }

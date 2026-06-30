@@ -102,7 +102,7 @@ fi
 echo "*** RUNNING WF TO DUMP CONFIG FILES ***"
 mkdir relvals && mkdir data && cd data
 
-voms-proxy-init -voms cms -rfc
+voms-proxy-init -voms cms -rfc -hours 168
 # TODO: Add option for step1 (we need a generator card to control the generated events)
 if [[ "${STEP}" == *"step3"* ]]; then
   runTheMatrix.py -l $WF -t ${THREADS} --maxSteps 3 --nEvents ${EVENTS} --ibeos -i all --job-reports --command "  --customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"

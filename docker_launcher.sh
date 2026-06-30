@@ -35,7 +35,7 @@ export GIT_CONFIG_NOSYSTEM=1
 if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
 if [ "${X509_USER_PROXY}" = "" ] ; then
   export X509_USER_PROXY=${WORKSPACE}/x509up_u$(id -u)
-  voms-proxy-init -voms cms -rfc -valid 24:00 || true
+  voms-proxy-init -voms cms -rfc -hours 168 || true
 fi
 
 XPATH=""
@@ -144,7 +144,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ -d $HOME/bin ] ; then
     CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "
   fi
-  CMD2RUN="${CMD2RUN}export X509_USER_PROXY=${X509_USER_PROXY}; if [ ! -e ${X509_USER_PROXY} ] ; then voms-proxy-init -voms cms -rfc -valid 24:00 || true ; voms-proxy-info || true; fi; echo \$HOME; cd $WORKSPACE; echo \$PATH; $@"
+  CMD2RUN="${CMD2RUN}export X509_USER_PROXY=${X509_USER_PROXY}; if [ ! -e ${X509_USER_PROXY} ] ; then voms-proxy-init -voms cms -rfc -hours 168 || true ; voms-proxy-info || true; fi; echo \$HOME; cd $WORKSPACE; echo \$PATH; $@"
   if $HAS_DOCKER ; then
     $DOCKER_CMD pull $DOCKER_IMG
     set +x
@@ -245,6 +245,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
 else
   cd $WORKSPACE
   [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] && source /cvmfs/cms.cern.ch/cmsset_default.sh
-  voms-proxy-init -voms cms -valid 24:00 || true
+  voms-proxy-init -voms cms -hours 168 || true
   eval $@
 fi

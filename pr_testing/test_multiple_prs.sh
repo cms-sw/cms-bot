@@ -893,7 +893,7 @@ echo_section "end of build external"
 
 # This part responsible for testing CMSSW
 echo_section "Testing CMSSW"
-voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artifact machine
+voms-proxy-init -voms cms -hours 168 || true  # To get access to jenkins artifact machine
 
 ### to know at the end of the tests if everything went ok
 ALL_OK=true

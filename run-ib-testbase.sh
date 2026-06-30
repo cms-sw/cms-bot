@@ -10,7 +10,7 @@ for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.
   ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
 done
 if [ "\${X509_USER_PROXY}" = "" -o ! -e "\${X509_USER_PROXY}" ] ; then
-  voms-proxy-init -voms cms || true
+  voms-proxy-init -voms cms -hours 168 || true
   voms-proxy-info || true
 fi
 if [ "\$(systemctl is-system-running 2>/dev/null || true)" = "offline" ] ; then

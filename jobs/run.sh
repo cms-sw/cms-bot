@@ -8,7 +8,7 @@ if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
   CMS_SITE_OVERRIDE="local"
 fi
 export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
-voms-proxy-init -voms cms
+voms-proxy-init -voms cms -hours 168
 
 rm -rf all-pyRelval
 mkdir all-pyRelval

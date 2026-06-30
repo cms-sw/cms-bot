@@ -40,7 +40,7 @@ eval `scram run -sh`
 CRABCLIENT_TYPES=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' || true)
 [ "${CRABCLIENT_TYPES}" != "" ] || CRABCLIENT_TYPES="prod"
 if [ "${X509_USER_PROXY}" = "" ] ; then
-  voms-proxy-init -voms cms
+  voms-proxy-init -voms cms -hours 168
   export X509_USER_PROXY=$(voms-proxy-info -path)
 fi
 cp $(dirname $0)/pset.py .

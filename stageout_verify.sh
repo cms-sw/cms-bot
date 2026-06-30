@@ -7,7 +7,7 @@ trap '/bin/rm -f /tmp/stageout_verify_$$.bin 1> /dev/null 2>&1' 0
 #
 # destinations the test can use:
 
-voms-proxy-init -voms cms
+voms-proxy-init -voms cms -hours 168
 voms-proxy-info -all
 
 KNOWN_ERRORS="el9:srm"

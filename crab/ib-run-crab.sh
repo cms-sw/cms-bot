@@ -57,7 +57,7 @@ if [ -e ${thisdir}/${cmssw_queue}/pset.py ] ; then
   cp ${thisdir}/${cmssw_queue}/pset.py .
 fi
 if [ "${X509_USER_PROXY}" = "" ] ; then
-  voms-proxy-init -voms cms
+  voms-proxy-init -voms cms -hours 168
   export X509_USER_PROXY=$(voms-proxy-info -path)
 fi
 pyver=$(${CMSBOT_PYTHON_CMD} -c 'import sys;print("python%s%s" % (sys.version_info[0],sys.version_info[1]))')

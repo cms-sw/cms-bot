@@ -10,7 +10,7 @@ CRAB_BUILD_ID=$1
 GRIDSITE=$2
 
 # Keep checking the status of the job until it finishes
-voms-proxy-init -voms cms
+voms-proxy-init -voms cms -hours 168
 status=""
 while true ; do
   curl "${GRIDSITE}/status_cache" > $WORKSPACE/status-${CRABCLIENT_TYPE}.log 2>&1

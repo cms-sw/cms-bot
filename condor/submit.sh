@@ -25,7 +25,7 @@ here=$(dirname $0)
 script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
 
 #X509_PROXY_FILE="x509up_u$(id -u)"
-#voms-proxy-init --voms cms --out $X509_PROXY_FILE
+#voms-proxy-init --voms cms -hours 168 --out $X509_PROXY_FILE
 #chmod 0600 $X509_PROXY_FILE
 
 echo '#!/bin/bash -ex' > ${script_name}.sh

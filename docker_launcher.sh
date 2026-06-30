@@ -237,7 +237,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       dockerrun "${precmd} $CMD2RUN" || ERR=$?
       pkill -9 qemu-riscv64 || true
     else
-      PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
+      PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -d exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
       #if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     fi
     exit $ERR

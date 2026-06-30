@@ -19551,7 +19551,7 @@
               "architectures": [
                 {
                   "architecture": "slc6_amd64_gcc530",
-                  "prodarch": 1
+                  "prodarch": 0
                 }
               ]
             }
@@ -33279,7 +33279,7 @@
               "architectures": [
                 {
                   "architecture": "slc7_amd64_gcc530",
-                  "prodarch": 0
+                  "prodarch": 1
                 }
               ]
             }

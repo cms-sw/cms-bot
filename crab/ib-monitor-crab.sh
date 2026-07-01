@@ -70,5 +70,5 @@ else
   mv $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE} $WORKSPACE/testsResults/statusfile
   mv $WORKSPACE/testsResults/crab-logfile-${CRABCLIENT_TYPE} $WORKSPACE/testsResults/monitor.log
   ls -l $WORKSPACE/testsResults
-  send_jenkins_artifacts $WORKSPACE/testsResults ib-run-crab/$RELEASE_FORMAT/$ARCHITECTURE/${CRAB_BUILD_ID}/
+  send_jenkins_artifacts $WORKSPACE/testsResults ib-run-crab/$RELEASE_FORMAT/$ARCHITECTURE/client-${CRABCLIENT_TYPE}-server-${CRABCONFIGINSTANCE}/${CRAB_BUILD_ID}/
 fi

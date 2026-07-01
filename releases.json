@@ -31865,6 +31865,15 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_14_2_3",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
             }
           ],
           "CMSSW_15_0": [

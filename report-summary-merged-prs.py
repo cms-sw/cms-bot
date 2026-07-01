@@ -150,7 +150,8 @@ def get_config_map_params():
         if not params:
             continue
         print(params)
-
+        if params.get("NO_IB", "0") == "1":
+            continue
         arch = params["SCRAM_ARCH"]
         if arch not in ARCHITECTURES:
             ARCHITECTURES.append(arch)

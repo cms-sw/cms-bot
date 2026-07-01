@@ -1294,8 +1294,8 @@ def find_check_crab(comparisons, architecture):
             rel_name,
             architecture,
             CHECK_CRAB_PATH,
-            'grep -h -c "FAILED" {0}/*/statusfile',
-            'grep -h -c "INPROGRESS" {0}/*/statusfile',
+            'find {0} -name statusfile | xargs -r grep -h -c "FAILED"',
+            'find {0} -name statusfile | xargs -r grep -h -c "INPROGRESS"',
         )
 
 

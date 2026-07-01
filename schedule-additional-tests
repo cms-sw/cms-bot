@@ -14,6 +14,8 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
   [ "${x}" = "clang-analyzer" ] && continue
   [ "${x}" = "rntuple" ] && continue
 
+  ox=$x
+  [ "$x" = "crabx" ] && x="crab"
   pfile="$WORKSPACE/auto-$x-properties"
   echo "Creating property file ${pfile}"
   echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > ${pfile}
@@ -44,6 +46,13 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
       sed -e's/ADDITIONAL_TEST_NAME=profiling/ADDITIONAL_TEST_NAME=eventallocmon-profiling/' ${nfile} > ${lfile}
     done
     rm -f ${pfile}
+  fi
+  if [ "$ox" = "crabx" ] ; then
+    for c in pre dev prod ; do
+      nfile="$WORKSPACE/auto-${x}-${c}-properties"
+      cp ${pfile} ${nfile}
+      echo "CRABCLIENT_TYPE=${c}" >>  ${nfile}
+    done
   fi
 done
 

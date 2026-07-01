@@ -1964,7 +1964,7 @@ if __name__ == "__main__":
                     find_check_hlt(release_queue_results["comparisons"], arch)
                 if "hlt-p2-timing" in tests_to_find:
                     find_check_hlt_p2_timing(release_queue_results["comparisons"], arch)
-                if "crab" in tests_to_find:
+                if ("crab" in tests_to_find) or ("crabx" in tests_to_find):
                     find_check_crab(release_queue_results["comparisons"], arch)
                 if "static-checks" in tests_to_find:
                     find_static_results(release_queue_results["comparisons"], arch)

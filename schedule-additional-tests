@@ -53,6 +53,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
       cp ${pfile} ${nfile}
       echo "CRABCLIENT_TYPE=${c}" >>  ${nfile}
     done
+    rm -f ${pfile}
   fi
 done
 

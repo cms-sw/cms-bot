@@ -4975,3 +4975,4 @@ architecture=slc7_amd64_gcc12;label=CMSSW_14_2_3;type=Production;state=Announced
 architecture=el9_amd64_gcc12;label=CMSSW_14_2_3;type=Production;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc12;label=CMSSW_14_2_3;type=Production;state=Announced;prodarch=1;
 architecture=el8_aarch64_gcc13;label=CMSSW_17_0_0_pre3;type=Development;state=Announced;prodarch=0;
+architecture=el9_amd64_gcc13;label=CMSSW_17_0_0_pre3;type=Development;state=Announced;prodarch=0;default_micro_arch=x86-64-v3;

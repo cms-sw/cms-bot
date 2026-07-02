@@ -1294,7 +1294,12 @@ def process_pr(
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
-        if pr.changed_files == 0:
+        if (pr.changed_files == 0) and (
+            not any(
+                line.strip() == "<cmsbot ignore-changed-files/>"
+                for line in ensure_ascii(pr.body).split("\n")
+            )
+        ):
             logger.error("Ignoring: PR with no files changed")
             return
 

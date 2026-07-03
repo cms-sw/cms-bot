@@ -138,6 +138,8 @@ if __name__ == "__main__":
             ref="refs/tags/" + new_tag, sha=data_repo.get_branch(data_pr_base_branch).commit.sha
         )
     default_cms_dist_branch = dist_repo.default_branch
+    if data_pr_base_branch.startswith("CMSSW_") and data_pr_base_branch.endwith("_X"):
+        default_cms_dist_branch = "IB/" + data_pr_base_branch + "/master"
     repo_name_only = args.data_repo.split("/")[1]
     repo_tag_pr_branch = "update-" + repo_name_only + "-to-" + new_tag
 

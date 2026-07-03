@@ -392,7 +392,7 @@ if __name__ == "__main__":
     timestramps = read_timestramps(timestramps_file)
     vold_caches = {}
     run_queries = {}
-    vold_threshold = 90
+    vold_threshold = 180
     for query in query_sha:
         nquery += 1
         sha = query_sha[query]

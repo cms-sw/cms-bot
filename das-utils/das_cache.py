@@ -285,6 +285,14 @@ if __name__ == "__main__":
         default=86400,
     )
     parser.add_option(
+        "-S",
+        "--skip-old-queries-days",
+        dest="vold_threshold",
+        help="Skip queries for which there were no results for N days. Default is 90 days",
+        type=int,
+        default=90,
+    )
+    parser.add_option(
         "-o",
         "--override",
         dest="override",
@@ -392,7 +400,7 @@ if __name__ == "__main__":
     timestramps = read_timestramps(timestramps_file)
     vold_caches = {}
     run_queries = {}
-    vold_threshold = 90
+    vold_threshold = opts.vold_threshold
     for query in query_sha:
         nquery += 1
         sha = query_sha[query]

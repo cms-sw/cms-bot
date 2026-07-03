@@ -8,6 +8,9 @@ JOBS=$(nproc)
 USE_DASGO=$3
 PUSH_RESULTS=$4
 DAS_CLINET=$6
+OLD_QUERIES_DAYS=90
+[ "$7" != "" ] && OLD_QUERIES_DAYS="$7"
+
 if [ "${DAS_CLINET}" != "" ] ; then
   USE_DASGO="-c ${DAS_CLINET}"
 elif [ "$USE_DASGO" = "true" ] ; then
@@ -31,7 +34,7 @@ fi
 rm -f $WORKSPACE/error
 if [ "${DEBUG}" = "true" ] ; then USE_DASGO="${USE_DASGO} --debug" ; fi
 OLD_SIZE=$(du -sm $WORKSPACE/das_results/das_queries | awk '{print $1}') || true
-$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries --query "$5" || touch $WORKSPACE/error
+$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} -S ${OLD_QUERIES_DAYS} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries --query "$5" || touch $WORKSPACE/error
 let DIFF_SIZE=$(du -sm $WORKSPACE/das_results/das_queries | awk '{print $1}')-${OLD_SIZE} || true
 echo "Change in DAS cache size (MB): ${DIFF_SIZE}"
 if [ "$PUSH_RESULTS" = "true" ] ; then

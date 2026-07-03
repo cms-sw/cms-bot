@@ -11,10 +11,20 @@ from _py2with3compatibility import run_cmd, HTTPError, urlopen
 
 
 def update_tag_version(current_version):
-    updated_version = int(current_version) + 1
-    if updated_version < 10:
-        updated_version = "0%s" % updated_version
-    return str(updated_version)
+    updated_version = current_version[:]
+    idx = -1
+    while True:
+        ver = int(current_version[idx]) + 1
+        if ver >= 100:
+            updated_version[idx] = "00"
+            idx -= 1
+            continue
+        if ver < 10:
+            updated_version[idx] = "0%s" % ver
+        else:
+            updated_version[idx] = str(ver)
+        break
+    return updated_version
 
 
 def get_tag_from_string(tag_string=None):
@@ -113,12 +123,7 @@ if __name__ == "__main__":
             if len(tag_data) < 3:
                 tag_data.append("00")
             print(tag_data)
-            # update minor for now
-            if only_new_files:
-                tag_data[-1] = update_tag_version(tag_data[-1])
-            else:
-                tag_data[-2] = update_tag_version(tag_data[-2])
-                tag_data[-1] = "00"
+            tag_data = update_tag_version(tag_data)
             print("New tag data", tag_data)
             new_tag = "V%s" % "-".join(tag_data)
             try:

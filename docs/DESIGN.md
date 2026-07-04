@@ -359,6 +359,16 @@ PRs/Issues are skipped if:
 2. Title matches `^[Bb]uild[ ]+(CMSSW_[^ ]+)` (release builds)
 3. First line contains `<cms-bot></cms-bot>` tag
 
+### Zero Changed Files
+
+GitHub occasionally reports `changed_files == 0` for very large PRs (8000+ files) even
+though the PR has real changes (cms-sw/cms-bot#2736). To guard against silently
+processing such a PR as empty, `process_pr()` skips it (`reason: "No files changed"`)
+unless the PR body contains `<cmsbot ignore-changed-files/>` (checked by
+`should_ignore_zero_changed_files()`, case-insensitive, matched anywhere in the body).
+This check runs before the `<cms-bot></cms-bot>` ignore-tag check and is not affected
+by `force=True`.
+
 ## Repository Classification
 
 | Flag | Condition |

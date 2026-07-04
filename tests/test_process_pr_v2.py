@@ -100,6 +100,7 @@ from process_pr_v2 import (
     preprocess_command,
     process_pr,
     should_ignore_issue,
+    should_ignore_zero_changed_files,
     should_notify_without_at,
 )
 
@@ -3398,6 +3399,34 @@ class TestPRDescriptionParsing:
         assert should_notify_without_at("Normal PR description") is False
         assert should_notify_without_at("<notify>content</notify>") is False
 
+    def test_should_ignore_zero_changed_files_with_tag(self):
+        """Test that <cmsbot ignore-changed-files/> tag is detected anywhere in the body."""
+        assert should_ignore_zero_changed_files("<cmsbot ignore-changed-files/>") is True
+        assert (
+            should_ignore_zero_changed_files("  <cmsbot ignore-changed-files/>  ") is True
+        )
+        assert (
+            should_ignore_zero_changed_files("<CMSBOT IGNORE-CHANGED-FILES/>") is True
+        )  # case-insensitive
+        assert (
+            should_ignore_zero_changed_files(
+                "Some description\n<cmsbot ignore-changed-files/>\nMore text"
+            )
+            is True
+        )  # anywhere in body (MULTILINE)
+
+    def test_should_ignore_zero_changed_files_without_tag(self):
+        """Test that PRs without the override tag are not affected."""
+        assert should_ignore_zero_changed_files("") is False
+        assert should_ignore_zero_changed_files(None) is False
+        assert should_ignore_zero_changed_files("Normal PR description") is False
+        # Similar-looking tags should NOT match
+        assert should_ignore_zero_changed_files("<cmsbot></cmsbot>") is False
+        assert should_ignore_zero_changed_files("<notify></notify>") is False
+        assert (
+            should_ignore_zero_changed_files("ignore-changed-files without the tag") is False
+        )
+
 
 class TestPRIgnoreProcessing:
     """Tests for PR ignore functionality via <cms-bot> tag."""
@@ -3499,6 +3528,148 @@ class TestPRIgnoreProcessing:
         )
 
         # Should NOT be skipped because force=True
+        assert result.get("skipped") is not True
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+class TestZeroChangedFilesProcessing:
+    """Tests for skipping PRs where GitHub reports 0 changed files (cms-sw/cms-bot#2736).
+
+    GitHub sometimes reports changed_files=0 for very large PRs (8000+ files), even
+    though pr.get_files() and pr.body may indicate real changes. The bot skips such
+    PRs by default, unless the PR body contains <cmsbot ignore-changed-files/>.
+    """
+
+    def test_pr_with_zero_changed_files_skipped(self, test_name, repo_config, record_mode):
+        """Test that a PR reporting changed_files=0 is skipped by default."""
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[],
+        )
+
+        # Force changed_files to 0 even though files are present (GitHub quirk)
+        pr_data_path = REPLAY_DATA_DIR / test_name / "PullRequest_1.json"
+        with open(pr_data_path, "r") as f:
+            pr_data = json.load(f)
+        pr_data["changed_files"] = 0
+        with open(pr_data_path, "w") as f:
+            json.dump(pr_data, f, indent=2)
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert result["skipped"] is True
+        assert result["reason"] == "No files changed"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_pr_with_zero_changed_files_processed_with_ignore_tag(
+        self, test_name, repo_config, record_mode
+    ):
+        """Test that <cmsbot ignore-changed-files/> in the body overrides the skip."""
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[],
+        )
+
+        pr_data_path = REPLAY_DATA_DIR / test_name / "PullRequest_1.json"
+        with open(pr_data_path, "r") as f:
+            pr_data = json.load(f)
+        pr_data["changed_files"] = 0
+        pr_data["body"] = "Huge PR.\n<cmsbot ignore-changed-files/>\n"
+        with open(pr_data_path, "w") as f:
+            json.dump(pr_data, f, indent=2)
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        # Should NOT be skipped for zero-changed-files reason - normal processing continues
+        assert result.get("reason") != "No files changed"
+        assert result["pr_number"] == 1
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_pr_with_nonzero_changed_files_not_skipped(
+        self, test_name, repo_config, record_mode
+    ):
+        """Sanity check: normal PRs with real changed_files count are processed as usual."""
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[],
+        )
+        # changed_files defaults to len(files) == 1, no JSON patch needed.
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
         assert result.get("skipped") is not True
         assert result["pr_number"] == 1
 

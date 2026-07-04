@@ -380,7 +380,7 @@ MULTILINE_COMMENTS_MAP: Dict[str, List[Any]] = {
 RE_CMS_BOT_IGNORE = re.compile(CMSBOT_IGNORE_MSG, re.IGNORECASE)
 RE_NOTIFY_NO_AT = re.compile(CMSBOT_NO_NOTIFY_MSG, re.IGNORECASE)
 RE_IGNORE_CHANGED_FILES = re.compile(
-    "^<cmsbot ignore-changed-files/>$", re.IGNORECASE | re.MULTILINE
+    r"^\s*<cmsbot ignore-changed-files/>\s*$", re.IGNORECASE | re.MULTILINE
 )
 
 # Global L2 data cache

@@ -379,6 +379,9 @@ MULTILINE_COMMENTS_MAP: Dict[str, List[Any]] = {
 # Regex patterns for PR description flags (compiled from cms_static constants)
 RE_CMS_BOT_IGNORE = re.compile(CMSBOT_IGNORE_MSG, re.IGNORECASE)
 RE_NOTIFY_NO_AT = re.compile(CMSBOT_NO_NOTIFY_MSG, re.IGNORECASE)
+RE_IGNORE_CHANGED_FILES = re.compile(
+    "^<cmsbot ignore-changed-files/>$", re.IGNORECASE | re.MULTILINE
+)
 
 # Global L2 data cache
 _L2_DATA: Dict[str, List[Dict[str, Any]]] = {}
@@ -1883,6 +1886,19 @@ def should_notify_without_at(pr_body: str) -> bool:
     if not pr_body:
         return False
     return bool(RE_NOTIFY_NO_AT.search(pr_body))
+
+
+def should_ignore_zero_changed_files(pr_body: str) -> bool:
+    """
+    Skip check for number of files changed by a PR - sometimes GitHub will
+    report 0 changed files for big PRs (8000+ changed files)
+
+    Returns True if body contains <cmsbot ignore-changed-files/> anywhere.
+    """
+
+    if not pr_body:
+        return False
+    return bool(RE_IGNORE_CHANGED_FILES.search(pr_body))
 
 
 # =============================================================================
@@ -6974,7 +6990,7 @@ def process_pr(
             pr = repo.get_pull(issue.number)
 
         # Check for PR with no files changed
-        if pr.changed_files == 0:
+        if pr.changed_files == 0 and not should_ignore_zero_changed_files(pr.body):
             logger.error("Ignoring: PR with no files changed")
             return {
                 "pr_number": issue.number,

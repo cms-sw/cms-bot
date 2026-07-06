@@ -15,6 +15,7 @@ function get_parent_cmds ()
   get_parent_cmds "$XPID" "$DEPTH"
 }
 
+CVMFS_CACHE="/cvmfs/cms-ib.cern.ch/jenkins-env/das_queries"
 CMD_NAME=$(basename $0)
 SCRIPT_DIR=$(dirname $0)
 CMD_NAME="dasgoclient"
@@ -82,7 +83,13 @@ debug_log="${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.debug"
 out_log="${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out"
 touch ${debug_log}
 if [ "${FORMAT}" = "json" ]  ; then
-  QUERY_RESULTS=$(${DOWNLOAD_CMD} "${QUERY_URL}.json" || true)
+  if [ -e "${CVMFS_CACHE}/${QUERY_SHA}.json" ] ; then
+    echo "Using cache from ${CVMFS_CACHE}/${QUERY_SHA}.json" >> ${debug_log}
+    QUERY_RESULTS=$(cat "${CVMFS_CACHE}/${QUERY_SHA}.json")
+  else
+    echo "Using cache from ${QUERY_URL}.json" >> ${debug_log}
+    QUERY_RESULTS=$(${DOWNLOAD_CMD} "${QUERY_URL}.json" || true)
+  fi
   if [ "${QUERY_RESULTS}" = "" ] ; then
     echo "No results found in github cache for ${QUERY_URL}.json" >> ${debug_log}
     sleep 1
@@ -95,7 +102,13 @@ if [ "${FORMAT}" = "json" ]  ; then
     echo "${QUERY_RESULTS}" > ${out_log}
   fi
 else
-  QUERY_RESULTS=$((${DOWNLOAD_CMD} "${QUERY_URL}" || true) | sed 's|\s*$||g;s|"||g')
+  if [ -e "${CVMFS_CACHE}/${QUERY_SHA}" ] ; then
+    echo "Using cache from ${CVMFS_CACHE}/${QUERY_SHA}" >> ${debug_log}
+    QUERY_RESULTS=$(cat "${CVMFS_CACHE}/${QUERY_SHA}")
+  else
+    echo "Using cache from ${QUERY_URL}" >> ${debug_log}
+    QUERY_RESULTS=$((${DOWNLOAD_CMD} "${QUERY_URL}" || true) | sed 's|\s*$||g;s|"||g')
+  fi
   if [ "${QUERY_RESULTS}" = "" ] ; then
     echo "No results found in github cache for ${QUERY_URL}" >> ${debug_log}
     sleep 1

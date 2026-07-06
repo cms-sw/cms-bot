@@ -78,47 +78,56 @@ rm -rf ${DAS_QUERY_DIR}
 mkdir -p ${DAS_QUERY_DIR}
 echo "${QUERY}${DAS_EX_OPTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
 touch ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
+debug_log="${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.debug"
+out_log="${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out"
+touch ${debug_log}
 if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(${DOWNLOAD_CMD} "${QUERY_URL}.json" || true)
   if [ "${QUERY_RESULTS}" = "" ] ; then
+    echo "No results found in github cache for ${QUERY_URL}.json" >> ${debug_log}
     sleep 1
-    ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
-    if grep -q 'failed to parse X509 proxy' ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ; then
+    ${ORIG_DAS_CLIENT} "$@" > ${out_log}
+    if grep -q 'failed to parse X509 proxy' ${out_log} ; then
       ENABLE_DEBUG=true
     fi
   else
-    echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+    echo "OK: github cache found for ${QUERY_URL}.json" >> ${debug_log}
+    echo "${QUERY_RESULTS}" > ${out_log}
   fi
 else
   QUERY_RESULTS=$((${DOWNLOAD_CMD} "${QUERY_URL}" || true) | sed 's|\s*$||g;s|"||g')
   if [ "${QUERY_RESULTS}" = "" ] ; then
+    echo "No results found in github cache for ${QUERY_URL}" >> ${debug_log}
     sleep 1
-    ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
-    if grep -q 'failed to parse X509 proxy' ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ; then
+    ${ORIG_DAS_CLIENT} "$@" > ${out_log}
+    if grep -q 'failed to parse X509 proxy' ${out_log} ; then
       ENABLE_DEBUG=true
     fi
   else
-    echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+    echo "OK: github cache found for ${QUERY_URL}" >> ${debug_log}
+    echo "${QUERY_RESULTS}" > ${out_log}
   fi
   if [ $(echo "${QUERY_RESULTS}" | grep /store/ |wc -l) -gt 0 ] ; then
-    [ $((get_parent_cmds $$ 0 2>&1 || true) | grep -a '/cmsDriver.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
+    [ $((get_parent_cmds $$ 0 2>&1 || true) | grep -a '/cmsDriver.py\|/runTheMatrix.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
   fi
 fi
+echo "LIMIT_RESULT=$LIMIT_RESULT" >> ${debug_log}
 if [ "$LIMIT_RESULTS" = "YES" ] ; then
-  cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out | ${SCRIPT_DIR}/ibeos-lfn-sort > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected
+  cat ${out_log} | ${SCRIPT_DIR}/ibeos-lfn-sort > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected
 else
-  cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
+  cat ${out_log}
 fi
+cat ${out_log} >> ${debug_log}
 if ! $ENABLE_DEBUG ; then
-  rm -f ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info >/dev/null 2>&1 || true
+  rm -f ${debug_log} ${out_log} ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info >/dev/null 2>&1 || true
 else
-  echo "============ DEBUG ========" >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
-  echo "============ ENV   ========" >>${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
-  env >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
-  echo "============ VOMS  ========" >>${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
-  voms-proxy-info >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out || true
+  echo "============ DEBUG ========" >> ${debug_log}
+  echo "============ ENV   ========" >> ${debug_log}
+  env >> ${debug_log}
+  echo "============ VOMS  ========" >> ${debug_log}
+  voms-proxy-info >> ${debug_log} || true
   if [ "${X509_USER_PROXY}" != "" ] ; then
-    ls -l "${X509_USER_PROXY}" >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out || true
+    ls -l "${X509_USER_PROXY}" >> ${debug_log} || true
   fi
 fi

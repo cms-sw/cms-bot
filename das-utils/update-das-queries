@@ -47,6 +47,7 @@ if [ "$PUSH_RESULTS" = "true" ] ; then
       git pull --rebase || continue
       git push origin   || continue
       ERR=0
+      touch $WORKSPACE/deploy-das-results.txt
       break
     done
     if [ $ERR -gt 0 ] ; then touch $WORKSPACE/error ; fi

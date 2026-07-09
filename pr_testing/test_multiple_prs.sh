@@ -363,6 +363,9 @@ if $DO_COMPARISON ; then
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
     echo "HLT_P2_TIMING=${DO_HLT_P2_TIMING}" >> run-baseline-${BUILD_ID}-01.default
+    if [ "${DO_HLT_P2_TIMING}" = "true" ] ; then
+      echo "HLT_P2_HOST=${HLT_P2_HOST}" >> run-baseline-${BUILD_ID}-01.default
+    fi
 
     PR_LABELS=$(curl -s https://api.github.com/repos/${PR_REPO}/issues/${PR_NUMBER}/labels | grep '"name":' | sed 's|.*: *||;s|"||g;s|-pending||;s|-approved||;s|-rejected||' | tr ',\n' '  ' | tr '[a-z-]' '[A-Z_]')
     EX_WFS=""

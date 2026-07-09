@@ -779,7 +779,7 @@ if ${BUILD_EXTERNAL} ; then
       l_tc=$(find ${ltpath} -follow | wc -l)
       l_ts=$(du -shD ${ltpath} | awk '{print $1}')
       tdir=$(dirname $pkg)
-      rtpath=$(grep -R ${tdir} ${BTOOLS} | grep '_BASE\|CMSSW_SEARCH_PATH' | tail -1 | sed 's|.* default="||;s|".*||')
+      rtpath=$(grep -R ${tdir} ${BTOOLS} | grep '_BASE\|CMSSW_SEARCH_PATH\| path=' | tail -1 | sed -E -e 's#.* (default|path)="##;s#".*##')
       if [ "${rtpath}" = "" ] || [ ! -d "${rtpath}" ] ; then
         r_tc=0
         r_ts=0

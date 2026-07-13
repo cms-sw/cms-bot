@@ -128,6 +128,7 @@ class UnitTester(IBThreadBase):
             user_tests = "cuda"
         elif user_tests.startswith("amd_"):
             user_tests = "rocm"
+            paralleJobs = MachineCPUCount if MachineCPUCount<=4 else 4
         if ("ASAN" in os.environ["CMSSW_VERSION"]) or ("UBSAN" in os.environ["CMSSW_VERSION"]):
             paralleJobs = int(MachineCPUCount / 2)
         if user_tests != "":

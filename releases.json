@@ -22523,6 +22523,20 @@
               ]
             }
           ]
+        },
+        "ROOT640": {
+          "CMSSW_20_1": [
+            {
+              "label": "CMSSW_20_1_0_pre1_ROOT640",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc15",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ]
         }
       }
     },

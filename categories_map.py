@@ -341,6 +341,8 @@ CMSSW_CATEGORIES = {
         "PerfTools/JeProf",
         "PerfTools/MaxMemoryPreload",
         "PerfTools/Perfetto",
+        "PerfTools/PeriodicAllocMonitorPreload",
+        "PerfTools/ThresholdAbortAllocMonitorPreload",
         "Utilities/DCacheAdaptor",
         "Utilities/DavixAdaptor",
         "Utilities/General",

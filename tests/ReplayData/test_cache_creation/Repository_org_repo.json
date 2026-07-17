@@ -1,0 +1,7 @@
+{
+  "id": 12345,
+  "name": "repo",
+  "full_name": "org/repo",
+  "private": false,
+  "default_branch": "main"
+}

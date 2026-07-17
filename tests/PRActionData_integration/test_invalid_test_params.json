@@ -1,0 +1,33 @@
+{
+  "test_name": "test_invalid_test_params",
+  "action_count": 3,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 25,
+        "body": "Pull request #25 was updated. iarspider can you please check and sign again.\n<!--pr_updated:609468173637993408-->"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_status",
+      "details": {
+        "sha": "ceea69106c5e0e17c03c87c13bdf187f03214fec",
+        "state": "error",
+        "target_url": "",
+        "description": "2801609055:ERRORS: ERRORS: format:'foo'; key:bar",
+        "context": "bot/25/test_parameters"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2801536138,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2801602205\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2025-04-14T12:47:46+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2801525714\":\"+1\"},\"fv\":{\"README::c367bf9be61c3a14b4a4712dae50f8cd9c9590af\":{\"cats\":[],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

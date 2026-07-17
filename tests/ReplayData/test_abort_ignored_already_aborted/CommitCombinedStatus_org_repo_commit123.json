@@ -1,0 +1,17 @@
+{
+  "state": "pending",
+  "statuses": [
+    {
+      "context": "bot/1/jenkins",
+      "state": "pending",
+      "description": "Aborted, waiting for authorized user to issue the test command.",
+      "target_url": ""
+    },
+    {
+      "context": "cms/1/el8_amd64_gcc12/required",
+      "state": "pending",
+      "description": "Tests running",
+      "target_url": ""
+    }
+  ]
+}

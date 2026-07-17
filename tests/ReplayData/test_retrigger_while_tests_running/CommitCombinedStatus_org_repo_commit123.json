@@ -1,0 +1,11 @@
+{
+  "state": "pending",
+  "statuses": [
+    {
+      "context": "bot/1/jenkins",
+      "state": "success",
+      "description": "Tests requested by alice at 2024-01-01 13:00:00 UTC.",
+      "target_url": "https://github.com/org/repo/pull/1#issuecomment-100"
+    }
+  ]
+}

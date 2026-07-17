@@ -1,0 +1,20 @@
+{
+  "id": 1,
+  "number": 1,
+  "title": "Test PR #1",
+  "body": "Test PR body",
+  "state": "open",
+  "user": {
+    "login": "testuser",
+    "id": 1
+  },
+  "labels": [
+    {
+      "name": "bug-fix"
+    }
+  ],
+  "comments": 2,
+  "pull_request": {
+    "url": "https://api.github.com/repos/org/repo/pulls/1"
+  }
+}

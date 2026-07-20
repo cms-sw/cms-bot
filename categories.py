@@ -75,6 +75,7 @@ CMSSW_L2 = {
     "emeschi": ["daq"],
     "ftorrresd": ["xpog"],
     "fwyzard": ["heterogeneous"],
+    "forthommel": ["reconstruction"],
     "jfernan2": ["reconstruction"],
     "makortel": ["heterogeneous", "core", "visualization", "geometry"],
     "mandrenguyen": ["reconstruction", "operations"],

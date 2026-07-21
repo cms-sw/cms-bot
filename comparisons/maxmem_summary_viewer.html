@@ -275,7 +275,7 @@
     }
 
     .workflow-link:hover {
-      text-decoration: underline;
+      text-decoration: none;
     }
 
     .workflow-toggle {
@@ -294,7 +294,7 @@
     }
 
     .workflow-toggle:hover .workflow-name {
-      text-decoration: underline;
+      text-decoration: none;
     }
 
     .workflow-caret {
@@ -775,6 +775,7 @@
     function aggregateStepValue(row, selectedField) {
       let bestValue = null;
       let bestStepData = null;
+      let bestStep = null;
 
       for (const step of state.steps) {
         const stepData = row.steps[step] || {};
@@ -786,6 +787,7 @@
         if (bestValue === null) {
           bestValue = value;
           bestStepData = stepData;
+          bestStep = step;
           continue;
         }
 
@@ -793,54 +795,19 @@
           if (value < bestValue) {
             bestValue = value;
             bestStepData = stepData;
+            bestStep = step;
           }
           continue;
         }
         if (value > bestValue) {
           bestValue = value;
           bestStepData = stepData;
+          bestStep = step;
         }
       }
 
-      return { value: bestValue, stepData: bestStepData };
-    }
-
-    function findAutoSelectedErrorQuantity(payload) {
-      if (!payload || typeof payload !== "object" || !payload.workflows) {
-        return null;
-      }
-
-      const candidates = ["max memory", "req memory", "leak memory"];
-      let bestQuantity = null;
-      let bestExcess = -Infinity;
-      let bestValue = -Infinity;
-
-      for (const workflowName of Object.keys(payload.workflows)) {
-        const stepsByName = payload.workflows[workflowName] || {};
-        for (const stepName of Object.keys(stepsByName)) {
-          const stepData = stepsByName[stepName] || {};
-          const errorThreshold = Number((stepData && stepData.error_threshold) ?? payload.defaultErrorThreshold);
-          if (!Number.isFinite(errorThreshold)) {
-            continue;
-          }
-
-          for (const quantityKey of candidates) {
-            const absoluteDiff = Number(stepData[fieldName(quantityKey, "adiff")]);
-            if (!Number.isFinite(absoluteDiff) || absoluteDiff <= errorThreshold) {
-              continue;
-            }
-
-            const excess = absoluteDiff - errorThreshold;
-            if (excess > bestExcess || (excess === bestExcess && absoluteDiff > bestValue)) {
-              bestExcess = excess;
-              bestValue = absoluteDiff;
-              bestQuantity = quantityKey;
-            }
-          }
-        }
-      }
-
-      return bestQuantity;
+      const stepNumber = bestStep ? Number.parseInt(String(bestStep).replace("step", ""), 10) : null;
+      return { value: bestValue, stepData: bestStepData, step: bestStep, stepNumber };
     }
 
     function cellClass(quantity, legend, stepData, value) {
@@ -1105,8 +1072,8 @@
         const isExpanded = state.expandedWorkflows.has(row.name);
         workflowCell.innerHTML = `
           <button class="workflow-toggle" type="button" data-workflow-name="${escapeHtml(row.name)}" aria-expanded="${isExpanded ? "true" : "false"}">
-            <span class="workflow-name">${workflowNameHtml(row.name)}</span>
-            <span class="workflow-caret">${isExpanded ? "Hide steps" : "Show steps"}</span>
+            <span class="workflow-caret">${isExpanded ? " ▼ " : " ▶ "}</span>
+            <span class="workflow-name" style="text-align: center">${workflowNameHtml(row.name)}</span>
           </button>
         `;
         tr.appendChild(workflowCell);
@@ -1116,7 +1083,8 @@
           const maxValue = aggregateStepValue(row, legendField);
           const maxValueCell = document.createElement("td");
           maxValueCell.className = cellClass(quantity, legend, maxValue.stepData, maxValue.value);
-          maxValueCell.textContent = formatValue(maxValue.value, quantity, legend);
+          const stepDisplay = maxValue.stepNumber !== null ? ` [Step ${maxValue.stepNumber}]` : "";
+          maxValueCell.textContent = `${formatValue(maxValue.value, quantity, legend)}${stepDisplay}`;
           tr.appendChild(maxValueCell);
         }
 

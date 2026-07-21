@@ -505,7 +505,7 @@
             </select>
           </div>
           <div>
-            <label for="aggregationSelect">Aggregation</label>
+            <label for="aggregationSelect">max/min over workflow steps</label>
             <select id="aggregationSelect">
               <option value="max" selected>max</option>
               <option value="min">min</option>
@@ -984,10 +984,10 @@
                 <tr>
                   <th class="sortable" data-sort-key="workflow">Workflow${detailSortIndicator("workflow")}</th>
                   <th class="sortable" data-sort-key="step">Step${detailSortIndicator("step")}</th>
-                  <th class="sortable th-num" data-sort-key="baseline">Baseline (${aggregation.label}${unitPart})${detailSortIndicator("baseline")}</th>
-                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request (${aggregation.label}${unitPart})${detailSortIndicator("pullRequest")}</th>
-                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline (${aggregation.label}${unitPart})${detailSortIndicator("absoluteDiff")}</th>
-                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff (${aggregation.label}, %)${detailSortIndicator("percentDiff")}</th>
+                   <th class="sortable th-num" data-sort-key="baseline">Baseline${detailSortIndicator("baseline")}</th>
+                   <th class="sortable th-num" data-sort-key="pullRequest">Pull Request${detailSortIndicator("pullRequest")}</th>
+                   <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline${detailSortIndicator("absoluteDiff")}</th>
+                   <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff${detailSortIndicator("percentDiff")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -997,10 +997,10 @@
                   <tr class="${thresholdClass}">
                     <td>${escapeHtml(detailRow.workflow)}</td>
                     <td class="td-step">${escapeHtml(detailRow.step.replace("step", "Step "))}</td>
-                    <td class="td-num ${detailRow.baseline == null ? "cell-empty" : ""}">${formatValue(detailRow.baseline, quantity, numberLegend)}</td>
-                    <td class="td-num ${detailRow.pullRequest == null ? "cell-empty" : ""}">${formatValue(detailRow.pullRequest, quantity, numberLegend)}</td>
-                    <td class="td-num ${cellClass(quantity, adiffLegend, detailRow.stepData, detailRow.absoluteDiff)}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)}</td>
-                    <td class="td-num ${cellClass(quantity, percentLegend, detailRow.stepData, detailRow.percentDiff)}">${formatValue(detailRow.percentDiff, quantity, percentLegend)}</td>
+                     <td class="td-num ${detailRow.baseline == null ? "cell-empty" : ""}">${formatValue(detailRow.baseline, quantity, numberLegend)} ${numberLegend.unit}</td>
+                     <td class="td-num ${detailRow.pullRequest == null ? "cell-empty" : ""}">${formatValue(detailRow.pullRequest, quantity, numberLegend)} ${numberLegend.unit}</td>
+                     <td class="td-num ${cellClass(quantity, adiffLegend, detailRow.stepData, detailRow.absoluteDiff)}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)} ${numberLegend.unit}</td>
+                     <td class="td-num ${cellClass(quantity, percentLegend, detailRow.stepData, detailRow.percentDiff)}">${formatValue(detailRow.percentDiff, quantity, percentLegend)} %</td>
                   </tr>
                 `;
                 }).join("")}
@@ -1050,9 +1050,9 @@
         const legendHead = document.createElement("th");
         legendHead.className = "sortable th-num";
         legendHead.setAttribute("data-sort-key", legend.key);
-        const unit = legend.unit || quantity.unit;
-        const unitPart = unit ? `, ${unit}` : "";
-        legendHead.textContent = `${legend.label} (${aggregation.label}${unitPart})${mainSortIndicator(legend.key)}`;
+        const unit =  quantity.unit || legend.unit;
+        const unitPart = unit ? `${unit}` : "";
+        legendHead.textContent = `${legend.label}${mainSortIndicator(legend.key)}`;
         el.tableHeadRow.appendChild(legendHead);
       }
 
@@ -1084,7 +1084,13 @@
           const maxValueCell = document.createElement("td");
           maxValueCell.className = cellClass(quantity, legend, maxValue.stepData, maxValue.value);
           const stepDisplay = maxValue.stepNumber !== null ? ` [Step ${maxValue.stepNumber}]` : "";
-          maxValueCell.textContent = `${formatValue(maxValue.value, quantity, legend)}${stepDisplay}`;
+          if (legend.unit) {
+            maxValueCell.textContent = `${formatValue(maxValue.value, quantity, legend)} ${legend.unit}${stepDisplay}`.trim();
+          } else if (quantity.unit) {
+            maxValueCell.textContent = `${formatValue(maxValue.value, quantity, legend)} ${quantity.unit}${stepDisplay}`.trim();
+          } else {
+            maxValueCell.textContent = `${formatValue(maxValue.value, quantity, legend)}${stepDisplay}`.trim();
+          };
           tr.appendChild(maxValueCell);
         }
 
@@ -1164,11 +1170,6 @@
         ? data.orderedSteps.slice().sort((left, right) => stepNumber(left) - stepNumber(right))
         : Array.from(new Set(state.workflows.flatMap((workflow) => Object.keys(data.workflows[workflow] || {})))).sort((left, right) => stepNumber(left) - stepNumber(right));
 
-      const autoQuantity = findAutoSelectedErrorQuantity(data);
-      if (autoQuantity) {
-        state.quantityKey = autoQuantity;
-        state.sortKey = "adiff-desc";
-      }
 
       if (typeof data.resultsURL === "string" && data.resultsURL.trim()) {
         el.resultsLink.href = data.resultsURL;

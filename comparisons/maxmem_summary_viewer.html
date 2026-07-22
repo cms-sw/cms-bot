@@ -282,7 +282,7 @@
       width: 100%;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 10px;
       padding: 0;
       border: 0;
@@ -1079,7 +1079,7 @@
         workflowCell.innerHTML = `
           <button class="workflow-toggle" type="button" data-workflow-name="${escapeHtml(row.name)}" aria-expanded="${isExpanded ? "true" : "false"}">
             <span class="workflow-caret">${isExpanded ? " ▼ " : " ▶ "}</span>
-            <span class="workflow-name" style="text-align: center">${workflowNameHtml(row.name)}</span>
+            <span class="workflow-name">${workflowNameHtml(row.name)}</span>
           </button>
         `;
         tr.appendChild(workflowCell);

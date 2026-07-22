@@ -1123,7 +1123,7 @@
       attachDetailSortHandlers();
 
       const sortColumn = mainSortColumn();
-      const sortLabel = sortColumn === "adiff" ? "absolute difference" : sortColumn === "pdiff" ? "percentage difference" : sortColumn === "baseline" ? "baseline" : sortColumn === "pullRequest" ? "pull request" : sortColumn  === "workflow" ? "workflow" : sortColumn;
+      const sortLabel = sortColumn === "adiff" ? "absolute difference" : sortColumn === "pdiff" ? "percentage difference" : sortColumn === "base" ? "baseline" : sortColumn === "pr" ? "pull request" : sortColumn  === "workflow" ? "workflow" : sortColumn;
       setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label}, sorted by ${sortLabel}`, false);
     }
 

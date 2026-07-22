@@ -502,6 +502,12 @@
               <option value="workflow-desc">Workflow descending</option>
               <option value="adiff-desc">PR - baseline descending</option>
               <option value="adiff-asc">PR - baseline ascending</option>
+              <option value="pdiff-desc">Percent diff descending</option>
+              <option value="pdiff-asc">Percent diff ascending</option>
+              <option value="base-desc">Baseline descending</option>
+              <option value="base-asc">Baseline ascending</option>
+              <option value="pr-desc">Pull request descending</option>
+              <option value="pr-asc">Pull request ascending</option>
             </select>
           </div>
           <div>
@@ -1052,7 +1058,7 @@
         legendHead.setAttribute("data-sort-key", legend.key);
         const unit =  quantity.unit || legend.unit;
         const unitPart = unit ? `${unit}` : "";
-        legendHead.textContent = `${legend.label}${mainSortIndicator(legend.key)}`;
+        legendHead.textContent = `${aggregation.label} ${legend.label}${mainSortIndicator(legend.key)}`;
         el.tableHeadRow.appendChild(legendHead);
       }
 
@@ -1116,7 +1122,9 @@
       });
       attachDetailSortHandlers();
 
-      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label}, sorted by ${mainSortColumn() === "workflow" ? "workflow" : mainSortColumn() + " " + aggregation.label}.`, false);
+      const sortColumn = mainSortColumn();
+      const sortLabel = sortColumn === "adiff" ? "absolute difference" : sortColumn === "pdiff" ? "percentage difference" : sortColumn === "baseline" ? "baseline" : sortColumn === "pullRequest" ? "pull request" : sortColumn  === "workflow" ? "workflow" : sortColumn;
+      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label}, sorted by ${sortLabel}`, false);
     }
 
     function populateSelectors() {

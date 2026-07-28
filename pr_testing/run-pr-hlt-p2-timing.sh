@@ -77,26 +77,26 @@ if which compareMemoryProfiles.py >/dev/null 2>&1; then
     fi
 
     # run the GPU comparison job for the HLT timing menu
-    compareMemoryProfiles.py $PR_DIR/logs.Phase2_L1P2GT_HLT/gpu_memory.csv $BASELINE_ARGS_GPU_HLT \
+    compareMemoryProfiles.py $BASELINE_ARGS_GPU_HLT $PR_DIR/logs.Phase2_L1P2GT_HLT/gpu_memory.csv \
 			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
 			     --no-show --gpu --output hlt_memory_comparison || ERR=1
     # run the GPU comparison job for the NGT menu
-    compareMemoryProfiles.py $PR_DIR/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $BASELINE_ARGS_GPU_NGT \
+    compareMemoryProfiles.py $BASELINE_ARGS_GPU_NGT $PR_DIR/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv \
 			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
 			     --no-show --gpu --output ngt_memory_comparison || ERR=1
     # run the CPU comparison job for the HLT timing menu
-    compareMemoryProfiles.py $PR_DIR/logs.Phase2_L1P2GT_HLT/cpu_memory.csv $BASELINE_ARGS_CPU_HLT \
+    compareMemoryProfiles.py $BASELINE_ARGS_CPU_HLT $PR_DIR/logs.Phase2_L1P2GT_HLT/cpu_memory.csv \
 			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
 			     --no-show --output hlt_memory_comparison || ERR=1
     # run the CPU comparison job for the NGT menu
-    compareMemoryProfiles.py $PR_DIR/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv $BASELINE_ARGS_CPU_NGT \
+    compareMemoryProfiles.py $BASELINE_ARGS_CPU_NGT $PR_DIR/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv \
 			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
 			     --no-show --output ngt_memory_comparison || ERR=1
     # run the CPU comparison job for the HLT timing menu (on CPU)
-    compareMemoryProfiles.py $PR_DIR/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv $BASELINE_ARGS_CPU_HLTONCPU \
+    compareMemoryProfiles.py $BASELINE_ARGS_CPU_HLTONCPU $PR_DIR/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv \
 			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
 			     --no-show --output hltOnCPU_memory_comparison || ERR=1
-    
+
     # copy back the png figures to the output folder
     cp gpu_hlt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
     cp gpu_ngt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1

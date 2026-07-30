@@ -275,14 +275,14 @@
     }
 
     .workflow-link:hover {
-      text-decoration: underline;
+      text-decoration: none;
     }
 
     .workflow-toggle {
       width: 100%;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       gap: 10px;
       padding: 0;
       border: 0;
@@ -294,7 +294,7 @@
     }
 
     .workflow-toggle:hover .workflow-name {
-      text-decoration: underline;
+      text-decoration: none;
     }
 
     .workflow-caret {
@@ -502,10 +502,16 @@
               <option value="workflow-desc">Workflow descending</option>
               <option value="adiff-desc">PR - baseline descending</option>
               <option value="adiff-asc">PR - baseline ascending</option>
+              <option value="pdiff-desc">Percent diff descending</option>
+              <option value="pdiff-asc">Percent diff ascending</option>
+              <option value="base-desc">Baseline descending</option>
+              <option value="base-asc">Baseline ascending</option>
+              <option value="pr-desc">Pull request descending</option>
+              <option value="pr-asc">Pull request ascending</option>
             </select>
           </div>
           <div>
-            <label for="aggregationSelect">Aggregation</label>
+            <label for="aggregationSelect">max/min over workflow steps</label>
             <select id="aggregationSelect">
               <option value="max" selected>max</option>
               <option value="min">min</option>
@@ -586,7 +592,7 @@
       workflows: [],
       steps: [],
       search: "",
-      quantityKey: "req memory",
+      quantityKey: "max memory",
       sortKey: "adiff-desc",
       aggregationKey: "max",
       expandedWorkflows: new Set(),
@@ -775,6 +781,7 @@
     function aggregateStepValue(row, selectedField) {
       let bestValue = null;
       let bestStepData = null;
+      let bestStep = null;
 
       for (const step of state.steps) {
         const stepData = row.steps[step] || {};
@@ -786,6 +793,7 @@
         if (bestValue === null) {
           bestValue = value;
           bestStepData = stepData;
+          bestStep = step;
           continue;
         }
 
@@ -793,54 +801,19 @@
           if (value < bestValue) {
             bestValue = value;
             bestStepData = stepData;
+            bestStep = step;
           }
           continue;
         }
         if (value > bestValue) {
           bestValue = value;
           bestStepData = stepData;
+          bestStep = step;
         }
       }
 
-      return { value: bestValue, stepData: bestStepData };
-    }
-
-    function findAutoSelectedErrorQuantity(payload) {
-      if (!payload || typeof payload !== "object" || !payload.workflows) {
-        return null;
-      }
-
-      const candidates = ["max memory", "req memory", "leak memory"];
-      let bestQuantity = null;
-      let bestExcess = -Infinity;
-      let bestValue = -Infinity;
-
-      for (const workflowName of Object.keys(payload.workflows)) {
-        const stepsByName = payload.workflows[workflowName] || {};
-        for (const stepName of Object.keys(stepsByName)) {
-          const stepData = stepsByName[stepName] || {};
-          const errorThreshold = Number((stepData && stepData.error_threshold) ?? payload.defaultErrorThreshold);
-          if (!Number.isFinite(errorThreshold)) {
-            continue;
-          }
-
-          for (const quantityKey of candidates) {
-            const absoluteDiff = Number(stepData[fieldName(quantityKey, "adiff")]);
-            if (!Number.isFinite(absoluteDiff) || absoluteDiff <= errorThreshold) {
-              continue;
-            }
-
-            const excess = absoluteDiff - errorThreshold;
-            if (excess > bestExcess || (excess === bestExcess && absoluteDiff > bestValue)) {
-              bestExcess = excess;
-              bestValue = absoluteDiff;
-              bestQuantity = quantityKey;
-            }
-          }
-        }
-      }
-
-      return bestQuantity;
+      const stepNumber = bestStep ? Number.parseInt(String(bestStep).replace("step", ""), 10) : null;
+      return { value: bestValue, stepData: bestStepData, step: bestStep, stepNumber };
     }
 
     function cellClass(quantity, legend, stepData, value) {
@@ -1017,10 +990,10 @@
                 <tr>
                   <th class="sortable" data-sort-key="workflow">Workflow${detailSortIndicator("workflow")}</th>
                   <th class="sortable" data-sort-key="step">Step${detailSortIndicator("step")}</th>
-                  <th class="sortable th-num" data-sort-key="baseline">Baseline (${aggregation.label}${unitPart})${detailSortIndicator("baseline")}</th>
-                  <th class="sortable th-num" data-sort-key="pullRequest">Pull Request (${aggregation.label}${unitPart})${detailSortIndicator("pullRequest")}</th>
-                  <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline (${aggregation.label}${unitPart})${detailSortIndicator("absoluteDiff")}</th>
-                  <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff (${aggregation.label}, %)${detailSortIndicator("percentDiff")}</th>
+                   <th class="sortable th-num" data-sort-key="baseline">Baseline${detailSortIndicator("baseline")}</th>
+                   <th class="sortable th-num" data-sort-key="pullRequest">Pull Request${detailSortIndicator("pullRequest")}</th>
+                   <th class="sortable th-num" data-sort-key="absoluteDiff">PR - Baseline${detailSortIndicator("absoluteDiff")}</th>
+                   <th class="sortable th-num" data-sort-key="percentDiff">Percent Diff${detailSortIndicator("percentDiff")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1030,10 +1003,10 @@
                   <tr class="${thresholdClass}">
                     <td>${escapeHtml(detailRow.workflow)}</td>
                     <td class="td-step">${escapeHtml(detailRow.step.replace("step", "Step "))}</td>
-                    <td class="td-num ${detailRow.baseline == null ? "cell-empty" : ""}">${formatValue(detailRow.baseline, quantity, numberLegend)}</td>
-                    <td class="td-num ${detailRow.pullRequest == null ? "cell-empty" : ""}">${formatValue(detailRow.pullRequest, quantity, numberLegend)}</td>
-                    <td class="td-num ${cellClass(quantity, adiffLegend, detailRow.stepData, detailRow.absoluteDiff)}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)}</td>
-                    <td class="td-num ${cellClass(quantity, percentLegend, detailRow.stepData, detailRow.percentDiff)}">${formatValue(detailRow.percentDiff, quantity, percentLegend)}</td>
+                     <td class="td-num ${detailRow.baseline == null ? "cell-empty" : ""}">${formatValue(detailRow.baseline, quantity, numberLegend)} ${numberLegend.unit}</td>
+                     <td class="td-num ${detailRow.pullRequest == null ? "cell-empty" : ""}">${formatValue(detailRow.pullRequest, quantity, numberLegend)} ${numberLegend.unit}</td>
+                     <td class="td-num ${cellClass(quantity, adiffLegend, detailRow.stepData, detailRow.absoluteDiff)}">${formatValue(detailRow.absoluteDiff, quantity, numberLegend)} ${numberLegend.unit}</td>
+                     <td class="td-num ${cellClass(quantity, percentLegend, detailRow.stepData, detailRow.percentDiff)}">${formatValue(detailRow.percentDiff, quantity, percentLegend)} %</td>
                   </tr>
                 `;
                 }).join("")}
@@ -1083,9 +1056,9 @@
         const legendHead = document.createElement("th");
         legendHead.className = "sortable th-num";
         legendHead.setAttribute("data-sort-key", legend.key);
-        const unit = legend.unit || quantity.unit;
-        const unitPart = unit ? `, ${unit}` : "";
-        legendHead.textContent = `${legend.label} (${aggregation.label}${unitPart})${mainSortIndicator(legend.key)}`;
+        const unit =  quantity.unit || legend.unit;
+        const unitPart = unit ? `${unit}` : "";
+        legendHead.textContent = `${aggregation.label} ${legend.label}${mainSortIndicator(legend.key)}`;
         el.tableHeadRow.appendChild(legendHead);
       }
 
@@ -1105,8 +1078,8 @@
         const isExpanded = state.expandedWorkflows.has(row.name);
         workflowCell.innerHTML = `
           <button class="workflow-toggle" type="button" data-workflow-name="${escapeHtml(row.name)}" aria-expanded="${isExpanded ? "true" : "false"}">
+            <span class="workflow-caret">${isExpanded ? " ▼ " : " ▶ "}</span>
             <span class="workflow-name">${workflowNameHtml(row.name)}</span>
-            <span class="workflow-caret">${isExpanded ? "Hide steps" : "Show steps"}</span>
           </button>
         `;
         tr.appendChild(workflowCell);
@@ -1116,7 +1089,14 @@
           const maxValue = aggregateStepValue(row, legendField);
           const maxValueCell = document.createElement("td");
           maxValueCell.className = cellClass(quantity, legend, maxValue.stepData, maxValue.value);
-          maxValueCell.textContent = formatValue(maxValue.value, quantity, legend);
+          const stepDisplay = maxValue.stepNumber !== null ? ` [Step ${maxValue.stepNumber}]` : "";
+          if (legend.unit) {
+            maxValueCell.textContent = `${formatValue(maxValue.value, quantity, legend)} ${legend.unit}${stepDisplay}`.trim();
+          } else if (quantity.unit) {
+            maxValueCell.textContent = `${formatValue(maxValue.value, quantity, legend)} ${quantity.unit}${stepDisplay}`.trim();
+          } else {
+            maxValueCell.textContent = `${formatValue(maxValue.value, quantity, legend)}${stepDisplay}`.trim();
+          };
           tr.appendChild(maxValueCell);
         }
 
@@ -1142,7 +1122,9 @@
       });
       attachDetailSortHandlers();
 
-      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label}, sorted by ${mainSortColumn() === "workflow" ? "workflow" : mainSortColumn() + " " + aggregation.label}.`, false);
+      const sortColumn = mainSortColumn();
+      const sortLabel = sortColumn === "adiff" ? "absolute difference" : sortColumn === "pdiff" ? "percentage difference" : sortColumn === "base" ? "baseline" : sortColumn === "pr" ? "pull request" : sortColumn  === "workflow" ? "workflow" : sortColumn;
+      setStatus(`Showing ${rows.length.toLocaleString()} workflows for ${quantity.label}, sorted by ${sortLabel}`, false);
     }
 
     function populateSelectors() {
@@ -1196,11 +1178,6 @@
         ? data.orderedSteps.slice().sort((left, right) => stepNumber(left) - stepNumber(right))
         : Array.from(new Set(state.workflows.flatMap((workflow) => Object.keys(data.workflows[workflow] || {})))).sort((left, right) => stepNumber(left) - stepNumber(right));
 
-      const autoQuantity = findAutoSelectedErrorQuantity(data);
-      if (autoQuantity) {
-        state.quantityKey = autoQuantity;
-        state.sortKey = "adiff-desc";
-      }
 
       if (typeof data.resultsURL === "string" && data.resultsURL.trim()) {
         el.resultsLink.href = data.resultsURL;

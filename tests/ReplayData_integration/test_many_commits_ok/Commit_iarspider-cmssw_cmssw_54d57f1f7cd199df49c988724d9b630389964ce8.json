@@ -1,0 +1,98 @@
+{
+  "sha": "54d57f1f7cd199df49c988724d9b630389964ce8",
+  "node_id": "C_kwDOF83__NoAKDU0ZDU3ZjFmN2NkMTk5ZGY0OWM5ODg3MjRkOWI2MzAzODk5NjRjZTg",
+  "commit": {
+    "author": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:04Z"
+    },
+    "committer": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:04Z"
+    },
+    "message": "Dummy commit",
+    "tree": {
+      "sha": "48622698e104ea5980cad5c132faf25c431ef97b",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/48622698e104ea5980cad5c132faf25c431ef97b"
+    },
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/54d57f1f7cd199df49c988724d9b630389964ce8",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null
+    }
+  },
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/54d57f1f7cd199df49c988724d9b630389964ce8",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/54d57f1f7cd199df49c988724d9b630389964ce8",
+  "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/54d57f1f7cd199df49c988724d9b630389964ce8/comments",
+  "author": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "bf4f3003d8ca2adca1fa6521e79de2e38fa00085",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/bf4f3003d8ca2adca1fa6521e79de2e38fa00085",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/bf4f3003d8ca2adca1fa6521e79de2e38fa00085"
+    }
+  ],
+  "stats": {
+    "total": 1,
+    "additions": 1,
+    "deletions": 0
+  },
+  "files": [
+    {
+      "sha": "219601e77d98b73e2cf378682f0d2b0976114800",
+      "filename": "Alignment/CommonAlignmentProducer/python/ALCARECOPromptCalibProdSiPixelAliHGDiMuon_cff.py",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/54d57f1f7cd199df49c988724d9b630389964ce8/Alignment%2FCommonAlignmentProducer%2Fpython%2FALCARECOPromptCalibProdSiPixelAliHGDiMuon_cff.py",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/54d57f1f7cd199df49c988724d9b630389964ce8/Alignment%2FCommonAlignmentProducer%2Fpython%2FALCARECOPromptCalibProdSiPixelAliHGDiMuon_cff.py",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Alignment%2FCommonAlignmentProducer%2Fpython%2FALCARECOPromptCalibProdSiPixelAliHGDiMuon_cff.py?ref=54d57f1f7cd199df49c988724d9b630389964ce8",
+      "patch": "@@ -133,3 +133,4 @@\n                                                           SiPixelAliTrackRefitterHGDimuon1*\n                                                           SiPixelAliMilleAlignmentProducerHGDimuon*\n                                                           SiPixelAliMillePedeFileConverterHGDimuon)\n+# dummy dummy"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "sha": "f0e710781cfb2d7f7d531a72bb1097d31fc8850d",
+      "filename": "FWCore/Utilities/BuildFile.xml",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 0,
+      "changes": 2,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/28ce3f5888b5433dcae409ee336b2ad422595246/FWCore%2FUtilities%2FBuildFile.xml",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/28ce3f5888b5433dcae409ee336b2ad422595246/FWCore%2FUtilities%2FBuildFile.xml",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/FWCore%2FUtilities%2FBuildFile.xml?ref=28ce3f5888b5433dcae409ee336b2ad422595246",
+      "patch": "@@ -7,3 +7,5 @@\n <export>\n   <lib name=\"1\"/>\n </export>\n+<!-- test -->\n+<!-- test test -->"
+    }
+  ]
+}

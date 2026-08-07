@@ -786,7 +786,7 @@ if ${BUILD_EXTERNAL} ; then
         r_ts=0
       else
         r_tc=$(find ${rtpath} -follow | wc -l)
-        r_ts=$(du -shD ${rtpath} | awk '{print $1}')
+        r_ts=$(du -shL ${rtpath} | awk '{print $1}')
       fi
       tool=$(basename $tdir)
       echo "<tr><td>$cnt</td><td>${tool}</td><td>$l_tc</td><td>$r_tc</td><td>$l_ts</td><td>$r_ts</td></tr>" >> $WORKSPACE/upload/external-tools.html

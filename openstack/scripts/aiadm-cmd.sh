@@ -11,6 +11,7 @@ if [ "${BUILD_TAG}${JENKINS_PREFIX}" = "" ] ; then
   exit 1
 fi
 REMOTE_ADD="cmsbuild@lxplus.cern.ch"
+REMOTE_ADD="cmsbuild@cmsdev45.cern.ch"
 SSH_OPT="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 REQ_DIR="${AIADM_DIR}/request"
 RES_DIR="${AIADM_DIR}/response"

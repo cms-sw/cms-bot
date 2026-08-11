@@ -885,7 +885,7 @@ if ${BUILD_EXTERNAL} ; then
         echo '/*/' >> .git/info/sparse-checkout
         git read-tree -mu HEAD
       else
-        git cms-checkout-topic --ssh $(git branch | grep  '^  *CMSSW_') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+        git cms-checkout-topic --ssh $CMSSW_BRANCH 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
         git cms-checkdeps -A -a 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
         git cms-addpkg --ssh "$CMSSW_DEP" 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
       fi

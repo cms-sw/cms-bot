@@ -984,7 +984,9 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   fi
 
   git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
-  if ! should_skip_test $WORKSPACE/changed-files ; then RUN_TESTS=false ; fi
+  if [ $(echo "${PULL_REQUESTS}" | wc -w) -eq 1 ] ; then
+    if ! should_skip_test $WORKSPACE/changed-files ; then RUN_TESTS=false ; fi
+  fi
 
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then

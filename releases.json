@@ -21857,6 +21857,16 @@
                   "default_micro_arch": "x86-64-v3"
                 }
               ]
+            },
+            {
+              "label": "CMSSW_20_1_0_pre2",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
             }
           ]
         },

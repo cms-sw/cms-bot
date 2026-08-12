@@ -47,6 +47,28 @@ function get_pr_relval_args() {
   echo "${WF_ARGS}"
 }
 
+function should_skip_test()
+{
+  local file="$1"
+  local patterns=(
+    '\.md$'
+    '/README$'
+  )
+  while IFS= read -r filename; do
+    local matched=false
+    for regexp in "${patterns[@]}"; do
+      if [[ "$filename" =~ $regexp ]]; then
+        matched=true
+        break
+      fi
+    done
+    if ! $matched; then
+      return 0
+    fi
+  done < "$file"
+  return 1
+}
+
 # Function to extract filenames by headername and append to indirectly-changed-files.txt
 function extract_filenames() {
   local headername="$1"
@@ -962,6 +984,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   fi
 
   git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
+  if ! should_skip_test $WORKSPACE/changed-files ; then RUN_TESTS=false ; fi
 
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then

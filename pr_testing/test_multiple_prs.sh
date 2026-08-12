@@ -999,7 +999,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
       mv src src.tmp && mkdir src
       cd src
       THRDS=""
-      git cms-init --upstream-only $CMSSW_IB && git checkout -b codechecks $CMSSW_IB
+      git cms-init --upstream-only && git checkout -b codechecks $CMSSW_IB
       git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NCPU}" || true
       git repack -a -d ${THRDS}
       git repack -a -d ${THRDS}

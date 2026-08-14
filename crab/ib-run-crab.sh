@@ -24,10 +24,7 @@ mkdir -p ${CMSSW_BASE}/src/FWCore/Version/python ${CMSSW_BASE}/src/FWCore/Versio
 echo 'CMSBOT_CRAB_TEST="OK"' > ${CMSSW_BASE}/src/FWCore/Version/python/cmsbot_crab_test.py
 echo -e '#!/bin/bash\necho OK' > ${CMSSW_BASE}/src/FWCore/Version/scripts/cmsbot_crab_test.sh
 chmod +x ${CMSSW_BASE}/src/FWCore/Version/scripts/cmsbot_crab_test.sh
-scram build -j $(nproc) cmsRun
-pushd ${CMSSW_BASE}/src/FWCore/Version
-  scram build -j $(nproc)
-popd
+scram build -j $(nproc)
 #bug in build rules where scram creates a broken symlink
 if [ -d ${CMSSW_BASE}/biglib/${SCRAM_ARCH} ] ; then
   for l in $(find ${CMSSW_BASE}/biglib/${SCRAM_ARCH} -type l) ; do

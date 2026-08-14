@@ -1256,6 +1256,7 @@ fi
 ##########################################
 # Checkout full cmssw is requested
 ##########################################
+IB_RELEASE_BASE=$(grep '^RELEASETOP=' $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment | sed 's|.*=||')
 if [ "${BUILD_FULL_CMSSW}-${BUILD_EXTERNAL}" = "true-false" ] ; then
   if [ -d  $LOCALRT/src/.git ] ; then
     pushd $LOCALRT/src
@@ -1437,7 +1438,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_INTEGRATION$' | wc -l) -gt 0 ] ; then
     if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
-      if [ -e ${CMSSW_RELEASE_BASE}/src/HLTrigger/Configuration/scripts/hltPhase2UpgradeIntegrationTests ]; then
+      if [ -e ${IB_RELEASE_BASE}/src/HLTrigger/Configuration/scripts/hltPhase2UpgradeIntegrationTests ]; then
         DO_HLT_P2_INTEGRATION=true
         mark_commit_status_all_prs 'hlt-p2-integration' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       fi

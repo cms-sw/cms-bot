@@ -139,6 +139,7 @@ def check_updates(req_data):
                 print("ERROR: ", inst)
                 print("SKIPPED: Failed for ", data)
                 print(jdata)
+                if ignore_count: ignore_count -= 1
                 continue
             if ignore_count:
                 ignore_count -= 1
@@ -189,7 +190,7 @@ def check_updates(req_data):
                             print(m)
             if ov == v:
                 continue
-            m = re.match(r"^\s*%s\s*==\s*%s(\s*;.+|)$" % (p, ov), data["line"])
+            m = re.match(r"^\s*%s\s*==\s*%s(\s*(#|);.+|)$" % (p, ov), data["line"])
             try:
                 data["line"] = "%s==%s%s" % (p, v, m.group(1))
                 print("NEW:", p, ov, v)

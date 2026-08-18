@@ -81,13 +81,16 @@ function should_enable_gpu_tests()
   local file="$1"
   local patterns=(
     '^([^/]+/){3}alpaka/'
-    '^HeterogeneousCore/Common/'
-    '^HeterogeneousCore/CUDA.*/'
-    '^HeterogeneousCore/ROCm.*/'
-    '^HeterogeneousCore/Alpaka.*/'
-    '^HeterogeneousTest/'
-    '^HLTrigger/Configuration/'
-    '^Configuration/PyReleaseValidation/'
+    'DataFormats/AlpakaCommon/'
+    'DataFormats/Portable/'
+    'DataFormats/PortableTestObjects/'
+    'HeterogeneousCore/Common/'
+    'HeterogeneousCore/Alpaka.*/'
+    'HeterogeneousCore/CUDA.*/'
+    'HeterogeneousCore/ROCm.*/'
+    'HeterogeneousTest/'
+    'HLTrigger/Configuration/'
+    'Configuration/PyReleaseValidation/'
   )
   local -a packages=()
   local filename package regexp

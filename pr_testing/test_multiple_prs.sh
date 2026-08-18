@@ -1076,7 +1076,8 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   fi
 
   git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
-  if [ $(echo "${PULL_REQUESTS}" | tr ' ' '\n' | grep "/cmssw#" | wc -l) -eq 1 ] ; then
+  #Check for auto-skip tests only if there is one PR
+  if [ $(echo "${PULL_REQUESTS}" | wc -w) -eq 1 ] ; then
     if should_skip_tests $WORKSPACE/changed-files ; then RUN_TESTS=false ; fi
   fi
 

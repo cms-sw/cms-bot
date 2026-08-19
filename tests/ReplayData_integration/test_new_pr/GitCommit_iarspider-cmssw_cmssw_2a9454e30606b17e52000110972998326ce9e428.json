@@ -1,0 +1,34 @@
+{
+  "sha": "2a9454e30606b17e52000110972998326ce9e428",
+  "node_id": "C_kwDOF83__NoAKDJhOTQ1NGUzMDYwNmIxN2U1MjAwMDExMDk3Mjk5ODMyNmNlOWU0Mjg",
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/2a9454e30606b17e52000110972998326ce9e428",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/2a9454e30606b17e52000110972998326ce9e428",
+  "author": {
+    "name": "Ivan Razumov",
+    "email": "iarspider@gmail.com",
+    "date": "2024-02-27T10:25:45Z"
+  },
+  "committer": {
+    "name": "Ivan Razumov",
+    "email": "iarspider@gmail.com",
+    "date": "2024-03-27T12:21:07Z"
+  },
+  "tree": {
+    "sha": "25df9af04437a6cbb14106597ca89b3a1d3dd979",
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/25df9af04437a6cbb14106597ca89b3a1d3dd979"
+  },
+  "message": "[do-not-merge] Just for generating bot tests",
+  "parents": [
+    {
+      "sha": "a3adc2d589298214012d49f4afc4356baf30956c",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/a3adc2d589298214012d49f4afc4356baf30956c",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/a3adc2d589298214012d49f4afc4356baf30956c"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null
+  }
+}

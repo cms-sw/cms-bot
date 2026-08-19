@@ -1,0 +1,58 @@
+{
+  "test_name": "test_draft_pr_fully_signed",
+  "action_count": 6,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 21,
+        "labels": [
+          "fully-signed"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "remove_labels",
+      "details": {
+        "issue_number": 21,
+        "labels": [
+          "fully-signed-draft"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 21,
+        "body": "New categories assigned: l1\n\naloeliger, epalencia you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2523442237-->"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 21,
+        "body": "This pull request is fully signed and it will be integrated in one of the next master IBs after it passes the integration tests and once validation in the development release cycle CMSSW_14_1_X is complete. This pull request will now be reviewed by the release team before it's merged. @cms-sw/release-managers (and backports should be raised in the release meeting by the corresponding L2)\n<!--fully_signed-->"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 21,
+        "body": "A new Pull Request was created by  iarspider for master.\n\nIt involves the following packages:\n\n- FWCore/Utilities (**core**)\n\nDr15Jones, aloeliger, epalencia, makortel, smuzaffar can you please review it and eventually sign? Thanks.\nfelicepantaleo, makortel, missirol, wddgit this is something you requested to watch as well.\niarspider you are the release manager for this.\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2523322081,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"},\"2523514208\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:36:43+00:00\",\"user\":\"iarspider\"},\"2545714988\":{\"cats\":[\"core\"],\"ctype\":\"+1\",\"first_line\":\"+core\",\"locked\":true,\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\"],\"ts\":\"2024-12-16T14:03:30Z\",\"user\":\"iarspider\"},\"2545738731\":{\"cats\":[\"l1\"],\"ctype\":\"+1\",\"first_line\":\"+l1\",\"locked\":true,\"signed_files\":[\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\"],\"ts\":\"2024-12-16T14:13:40Z\",\"user\":\"iarspider\"}},\"emoji\":{\"2523442237\":\"+1\",\"2532358732\":\"+1\",\"2545714988\":\"+1\",\"2545738731\":\"+1\"},\"fv\":{\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\":{\"cats\":[\"core\"],\"ts\":\"2024-12-16T14:03:30Z\"}}} -->"
+      }
+    }
+  ]
+}

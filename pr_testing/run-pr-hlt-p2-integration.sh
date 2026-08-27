@@ -3,6 +3,9 @@ source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
 
 PR_REPO_NUM=$(echo $PULL_REQUEST | sed 's|^.*/||;s|#||')
 UPLOAD_PATH="${CMSSW_VERSION}-${PR_REPO_NUM}/${ARCHITECTURE}/${BUILD_NUMBER}"
+# Get the name of the output JSON files from the FastTimerService of the release under test
+RES_PREFIX=$(python3 -c 'from HLTrigger.Configuration.HLT_75e33.services.FastTimerService_cfi import FastTimerService; print(FastTimerService.jsonFileName.value())' 2>/dev/null | sed 's|[.]json$||') || true
+[ -n "${RES_PREFIX}" ] || RES_PREFIX="resources"
 # Report test started
 mark_commit_status_all_prs 'hlt-p2-integration' 'pending' -u "${BUILD_URL}" -d "Running"
 
@@ -36,7 +39,7 @@ touch ${RESULTS_DIR}/11-hlt-p2-integration-failed.res
 
 if grep -iE 'Error|failure' "${INTEGRTESTS_LOG}"; then
   HLT_P2_RES="ERROR"
-elif [ ! -f $WORKSPACE/rundir/resources.json ] ; then
+elif [ ! -f $WORKSPACE/rundir/${RES_PREFIX}.json ] ; then
   HLT_P2_RES="ERROR"
 fi
 echo "HLT_P2_INTEGRATION;${HLT_P2_RES},HLT Phase 2 integration Test,See Logs,hlt-p2-integration.log" >> ${RESULTS_DIR}/hlt-p2-integration.txt

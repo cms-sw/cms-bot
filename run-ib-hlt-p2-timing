@@ -14,7 +14,7 @@ cd src/HLTrigger/Configuration/python/HLT_75e33/test
 RES="passed"
 mkdir -p $WORKSPACE/upload
 timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1 || RES="failed"
-mv Phase2Timing_resources*.json $WORKSPACE/upload || RES="failed"
+mv resources*.json $WORKSPACE/upload || RES="failed"
 if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
   (
     mv logs.Phase2_L1P2GT_HLT/cpu_memory.csv       $WORKSPACE/upload/cpu_memory_ph2_hlt.csv &&

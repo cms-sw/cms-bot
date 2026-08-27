@@ -110,18 +110,18 @@ fi
 touch ${RESULTS_DIR}/11-hlt-p2-timing-report.res ${RESULTS_DIR}/11-hlt-p2-timing-failed.res
 
 required_files=(
-    "$WORKSPACE/rundir/Phase2Timing_resources.json"
+    "$WORKSPACE/rundir/resources.json"
 )
 
 if [ "$CMSSW_VERSION_NUMBER" -ge 1501 ]; then
     required_files+=(
-        "$WORKSPACE/rundir/Phase2Timing_resources_NGT.json"
+        "$WORKSPACE/rundir/resources_NGT.json"
     )
 fi
 
 if [ "$CMSSW_VERSION_NUMBER" -ge 1600 ]; then
     required_files+=(
-        "$WORKSPACE/rundir/Phase2Timing_resources_OnCPU.json"
+        "$WORKSPACE/rundir/resources_OnCPU.json"
     )
 fi
 
@@ -134,7 +134,7 @@ for f in "${required_files[@]}"; do
 done
 
 if [ $missing -eq 0 ]; then
-  CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${CMSSW_VERSION}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
+  CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${CMSSW_VERSION}&dataset=${UPLOAD_PATH}/resources"
   echo "HLT_P2_TIMING;SUCCESS,HLT Phase 2 timing Test,See Chart,${CHART_URL}" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   echo "HLT_P2_TIMING_LOG;OK,HLT Phase 2 timing Test Log,See Logs,hlt-p2-timing.log" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
@@ -142,7 +142,7 @@ if [ $missing -eq 0 ]; then
   fi
   echo -e "**HLT P2 Timing**: [chart](${CHART_URL})" > ${RESULTS_DIR}/11-hlt-p2-timing-report.res
 
-  mv $WORKSPACE/rundir/Phase2Timing*.json $WORKSPACE/json_upload
+  mv $WORKSPACE/rundir/resources*.json $WORKSPACE/json_upload
   send_jenkins_artifacts $WORKSPACE/json_upload hlt-p2-timing/${UPLOAD_PATH}
   mark_commit_status_all_prs 'hlt-p2-timing' 'success' -u "${BUILD_URL}" -d "HLT Phase2 timing data collected"
 else
@@ -158,9 +158,9 @@ BUILD_TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
 HLT_STATUS="&#10003; ok";       HLT_STATUS_CLASS="ok"
 HLT_ONCPU_STATUS="&#10003; ok"; HLT_ONCPU_STATUS_CLASS="ok"
 NGT_STATUS="&#10003; ok";       NGT_STATUS_CLASS="ok"
-[ ! -f "$WORKSPACE/json_upload/Phase2Timing_resources.json" ]       && HLT_STATUS="&#10007; missing"       && HLT_STATUS_CLASS="err"
-[ ! -f "$WORKSPACE/json_upload/Phase2Timing_resources_OnCPU.json" ] && HLT_ONCPU_STATUS="&#10007; missing" && HLT_ONCPU_STATUS_CLASS="err"
-[ ! -f "$WORKSPACE/json_upload/Phase2Timing_resources_NGT.json" ]   && NGT_STATUS="&#10007; missing"       && NGT_STATUS_CLASS="err"
+[ ! -f "$WORKSPACE/json_upload/resources.json" ]       && HLT_STATUS="&#10007; missing"       && HLT_STATUS_CLASS="err"
+[ ! -f "$WORKSPACE/json_upload/resources_OnCPU.json" ] && HLT_ONCPU_STATUS="&#10007; missing" && HLT_ONCPU_STATUS_CLASS="err"
+[ ! -f "$WORKSPACE/json_upload/resources_NGT.json" ]   && NGT_STATUS="&#10007; missing"       && NGT_STATUS_CLASS="err"
 
 # Build optional CSV section for CMSSW >= 17
 CSV_SECTION=""

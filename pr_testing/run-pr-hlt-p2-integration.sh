@@ -36,7 +36,7 @@ touch ${RESULTS_DIR}/11-hlt-p2-integration-failed.res
 
 if grep -iE 'Error|failure' "${INTEGRTESTS_LOG}"; then
   HLT_P2_RES="ERROR"
-elif [ ! -f $WORKSPACE/rundir/Phase2Timing_resources.json ] ; then
+elif [ ! -f $WORKSPACE/rundir/resources.json ] ; then
   HLT_P2_RES="ERROR"
 fi
 echo "HLT_P2_INTEGRATION;${HLT_P2_RES},HLT Phase 2 integration Test,See Logs,hlt-p2-integration.log" >> ${RESULTS_DIR}/hlt-p2-integration.txt

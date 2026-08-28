@@ -980,6 +980,7 @@ CMSSW_CATEGORIES = {
         "HLTrigger/Tools",
         "HLTrigger/btau",
         "HLTrigger/special",
+        "FastSimulation/HighLevelTrigger",
         "RecoEgamma/EgammaHLTAlgos",
         "RecoEgamma/EgammaHLTProducers",
         "RecoMuon/L2MuonIsolationProducer",

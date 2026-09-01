@@ -122,14 +122,12 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_17_0_X/master"].append("IB/CMSSW_17_0_X/g4
 
 # Automatically added
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_20_1_X"] = ["CMSSW_20_1_EVTGEN3_X"]
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_20_1_X"].append("CMSSW_20_1_TF_X")
 
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/rootmaster")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/root640")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/evtgen3")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/therockrocm")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/tf")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/py314")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/clang")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_20_1_X/master"].append("IB/CMSSW_20_1_X/devel")

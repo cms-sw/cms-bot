@@ -74,7 +74,12 @@ CMSSW_L2 = {
     "davidlange6": ["operations"],
     "emeschi": ["daq"],
     "ftorrresd": ["xpog"],
-    "fwyzard": ["heterogeneous"],
+    "Electricks94": ["heterogeneous"],  # Markus Holzer
+    "Parsifal-2045": ["heterogeneous"],  # Luca Ferragina
+    "fwyzard": ["heterogeneous"],  # Andrea Bocci
+    "ghyls": ["heterogeneous"],  # Mario Gonzalez
+    "pietroGru": ["heterogeneous"],  # Pietro Grutta
+    "sbaldu": ["heterogeneous"],  # Simone Balducci
     "forthommel": ["reconstruction"],
     "jfernan2": ["reconstruction"],
     "makortel": ["heterogeneous", "core", "visualization", "geometry"],

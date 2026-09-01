@@ -62,40 +62,46 @@ if which compareMemoryProfiles.py >/dev/null 2>&1; then
     BASELINE_DIR=$WORKSPACE/baseline-hlt-p2-timing
     PR_DIR=$WORKSPACE/rundir
     if grep -q "passed" $BASELINE_DIR/status.txt; then
-        BASELINE_ARGS_GPU_HLT="$BASELINE_DIR/gpu_memory_ph2_hlt.csv --label1 ${COMPARISON_RELEASE}"
-        BASELINE_ARGS_GPU_NGT="$BASELINE_DIR/gpu_memory_ph2_ngt.csv --label1 ${COMPARISON_RELEASE}"
-        BASELINE_ARGS_CPU_HLT="$BASELINE_DIR/cpu_memory_ph2_hlt.csv --label1 ${COMPARISON_RELEASE}"
-        BASELINE_ARGS_CPU_NGT="$BASELINE_DIR/cpu_memory_ph2_ngt.csv --label1 ${COMPARISON_RELEASE}"
-        BASELINE_ARGS_CPU_HLTONCPU="$BASELINE_DIR/cpu_memory_ph2_hlt_onCPU.csv --label1 ${COMPARISON_RELEASE}"
+        HAVE_BASELINE=1
     else
         echo "Baseline job didn't pass, plotting current job only"
-        BASELINE_ARGS_GPU_HLT=""
-        BASELINE_ARGS_GPU_NGT=""
-        BASELINE_ARGS_CPU_HLT=""
-        BASELINE_ARGS_CPU_NGT=""
-        BASELINE_ARGS_CPU_HLTONCPU=""
+        HAVE_BASELINE=0
     fi
 
+    # compareMemoryProfiles.py now takes --file1/--file2 as named
+    # flags (--file1 is required). This helper picks which file goes
+    # into --file1 depending on whether a passing baseline is
+    # available, so the "current-run-only" fallback still works.
+    run_compare() {
+        local baseline_file="$1"; shift
+        local current_file="$1"; shift
+        if [ "$HAVE_BASELINE" -eq 1 ]; then
+            compareMemoryProfiles.py \
+                --file1 "$baseline_file" --label1 "${COMPARISON_RELEASE}" \
+                --file2 "$current_file" --label2 "${PULL_REQUEST}" \
+                --cms-label "cmssw integration" --no-show "$@"
+        else
+            compareMemoryProfiles.py \
+                --file1 "$current_file" --label1 "${PULL_REQUEST}" \
+                --cms-label "cmssw integration" --no-show "$@"
+        fi
+    }
+
     # run the GPU comparison job for the HLT timing menu
-    compareMemoryProfiles.py $BASELINE_ARGS_GPU_HLT $PR_DIR/logs.Phase2_L1P2GT_HLT/gpu_memory.csv \
-			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
-			     --no-show --gpu --output hlt_memory_comparison || ERR=1
+    run_compare "$BASELINE_DIR/gpu_memory_ph2_hlt.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT/gpu_memory.csv" \
+			     --gpu --output hlt_memory_comparison || ERR=1
     # run the GPU comparison job for the NGT menu
-    compareMemoryProfiles.py $BASELINE_ARGS_GPU_NGT $PR_DIR/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv \
-			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
-			     --no-show --gpu --output ngt_memory_comparison || ERR=1
+    run_compare "$BASELINE_DIR/gpu_memory_ph2_ngt.csv" "$PR_DIR/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv" \
+			     --gpu --output ngt_memory_comparison || ERR=1
     # run the CPU comparison job for the HLT timing menu
-    compareMemoryProfiles.py $BASELINE_ARGS_CPU_HLT $PR_DIR/logs.Phase2_L1P2GT_HLT/cpu_memory.csv \
-			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
-			     --no-show --output hlt_memory_comparison || ERR=1
+    run_compare "$BASELINE_DIR/cpu_memory_ph2_hlt.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT/cpu_memory.csv" \
+			     --output hlt_memory_comparison || ERR=1
     # run the CPU comparison job for the NGT menu
-    compareMemoryProfiles.py $BASELINE_ARGS_CPU_NGT $PR_DIR/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv \
-			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
-			     --no-show --output ngt_memory_comparison || ERR=1
+    run_compare "$BASELINE_DIR/cpu_memory_ph2_ngt.csv" "$PR_DIR/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv" \
+			     --output ngt_memory_comparison || ERR=1
     # run the CPU comparison job for the HLT timing menu (on CPU)
-    compareMemoryProfiles.py $BASELINE_ARGS_CPU_HLTONCPU $PR_DIR/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv \
-			     --label2 "${PULL_REQUEST}" --cms-label "cmssw integration" \
-			     --no-show --output hltOnCPU_memory_comparison || ERR=1
+    run_compare "$BASELINE_DIR/cpu_memory_ph2_hlt_onCPU.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv" \
+			     --output hltOnCPU_memory_comparison || ERR=1
 
     # copy back the png figures to the output folder
     cp gpu_hlt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1

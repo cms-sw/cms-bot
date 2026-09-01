@@ -139,7 +139,8 @@ def check_updates(req_data):
                 print("ERROR: ", inst)
                 print("SKIPPED: Failed for ", data)
                 print(jdata)
-                if ignore_count: ignore_count -= 1
+                if ignore_count:
+                    ignore_count -= 1
                 continue
             if ignore_count:
                 ignore_count -= 1

@@ -62,5 +62,13 @@ if __name__ == "__main__":
     end_time = int(time() * 1000)
     start_time = end_time - int(86400 * 1000 * opts.days)
     query = "release:/%s/ AND architecture:/%s/" % (opts.release.lower(), opts.arch)
-    es_data = es_query("cmssdt-ib-matrix-*", query, start_time, end_time, scroll=True, fields=["release", "workflow", "step", "architecture" ,"exception"], must_fields='{"exists":{"field":"exception"}},')
+    es_data = es_query(
+        "cmssdt-ib-matrix-*",
+        query,
+        start_time,
+        end_time,
+        scroll=True,
+        fields=["release", "workflow", "step", "architecture", "exception"],
+        must_fields='{"exists":{"field":"exception"}},',
+    )
     print(json.dumps(es_data, indent=2, sort_keys=True, separators=(",", ": ")))

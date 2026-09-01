@@ -306,7 +306,7 @@ def es_query(
     scroll=False,
     max_count=-1,
     fields=None,
-    must_fields=""
+    must_fields="",
 ):
     query_str = get_es_query(
         query=query,

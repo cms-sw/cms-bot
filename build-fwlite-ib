@@ -66,7 +66,7 @@ CMSBUILD_ARGS="${CMSBUILD_ARGS} -j $(nproc) --repository $REPOSITORY --architect
 
 PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} --builders 2 build fwlite-tool-conf
 PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} --builders 2 --sync-back upload fwlite-tool-conf
-PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} -k -j build fwlite
+PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} -k build fwlite
 
 pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src
   tar xzf src-logs.tgz

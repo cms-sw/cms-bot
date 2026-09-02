@@ -90,6 +90,14 @@
       "start_date": 1377043200
     }
   ],
+  "Electricks94": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
+    }
+  ],
   "EltonSh": [
     {
       "category": [
@@ -189,6 +197,14 @@
         "reconstruction"
       ],
       "start_date": 1765238400
+    }
+  ],
+  "Parsifal-2045": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "Pavlov": [
@@ -1312,6 +1328,14 @@
       "start_date": 1462147200
     }
   ],
+  "ghyls": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
+    }
+  ],
   "giamman": [
     {
       "category": [
@@ -2335,6 +2359,14 @@
       "start_date": 1530748800
     }
   ],
+  "pietroGru": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
+    }
+  ],
   "pmandrik": [
     {
       "category": [
@@ -2490,6 +2522,14 @@
       ],
       "end_date": 1726790400,
       "start_date": 1659052800
+    }
+  ],
+  "sbaldu": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "sbein": [

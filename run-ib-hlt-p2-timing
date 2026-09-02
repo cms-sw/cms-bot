@@ -7,6 +7,9 @@ if has_jenkins_artifacts hlt-p2-timing/$RELEASE_FORMAT/${ARCHITECTURE}/status.tx
   echo "SKIPPED: Not running hlt-p2-timing as it is already run"
   exit 0
 fi
+# Get the name of the output JSON files from the FastTimerService of the release under test
+RES_PREFIX=$(python3 -c 'from HLTrigger.Configuration.HLT_75e33.services.FastTimerService_cfi import FastTimerService; print(FastTimerService.jsonFileName.value())' 2>/dev/null | sed 's|[.]json$||') || true
+[ -n "${RES_PREFIX}" ] || RES_PREFIX="resources"
 git cms-addpkg HLTrigger/Configuration
 cd src/HLTrigger/Configuration/python/HLT_75e33/test
 # Uncomment the following in case we have to use quick patch for patatrack-scripts
@@ -14,7 +17,7 @@ cd src/HLTrigger/Configuration/python/HLT_75e33/test
 RES="passed"
 mkdir -p $WORKSPACE/upload
 timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1 || RES="failed"
-mv Phase2Timing_resources*.json $WORKSPACE/upload || RES="failed"
+mv ${RES_PREFIX}*.json $WORKSPACE/upload || RES="failed"
 if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
   (
     mv logs.Phase2_L1P2GT_HLT/cpu_memory.csv       $WORKSPACE/upload/cpu_memory_ph2_hlt.csv &&

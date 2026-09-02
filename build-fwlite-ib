@@ -65,7 +65,10 @@ fi
 CMSBUILD_ARGS="${CMSBUILD_ARGS} -j $(nproc) --repository $REPOSITORY --architecture $ARCHITECTURE $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}") --work-dir cms"
 
 PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} --builders 2 build fwlite-tool-conf
-PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} --builders 2 --sync-back upload fwlite-tool-conf
+if [ $(ls cms/RPMS/$ARCHITECTURE | grep '.rpm' | wc -l) -gt 0 ] ; then
+  PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} --builders 2 --sync-back upload fwlite-tool-conf
+  rm -rf cms
+fi
 PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} -k build fwlite
 
 pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src

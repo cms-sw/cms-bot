@@ -1,0 +1,48 @@
+#!/bin/sh -ex
+CMS_BOT_DIR=$(cd $(dirname $0); /bin/pwd -P)
+source $(dirname $0)/ci-cd_config.sh
+source $(dirname $0)/cmssdt.sh
+ARCHITECTURE=$1
+CMSSW_X_Y_Z=$2
+export SCRAM_ARCH=$ARCHITECTURE
+WORKSPACE=${WORKSPACE-$PWD}
+
+RELEASE_QUEUE=`echo $CMSSW_X_Y_Z | sed 's/\(CMSSW_[0-9][0-9]*_[0-9][0-9]*\)_.*/\1_X/'`
+CMSSW_MAJOR=$(echo ${RELEASE_QUEUE} | cut -d_ -f2)
+CMSSW_MINOR=$(echo ${RELEASE_QUEUE} | cut -d_ -f3)
+CMSSW_VERSION_NUMBER=$(echo x0${CMSSW_MAJOR}x0${CMSSW_MINOR} | sed -r -e 's|x[0]*([0-9][0-9])|\1|g;s|^0||')
+
+cd "$WORKSPACE"
+
+CONFIG_MAP_URL="${CMS_BOT_DIR}/config.map"
+eval `cat $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+
+git clone -b $CMSDIST_TAG  https://github.com/cms-sw/cmsdist.git   CMSDIST
+git clone -b $PKGTOOLS_TAG https://github.com/cms-sw/pkgtools.git PKGTOOLS
+pushd CMSDIST
+  git checkout REL/${CMSSW_X_Y_Z}/${ARCHITECTURE}
+popd
+
+CMSBUILD_ARGS="--server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER}"
+
+if [[ "$BUILD_OPTS" == *microarchs:* ]]; then
+  BUILD_OPTS=$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep -v '^microarchs:' | tr '\n' ',' | sed 's|,$||')
+fi
+if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
+  if [[ "$BUILD_OPTS" == *without:* ]]; then
+    BUILD_OPTS_WITHOUT=$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^without:')
+    BUILD_OPTS=$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep -v '^without:' | tr '\n' ',')without:$(echo "${BUILD_OPTS_WITHOUT}:rocm:cuda" | tr ':' '\n' | grep -v '^without$' | sort | uniq | tr '\n' ':' | sed 's|:$||')
+  elif [[ -z "$BUILD_OPTS" ]]; then
+    BUILD_OPTS="without:rocm:cuda"
+  else
+    BUILD_OPTS="without:rocm:cuda,$BUILD_OPTS"
+  fi
+fi
+[ $(grep 'upload-package-store-s3' PKGTOOLS/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store-s3"
+CMSBUILD_ARGS="${CMSBUILD_ARGS} -j $(nproc) --architecture $ARCHITECTURE $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}") --work-dir cms"
+
+PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} --builders 2 build fwlite-tool-conf
+PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} --builders 2 --sync-back upload fwlite-tool-conf
+rm -rf cms
+PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} build fwlite
+PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} --sync-back upload fwlite

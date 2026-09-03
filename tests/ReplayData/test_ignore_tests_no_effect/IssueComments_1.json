@@ -1,0 +1,12 @@
+{
+  "comments": [
+    {
+      "id": 1001,
+      "user": {
+        "login": "tester"
+      },
+      "body": "ignore tests-rejected with manual-override",
+      "created_at": "2025-12-12T12:00:00+00:00"
+    }
+  ]
+}

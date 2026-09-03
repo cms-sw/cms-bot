@@ -1,0 +1,54 @@
+{
+  "test_name": "test_backport_ok",
+  "action_count": 5,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 9,
+        "labels": [
+          "backport-ok"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 9,
+        "body": "Pull request #9 was updated. aloeliger, antoniovagnerini, civanch, epalencia, iarspider, mdhildreth, nothingface0, rvenditti, syuvivida, tjavaid can you please check and sign again.\n\nThe following packages are now also affected:\n- SimTracker/TrackTriggerAssociation (**l1, simulation**)\n- Validation/TrackerHits (**dqm**)\n\naloeliger, antoniovagnerini, civanch, epalencia, mdhildreth, nothingface0, rvenditti, syuvivida, tjavaid can you please review and sign?\n\nGiacomoSguazzoni, VinInn, VourMa, arossi83, missirol, mmusich, mtosi, rovere, sroychow, threus this is something you requested to watch as well.\n<!--pr_updated:157948786646167098-->"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_status",
+      "details": {
+        "sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/9/jenkins"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_status",
+      "details": {
+        "sha": "5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
+        "state": "success",
+        "target_url": "",
+        "description": "{\"ENABLE_BOT_TESTS\": \"\"}",
+        "context": "bot/9/test_parameters"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 1852047910,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"1852049424\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2023-12-12T13:37:11+00:00\",\"user\":\"iarspider\"},\"1852068434\":{\"cats\":[\"dqm\"],\"ctype\":\"+1\",\"first_line\":\"+dqm\",\"locked\":true,\"signed_files\":[\"Validation/TrackerHits/test/README::commit::17338beb185f\"],\"ts\":\"2023-12-12T13:45:49Z\",\"user\":\"iarspider\"},\"1852079588\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2023-12-12T13:52:20+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"1852068434\":\"+1\",\"2857856131\":\"+1\",\"2857857384\":\"+1\"},\"fv\":{\"SimTracker/TrackTriggerAssociation/doc/README::9a83848133c1de5c6e0071f6c8ed7e527529534d\":{\"cats\":[\"l1\",\"simulation\"],\"ts\":\"2025-12-12T11:00:00Z\"},\"Validation/TrackerHits/test/README::fec8f9d86c13d6ca0ba7316317695d3df46af93d\":{\"cats\":[\"dqm\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

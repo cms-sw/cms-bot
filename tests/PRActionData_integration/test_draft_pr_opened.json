@@ -1,0 +1,25 @@
+{
+  "test_name": "test_draft_pr_opened",
+  "action_count": 2,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_status",
+      "details": {
+        "sha": "9138474754099798ff50cb07287e7caa4786f247",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/21/jenkins"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2523322081,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"}},\"emoji\":{},\"fv\":{\"FWCore/Utilities/BuildFile.xml::279eb03c0cbce1d387c1678a1f4bda0b3e8034ad\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "state": "pending",
+  "statuses": [
+    {
+      "context": "cms/1/relval/required",
+      "state": "success",
+      "description": "Tests passed",
+      "target_url": ""
+    }
+  ]
+}

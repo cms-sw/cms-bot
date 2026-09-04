@@ -160,6 +160,7 @@ CMSSW_L2 = {
     "mbluj": ["tau-pog"],
     "mmasciov": ["tracking-pog"],
     "elusian": ["tracking-pog"],
+    "bdanzi": ["tracking-pog"],
     # PPD
     "abenecke": ["ppd"],
     "vlimant": ["ppd"],

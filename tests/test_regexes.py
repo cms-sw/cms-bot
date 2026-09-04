@@ -29,7 +29,7 @@ def test_regex(case):
     expect = case["expect"]
     first_line = process_pr.preprocess_comment_text(case["s"])[0]
     print("\tTest string:", first_line)
-    ret = process_pr.check_test_cmd(first_line, "cms-sw/cmssw", params)
+    ret = process_pr.check_test_cmd(first_line, "cms-sw/cmssw")
     assert ret[0] == case["should_match"]
     if case["should_match"]:
         assert ret[1] == " ".join(expect.get("cms_prs", []))

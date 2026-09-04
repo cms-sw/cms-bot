@@ -18,6 +18,11 @@ mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload
 cp -r ${HLT_BASEDIR}/${HLT_P2_SCRIPT} $WORKSPACE/rundir
 rm -rf $WORKSPACE/rundir/__pycache__
 
+# Current-run FastTimerService JSON outputs, kept around under their original
+# name so they can be diffed against the baseline JSONs before being moved
+# into $WORKSPACE/json_upload further down.
+PR_DIR=$WORKSPACE/rundir
+
 upload_gpu_csvs() {
   mkdir -p $JENKINS_UPLOAD_DIR/hlt-p2-timing
 
@@ -33,6 +38,48 @@ upload_gpu_csvs() {
   cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_memory_ph2_ngt.csv ||  return 1
   cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_ngt.csv || return 1
   cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv  $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_ngt.csv ||  return 1
+}
+
+ensure_circles_scripts() {
+  if [[ ! -d $WORKSPACE/circles ]]; then
+    git clone https://github.com/cms-sw/circles --depth 1 $WORKSPACE/circles
+  fi
+}
+
+# Compare one menu's current-PR FastTimerService JSON against the reference
+# IB's JSON (fetched into $BASELINE_DIR alongside the baseline CSVs). Falls
+# back to plotting the PR file alone when no passing baseline is available,
+# mirroring the run_compare() fallback used for the memory CSVs above.
+run_json_compare() {
+    local baseline_file="$1"; shift
+    local current_file="$1"; shift
+    local group_file="$1"; shift
+    local color_file="$1"; shift
+    local title="$1"; shift
+    local output="$1"; shift
+
+    local files=()
+    local labels=()
+    if [ "$HAVE_BASELINE" -eq 1 ] && [ -f "$baseline_file" ]; then
+        files+=("$baseline_file"); labels+=("${COMPARISON_RELEASE}")
+    fi
+    if [ -f "$current_file" ]; then
+        files+=("$current_file"); labels+=("${PULL_REQUEST}")
+    fi
+    if [ ${#files[@]} -eq 0 ]; then
+        echo "No timing JSON files found for ${output}; skipping" >> ${WORKSPACE}/hlt-p2-timing.log
+        return 0
+    fi
+
+    python3 "$WORKSPACE/circles/scripts/compare_multiple_json_hist.py" \
+        "${files[@]}" \
+        --labels "${labels[@]}" \
+        --group "$group_file" \
+        --colors "$color_file" \
+        --metric time_real --level package \
+        --title "$title" \
+        --save "$JENKINS_UPLOAD_DIR/hlt-p2-timing/${output}.png" \
+        --no-show
 }
 
 ERR=0
@@ -59,11 +106,11 @@ if which compareMemoryProfiles.py >/dev/null 2>&1; then
 
     # create folder for the baseline
     mkdir -p $WORKSPACE/baseline-hlt-p2-timing
-    # get the csv files for the baseline
+    # get the csv (and json) files for the baseline -- they are uploaded to the
+    # same location, so this single fetch covers both
     get_jenkins_artifacts hlt-p2-timing/${COMPARISON_RELEASE}/${COMPARISON_ARCH}/ $WORKSPACE/baseline-hlt-p2-timing/
 
     BASELINE_DIR=$WORKSPACE/baseline-hlt-p2-timing
-    PR_DIR=$WORKSPACE/rundir
     if grep -q "passed" $BASELINE_DIR/status.txt; then
         HAVE_BASELINE=1
     else
@@ -112,6 +159,24 @@ if which compareMemoryProfiles.py >/dev/null 2>&1; then
     cp cpu_hlt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
     cp cpu_ngt_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
     cp cpu_hltOnCPU_memory_comparison.png $JENKINS_UPLOAD_DIR/hlt-p2-timing/ || ERR=1
+
+    # timing (time_real) comparison of the current PR against the reference IB,
+    # one plot per menu -- the baseline JSONs live alongside the baseline CSVs
+    # fetched above, so no separate get_jenkins_artifacts call is needed.
+    ensure_circles_scripts
+    if [ -f "$WORKSPACE/circles/scripts/compare_multiple_json_hist.py" ]; then
+        run_json_compare "$BASELINE_DIR/${RES_PREFIX}.json" "$PR_DIR/${RES_PREFIX}.json" \
+            "$WORKSPACE/circles/web/groups/hlt.json" "$WORKSPACE/circles/web/colours/default.json" "HLT (GPU) timing breakdown" \
+            "hlt_timing_comparison" || ERR=1
+        run_json_compare "$BASELINE_DIR/${RES_PREFIX}_OnCPU.json" "$PR_DIR/${RES_PREFIX}_OnCPU.json" \
+            "$WORKSPACE/circles/web/groups/hlt.json" "$WORKSPACE/circles/web/colours/default.json" "HLT (CPU) timing breakdown" \
+            "hltOnCPU_timing_comparison" || ERR=1
+        run_json_compare "$BASELINE_DIR/${RES_PREFIX}_NGT.json" "$PR_DIR/${RES_PREFIX}_NGT.json" \
+            "$WORKSPACE/circles/web/groups/hlt.json" "$WORKSPACE/circles/web/colours/default.json" "NGT Scouting timing breakdown" \
+            "ngt_timing_comparison" || ERR=1
+    else
+        echo "compare_multiple_json_hist.py is NOT available"
+    fi
 else
     echo "compareMemoryProfiles.py is NOT available"
 fi
@@ -230,6 +295,14 @@ h1{font-size:1.4rem;font-weight:500;margin-bottom:.25rem}
   <div class="stat"><span class="stat-label">HLT on CPU</span><span class="stat-value ${HLT_ONCPU_STATUS_CLASS}">${HLT_ONCPU_STATUS}</span></div>
   <div class="stat"><span class="stat-label">NGT Scouting</span><span class="stat-value ${NGT_STATUS_CLASS}">${NGT_STATUS}</span></div>
   <div class="stat"><span class="stat-label">Baseline</span><span class="stat-value">${COMPARISON_RELEASE}</span></div>
+</div>
+<div class="section">
+  <div class="section-title">Timing comparisons vs reference IB (${COMPARISON_RELEASE})</div>
+  <div class="grid">
+    <div class="card"><a href="hlt_timing_comparison.png"><img src="hlt_timing_comparison.png" alt="HLT GPU timing comparison" onerror="this.outerHTML='<div class=\'placeholder\'>hlt_timing_comparison.png not found</div>'"></a><div class="card-body"><div class="card-title">HLT (GPU) <span class="badge badge-gpu">GPU</span></div><div class="card-sub">Phase2_L1P2GT_HLT</div></div></div>
+    <div class="card"><a href="hltOnCPU_timing_comparison.png"><img src="hltOnCPU_timing_comparison.png" alt="HLT CPU timing comparison" onerror="this.outerHTML='<div class=\'placeholder\'>hltOnCPU_timing_comparison.png not found</div>'"></a><div class="card-body"><div class="card-title">HLT (CPU) <span class="badge badge-cpu">CPU</span></div><div class="card-sub">Phase2_L1P2GT_HLT_OnCPU</div></div></div>
+    <div class="card"><a href="ngt_timing_comparison.png"><img src="ngt_timing_comparison.png" alt="NGT Scouting timing comparison" onerror="this.outerHTML='<div class=\'placeholder\'>ngt_timing_comparison.png not found</div>'"></a><div class="card-body"><div class="card-title">NGT Scouting <span class="badge badge-gpu">GPU</span></div><div class="card-sub">NGTScouting_L1P2GT_HLT</div></div></div>
+  </div>
 </div>
 <div class="section">
   <div class="section-title">Memory comparisons &mdash; HLT Phase-2 menu</div>

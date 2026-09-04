@@ -884,15 +884,16 @@ def parse_test_cmd(first_line: str) -> ParseResult:
     return res
 
 
-def check_test_cmd(first_line, repo, params):
+def check_test_cmd(first_line, repo):
     try:
         res = parse_test_cmd(first_line)
     except ParseError as e:
         logger.warning("Invalid build/test command: " + str(e))
-        return (False, "", "", "", False)
+        return (False, "", "", "", False, {})
 
     wfs = ""
     prs = []
+    params = {}
 
     if res.workflows:
         wfs = ",".join(set(res.workflows))
@@ -906,7 +907,7 @@ def check_test_cmd(first_line, repo, params):
     if res.addpkg:
         params["EXTRA_CMSSW_PACKAGES"] = ",".join(set(res.addpkg))
 
-    return (True, " ".join(prs), wfs, res.queue, res.verb == "build")
+    return (True, " ".join(prs), wfs, res.queue, res.verb == "build", params)
 
 
 def get_prs_list_from_string(pr_string="", repo_string=""):
@@ -1523,6 +1524,7 @@ def process_pr(
     cmssw_prs = ""
     extra_wfs = ""
     global_test_params = {}
+    transient_test_params = {}
     assign_cats = {}
     hold = {}
     last_test_start_time = None
@@ -1887,8 +1889,9 @@ def process_pr(
             # Check if someone asked to trigger the tests
             if valid_commenter:
                 if re.match("^(" + "|".join(TEST_VERBS) + ")", first_line):
-                    ok, v2, v3, v4, v5 = check_test_cmd(first_line, repository, global_test_params)
+                    ok, v2, v3, v4, v5, v6 = check_test_cmd(first_line, repository)
                     if ok:
+                        transient_test_params = v6
                         build_comment = None
                         if v5:
                             if has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
@@ -1943,6 +1946,8 @@ def process_pr(
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
+    # merge global and transient test params
+    global_test_params.update(transient_test_params)
 
     # Check if it needs to be automatically closed.
     if mustClose:

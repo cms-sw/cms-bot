@@ -720,6 +720,7 @@ CMSSW_CATEGORIES = {
         "Validation/TrackerHits",
         "Validation/TrackerRecHits",
         "Validation/TrackingMCTruth",
+        "Validation/TruthInfo",
     ],
     "externals": [
         "",
@@ -806,7 +807,9 @@ CMSSW_CATEGORIES = {
         "SimDataFormats/GeneratorProducts",
         "SimDataFormats/HTXS",
         "SimDataFormats/TruthInfo",
+        "SimGeneral/TruthGraphAssociatorProducers",
         "Validation/EventGenerator",
+        "Validation/TruthInfo",
     ],
     "geometry": [
         "Configuration/Geometry",

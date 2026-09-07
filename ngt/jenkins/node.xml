@@ -25,7 +25,7 @@
           <string>CMSSW_GIT_REFERENCE</string>
           <string>/cvmfs/cms.cern.ch/cmssw.git.daily</string>
           <string>FORCE_LABELS</string>
-          <string>@GPU_LABELS"</string>
+          <string>@GPU_LABELS@"</string>
           <string>PYTHONPATH</string>
           <string>/cvmfs/cms-ib.cern.ch/jenkins-env/py23</string>
           <string>SINGULARITY_OPTIONS</string>

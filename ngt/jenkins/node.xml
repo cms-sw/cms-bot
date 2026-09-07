@@ -21,11 +21,13 @@
           <default>
             <comparator class="hudson.util.CaseInsensitiveComparator"/>
           </default>
-          <int>4</int>
+          <int>5</int>
           <string>CMSSW_GIT_REFERENCE</string>
           <string>/cvmfs/cms.cern.ch/cmssw.git.daily</string>
           <string>FORCE_LABELS</string>
           <string>@GPU_LABELS@</string>
+          <string>JENKINS_AGENT_CORES</string>
+          <string>4</string>
           <string>PYTHONPATH</string>
           <string>/cvmfs/cms-ib.cern.ch/jenkins-env/py23</string>
           <string>USE_SINGULARITY</string>

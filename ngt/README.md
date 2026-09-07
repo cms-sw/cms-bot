@@ -1,7 +1,7 @@
-Create: kubectl create -f session.yaml
+Create: kubectl --context ngt-token create -f session.yaml
         ./create.sh gpu.yaml session-number
         ./create.sh h100.yaml 02
-List:   kubectl get po
-Delete: kubectl delete --force po <session-id>
+List:   kubectl --context ngt-token get po
+Delete: kubectl --context ngt-token delete --force po <session-id>
 Connect: ssh <session-id>@ngt.cern.ch
 

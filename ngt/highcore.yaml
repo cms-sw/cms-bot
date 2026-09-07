@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ngt-highcore-@N@
+  labels:
+    home-eos: "true"
+    mount-cvmfs: "true"
+    mount-afs: "false"
+    mount-eos: "true"
+spec:
+  containers:
+    - name: container
+      image: cmssw/el9:x86_64-d@IMG_DATE@
+      command: ["/usr/bin/tini", "--"]
+      args: ["sleep", "infinity"]
+      env:
+        - name: TZ
+          value: Europe/Zurich
+  nodeSelector:
+    node/type: HIGHCORE-384

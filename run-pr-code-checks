@@ -15,6 +15,7 @@ if [ "${APPLY_PATCH}" != "true" ] ; then APPLY_PATCH=false; fi
 MULTIPLE_FILES_CHANGES=true
 if [ "${CONTEXT_PREFIX}" = "" ] ; then CONTEXT_PREFIX="cms"; fi
 if [ "$DRY_RUN" != "true" ] ; then DRY_RUN=false ; fi
+export CMSBOT_PYTHON_CMD=$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 
 source ${CMS_BOT_DIR}/common/github_reports.sh
 PR_COMMIT="$(wget -q -O- https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} | grep 'api.github.com/repos/cms-sw/cmssw/statuses/' | grep '"href"' | tail -1 | sed 's|.*/||;s|".*||')"
@@ -72,7 +73,7 @@ pushd $CMSSW_BASE/src
   done
   grep -v '^[^/]*/[^/]*/test/' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-checks-files.txt          || true
   grep -v '^[^/]*/[^/]*/data/' ${UP_DIR}/code-checks-files.txt > ${UP_DIR}/filename-code-checks-files.txt || true
-  $CMS_BOT_DIR/cms-filename-checks.py ${UP_DIR}/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > ${UP_DIR}/invalid-filenames.txt || true
+  $CMSBOT_PYTHON_CMD $CMS_BOT_DIR/cms-filename-checks.py ${UP_DIR}/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > ${UP_DIR}/invalid-filenames.txt || true
   echo "Changed files:"
   cat ${UP_DIR}/code-checks-files.txt
   echo ""
@@ -91,7 +92,7 @@ pushd $CMSSW_BASE/src
     fi
     exit 0
   fi
-  $CMS_BOT_DIR/pr-checks/check-pr-files.py -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > ${UP_DIR}/invalid_files.txt || true
+  $CMSBOT_PYTHON_CMD $CMS_BOT_DIR/pr-checks/check-pr-files.py -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > ${UP_DIR}/invalid_files.txt || true
   touch ${UP_DIR}/duplicate-data.txt
   if [ -d ${CMSSW_RELEASE_BASE}/external/${SCRAM_ARCH}/data ] ; then
     for f in $(cat ${UP_DIR}/all-changed-files.txt) ; do
@@ -178,7 +179,6 @@ if [ ${COMMIT_CHG} -gt 0 ] ; then
         git commit -a -m 'auto applied code-checks/format changes'
       fi
       curl -s https://api.github.com/repos/${REPO_USER}/cmssw/pulls/${PULL_REQUEST}  > pr.json
-      export CMSBOT_PYTHON_CMD=$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
       TEST_BRANCH=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('pr.json'));print(obj['head']['ref'])")
       TEST_REPO=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('pr.json'));print(obj['head']['repo']['full_name'])")
       if ! $DRY_RUN ; then

@@ -1454,6 +1454,7 @@ if [ -e $WORKSPACE/deprecated-warnings.log ] ; then
   echo "**CMS deprecated warnings**: $(cat ${WORKSPACE}/deprecated-warnings.log | grep 'Wdeprecated-declarations' | wc -l) CMS deprecated warnings found, see [summary page](${PR_RESULT_URL}/deprecated-warnings.log) for details." >> ${RESULTS_DIR}/09-report.res
 fi
 
+CMSSW_CONFIG_TAG=$(cat $WORKSPACE/$CMSSW_IB/config/config_tag | grep '^V[0-9]' | cut -d- -f1-3 | sed 's|V||;s|-||g;s|^0*||')
 BUILD_LOG_RES="ERROR"
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"
@@ -1471,7 +1472,7 @@ else
     fi
     if $RUN_TESTS ; then
       #Check Build Rule: Make sure nothing rebuilds after last build
-      if [ $(cat $WORKSPACE/$CMSSW_IB/config/config_tag  | sed 's|V||;s|-||g;s|^0*||') -gt 50807 ] ; then
+      if [ "${CMSSW_CONFIG_TAG}" -gt 50807 ] ; then
           scram build -f -j ${NCPU} -d  >${WORKSPACE}/scram-rebuild.log 2>&1
           grep ' newer ' ${WORKSPACE}/scram-rebuild.log | grep -v '/cache/xlibs.backup' > ${WORKSPACE}/newer-than-target.log || true
           if [ -s ${WORKSPACE}/newer-than-target.log ] ; then

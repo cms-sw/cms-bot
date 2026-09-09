@@ -17458,6 +17458,15 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_14_0_25",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_14_1": [

@@ -1,0 +1,78 @@
+{
+  "test_name": "test_new_pr",
+  "action_count": 7,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "edit_issue",
+      "details": {
+        "issue_number": 17,
+        "milestone": "CMSSW_14_1_X"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 17,
+        "labels": [
+          "code-checks-pending",
+          "core-pending",
+          "orp-pending",
+          "pending-signatures",
+          "tests-pending"
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_property_file",
+      "details": {
+        "filename": "trigger-code-checks-iarspider-cmssw-cmssw-17.properties",
+        "parameters": {
+          "PULL_REQUEST": "17",
+          "CONTEXT_PREFIX": "cms/17",
+          "APPLY_PATCH": "false"
+        }
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 17,
+        "body": "A new Pull Request was created by  @iarspider for master.\n\nIt involves the following packages:\n\n- Utilities/ReleaseScripts (**core**)\n\n@Dr15Jones, @makortel, @smuzaffar can you please review it and eventually sign? Thanks.\n@wddgit this is something you requested to watch as well.\n@iarspider you are the release manager for this.\ncms-bot commands are listed <a href=\"https://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n\n<!--welcome-->"
+      }
+    },
+    {
+      "sequence": 5,
+      "action": "create_status",
+      "details": {
+        "sha": "2a9454e30606b17e52000110972998326ce9e428",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/17/jenkins"
+      }
+    },
+    {
+      "sequence": 6,
+      "action": "create_status",
+      "details": {
+        "sha": "2a9454e30606b17e52000110972998326ce9e428",
+        "state": "pending",
+        "target_url": "",
+        "description": "code-checks requested",
+        "context": "cms/17/code-checks"
+      }
+    },
+    {
+      "sequence": 7,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 17,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::1963595dc5bad37400a61b64c43b5efbefa11b81\":{\"cats\":[\"core\"],\"ts\":\"2024-02-27T10:25:45Z\"}}} -->"
+      }
+    }
+  ]
+}

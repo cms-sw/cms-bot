@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "sha": "1963595dc5bad37400a61b64c43b5efbefa11b81",
+      "filename": "Utilities/ReleaseScripts/test/BuildFile.xml",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 0,
+      "changes": 2,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/2a9454e30606b17e52000110972998326ce9e428/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/2a9454e30606b17e52000110972998326ce9e428/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Utilities%2FReleaseScripts%2Ftest%2FBuildFile.xml?ref=2a9454e30606b17e52000110972998326ce9e428",
+      "patch": "@@ -4,6 +4,8 @@\n <test name=\"test-clang-tidy\" command=\"test-clang-tidy.sh\">\n   <use name=\"llvm\"/>\n </test>\n+<test name=\"scram-always-pass\" command=\"ture\"/>\n+<test name=\"scram-always-fail\" command=\"! fail\"/>\n <ifrelease name=\"!ASAN\">\n   <test name=\"TestValgrind\" command=\"test-valgrind.sh\">\n     <flags PRE_TEST=\"test-valgrind-memleak\"/>"
+    }
+  ]
+}

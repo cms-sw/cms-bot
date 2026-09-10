@@ -1,0 +1,35 @@
+{
+  "sha": "551c95f59caff42369887b5fee86583fe2bff161",
+  "node_id": "C_kwDOF83__NoAKDU1MWM5NWY1OWNhZmY0MjM2OTg4N2I1ZmVlODY1ODNmZTJiZmYxNjE",
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/551c95f59caff42369887b5fee86583fe2bff161",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/551c95f59caff42369887b5fee86583fe2bff161",
+  "author": {
+    "name": "Ivan Razumov",
+    "email": "iarspider@gmail.com",
+    "date": "2025-03-28T13:08:22Z"
+  },
+  "committer": {
+    "name": "Ivan Razumov",
+    "email": "iarspider@gmail.com",
+    "date": "2025-03-28T13:08:22Z"
+  },
+  "tree": {
+    "sha": "9f2edff2009ac962b7a68132fdee20a2d27293d0",
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/9f2edff2009ac962b7a68132fdee20a2d27293d0"
+  },
+  "message": "Dummy change",
+  "parents": [
+    {
+      "sha": "1a6eba4a2910fa7af4d98b4c35a7ae501d9a1615",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/1a6eba4a2910fa7af4d98b4c35a7ae501d9a1615",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/1a6eba4a2910fa7af4d98b4c35a7ae501d9a1615"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+  }
+}

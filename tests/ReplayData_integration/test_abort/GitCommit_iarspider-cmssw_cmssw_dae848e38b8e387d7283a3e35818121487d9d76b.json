@@ -1,0 +1,34 @@
+{
+  "sha": "dae848e38b8e387d7283a3e35818121487d9d76b",
+  "node_id": "C_kwDOF83__NoAKGRhZTg0OGUzOGI4ZTM4N2Q3MjgzYTNlMzU4MTgxMjE0ODdkOWQ3NmI",
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/dae848e38b8e387d7283a3e35818121487d9d76b",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/dae848e38b8e387d7283a3e35818121487d9d76b",
+  "author": {
+    "name": "Ivan Razumov",
+    "email": "iarspider@gmail.com",
+    "date": "2024-04-11T11:54:10Z"
+  },
+  "committer": {
+    "name": "Ivan Razumov",
+    "email": "iarspider@gmail.com",
+    "date": "2024-04-11T11:54:10Z"
+  },
+  "tree": {
+    "sha": "941e19965634c7aa374c88d38f2eb49b97a6370a",
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/941e19965634c7aa374c88d38f2eb49b97a6370a"
+  },
+  "message": "test revert dqm",
+  "parents": [
+    {
+      "sha": "79752f053efecad55dde17732259737e621a1f3f",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/79752f053efecad55dde17732259737e621a1f3f",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/79752f053efecad55dde17732259737e621a1f3f"
+    }
+  ],
+  "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null
+  }
+}

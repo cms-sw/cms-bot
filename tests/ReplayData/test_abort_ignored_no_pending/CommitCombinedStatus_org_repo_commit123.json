@@ -1,0 +1,17 @@
+{
+  "state": "pending",
+  "statuses": [
+    {
+      "context": "bot/1/jenkins",
+      "state": "success",
+      "description": "Tests requested by tester at 2024-01-15 10:00:00 UTC.",
+      "target_url": "https://example.com/comment/1000"
+    },
+    {
+      "context": "cms/1/el8_amd64_gcc12/required",
+      "state": "success",
+      "description": "Tests passed",
+      "target_url": ""
+    }
+  ]
+}

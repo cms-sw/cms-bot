@@ -1,0 +1,14 @@
+{
+  "test_name": "test_assign_from",
+  "action_count": 1,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 27,
+        "body": "New categories assigned: core\n\nDr15Jones, makortel, smuzaffar you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2769192218-->"
+      }
+    }
+  ]
+}

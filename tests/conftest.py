@@ -20,20 +20,22 @@
 #                                                                              #
 ################################################################################
 
-from . import Framework
-
 collect_ignore = ["condor/tests"]
+
+import pytest
 
 
 def pytest_addoption(parser):
-    parser.addoption("--record", action="store_true", help="record mode")
-    parser.addoption("--record_action", action="store_true", help="record actions mode")
-    parser.addoption("--auth_with_token", action="store_true", help="legacy option, does nothing")
+    """Add command-line options for testing."""
+    parser.addoption(
+        "--record-actions",
+        action="store_true",
+        default=False,
+        help="Record actions instead of comparing to saved data",
+    )
 
 
-def pytest_configure(config):
-    if config.getoption("record"):
-        Framework.activateRecordMode()
-    if config.getoption("record_action"):
-        Framework.activateRecordActionMode()
-    Framework.activateTokenAuthMode()
+@pytest.fixture
+def record_mode(request):
+    """Fixture to check if we're in recording mode."""
+    return request.config.getoption("--record-actions")

@@ -1,0 +1,44 @@
+{
+  "test_name": "test_draft_pr_updated",
+  "action_count": 4,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 21,
+        "body": "New categories assigned: l1\n\n@aloeliger, @epalencia you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2523442237-->"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "create_status",
+      "details": {
+        "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
+        "state": "pending",
+        "target_url": "",
+        "description": "Waiting for authorized user to issue the test command.",
+        "context": "bot/21/jenkins"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "create_status",
+      "details": {
+        "sha": "28ce3f5888b5433dcae409ee336b2ad422595246",
+        "state": "success",
+        "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/21#issuecomment-2523514208",
+        "description": "See details",
+        "context": "cms/21/code-checks"
+      }
+    },
+    {
+      "sequence": 4,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2523322081,
+        "body": "cms-bot internal usage<!-- {\"comments\":{\"2523440118\":{\"ctype\":\"approve\",\"first_line\":\"+code-checks\",\"locked\":true,\"ts\":\"2024-12-06T15:00:50+00:00\",\"user\":\"iarspider\"}},\"emoji\":{\"2523442237\":\"+1\"},\"fv\":{\"FWCore/Utilities/BuildFile.xml::f0e710781cfb2d7f7d531a72bb1097d31fc8850d\":{\"cats\":[\"core\"],\"ts\":\"2024-12-06T15:34:01Z\"}}} -->"
+      }
+    }
+  ]
+}

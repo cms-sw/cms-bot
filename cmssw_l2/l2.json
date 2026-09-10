@@ -1039,6 +1039,14 @@
       "start_date": 1377734400
     }
   ],
+  "enibigir": [
+    {
+      "category": [
+        "xpog"
+      ],
+      "start_date": 1788998400
+    }
+  ],
   "epalencia": [
     {
       "category": [
@@ -1260,6 +1268,7 @@
       "category": [
         "xpog"
       ],
+      "end_date": 1788998400,
       "start_date": 1716508800
     }
   ],

@@ -7666,6 +7666,450 @@ class TestTestParametersOverride:
 
 
 # =============================================================================
+# TEST: BUILD/TEST COMMANDS MUST NOT AFFECT TEST_PARAMETERS TRACKING
+# =============================================================================
+
+
+class TestBuildTestDoesNotAffectTestParametersTracking:
+    """
+    Tests for the requirement that parameter changes given directly in
+    'please test'/'please build' commands apply only to that single job, and
+    must not affect the persistent 'test parameters:' state or its reporting
+    via the bot/{prId}/test_parameters commit status.
+
+    Specifically, handle_build_test() must NOT mutate:
+    - context.test_params_comment_id
+    - context.test_params_comment_url
+    - context.test_params_errors
+
+    These fields are owned exclusively by the 'test parameters:' command
+    (handle_test_parameters) and drive the bot/{prId}/test_parameters status.
+    """
+
+    @staticmethod
+    def _get_test_params_status(recorder):
+        """Return the create_status action for bot/{prId}/test_parameters, or None."""
+        for a in recorder.actions:
+            if a["action"] != "create_status":
+                continue
+            if "test_parameters" in a.get("details", {}).get("context", ""):
+                return a
+        return None
+
+    def test_status_not_overwritten_by_please_test_without_override(
+        self, test_name, alice_user, repo_config, record_mode
+    ):
+        """
+        Scenario:
+        1. alice posts 'test parameters:' (comment 100) with a valid parameter.
+        2. alice later posts 'please test' (comment 101) with no overrides.
+
+        Expected: bot/{prId}/test_parameters status is still attributed to
+        comment 100 (the 'test parameters:' comment), not comment 101.
+        """
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test parameters:\r\n- workflows = 1.0,2.0",
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "please test",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=1)).isoformat(),
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        # Sanity check: the 'please test' command did actually run
+        assert len(result["tests_triggered"]) > 0
+
+        status = self._get_test_params_status(recorder)
+        assert status is not None, "Expected a bot/{prId}/test_parameters status"
+        description = status["details"]["description"]
+        assert description.startswith("100:"), (
+            f"test_parameters status should still be attributed to comment 100 "
+            f"('test parameters:'), not the later 'please test' comment: {description!r}"
+        )
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_status_unaffected_by_please_test_with_override(
+        self, test_name, alice_user, repo_config, record_mode
+    ):
+        """
+        Scenario:
+        1. alice posts 'test parameters:' (comment 100) with a valid parameter.
+        2. alice later posts 'please test for el8_aarch64_gcc13' (comment 101),
+           overriding the architecture for that job only.
+
+        Expected: bot/{prId}/test_parameters status is still attributed to
+        comment 100, even though comment 101 carried an override. The override
+        only affects the properties file created for that job.
+        """
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test parameters:\r\n- workflows = 1.0,2.0",
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "please test for el8_aarch64_gcc13",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=1)).isoformat(),
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        assert len(result["tests_triggered"]) > 0
+
+        status = self._get_test_params_status(recorder)
+        assert status is not None, "Expected a bot/{prId}/test_parameters status"
+        description = status["details"]["description"]
+        assert description.startswith("100:"), (
+            f"test_parameters status should stay attributed to comment 100 even "
+            f"when the later 'please test' overrides parameters for its own job: "
+            f"{description!r}"
+        )
+        # The persistent test_params dict itself must be unaffected by the override
+        assert result["test_params"].get("MATRIX_EXTRAS") == "1.0,2.0"
+        assert "ARCHITECTURE_FILTER" not in result["test_params"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_errors_not_cleared_by_subsequent_please_test(
+        self, test_name, alice_user, repo_config, record_mode
+    ):
+        """
+        Scenario:
+        1. alice posts 'test parameters:' with an invalid key (comment 100),
+           producing a parsing error.
+        2. alice later posts 'please test' (comment 101).
+
+        Expected: The bot/{prId}/test_parameters status still reports the
+        error state - it must not be silently cleared by the later
+        'please test' command, since the underlying invalid configuration
+        was never fixed.
+        """
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": "test parameters:\r\n- invalid_key = some_value",
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "please test",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=1)).isoformat(),
+                },
+            ],
+            user=alice_user,
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        status = self._get_test_params_status(recorder)
+        assert status is not None, "Expected a bot/{prId}/test_parameters status"
+        assert status["details"]["state"] == "error", (
+            "test_parameters error state must not be cleared by a later " "'please test' command"
+        )
+        description = status["details"]["description"]
+        assert description.startswith(
+            "100:"
+        ), f"Error status should still be attributed to comment 100: {description!r}"
+        assert "ERRORS" in description
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: CHAINED PLEASE TEST/BUILD COMMANDS (LAST COMMAND WINS PER-JOB SCOPING)
+# =============================================================================
+
+
+class TestChainedBuildTestCommands:
+    """
+    Integration tests verifying that when several 'please test'/'please build'
+    commands are posted on the same PR, only the last one is executed, and any
+    parameter overrides from earlier commands do not leak into it - it falls
+    back to 'test parameters:' defaults (or no value at all) for anything it
+    doesn't specify itself.
+    """
+
+    WELCOME_COMMENT_BODY = (
+        "A new Pull Request was created by @author for branch master.\n\n"
+        "@l2-reviewer can you please review it and eventually sign? Thanks.\n"
+        "cms-bot commands are listed here\n"
+        "<!--welcome-->"
+    )
+
+    def test_please_test_without_override_after_please_test_with_override(
+        self, test_name, alice_user, repo_config, record_mode
+    ):
+        """
+        PR with three comments:
+        1. The usual welcome comment ("A new pr was created...").
+        2. 'please test for el8_aarch64_gcc13'
+        3. 'please test' (no override)
+
+        Since build/test commands share a single 'last one wins' slot, only
+        comment #3 is actually executed. It has no architecture override and
+        there is no 'test parameters:' default, so the resulting test must be
+        triggered WITHOUT any ARCHITECTURE_FILTER.
+        """
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": self.WELCOME_COMMENT_BODY,
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "please test for el8_aarch64_gcc13",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=1)).isoformat(),
+                    "user": alice_user,
+                },
+                {
+                    "id": 102,
+                    "body": "please test",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=2)).isoformat(),
+                    "user": alice_user,
+                },
+            ],
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+
+        # Only the last 'please test' command should have been executed
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["comment_id"] == 102
+
+        # Exactly one test properties file should have been created
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        test_props = [
+            a for a in prop_actions if "abort" not in a.get("details", {}).get("filename", "")
+        ]
+        assert len(test_props) == 1, "Only the last 'please test' command should trigger a test"
+
+        params = test_props[0]["details"]["parameters"]
+        assert "ARCHITECTURE_FILTER" not in params, (
+            f"'please test' (no override) must not inherit the architecture from the "
+            f"earlier, superseded 'please test for el8_aarch64_gcc13' command: {params!r}"
+        )
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_please_test_without_override_falls_back_to_test_parameters(
+        self, test_name, alice_user, repo_config, record_mode
+    ):
+        """
+        PR with four comments:
+        1. The usual welcome comment ("A new pr was created...").
+        2. 'test parameters:\\n- architecture = el9_amd64_gcc14'
+        3. 'please test for el8_aarch64_gcc13' (per-job override)
+        4. 'please test' (no override)
+
+        Only comment #4 is actually executed (last one wins). Since it has no
+        architecture override, it must fall back to the 'test parameters:'
+        default (el9_amd64_gcc14) - NOT to the architecture from the
+        superseded 'please test for el8_aarch64_gcc13' command.
+        """
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[
+                {
+                    "id": 100,
+                    "body": self.WELCOME_COMMENT_BODY,
+                    "user": {"login": "cmsbuild", "id": 999},
+                    "created_at": FROZEN_COMMENT_TIME.isoformat(),
+                },
+                {
+                    "id": 101,
+                    "body": "test parameters:\r\n- architecture = el9_amd64_gcc14",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=1)).isoformat(),
+                    "user": alice_user,
+                },
+                {
+                    "id": 102,
+                    "body": "please test for el8_aarch64_gcc13",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=2)).isoformat(),
+                    "user": alice_user,
+                },
+                {
+                    "id": 103,
+                    "body": "please test",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=3)).isoformat(),
+                    "user": alice_user,
+                },
+            ],
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        assert result["pr_number"] == 1
+        assert result["test_params"].get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14"
+
+        # Only the last 'please test' command should have been executed
+        assert len(result["tests_triggered"]) == 1
+        assert result["tests_triggered"][0]["comment_id"] == 103
+
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        test_props = [
+            a for a in prop_actions if "abort" not in a.get("details", {}).get("filename", "")
+        ]
+        assert len(test_props) == 1, "Only the last 'please test' command should trigger a test"
+
+        params = test_props[0]["details"]["parameters"]
+        assert params.get("ARCHITECTURE_FILTER") == "el9_amd64_gcc14", (
+            f"'please test' (no override) must fall back to the 'test parameters:' "
+            f"default, not the superseded per-job override: {params!r}"
+        )
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
 # TEST: VALID TESTER ACL
 # =============================================================================
 

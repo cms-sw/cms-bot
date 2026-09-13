@@ -3845,14 +3845,12 @@ def handle_build_test(context: PRContext, match: re.Match, comment: Any) -> bool
 
     # Get the full command line from the comment
     first_line = match.group(0)
-    comment_url = None
 
     # Try to get full first line from the actual comment
     comment_obj = context.comments.get(comment_id)
     if comment_obj:
         extracted, _ = extract_command_line(comment_obj.body or "", context.cmsbuild_user)
         first_line = extracted or first_line
-        comment_url = getattr(comment_obj, "html_url", None)
 
     # Parse and validate command syntax
     try:
@@ -3866,10 +3864,13 @@ def handle_build_test(context: PRContext, match: re.Match, comment: Any) -> bool
         logger.info("Skipping build command - already processed")
         return True
 
-    # Track this comment as the source of test params (build/test overrides test parameters:)
-    context.test_params_comment_id = comment_id
-    context.test_params_comment_url = comment_url
-    context.test_params_errors = None  # Clear any previous errors
+    # NOTE: Do NOT touch context.test_params_comment_id / test_params_comment_url /
+    # test_params_errors here. Those fields track the 'test parameters:' command
+    # that set context.test_params (the persistent defaults) and are used to report
+    # that state via the bot/{prId}/test_parameters status. Any parameter overrides
+    # given directly in a 'please build'/'please test' command apply only to that
+    # single job (see build_test_parameters()) and must not affect the persistent
+    # test_params state or its reporting.
 
     # Cancel any pending abort command
     context.abort_comment = None

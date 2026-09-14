@@ -293,6 +293,8 @@ RE_PKG_LIST = re.compile(f"{CMSSW_PACKAGE_PATTERN}(,{CMSSW_PACKAGE_PATTERN})*")
 RE_QUEUE = re.compile(CMSSW_RELEASE_QUEUE_PATTERN)
 TEST_VERBS = ("build", "test")
 
+CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
+
 
 # GPU flavors (loaded from files)
 def _load_gpu_flavors() -> List[str]:
@@ -1552,7 +1554,7 @@ def get_signing_checks(context: "PRContext") -> SigningChecks:
         # cms-sw/cmssw repository
         # Check if target branch requires code-checks (master or forward-port branch)
         needs_code_checks = False
-        if target_branch == "master":
+        if target_branch in CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS:
             needs_code_checks = True
         else:
             # Check forward-ports map for this branch

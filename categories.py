@@ -133,10 +133,11 @@ CMSSW_L2 = {
     "fabferro": ["ctpps-dpg"],
     "jan-kaspar": ["ctpps-dpg"],
     "vavati": ["ctpps-dpg"],
-    "rovere": ["hgcal-dpg"],
-    "cseez": ["hgcal-dpg"],
     "pfs": ["hgcal-dpg"],
     "felicepantaleo": ["hgcal-dpg"],
+    "camendola": ["hgcal-dpg"],  # L3
+    "cramonal": ["hgcal-dpg"],  # L3
+    "waredjeb": ["hgcal-dpg"],  # L3
     "fabiocos": ["mtd-dpg", "operations"],
     "martinamalberti": ["mtd-dpg"],
     "parbol": ["mtd-dpg"],
@@ -158,6 +159,7 @@ CMSSW_L2 = {
     "cardinia": ["tau-pog"],
     "IzaakWN": ["tau-pog"],
     "mbluj": ["tau-pog"],
+    "pmastrap": ["tau-pog"],
     "mmasciov": ["tracking-pog"],
     "elusian": ["tracking-pog"],
     "bdanzi": ["tracking-pog"],

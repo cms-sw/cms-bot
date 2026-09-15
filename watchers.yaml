@@ -1197,6 +1197,10 @@ IzaakWN:
 - EventFilter/HGCalRawToDigi
 - Geometry/HGCalMapping
 - RecoLocalCalo/HGCalRecAlgos
+- PhysicsTools/TruthInfo
+- SimDataFormats/TruthInfo
+- SimGeneral/TruthGraphAssociatorProducers
+- Validation/TruthInfo
 vandreev11:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
@@ -1300,6 +1304,10 @@ felicepantaleo:
 - SimG4CMS/Calo
 - SimDataFormats/Associations
 - SimDataFormats/CaloAnalysis
+- PhysicsTools/TruthInfo
+- SimDataFormats/TruthInfo
+- SimGeneral/TruthGraphAssociatorProducers
+- Validation/TruthInfo
 mtosi:
 - DQMOffline/Trigger
 - DQM/HLTEvF
@@ -1648,8 +1656,8 @@ ram1123:
   - RecoEcal
   - EgammaAnalysis
   - DataFormats/EgammaCandidates
-tau-pog:
-  - RecoTauTag/
+cms-sw/tau-pog-l2:
+  - RecoTauTag
   - DataFormats/TauReco
   - PhysicsTools/PatAlgos
 francescobrivio:

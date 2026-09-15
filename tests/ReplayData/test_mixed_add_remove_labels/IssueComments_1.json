@@ -1,0 +1,13 @@
+{
+  "comments": [
+    {
+      "id": 100,
+      "body": "type +new-feature,-bug-fix,documentation",
+      "user": {
+        "login": "alice",
+        "id": 2
+      },
+      "created_at": "2025-12-12T12:00:00+00:00"
+    }
+  ]
+}

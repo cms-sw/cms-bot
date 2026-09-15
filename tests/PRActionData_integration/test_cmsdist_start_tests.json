@@ -1,0 +1,22 @@
+{
+  "test_name": "test_cmsdist_start_tests",
+  "action_count": 2,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "create_comment",
+      "details": {
+        "issue_number": 1,
+        "body": "Pull request #1 was updated. @iarspider can you please check and sign again.\n<!--pr_updated:654708163404785324-->"
+      }
+    },
+    {
+      "sequence": 2,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2838026393,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"root.spec::ba8320038a298ae00090b7fec03f4ce9b66b111c\":{\"cats\":[],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+      }
+    }
+  ]
+}

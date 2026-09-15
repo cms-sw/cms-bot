@@ -1,9 +1,0 @@
-[
-    {
-        "type": "update-milestone",
-        "data": {
-            "id": 4,
-            "title": "CMSSW_14_1_X"
-        }
-    }
-]

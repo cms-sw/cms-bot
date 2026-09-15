@@ -1,0 +1,98 @@
+{
+  "sha": "b1da2ff5d37ce752da86c15bd721b990f72d2204",
+  "node_id": "C_kwDOF83__NoAKGIxZGEyZmY1ZDM3Y2U3NTJkYTg2YzE1YmQ3MjFiOTkwZjcyZDIyMDQ",
+  "commit": {
+    "author": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:07Z"
+    },
+    "committer": {
+      "name": "Ivan Razumov",
+      "email": "iarspider@gmail.com",
+      "date": "2024-04-16T10:45:07Z"
+    },
+    "message": "Dummy commit",
+    "tree": {
+      "sha": "494757ef627490593e82cb4e7f6441f313cd22b1",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/494757ef627490593e82cb4e7f6441f313cd22b1"
+    },
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/b1da2ff5d37ce752da86c15bd721b990f72d2204",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null
+    }
+  },
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/b1da2ff5d37ce752da86c15bd721b990f72d2204",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/b1da2ff5d37ce752da86c15bd721b990f72d2204",
+  "comments_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/b1da2ff5d37ce752da86c15bd721b990f72d2204/comments",
+  "author": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "committer": {
+    "login": "iarspider",
+    "id": 636602,
+    "node_id": "MDQ6VXNlcjYzNjYwMg==",
+    "avatar_url": "https://avatars.githubusercontent.com/u/636602?v=4",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/iarspider",
+    "html_url": "https://github.com/iarspider",
+    "followers_url": "https://api.github.com/users/iarspider/followers",
+    "following_url": "https://api.github.com/users/iarspider/following{/other_user}",
+    "gists_url": "https://api.github.com/users/iarspider/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/iarspider/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/iarspider/subscriptions",
+    "organizations_url": "https://api.github.com/users/iarspider/orgs",
+    "repos_url": "https://api.github.com/users/iarspider/repos",
+    "events_url": "https://api.github.com/users/iarspider/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/iarspider/received_events",
+    "type": "User",
+    "site_admin": false
+  },
+  "parents": [
+    {
+      "sha": "94c509c1d2433ff6733e6d5e555fd0f9af47667a",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/commits/94c509c1d2433ff6733e6d5e555fd0f9af47667a",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/94c509c1d2433ff6733e6d5e555fd0f9af47667a"
+    }
+  ],
+  "stats": {
+    "total": 1,
+    "additions": 1,
+    "deletions": 0
+  },
+  "files": [
+    {
+      "sha": "bf859b1017bc91f4fa4cc69f0a3f462e40db7adc",
+      "filename": "Alignment/CommonAlignmentProducer/python/ALCARECOTkAlJpsiMuMuHI_cff.py",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/b1da2ff5d37ce752da86c15bd721b990f72d2204/Alignment%2FCommonAlignmentProducer%2Fpython%2FALCARECOTkAlJpsiMuMuHI_cff.py",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/b1da2ff5d37ce752da86c15bd721b990f72d2204/Alignment%2FCommonAlignmentProducer%2Fpython%2FALCARECOTkAlJpsiMuMuHI_cff.py",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Alignment%2FCommonAlignmentProducer%2Fpython%2FALCARECOTkAlJpsiMuMuHI_cff.py?ref=b1da2ff5d37ce752da86c15bd721b990f72d2204",
+      "patch": "@@ -22,3 +22,4 @@\n                                          +ALCARECOTkAlJpsiMuMuHIGoodMuons\n                                          +ALCARECOTkAlJpsiMuMuHI\n                                          )\n+# dummy dummy"
+    }
+  ]
+}

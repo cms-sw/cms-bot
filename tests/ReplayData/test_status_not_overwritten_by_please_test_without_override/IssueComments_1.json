@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "id": 100,
+      "body": "test parameters:\r\n- workflows = 1.0,2.0",
+      "created_at": "2025-12-12T12:00:00+00:00",
+      "user": {
+        "login": "alice",
+        "id": 2
+      }
+    },
+    {
+      "id": 101,
+      "body": "please test",
+      "created_at": "2025-12-12T12:01:00+00:00",
+      "user": {
+        "login": "alice",
+        "id": 2
+      }
+    }
+  ]
+}

@@ -27,17 +27,15 @@ upload_gpu_csvs() {
   mkdir -p $JENKINS_UPLOAD_DIR/hlt-p2-timing
 
   # HLT timing menu files
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/cpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_memory_ph2_hlt.csv || return 1
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_hlt.csv || return 1
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_usage.csv  $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_hlt.csv || return 1
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/cpu_monitor.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_monitor_ph2_hlt.csv || return 1
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT/gpu_monitor.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_monitor_ph2_hlt.csv || return 1
 
   # HLT timing menu (on CPU) files
-  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_memory_ph2_hlt_onCPU.csv || return 1
+  cp $WORKSPACE/rundir/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_monitor.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_monitor_ph2_hlt_onCPU.csv || return 1
 
   # NGT Scouting menu files
-  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_memory_ph2_ngt.csv ||  return 1
-  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_memory_ph2_ngt.csv || return 1
-  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv  $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_usage_ph2_ngt.csv ||  return 1
+  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/cpu_monitor.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/cpu_monitor_ph2_ngt.csv ||  return 1
+  cp $WORKSPACE/rundir/logs.NGTScouting_L1P2GT_HLT/gpu_monitor.csv $JENKINS_UPLOAD_DIR/hlt-p2-timing/gpu_monitor_ph2_ngt.csv ||  return 1
 }
 
 ensure_circles_scripts() {
@@ -125,7 +123,7 @@ if which compareMemoryProfiles.py >/dev/null 2>&1; then
     run_compare() {
         local baseline_file="$1"; shift
         local current_file="$1"; shift
-        if [ "$HAVE_BASELINE" -eq 1 ]; then
+        if [ "$HAVE_BASELINE" -eq 1 ] && [ -f "$baseline_file" ]; then
             compareMemoryProfiles.py \
                 --file1 "$baseline_file" --label1 "${COMPARISON_RELEASE}" \
                 --file2 "$current_file" --label2 "${PULL_REQUEST}" \
@@ -138,19 +136,19 @@ if which compareMemoryProfiles.py >/dev/null 2>&1; then
     }
 
     # run the GPU comparison job for the HLT timing menu
-    run_compare "$BASELINE_DIR/gpu_memory_ph2_hlt.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT/gpu_memory.csv" \
+    run_compare "$BASELINE_DIR/gpu_monitor_ph2_hlt.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT/gpu_monitor.csv" \
 			     --gpu --output hlt_memory_comparison || ERR=1
     # run the GPU comparison job for the NGT menu
-    run_compare "$BASELINE_DIR/gpu_memory_ph2_ngt.csv" "$PR_DIR/logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv" \
+    run_compare "$BASELINE_DIR/gpu_monitor_ph2_ngt.csv" "$PR_DIR/logs.NGTScouting_L1P2GT_HLT/gpu_monitor.csv" \
 			     --gpu --output ngt_memory_comparison || ERR=1
     # run the CPU comparison job for the HLT timing menu
-    run_compare "$BASELINE_DIR/cpu_memory_ph2_hlt.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT/cpu_memory.csv" \
+    run_compare "$BASELINE_DIR/cpu_monitor_ph2_hlt.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT/cpu_monitor.csv" \
 			     --output hlt_memory_comparison || ERR=1
     # run the CPU comparison job for the NGT menu
-    run_compare "$BASELINE_DIR/cpu_memory_ph2_ngt.csv" "$PR_DIR/logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv" \
+    run_compare "$BASELINE_DIR/cpu_monitor_ph2_ngt.csv" "$PR_DIR/logs.NGTScouting_L1P2GT_HLT/cpu_monitor.csv" \
 			     --output ngt_memory_comparison || ERR=1
     # run the CPU comparison job for the HLT timing menu (on CPU)
-    run_compare "$BASELINE_DIR/cpu_memory_ph2_hlt_onCPU.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv" \
+    run_compare "$BASELINE_DIR/cpu_monitor_ph2_hlt_onCPU.csv" "$PR_DIR/logs.Phase2_L1P2GT_HLT_OnCPU/cpu_monitor.csv" \
 			     --output hltOnCPU_memory_comparison || ERR=1
 
     # copy back the png figures to the output folder
@@ -240,13 +238,11 @@ NGT_STATUS="&#10003; ok";       NGT_STATUS_CLASS="ok"
 CSV_SECTION=""
 if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
   CSV_SECTION='<div class="section"><div class="section-title">Hardware usage CSVs</div><div class="links">
-    <a href="cpu_memory_ph2_hlt.csv">cpu_memory_ph2_hlt.csv</a>
-    <a href="gpu_memory_ph2_hlt.csv">gpu_memory_ph2_hlt.csv</a>
-    <a href="gpu_usage_ph2_hlt.csv">gpu_usage_ph2_hlt.csv</a>
-    <a href="cpu_memory_ph2_hlt_onCPU.csv">cpu_memory_ph2_hlt_onCPU.csv</a>
-    <a href="cpu_memory_ph2_ngt.csv">cpu_memory_ph2_ngt.csv</a>
-    <a href="gpu_memory_ph2_ngt.csv">gpu_memory_ph2_ngt.csv</a>
-    <a href="gpu_usage_ph2_ngt.csv">gpu_usage_ph2_ngt.csv</a>
+    <a href="cpu_monitor_ph2_hlt.csv">cpu_monitor_ph2_hlt.csv</a>
+    <a href="gpu_monitor_ph2_hlt.csv">gpu_monitor_ph2_hlt.csv</a>
+    <a href="cpu_monitor_ph2_hlt_onCPU.csv">cpu_monitor_ph2_hlt_onCPU.csv</a>
+    <a href="cpu_monitor_ph2_ngt.csv">cpu_monitor_ph2_ngt.csv</a>
+    <a href="gpu_monitor_ph2_ngt.csv">gpu_monitor_ph2_ngt.csv</a>
   </div></div>'
 fi
 

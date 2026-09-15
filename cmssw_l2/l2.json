@@ -674,6 +674,14 @@
       "start_date": 1632873600
     }
   ],
+  "camendola": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
+    }
+  ],
   "cardinia": [
     {
       "category": [
@@ -819,6 +827,14 @@
       "start_date": 1413331200
     }
   ],
+  "cramonal": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
+    }
+  ],
   "cschwick": [
     {
       "category": [
@@ -833,6 +849,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1789430400,
       "start_date": 1618272000
     }
   ],
@@ -2393,6 +2410,14 @@
       "start_date": 1631491200
     }
   ],
+  "pmastrap": [
+    {
+      "category": [
+        "tau-pog"
+      ],
+      "start_date": 1789430400
+    }
+  ],
   "pohsun": [
     {
       "category": [
@@ -2502,6 +2527,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1789430400,
       "start_date": 1618272000
     }
   ],
@@ -3090,6 +3116,14 @@
       ],
       "end_date": 1757548800,
       "start_date": 1680048000
+    }
+  ],
+  "waredjeb": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
     }
   ],
   "watson-ij": [

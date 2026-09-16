@@ -22,7 +22,6 @@ from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
 from json import load as json_load
-from multiprocessing.pool import ExceptionWithTraceback
 from os import getenv as os_getenv
 from os.path import dirname, exists, join
 from subprocess import getstatusoutput
@@ -1116,7 +1115,7 @@ def decompress_cache(data: str) -> str:
     return zlib.decompress(compressed).decode("utf-8")
 
 
-def load_cache_from_comments(comments) -> BotCache | None:
+def load_cache_from_comments(comments) -> Optional[BotCache]:
     """
     Load bot cache from PR issue comments.
 

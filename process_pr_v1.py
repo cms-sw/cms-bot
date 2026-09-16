@@ -1201,6 +1201,7 @@ def recreate_cms_bot_test_properties(bot_version: int = 2) -> None:
         f"Created cms-bot.properties for PR {params['REPOSITORY']}#{params['FORCE_PULL_REQUEST']}"
     )
 
+
 def process_pr(
     repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, enableTraceLog=True
 ):

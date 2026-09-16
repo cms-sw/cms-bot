@@ -11,6 +11,7 @@ import hashlib
 import itertools
 import json
 import logging
+import os
 import re
 import sys
 import types
@@ -21,6 +22,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from functools import wraps
 from json import load as json_load
+from multiprocessing.pool import ExceptionWithTraceback
 from os import getenv as os_getenv
 from os.path import dirname, exists, join
 from subprocess import getstatusoutput
@@ -294,6 +296,8 @@ RE_QUEUE = re.compile(CMSSW_RELEASE_QUEUE_PATTERN)
 TEST_VERBS = ("build", "test")
 
 CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
+
+CMS_BOT_VERSION = 2
 
 
 # GPU flavors (loaded from files)
@@ -1112,7 +1116,7 @@ def decompress_cache(data: str) -> str:
     return zlib.decompress(compressed).decode("utf-8")
 
 
-def load_cache_from_comments(comments) -> BotCache:
+def load_cache_from_comments(comments) -> BotCache | None:
     """
     Load bot cache from PR issue comments.
 
@@ -1155,6 +1159,23 @@ def load_cache_from_comments(comments) -> BotCache:
             data = json.loads(decompressed)
 
         logger.debug("Successfully loaded cache from comments")
+        cache_version = data.get("version", None)
+        if cache_version is None and "commits" in data:
+            cache_version = 1
+        if cache_version is None and "fv" in data:
+            cache_version = 2
+
+        if cache_version is None:
+            logger.error("Failed to determine cache version!")
+            return None
+
+        if cache_version != CMS_BOT_VERSION:
+            logger.error(
+                f"Bot version {CMS_BOT_VERSION} doesn't match bot version from cache {cache_version}, restarting job"
+            )
+            recreate_cms_bot_test_properties(cache_version)
+            return None
+
         return BotCache.from_dict(data)
 
     except Exception as e:
@@ -6496,6 +6517,29 @@ def create_cms_bot_test_properties(pr) -> None:
     logger.info(f"Created cms-bot.properties for PR #{pr.number}")
 
 
+def recreate_cms_bot_test_properties(bot_version: int = 1) -> None:
+    """
+    Create properties file to re-run cms-bot job with correct bot version
+
+    Args:
+        bot_version: Version number
+    """
+
+    params = {"CMS_BOT_VERSION": bot_version}
+
+    for k in ("CMS_BOT_TEST_BRANCH", "FORCE_PULL_REQUEST", "CMS_BOT_TEST_PRS", "REPOSITORY"):
+        if os.getenv(k):
+            params[k] = os.getenv(k)
+
+    with open("cms-bot.properties", "w") as f:
+        for key, value in params.items():
+            f.write(f"{key}={value}\n")
+
+    logger.info(
+        f"Created cms-bot.properties for PR {params['REPOSITORY']}#{params['FORCE_PULL_REQUEST']}"
+    )
+
+
 def create_new_data_repo_properties(issue_number: int, dry_run: bool) -> None:
     """
     Create properties file for new data repo issue.
@@ -7052,6 +7096,9 @@ def process_pr(
 
     # Load cache from comments
     cache = load_cache_from_comments(comments_list)
+
+    if cache is None:
+        return {}
 
     # Use global command registry
     command_registry = get_global_registry()

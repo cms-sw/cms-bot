@@ -11,7 +11,6 @@ from categories import (
     EXTERNAL_REPOS,
 )
 from categories import CMSSW_CATEGORIES as default_CMSSW_CATEGORIES
-from process_pr_v2 import CMS_BOT_VERSION
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
 from cms_static import (
     VALID_CMSDIST_BRANCHES,

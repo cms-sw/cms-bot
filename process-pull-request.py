@@ -89,7 +89,7 @@ def main():
     if getattr(repo_config, "REQUEST_PROCESSOR", "cms-bot") != "cms-bot":
         return
 
-    version = os.environ["CMS_BOT_VERSION"]
+    version = os.getenv("CMS_BOT_VERSION", 1)
 
     module = importlib.import_module(f"process_pr_v{version}")
     process_pr = module.process_pr

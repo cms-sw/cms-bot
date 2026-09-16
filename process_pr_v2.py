@@ -6526,17 +6526,11 @@ def recreate_cms_bot_test_properties(bot_version: int = 1) -> None:
 
     params = {"CMS_BOT_VERSION": bot_version}
 
-    for k in ("CMS_BOT_TEST_BRANCH", "FORCE_PULL_REQUEST", "CMS_BOT_TEST_PRS", "REPOSITORY"):
-        if os.getenv(k):
-            params[k] = os.getenv(k)
-
     with open("cms-bot.properties", "w") as f:
         for key, value in params.items():
             f.write(f"{key}={value}\n")
 
-    logger.info(
-        f"Created cms-bot.properties for PR {params['REPOSITORY']}#{params['FORCE_PULL_REQUEST']}"
-    )
+    logger.info(f"Created cms-bot.properties to switch to cms-bot v{params['CMS_BOT_VERSION']}")
 
 
 def create_new_data_repo_properties(issue_number: int, dry_run: bool) -> None:

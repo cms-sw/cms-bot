@@ -84,6 +84,8 @@ ERR=0
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
   set -o pipefail # required for correct error status piping
+  # Uncomment the following in case we have to use quick patch for patatrack-scripts
+  echo "git clone https://github.com/cms-externals/patatrack-scripts --depth 1" >>$WORKSPACE/run.sh
   timeout $TIMEOUT bash -e ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${WORKSPACE}/hlt-p2-timing.log || ERR=1
   # if the release is greater or equal to CMSSW_17_0_X upload the csv files
   if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then

@@ -361,7 +361,7 @@ def read_bot_cache(data):
     logger.info("Loading bot cache")
     res = loads_maybe_decompress(data)
 
-    cache_version = data.get("version", None)
+    cache_version = res.get("version", None)
     if cache_version is None and "commits" in data:
         cache_version = 1
     if cache_version is None and "fv" in data:
@@ -1196,13 +1196,20 @@ def recreate_cms_bot_test_properties(bot_version: int = 2) -> None:
 
 
 def process_pr(
-    repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, enableTraceLog=True
+    repo_config,
+    gh,
+    repo,
+    issue,
+    dryRun,
+    cmsbuild_user=None,
+    force=False,
+    loglevel: Union[str, int] = "trace",
 ):
     global L2_DATA, create_status
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
 
-    setup_logging("trace" if enableTraceLog else "debug")
+    setup_logging(loglevel)
 
     gh_user_char = "@"
 

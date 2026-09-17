@@ -9,12 +9,12 @@ import os
 from os.path import dirname, abspath, join, exists
 from socket import setdefaulttimeout
 
-from github import Github
-
 from github_utils import (
     api_rate_limits,
     get_gh_token,
     enable_github_loggin,
+    get_pr_commits,
+    get_pr_latest_commit,
 )
 
 setdefaulttimeout(120)
@@ -97,6 +97,8 @@ def main():
 
     module = importlib.import_module(f"process_pr{version_suffix}")
     process_pr = module.process_pr
+
+    from github import Github
 
     gh = Github(login_or_token=get_gh_token(opts.repository), per_page=100)
     api_rate_limits(gh)

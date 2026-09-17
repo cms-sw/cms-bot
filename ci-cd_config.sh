@@ -1,3 +1,4 @@
+HLT_P2_HOST="cms-hlt && singularity && x86_64 && nvidia_l4"
 CMSREP_SERVER=cmsrep.cern.ch
 CMSREP_IB_SERVER=cmsrep.cern.ch
 CMSBUILD_OPTS_FILE="etc/build_options.sh"
@@ -18,9 +19,12 @@ function cmsbuild_args()
       case $x in
         upload_store ) ;;
         estats ) ;;
+        debug:* )      arg="${arg} --define cms_debug_packages=$(echo $x    | sed 's|^debug:||')" ;;
+        stdcxx:* )     arg="${arg} --define cms_override_standard=$(echo $x | sed 's|^stdcxx:||;s|:|,|g')" ;;
         without:* )    arg="${arg} --build-without=$(echo $x    | sed 's|^without:||;s|:|,|g')" ;;
         system:* )     arg="${arg} --use-system-tools=$(echo $x | sed 's|^system:||;s|:|,|g')" ;;
         microarchs:* ) arg="${arg} --vectorization=$(echo $x    | sed 's|^microarchs:||;s|:|,|g')" ;;
+        builders:* )   arg="${arg} --builders=$(echo $x         | sed 's|^builders:||;s|:|,|g')" ;;
         * ) BLD_OPTS="${BLD_OPTS},$x" ;;
       esac
     done

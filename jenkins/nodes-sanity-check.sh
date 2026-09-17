@@ -4,7 +4,7 @@ PATHS=$@
 
 # Checking that paths are acessible
 for path in ${PATHS[@]}; do
-    echo "Checking ${path} for host $(hostname)"
+    echo "Checking ${path} for host $(uname -n)"
     timeout -k 1m 30s ls ${path} >/dev/null 2>&1 && echo -e "... OK!" || echo "ERROR accessing ${path}"
 done
 
@@ -16,6 +16,6 @@ fi
 
 if [ "$SINGULARITY" == "true" ]; then
     # Checking that singularity can start
-    echo "Checking that singularity can start a container on $(hostname)"
+    echo "Checking that singularity can start a container on $(uname -n)"
     /cvmfs/cms.cern.ch/common/cmssw-${arch} --command-to-run ls >/dev/null 2>&1 && echo -e "... OK!" || echo "ERROR starting singularity"
 fi

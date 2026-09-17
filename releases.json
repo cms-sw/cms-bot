@@ -12615,6 +12615,15 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_8_0_37",
+              "architectures": [
+                {
+                  "architecture": "slc6_amd64_gcc530",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_8_1": [
@@ -15131,6 +15140,33 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_10_6_49",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc700",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_10_6_49_patch1",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc700",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_10_6_50",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc700",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_11_0": [
@@ -16256,6 +16292,15 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_12_4_26",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc10",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_12_5": [
@@ -16658,6 +16703,15 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_13_0_25",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc11",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_13_1": [
@@ -16890,6 +16944,42 @@
             },
             {
               "label": "CMSSW_13_2_15",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc11",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_15_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc11",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_15_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc11",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_16",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc11",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_16_patch1",
               "architectures": [
                 {
                   "architecture": "el8_amd64_gcc11",
@@ -17314,6 +17404,69 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_14_0_22_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_22_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_22_patch3",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_23",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_24",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_24_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_25",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_14_1": [
@@ -17469,6 +17622,33 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_14_1_9_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_1_9_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_1_9_patch3",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_14_2": [
@@ -17492,6 +17672,15 @@
             },
             {
               "label": "CMSSW_14_2_2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_2_3",
               "architectures": [
                 {
                   "architecture": "el8_amd64_gcc12",
@@ -17890,6 +18079,66 @@
                   "default_micro_arch": "x86-64-v3"
                 }
               ]
+            },
+            {
+              "label": "CMSSW_15_0_18_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_19",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_19_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_19_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_20",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_21",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
             }
           ],
           "CMSSW_15_1": [
@@ -17958,6 +18207,302 @@
               "architectures": [
                 {
                   "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_1_0_patch5",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_1_1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_1_2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc12",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_16_0": [
+            {
+              "label": "CMSSW_16_0_0",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_0_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_2_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_3",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_4",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_4_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_4_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_5",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_5_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_6",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_6_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_7",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_7_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_8",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_9",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_16_1": [
+            {
+              "label": "CMSSW_16_1_0",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_1_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_1_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_1_patch3",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_3",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_20_0": [
+            {
+              "label": "CMSSW_20_0_0",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_20_0_0_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
                   "prodarch": 1,
                   "default_micro_arch": "x86-64-v3"
                 }
@@ -18141,6 +18686,15 @@
           "CMSSW_13_2": [
             {
               "label": "CMSSW_13_2_15_HLT",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc11",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_15_HLT_patch1",
               "architectures": [
                 {
                   "architecture": "el8_amd64_gcc11",
@@ -19121,6 +19675,15 @@
             },
             {
               "label": "CMSSW_8_0_36_UL_patch2",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc530",
+                  "prodarch": 1
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_8_0_37_UL",
               "architectures": [
                 {
                   "architecture": "slc7_amd64_gcc530",
@@ -21247,6 +21810,132 @@
                   "default_micro_arch": "x86-64-v3"
                 }
               ]
+            },
+            {
+              "label": "CMSSW_16_1_0_pre2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_0_pre3",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_0_pre4",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_17_0": [
+            {
+              "label": "CMSSW_17_0_0_pre1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_17_0_0_pre2",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_17_0_0_pre3",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_17_0_0_pre4",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_17_0_0_pre5",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_20_0": [
+            {
+              "label": "CMSSW_20_0_0_pre1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_20_1": [
+            {
+              "label": "CMSSW_20_1_0_pre1",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_20_1_0_pre2",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_20_1_0_pre3",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc14",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
             }
           ]
         },
@@ -21403,6 +22092,18 @@
                 {
                   "architecture": "el8_amd64_gcc12",
                   "prodarch": 1
+                }
+              ]
+            }
+          ],
+          "CMSSW_16_1": [
+            {
+              "label": "CMSSW_16_1_0_pre3_ROOT6",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
                 }
               ]
             }
@@ -21955,6 +22656,30 @@
               "architectures": [
                 {
                   "architecture": "el8_amd64_gcc13",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ]
+        },
+        "ROOT640": {
+          "CMSSW_20_1": [
+            {
+              "label": "CMSSW_20_1_0_pre1_ROOT640",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc15",
+                  "prodarch": 1,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_20_1_0_pre2_ROOT640",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
                   "prodarch": 1,
                   "default_micro_arch": "x86-64-v3"
                 }
@@ -23311,6 +24036,15 @@
             },
             {
               "label": "CMSSW_8_0_36_patch2",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc530",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_8_0_37",
               "architectures": [
                 {
                   "architecture": "slc7_amd64_gcc530",
@@ -28327,6 +29061,15 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_12_4_26",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc10",
+                  "prodarch": 0
+                }
+              ]
             }
           ],
           "CMSSW_12_5": [
@@ -29163,6 +29906,19 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_13_0_25",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc11",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc11",
+                  "prodarch": 0
+                }
+              ]
             }
           ],
           "CMSSW_13_1": [
@@ -29779,6 +30535,58 @@
             },
             {
               "label": "CMSSW_13_2_15",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc11",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc11",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_15_patch1",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc11",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc11",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_15_patch2",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc11",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc11",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_16",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc11",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc11",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_13_2_16_patch1",
               "architectures": [
                 {
                   "architecture": "el9_amd64_gcc11",
@@ -30767,6 +31575,97 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_14_0_22_patch1",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_22_patch2",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_22_patch3",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_23",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_24",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_24_patch1",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_0_25",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
             }
           ],
           "CMSSW_14_1": [
@@ -31126,6 +32025,45 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_14_1_9_patch1",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_1_9_patch2",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_1_9_patch3",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
             }
           ],
           "CMSSW_14_2": [
@@ -31188,6 +32126,19 @@
                 },
                 {
                   "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_14_2_3",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
                   "prodarch": 0
                 }
               ]
@@ -31888,6 +32839,90 @@
                   "default_micro_arch": "x86-64-v3"
                 }
               ]
+            },
+            {
+              "label": "CMSSW_15_0_18_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_19",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_19_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_19_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_20",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_0_21",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
             }
           ],
           "CMSSW_15_1": [
@@ -31956,6 +32991,418 @@
                 },
                 {
                   "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_1_0_patch5",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_1_1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_15_1_2",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc12",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc12",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_16_0": [
+            {
+              "label": "CMSSW_16_0_0",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_0_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_2",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_2_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_3",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_4",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_4_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_4_patch2",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_5",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_5_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_6",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_6_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_7",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_7_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_8",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_0_9",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_16_1": [
+            {
+              "label": "CMSSW_16_1_0",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_1",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_1_patch1",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_1_patch2",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_1_patch3",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_2",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_3",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
+            }
+          ],
+          "CMSSW_20_0": [
+            {
+              "label": "CMSSW_20_0_0",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_20_0_0_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
                   "prodarch": 0,
                   "default_micro_arch": "x86-64-v3"
                 }
@@ -35981,6 +37428,240 @@
                 },
                 {
                   "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_0_pre2",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_0_pre3",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_16_1_0_pre4",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el8_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_17_0": [
+            {
+              "label": "CMSSW_17_0_0_pre1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el8_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_17_0_0_pre2",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el8_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_17_0_0_pre3",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_17_0_0_pre4",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_17_0_0_pre5",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_20_0": [
+            {
+              "label": "CMSSW_20_0_0_pre1",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el8_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
+          ],
+          "CMSSW_20_1": [
+            {
+              "label": "CMSSW_20_1_0_pre1",
+              "architectures": [
+                {
+                  "architecture": "el9_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_20_1_0_pre2",
+              "architectures": [
+                {
+                  "architecture": "el9_aarch64_gcc13",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el8_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                },
+                {
+                  "architecture": "el9_amd64_gcc14",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            },
+            {
+              "label": "CMSSW_20_1_0_pre3",
+              "architectures": [
+                {
+                  "architecture": "el9_aarch64_gcc14",
+                  "prodarch": 0
+                },
+                {
+                  "architecture": "el8_amd64_gcc14",
                   "prodarch": 0,
                   "default_micro_arch": "x86-64-v3"
                 }

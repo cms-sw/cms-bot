@@ -99,6 +99,11 @@ class Component:
                 f"the '{name}' component is not available for the '{os_arch}' architecture"
             )
         package = component[os_arch]
+        if "cuda_variant" in component:
+            if len(component["cuda_variant"]) > 1:
+                raise RuntimeError(f"the '{name}' component has multiple variants.")
+            package = package["cuda%s" % component["cuda_variant"][0]]
+        print("Package :", package)
         self.path = package["relative_path"]
         self.size = int(package["size"])
         self.md5sum = package["md5"]
@@ -403,7 +408,7 @@ class RemapRules:
                 warning(f"{src} does not exist")
                 continue
             mode = stat.S_IMODE(os.stat(src).st_mode)
-            with open(src, "r") as f:
+            with open(src, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
             for pattern, replace in reps:
                 content = content.replace(pattern, replace)

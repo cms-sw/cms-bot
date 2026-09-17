@@ -90,7 +90,7 @@ def runThreadMatrix(basedir, workflow, args="", logger=None, wf_err=None):
         + os.path.join(outfolder, "workflow.log")
     )
     ret = doCmd("echo " + str(wftime) + " > " + os.path.join(outfolder, "time.log"))
-    ret = doCmd("hostname -s > " + os.path.join(outfolder, "hostname"))
+    ret = doCmd("uname -n | cut -d. -f1 > " + os.path.join(outfolder, "hostname"))
     ret = doCmd("echo %s > %s/threads.txt" % (GetWFThreads(args), outfolder))
     if wf_err:
         json.dump(wf_err, open("%s/known_error.json" % outfolder, "w"))

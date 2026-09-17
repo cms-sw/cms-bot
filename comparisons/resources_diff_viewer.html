@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Resources Diff Viewer</title>
+  <style>
+    :root {
+      --bg: #edf3ea;
+      --panel: #fbfdf8;
+      --ink: #1f2a20;
+      --ink-soft: #556555;
+      --line: #cbd6c2;
+      --accent: #1a7f5a;
+      --warn: rgba(244, 185, 66, 0.24);
+      --error: rgba(215, 76, 47, 0.22);
+      --good: rgba(163, 214, 151, 0.7);
+      --good-soft: rgba(201, 231, 192, 0.55);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 8% 14%, rgba(254, 221, 161, 0.45) 0%, transparent 28%),
+        radial-gradient(circle at 90% 16%, rgba(158, 222, 201, 0.35) 0%, transparent 28%),
+        linear-gradient(145deg, #edf3e7 0%, #e8efe1 100%);
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(1750px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 16px 0 28px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .hero,
+    .controls,
+    .legend,
+    .totals,
+    .status,
+    .table-wrap {
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .hero { border-top: 0; }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.2rem, 2.2vw, 1.9rem);
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid #bcc9b4;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: inherit;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+
+    .chip {
+      border: 1px solid #d8e0d0;
+      border-radius: 999px;
+      background: #fff;
+      padding: 6px 10px;
+    }
+
+    .totals-title {
+      margin: 0 0 8px;
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .totals-table-wrap,
+    .table-scroller {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 0;
+      table-layout: fixed;
+    }
+
+    .totals-table-wrap > table,
+    .table-scroller > table {
+      min-width: 0;
+    }
+
+    .totals-table-wrap th:first-child,
+    .totals-table-wrap td:first-child,
+    .table-scroller th:first-child,
+    .table-scroller td:first-child {
+      width: 4%;
+    }
+
+    .totals-table-wrap th:nth-child(2),
+    .totals-table-wrap td:nth-child(2),
+    .table-scroller th:nth-child(2),
+    .table-scroller td:nth-child(2) {
+      width: 18%;
+    }
+
+    .totals-table-wrap th:nth-child(3),
+    .totals-table-wrap td:nth-child(3),
+    .table-scroller th:nth-child(3),
+    .table-scroller td:nth-child(3) {
+      width: 36%;
+    }
+
+    .totals-table-wrap th:nth-child(4),
+    .totals-table-wrap td:nth-child(4),
+    .table-scroller th:nth-child(4),
+    .table-scroller td:nth-child(4),
+    .totals-table-wrap th:nth-child(5),
+    .totals-table-wrap td:nth-child(5),
+    .table-scroller th:nth-child(5),
+    .table-scroller td:nth-child(5),
+    .totals-table-wrap th:nth-child(6),
+    .totals-table-wrap td:nth-child(6),
+    .table-scroller th:nth-child(6),
+    .table-scroller td:nth-child(6) {
+      width: 14%;
+    }
+
+    .table-scroller td:nth-child(2),
+    .table-scroller td:nth-child(3),
+    .totals-table-wrap td:nth-child(2),
+    .totals-table-wrap td:nth-child(3) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e3e9dd;
+      vertical-align: top;
+    }
+
+    th {
+      text-align: left;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+      background: #f2f7ed;
+      white-space: nowrap;
+    }
+
+    .sortable {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sortable:hover {
+      color: var(--ink);
+    }
+
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    .cell-warn { background: var(--warn); }
+    .cell-error { background: var(--error); }
+    .cell-good { background: var(--good-soft); }
+    .cell-great { background: var(--good); }
+
+    .status {
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+    }
+
+    .status.error { color: #a03623; }
+
+    @media (max-width: 900px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="panel">
+      <div class="hero">
+        <h1>FastTimerService Resources Difference</h1>
+        <p>Interactive view of IB vs PR resources diff with sortable module rows and embedded JSON payload.</p>
+      </div>
+
+      <div class="controls">
+        <div class="controls-grid">
+          <div>
+            <label for="filterInput">Module Filter</label>
+            <input id="filterInput" type="text" placeholder="Filter by module type or label">
+          </div>
+          <div>
+            <label for="valueSelect">Main Table Metric</label>
+            <select id="valueSelect">
+              <option value="real-time">Real Time</option>
+              <option value="real-frac">Real % Total</option>
+              <option value="cpu-time">CPU Time</option>
+              <option value="cpu-frac" selected>CPU % Total</option>
+              <option value="alloc">Alloc Memory</option>
+              <option value="dealloc">Dealloc Memory</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend" id="legendBar">
+        <span class="chip">Warn threshold</span>
+        <span class="chip">Error threshold</span>
+        <span class="chip">Negative warn threshold</span>
+        <span class="chip">Negative error threshold</span>
+      </div>
+
+      <div class="totals">
+        <p class="totals-title" id="totalsTitle">Totals</p>
+        <div class="totals-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Type</th>
+                <th>Label</th>
+                <th class="num">IB</th>
+                <th class="num">PR</th>
+                <th class="num">Diff</th>
+              </tr>
+            </thead>
+            <tbody id="totalBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="status" id="statusLine">Waiting for data.</div>
+
+      <div class="table-wrap">
+        <div class="table-scroller">
+          <table>
+            <thead>
+              <tr id="modulesHead"></tr>
+            </thead>
+            <tbody id="modulesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <style>
+    .expand-btn {
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      color: var(--ink-soft);
+      line-height: 1;
+    }
+    .expand-btn:hover { background: #e8f0e0; color: var(--ink); }
+
+    .detail-row td { padding: 0; border-bottom: 2px solid var(--accent); }
+    .detail-inner {
+      width: 100%;
+      padding: 10px 14px 14px;
+      background: #f6faf2;
+    }
+    .detail-inner table {
+      min-width: 0;
+      width: 100%;
+      table-layout: fixed;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.86rem;
+    }
+    .detail-inner th,
+    .detail-inner td {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .detail-inner th { background: #eaf2e4; font-size: 0.72rem; }
+    .detail-inner th:first-child,
+    .detail-inner td:first-child {
+      width: 34%;
+      white-space: nowrap;
+    }
+    .detail-inner th:not(:first-child),
+    .detail-inner td:not(:first-child) {
+      width: 22%;
+    }
+    .detail-inner td { border-bottom: 1px solid #dde8d5; }
+    .detail-inner tr:last-child td { border-bottom: 0; font-weight: 600; }
+  </style>
+  <script>
+    const SELECTABLE_METRICS = [
+      { key: "real-time", label: "Real Time", metricKey: "time_real", valueType: "value", decimals: 2 },
+      { key: "real-frac", label: "Real % Total", metricKey: "time_real", valueType: "percent", decimals: 2, suffix: "%", threshold: true },
+      { key: "cpu-time", label: "CPU Time", metricKey: "time_thread", valueType: "value", decimals: 2 },
+      { key: "cpu-frac", label: "CPU % Total", metricKey: "time_thread", valueType: "percent", decimals: 2, suffix: "%", threshold: true },
+      { key: "alloc", label: "Alloc Memory", metricKey: "mem_alloc", valueType: "value", decimals: 0 },
+      { key: "dealloc", label: "Dealloc Memory", metricKey: "mem_free", valueType: "value", decimals: 0 }
+    ];
+
+    const DETAIL_METRICS = [
+      ...SELECTABLE_METRICS,
+      { key: "events", label: "Events", metricKey: "events", valueType: "value", decimals: 0 }
+    ];
+
+    const state = {
+      payload: null,
+      filter: "",
+      sortKey: "diff-desc",
+      selectedMetricKey: "cpu-frac",
+      expandedModules: new Set()
+    };
+
+    const el = {
+      filterInput: document.getElementById("filterInput"),
+      valueSelect: document.getElementById("valueSelect"),
+      legendBar: document.getElementById("legendBar"),
+      totalsTitle: document.getElementById("totalsTitle"),
+      totalBody: document.getElementById("totalBody"),
+      modulesHead: document.getElementById("modulesHead"),
+      modulesBody: document.getElementById("modulesBody"),
+      statusLine: document.getElementById("statusLine")
+    };
+
+    function fmt(value, decimals) {
+      if (typeof value !== "number" || Number.isNaN(value)) return "-";
+      return value.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function getMetricOption(key) {
+      return SELECTABLE_METRICS.find((option) => option.key === key) || SELECTABLE_METRICS[0];
+    }
+
+    function metricValue(metric, option, variant) {
+      if (!metric) return NaN;
+      if (option.valueType === "percent") return metric[`frac_${variant}`];
+      return metric[variant];
+    }
+
+    function formatMetricValue(metric, option, variant) {
+      return `${fmt(metricValue(metric, option, variant), option.decimals)}${option.suffix || ""}`;
+    }
+
+    function formatTotalMetricValue(metric, option, variant) {
+      const value = metricValue(metric, option, variant);
+      if (option.valueType === "percent" && !Number.isFinite(Number(value))) {
+        return `100${option.suffix || ""}`;
+      }
+      return formatMetricValue(metric, option, variant);
+    }
+
+    function diffMetricClass(metric, option) {
+      if (!option.threshold) return "";
+      return thresholdClass(metricValue(metric, option, "diff"));
+    }
+
+    function thresholdClass(value) {
+      if (typeof value !== "number" || Number.isNaN(value)) return "";
+      const warn = state.payload.threshold;
+      const error = state.payload.errorThreshold;
+      if (value > error) return "cell-error";
+      if (value > warn) return "cell-warn";
+      if (value < -error) return "cell-great";
+      if (value < -warn) return "cell-good";
+      return "";
+    }
+
+    function moduleKey(module) {
+      return module.type + "::" + module.label;
+    }
+
+    function setSortKey(sortKey) {
+      state.sortKey = sortKey;
+    }
+
+    function asNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function setSelectedMetric(metricKey) {
+      state.selectedMetricKey = metricKey;
+      el.valueSelect.value = metricKey;
+      renderTotals();
+      renderModulesTable();
+    }
+
+    function selectedMetricValue(module, variant, option) {
+      const selectedOption = option || getMetricOption(state.selectedMetricKey);
+      return asNumber(metricValue(module[selectedOption.metricKey], selectedOption, variant));
+    }
+
+    function sortedModules(modules) {
+      const filtered = modules.filter((module) => {
+        const f = state.filter.trim().toLowerCase();
+        if (!f) return true;
+        return module.type.toLowerCase().includes(f) || module.label.toLowerCase().includes(f);
+      });
+      const selectedOption = getMetricOption(state.selectedMetricKey);
+      filtered.sort((a, b) => {
+        switch (state.sortKey) {
+          case "type-asc":
+            return a.type.localeCompare(b.type) || a.label.localeCompare(b.label);
+          case "type-desc":
+            return b.type.localeCompare(a.type) || b.label.localeCompare(a.label);
+          case "label-asc":
+            return a.label.localeCompare(b.label) || a.type.localeCompare(b.type);
+          case "label-desc":
+            return b.label.localeCompare(a.label) || b.type.localeCompare(a.type);
+          case "ib-asc":
+            return selectedMetricValue(a, "ib", selectedOption) - selectedMetricValue(b, "ib", selectedOption);
+          case "ib-desc":
+            return selectedMetricValue(b, "ib", selectedOption) - selectedMetricValue(a, "ib", selectedOption);
+          case "pr-asc":
+            return selectedMetricValue(a, "pr", selectedOption) - selectedMetricValue(b, "pr", selectedOption);
+          case "pr-desc":
+            return selectedMetricValue(b, "pr", selectedOption) - selectedMetricValue(a, "pr", selectedOption);
+          case "diff-asc":
+            return selectedMetricValue(a, "diff", selectedOption) - selectedMetricValue(b, "diff", selectedOption);
+          case "diff-desc":
+            return selectedMetricValue(b, "diff", selectedOption) - selectedMetricValue(a, "diff", selectedOption);
+          default:
+            return selectedMetricValue(b, "diff", selectedOption) - selectedMetricValue(a, "diff", selectedOption);
+        }
+      });
+      return filtered;
+    }
+
+    function buildDetailMetricsTable(entry, colspan, useTotalFallback = false) {
+      const tr = document.createElement("tr");
+      tr.className = "detail-row";
+      tr.innerHTML = `<td colspan="${colspan}"></td>`;
+      const inner = document.createElement("div");
+      inner.className = "detail-inner";
+      const table = document.createElement("table");
+      const rows = DETAIL_METRICS.map((option) => {
+        const metric = entry[option.metricKey];
+        const diffClass = diffMetricClass(metric, option);
+        const formatter = useTotalFallback ? formatTotalMetricValue : formatMetricValue;
+        return `
+          <tr>
+            <td>${option.label}</td>
+            <td class="num mono">${formatter(metric, option, "ib")}</td>
+            <td class="num mono">${formatter(metric, option, "pr")}</td>
+            <td class="num mono ${diffClass}">${formatter(metric, option, "diff")}</td>
+          </tr>
+        `;
+      }).join("");
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th class="num">IB</th>
+            <th class="num">PR</th>
+            <th class="num">Diff</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      `;
+      inner.appendChild(table);
+      tr.firstElementChild.appendChild(inner);
+      return tr;
+    }
+
+    function renderTotals() {
+      const total = state.payload.total;
+      const expanded = state.expandedModules.has("__total__");
+      const selectedOption = getMetricOption(state.selectedMetricKey);
+      const selectedMetric = total[selectedOption.metricKey];
+      el.totalBody.innerHTML = "";
+      el.totalsTitle.textContent = `Totals (${selectedOption.label})`;
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><button class="expand-btn" data-key="__total__">${expanded ? "▼" : "▶"}</button></td>
+        <td>${total.type}</td>
+        <td>${total.label}</td>
+        <td class="num mono">${formatTotalMetricValue(selectedMetric, selectedOption, "ib")}</td>
+        <td class="num mono">${formatTotalMetricValue(selectedMetric, selectedOption, "pr")}</td>
+        <td class="num mono ${diffMetricClass(selectedMetric, selectedOption)}">${formatTotalMetricValue(selectedMetric, selectedOption, "diff")}</td>
+      `;
+      el.totalBody.appendChild(row);
+      if (expanded) {
+        el.totalBody.appendChild(buildDetailMetricsTable(total, 6, true));
+      }
+      el.totalBody.querySelector(".expand-btn").addEventListener("click", () => {
+        if (state.expandedModules.has("__total__")) {
+          state.expandedModules.delete("__total__");
+        } else {
+          state.expandedModules.add("__total__");
+        }
+        renderTotals();
+      });
+    }
+
+    function toggleModuleExpanded(key) {
+      if (state.expandedModules.has(key)) {
+        state.expandedModules.delete(key);
+      } else {
+        state.expandedModules.add(key);
+      }
+      renderModulesTable();
+    }
+
+    function renderModulesTable() {
+      const modules = sortedModules(state.payload.modules);
+      const COLSPAN = 6;
+      const selectedOption = getMetricOption(state.selectedMetricKey);
+
+      el.modulesHead.innerHTML = `
+        <th></th>
+        <th class="sortable" data-sort-base="type">Module Type</th>
+        <th class="sortable" data-sort-base="label">Module Label</th>
+        <th class="num sortable" data-sort-base="ib">IB</th>
+        <th class="num sortable" data-sort-base="pr">PR</th>
+        <th class="num sortable" data-sort-base="diff">Diff</th>
+      `;
+
+      el.modulesBody.innerHTML = "";
+      if (!modules.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="${COLSPAN}">No module rows matched current filters.</td>`;
+        el.modulesBody.appendChild(tr);
+        el.statusLine.textContent = "No modules matched current filters.";
+        return;
+      }
+
+      modules.forEach((module) => {
+        const key = moduleKey(module);
+        const expanded = state.expandedModules.has(key);
+        const selectedMetric = module[selectedOption.metricKey];
+        const diffClass = diffMetricClass(selectedMetric, selectedOption);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><button class="expand-btn" data-key="${key}">${expanded ? "▼" : "▶"}</button></td>
+          <td>${module.type}</td>
+          <td>${module.label}</td>
+          <td class="num mono">${formatMetricValue(selectedMetric, selectedOption, "ib")}</td>
+          <td class="num mono">${formatMetricValue(selectedMetric, selectedOption, "pr")}</td>
+          <td class="num mono ${diffClass}">${formatMetricValue(selectedMetric, selectedOption, "diff")}</td>
+        `;
+        el.modulesBody.appendChild(tr);
+
+        if (expanded) {
+          el.modulesBody.appendChild(buildDetailMetricsTable(module, COLSPAN));
+        }
+      });
+
+      el.modulesBody.querySelectorAll(".expand-btn").forEach((btn) => {
+        btn.addEventListener("click", () => toggleModuleExpanded(btn.getAttribute("data-key")));
+      });
+
+      el.modulesHead.querySelectorAll("th.sortable").forEach((th) => {
+        th.addEventListener("click", () => {
+          const base = th.getAttribute("data-sort-base");
+          const descending = state.sortKey === `${base}-desc`;
+          setSortKey(descending ? `${base}-asc` : `${base}-desc`);
+          renderModulesTable();
+        });
+      });
+
+      el.statusLine.textContent = `Showing ${modules.length.toLocaleString()} module rows.`;
+    }
+
+    function renderLegend() {
+      const warn = state.payload.threshold;
+      const error = state.payload.errorThreshold;
+      el.legendBar.innerHTML = `
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--warn')};">Above warn threshold (${warn.toFixed(2)}%)</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--error')};">Above error threshold (${error.toFixed(2)}%)</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--good-soft')};">Below negative warn threshold (-${warn.toFixed(2)}%)</span>
+        <span class="chip" style="background:${getComputedStyle(document.documentElement).getPropertyValue('--good')};">Below negative error threshold (-${error.toFixed(2)}%)</span>
+      `;
+    }
+
+    function render() {
+      renderLegend();
+      renderTotals();
+      renderModulesTable();
+    }
+
+    function attachEvents() {
+      el.filterInput.addEventListener("input", () => {
+        state.filter = el.filterInput.value;
+        renderModulesTable();
+      });
+      el.valueSelect.addEventListener("change", () => {
+        setSelectedMetric(el.valueSelect.value);
+      });
+    }
+
+    function loadFromObject(data, sourceLabel) {
+      if (!data || typeof data !== "object" || !Array.isArray(data.modules) || !data.total) {
+        throw new Error("Expected embedded resources diff payload.");
+      }
+      state.payload = data;
+      render();
+      el.statusLine.textContent = `Loaded ${data.modules.length.toLocaleString()} modules from ${sourceLabel}.`;
+    }
+
+    attachEvents();
+    window.loadFromObject = loadFromObject;
+  </script>
+</body>
+</html>

@@ -135,7 +135,7 @@ def update_timelog(workflow_dir, jobs):
 
 
 def update_hostname(workflow_dir):
-    run_cmd("hostname > %s/hostname" % workflow_dir)
+    run_cmd("uname -n > %s/hostname" % workflow_dir)
 
 
 def update_known_error(worflow, workflow_dir):

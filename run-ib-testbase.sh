@@ -3,7 +3,7 @@ cat <<EOF
 #!/bin/bash -ex
 klist || true
 kinit -R || true
-hostname
+hostname || uname -n
 umask 0002
 cvmfs_config probe || true
 for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
@@ -31,11 +31,13 @@ if [ ! -d ${CMSSW_BASE}/lib/${ARCHITECTURE} ] ; then
   UNAME=$(echo ${ARCHITECTURE} | cut -d_ -f2)
   [ "\${UNAME}" != "amd64" ] || UNAME="x86_64"
   if [ "\${CMS_SW_INSTALL_DIR}" = "" ] ; then
+    CMS_SW_INSTALL_DIR=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -1)
     #Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week
     if [ $(date +%w) -lt 2 ] ; then
-      CMS_SW_INSTALL_DIR=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -2 | head -1)
-    else
-      CMS_SW_INSTALL_DIR=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -1)
+      xDIR=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -2 | head -1)
+      if [ -d "\${xDIR}/share/etc/default-scram" ] && [ -d "\${xDIR}/${ARCHITECTURE}/lcg/SCRAMV1" ] ; then
+        CMS_SW_INSTALL_DIR="\${xDIR}"
+      fi
     fi
   fi
   source \${CMS_SW_INSTALL_DIR}/cmsset_default.sh  || true
@@ -75,4 +77,8 @@ if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true
 fi
 cudaComputeCapabilities || true
+CMSSW_MAJOR=\$(echo ${RELEASE_FORMAT} | cut -d_ -f2)
+CMSSW_MINOR=\$(echo ${RELEASE_FORMAT} | cut -d_ -f3)
+export CMSSW_VERSION_NUMBER=\$(echo x0\${CMSSW_MAJOR}x0\${CMSSW_MINOR} | sed -r -e 's|x[0]*([0-9][0-9])|\\1|g;s|^0||')
+[ -d $WORKSPACE/upload ] && export JENKINS_UPLOAD_DIR=$WORKSPACE/upload
 EOF

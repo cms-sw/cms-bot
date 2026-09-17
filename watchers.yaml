@@ -571,11 +571,15 @@ fabferro:
 - Geometry/VeryForwardRPTopology
 - RecoCTPPS
 forthommel:
+- CalibPPS
+- DQM/CTPPS
 - EventFilter/CTPPSRawToDigi
 - GeneratorInterface/CepGenInterface
-- RecoHGCal
+- Geometry/VeryForwardData
+- Geometry/VeryForwardGeometry
+- Geometry/VeryForwardGeometryBuilder
 - RecoPPS
-- SimPPS/DirectSimProducer
+- SimPPS
 fwyzard:
 - EventFilter/Configuration
 - EventFilter/OnlineMetaDataRawToDigi
@@ -1193,6 +1197,10 @@ IzaakWN:
 - EventFilter/HGCalRawToDigi
 - Geometry/HGCalMapping
 - RecoLocalCalo/HGCalRecAlgos
+- PhysicsTools/TruthInfo
+- SimDataFormats/TruthInfo
+- SimGeneral/TruthGraphAssociatorProducers
+- Validation/TruthInfo
 vandreev11:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
@@ -1296,6 +1304,10 @@ felicepantaleo:
 - SimG4CMS/Calo
 - SimDataFormats/Associations
 - SimDataFormats/CaloAnalysis
+- PhysicsTools/TruthInfo
+- SimDataFormats/TruthInfo
+- SimGeneral/TruthGraphAssociatorProducers
+- Validation/TruthInfo
 mtosi:
 - DQMOffline/Trigger
 - DQM/HLTEvF
@@ -1644,18 +1656,8 @@ ram1123:
   - RecoEcal
   - EgammaAnalysis
   - DataFormats/EgammaCandidates
-dinyar:
-  - DataFormats/L1TMuon
-  - DataFormats/L1Scouting
-  - DataFormats/L1ScoutingRawData
-  - DataFormats/L1Trigger
-  - EventFilter/L1ScoutingRawToDigi
-  - EventFilter/L1TRawToDigi
-  - L1Trigger/L1TCommon
-  - L1Trigger/L1TMuon
-  - L1Trigger/L1TNtuples
-tau-pog:
-  - RecoTauTag/
+cms-sw/tau-pog-l2:
+  - RecoTauTag
   - DataFormats/TauReco
   - PhysicsTools/PatAlgos
 francescobrivio:
@@ -1763,3 +1765,7 @@ salimcerci:
 - SimDataFormats
 - Configuration/Skimming
 - DPGAnalysis/Skims
+mmasciov:
+- RecoTracker
+- Validation/RecoTrack
+- HLTrigger/Configuration/python/HLT_75e33

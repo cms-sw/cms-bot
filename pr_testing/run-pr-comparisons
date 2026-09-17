@@ -81,7 +81,14 @@ rm -f $WORKSPACE/ALL_DONE
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$CMSSW_VERSION; fi
 if [ "$REAL_ARCH" = "" ] ; then REAL_ARCH="${RELVAL_REAL_ARCH}"; fi
 PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
-BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix${TEST_FLAVOR}-results
+if [ "${BASELINE_TEST_FLAVOR}" == "" ] ; then
+  BASELINE_TEST_FLAVOR="${TEST_FLAVOR}"
+  case "${TEST_FLAVOR}" in
+    rntuple ) BASELINE_TEST_FLAVOR="";;
+    * ) ;;
+  esac
+fi
+BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix${BASELINE_TEST_FLAVOR}-results
 PR_BASELINE_JOBDIR=pull-request-integration/${UPLOAD_UNIQ_ID}
 PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix${UC_TEST_FLAVOR}-results
 JENKINS_ARTIFACTS_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts"
@@ -91,6 +98,7 @@ COMP_UPLOAD_DIR="baseLineComparisons${UC_TEST_FLAVOR}/${COMPARISON_RELEASE}+${PR
 DAS_NON_CONSISTENT_WFS_FILE=wf_non_consistent_das.txt
 MAPPING_FILE=wf_mapping.txt
 ERRORS_FILE=wf_errors.txt
+[ $(echo ${RELEASE_FORMAT} | grep 'EVOLUTION_X'   | wc -l) -gt 0 ] && RUN_JR_COMP=false
 
 #Make sure Release baseline has been deployed
 echo -n "Waiting for baseline .."
@@ -155,11 +163,19 @@ echo "Done Downloading `date`"
 ${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 
 set +x
-for r in $(find $WORKSPACE/data/PR-${PR_NUM} -name 'step*.root' -type f | grep -v 'inDQM.root') ; do
+for r in $(find $WORKSPACE/data/PR-${PR_NUM} -name 'step*.root' -o -name 'step*.rntpl' -type f | grep -v 'inDQM.root') ; do
   while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
   echo "Running edmEventSize and edmProvDump: $r"
-  (edmEventSize -v $r > $r.edmEventSize || true) &
-  (edmProvDump     $r > $r.edmProvDump  || true) &
+  case $r in
+    *.rntpl )
+      (edmRNTupleTempStorage --average $r > $r.edmEventSize || true) &
+      (edmRNTupleTempProvDump          $r > $r.edmProvDump  || true) &
+      ;;
+    *.root )
+      (edmEventSize -v $r > $r.edmEventSize || true) &
+      (edmProvDump     $r > $r.edmProvDump  || true) &
+      ;;
+  esac
 done
 set -x
 jobs
@@ -281,12 +297,22 @@ fi
 
 echo "DQM_PID: ${DQM_PID}"
 #Run product size comparison script for Phase2 workflow
-mkdir compareProducts && pushd compareProducts
+mkdir compareProducts
+pushd compareProducts
   cp $CMS_BOT_DIR/comparisons/compareProducts.* ./
-  ./compareProducts.sh $WORKSPACE/data/PR-$PR_NUM/136.874_*/step3.root $WORKSPACE/data/$COMPARISON_RELEASE/136.874_*/step3.root _ 100 10 > products_AOD.log || true
-  ./compareProducts.sh $WORKSPACE/data/PR-$PR_NUM/136.874_*/step3_inMINIAOD.root $WORKSPACE/data/$COMPARISON_RELEASE/136.874_*/step3_inMINIAOD.root _ 100 10 > products_MINIAOD.log || true
-  mv products_AOD.log $WORKSPACE/upload/products_AOD.log
-  mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
+  for wf in 136.874 ; do
+    for step in step3 ; do
+      for stype in "" "_inMINIAOD" ; do
+        fA=$(ls -d $WORKSPACE/data/PR-$PR_NUM/${wf}_*/${step}${stype}.root 2>/dev/null || true)
+        [ "${fA}" != "" ] || continue
+        fB=$(ls -d $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_*/${step}${stype}.root 2>/dev/null || true)
+        [ "${fB}" != "" ] || continue
+        aod_log="${stype}"
+        [ "${stype}" == "" ] && aod_log="_AOD"
+        ./compareProducts.sh "$fA" "$fB" _ 100 10 > ${WORKSPACE}/upload/products${aod_log}.log || true
+      done
+    done
+  done
 popd
 
 set +x
@@ -352,7 +378,7 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
     wait_dqm_comp 0.5
     WF_DIR=`echo ${WF} | cut -d "/" -f1`
     echo "Running: edm::TriggerResults ${WF_DIR}"
-    (${CMS_BOT_DIR}/compareTriggerResults.py -r ${WORKSPACE}/data/${COMPARISON_RELEASE} -t ${WORKSPACE}/data/PR-${PR_NUM} \
+    (${CMSBOT_PYTHON_CMD} ${CMS_BOT_DIR}/compareTriggerResults.py -r ${WORKSPACE}/data/${COMPARISON_RELEASE} -t ${WORKSPACE}/data/PR-${PR_NUM} \
       -f "*/${WF_DIR}/step*.root" -o ${WORKSPACE}/upload/triggerResults > ${WORKSPACE}/upload/triggerResults/${WF_DIR}.log 2>&1 || true) &
   done
 fi
@@ -536,7 +562,7 @@ wait || true
 
 if [ "X$RUN_TR_COMP" = Xtrue ]; then
   echo "[`date`] Done comparisons of edm::TriggerResults"
-  ${CMS_BOT_DIR}/compareTriggerResultsSummary.py -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1 || true
+  ${CMSBOT_PYTHON_CMD} ${CMS_BOT_DIR}/compareTriggerResultsSummary.py -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1 || true
   echo "[`date`] Summary of TriggerResults comparisons saved in ${WORKSPACE}/upload/triggerResults.log"
   echo "HLT_TRIGGER_COMPARISON${TEST_FLAVOR_STR};OK,HLT Trigger ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/triggerResults/" >> ${RESULTS_FILE}
   if [ -f ${JR_COMP_DIR}/qaResultsSummary.log ]; then

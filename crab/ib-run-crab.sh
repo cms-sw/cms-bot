@@ -17,7 +17,7 @@ thisdir=$(dirname $0)
 [ "${JOB_DIR}" != "" ]           || JOB_DIR="."
 
 #Checkout a package
-git cms-addpkg FWCore/Version
+git cms-addpkg FWCore/Version FWCore/Framework
 [ -x ${thisdir}/${JOB_DIR}/setup.sh ] && ${thisdir}/${JOB_DIR}/setup.sh
 #Added test python module and script to make sure it is part of card sandbox
 mkdir -p ${CMSSW_BASE}/src/FWCore/Version/python ${CMSSW_BASE}/src/FWCore/Version/scripts

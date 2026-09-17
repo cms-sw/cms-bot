@@ -1,8 +1,8 @@
 #!/bin/bash -ex
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(cd $(dirname $0) >/dev/null 2>&1; pwd -P)
-readarray -t REQUIRED_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
-readarray -t ONDEMAND_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors_ondemand.txt
+readarray -t REQUIRED_GPU_TYPES < <(tr -d '\r' < "${CMS_BOT_DIR}/gpu_flavors.txt")
+readarray -t ONDEMAND_GPU_TYPES < <(tr -d '\r' < "${CMS_BOT_DIR}/gpu_flavors_ondemand.txt")
 ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
 
 ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
@@ -73,7 +73,7 @@ pushd "$WORKSPACE/matrix-results"
     nano )       MATRIX_ARGS="-w nano -i all ${MATRIX_ARGS}" ;;
     input )      MATRIX_ARGS="-i all --maxSteps=2 ${MATRIX_ARGS}" ; CMD_OPTS="-n 1 --prefix ${CMS_BOT_DIR}/pr_testing/retry-command.sh" ; export CMS_BOT_RETRY_COUNT=3 ;;
     * ) if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-          NJOBS=1
+          [ $NJOBS -gt 4 ] && NJOBS=4
           MATRIX_ARGS="$(get_gpu_matrix_args) ${MATRIX_ARGS}"
         fi
         ;;
@@ -91,13 +91,14 @@ pushd "$WORKSPACE/matrix-results"
   if ! check_invalid_wf_lists "${MATRIX_ARGS}" ; then
     exit 1
   fi
-  if is_in_array "${TEST_FLAVOR}" "${ALL_GPU_TYPES[@]}" ; then
-    NJOBS=$(grep 'GPU no' $WORKSPACE/runTheMatrix.log | wc -l)
-    if [ $NJOBS -eq 0 ] ; then NJOBS=1 ; fi
-  fi
   rm -f $WORKSPACE/runTheMatrix.log
 
-  [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"
+  if [ "${CMD_OPTS}" != "" ] ; then
+    case " ${CMD_OPTS} " in
+      *" --maxmem_profile "*|*" --prefix "*) MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'" ;;
+      * ) MATRIX_ARGS="${MATRIX_ARGS} --command ' --prefix \"timeout --signal SIGTERM 9000\" ${CMD_OPTS}'" ;;
+    esac
+  fi
   if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
     CMS_SITE_OVERRIDE="local"
   fi

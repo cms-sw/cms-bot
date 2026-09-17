@@ -80,6 +80,7 @@ fi
 THIS_DIR=$(dirname $0)
 rsync -a ${THIS_DIR}/deploy/ ${INSTALL_DIR}/
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg
+mkdir -p ${PYTHONUSERBASE}/etc
 ln -s ../../../../../rucio.cfg ${PYTHONUSERBASE}/etc/rucio.cfg
 
 cp -r ${THIS_DIR}/setup.sh ${INSTALL_DIR}/setup-py${PY_VER}.sh

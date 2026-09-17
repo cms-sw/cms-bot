@@ -73,8 +73,8 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     elif $REQUIRED_TEST ; then
      PR_COMMIT_STATUS="required"
     fi
-    readarray -t REQUIRED_GPU_TYPES < <(tr '[:lower:]' '[:upper:]' < "${CMS_BOT_DIR}/gpu_flavors.txt")
-    readarray -t ONDEMAND_GPU_TYPES < <(tr '[:lower:]' '[:upper:]' < "${CMS_BOT_DIR}/gpu_flavors_ondemand.txt")
+    readarray -t REQUIRED_GPU_TYPES < <(tr -d '\r' < "${CMS_BOT_DIR}/gpu_flavors.txt" | tr '[:lower:]' '[:upper:]')
+    readarray -t ONDEMAND_GPU_TYPES < <(tr -d '\r' < "${CMS_BOT_DIR}/gpu_flavors_ondemand.txt" | tr '[:lower:]' '[:upper:]')
     ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
     ALL_GPU_BRANDS=($(for gpu in "${REQUIRED_GPU_TYPES[@]}"; do echo "${gpu%%_*}"; done | sort -u))
     IFS=',' read -ra PARSED_TESTS <<< "$ENABLE_BOT_TESTS"

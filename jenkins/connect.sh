@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-TARGET=$1 ; shift
+TARGET=$(echo $1 | sed "s|NODE_NAME@|${NODE_NAME}@|") ; shift
 if [ $(echo ${TARGET} | grep '@' | wc -l) -eq 0 ] ; then exec $0 "${TARGET}@${NODE_NAME}" "${NODE_NAME}" "$@" ; fi
 if [ "$1" != "${NODE_NAME}" ] ; then exec $0 "${TARGET}" "${NODE_NAME}" "$@"; fi
 opts="$0 +${TARGET} +${NODE_NAME} +"

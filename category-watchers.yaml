@@ -7,13 +7,11 @@ mmusich:
 - db
 PonIlya:
 - db
-yuanchao:
-- alca
-- db
-rsreds:
-- alca
-- db
 JanChyczynski:
 - db
 sbein:
 - fastsim
+AdrianoDee:
+- heterogeneous
+ckoraka:
+- heterogeneous

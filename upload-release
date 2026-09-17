@@ -6,7 +6,7 @@
 # ARCHITECTURE: architecture for the upload
 # ISSUE_NUMBER: the number of the issue that triggered the upload
 # DRY_RUN_PARAM: parameter that to use dry-run
-source $WORKSPACE/cmsrep.sh
+source $WORKSPACE/ci-cd_config.sh
 CMSSW_X_Y_Z=$1
 ARCHITECTURE=$2
 ISSUE_NUMBER=$3
@@ -26,7 +26,7 @@ case $CMSSW_X_Y_Z in
     ;;
 esac
 
-WORKER=`hostname -s`
+WORKER=`uname -n | cut -d. -f1`
 
 # the jenkins build number is the one of the job in jenkins doing the upload
 $WORKSPACE/report-build-release-status $BUILD_NUMBER $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z UPLOADING $DRY_RUN_PARAM

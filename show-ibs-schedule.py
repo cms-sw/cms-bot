@@ -53,9 +53,9 @@ print("Day\tHour\tx86_64\tppc64le\taarch64")
 for day in data.keys():
     for hour in data[day].keys():
         str = "%s\t%s\t" % (day, hour)
-        cnt = {"amd64": 0, "ppc64le": 0, "aarch64": 0}
+        cnt = {"amd64": 0, "ppc64le": 0, "aarch64": 0, "riscv64": 0}
         for spec in data[day][hour]:
             arch = spec["SCRAM_ARCH"].split("_")[1]
             cnt[arch] += 1
-        str += "%s\t%s\t%s" % (cnt["amd64"], cnt["ppc64le"], cnt["aarch64"])
+        str += "%s\t%s\t%s\t%s" % (cnt["amd64"], cnt["ppc64le"], cnt["aarch64"], cnt["riscv64"])
         print(str)

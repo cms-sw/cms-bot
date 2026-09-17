@@ -104,7 +104,6 @@ def format(s, **kwds):
 
 
 CMS_BOT_VERSION = 1
-
 CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
 BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 BOT_CACHE_TEMPLATE["version"] = CMS_BOT_VERSION

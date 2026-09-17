@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 
 CMS_BOT_DIR=$(dirname $0)
-source $CMS_BOT_DIR/cmsrep.sh
+source $CMS_BOT_DIR/ci-cd_config.sh
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 
 echo DATE=`date`
@@ -27,10 +27,8 @@ rm -rf $WORKSPACE/../build-cache &
 cd $WORKSPACE
 rm -rf ${WRKDIR}/SPECS
 
-BUILD_JOBS=3
-[ "$CMDBUILD_JOBS" != "" ] && BUILD_JOBS="$CMDBUILD_JOBS"
 BUILD_NPROC=$(nproc)
-
+BUILD_JOBS=2
 case $ARCHITECTURE in
   *_mic_*) export BUILD_ARCH=`echo $ARCHITECTURE | cut -f1,2 -d_` ;;
   *_armv7hl_*) BUILD_JOBS=1; BUILD_NPROC=3 ;;
@@ -107,10 +105,22 @@ fi
 
 CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
 EX_OPTS=""
-if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
+PKG_TOOL_VERSION=$(echo ${PKGTOOLS_TAG} | cut -d- -f 2)
+if [ "${PKG_TOOL_VERSION}"  -gt 31 ] ; then
   EX_OPTS="--force-tag"
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
+  if [ "$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$')" = "estats" ] ; then
+    if [ "${PKG_TOOL_VERSION}" -ge 34 ] ; then
+      if ${CMS_BOT_DIR}/get-external-avg-stats.py ${ARCHITECTURE} > ${WORKSPACE}/externals-resource-usage.json ; then
+        CMSBUILD_CMD="${CMSBUILD_CMD} --estats ${WORKSPACE}/externals-resource-usage.json"
+        CMSBUILD_JOBS="${NCPU}"
+      fi
+    fi
+  fi
 fi
+CMSBUILD_OVERRIDE_ARGS=""
+[ "$CMSBUILD_JOBS" != "" ] && CMSBUILD_OVERRIDE_ARGS="--builders ${CMSBUILD_JOBS}"
+CMSBUILD_CMD="${CMSBUILD_CMD} ${CMSBUILD_OVERRIDE_ARGS}"
 [ $(grep 'upload-package-store-s3' PKGTOOLS/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store-s3"
 
 ## build and upload revision based packages

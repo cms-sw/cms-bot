@@ -16,10 +16,13 @@ from github import Github
 from pprint import pformat
 
 from cmsutils import get_config_map_properties
-from github_utils import get_merge_prs
+from github_utils import get_merge_prs, get_pr_data
 from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
 from releases import CMSSW_DEVEL_BRANCH
 from socket import setdefaulttimeout
+
+from githublabels import LABEL_TYPES, TYPE_COMMANDS
+from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, CMSSW_CATEGORIES
 
 setdefaulttimeout(120)
 CMSSW_REPO_NAME = join(GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO)
@@ -147,7 +150,8 @@ def get_config_map_params():
         if not params:
             continue
         print(params)
-
+        if params.get("NO_IB", "0") == "1":
+            continue
         arch = params["SCRAM_ARCH"]
         if arch not in ARCHITECTURES:
             ARCHITECTURES.append(arch)
@@ -324,7 +328,7 @@ def get_results_one_relval_file(filename):
         print(e)
         return False, details
     with open(summary_file, "w") as ref:
-        json.dump(details, ref, sort_keys=True)
+        json.dump(details, ref, sort_keys=True, indent=2)
     return details["num_failed"] == 0, details
 
 
@@ -621,9 +625,12 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
     prs = []
     for pr_num in notes:
         pr = {"is_merge_commit": False, "from_merge_commit": False}
-        if notes[pr_num]["branch"] != "master":
-            if notes[pr_num]["branch"] != branch:
-                pr["from_merge_commit"] = True
+        pr_branch = (
+            notes[pr_num]["branch"] if notes[pr_num]["branch"] != "master" else CMSSW_DEVEL_BRANCH
+        )
+        print("Forward port? ", pr_num, pr_branch, branch)
+        if pr_branch != branch:
+            pr["from_merge_commit"] = True
         pr["number"] = pr_num
         pr["hash"] = notes[pr_num]["hash"]
         pr["author_login"] = notes[pr_num]["author"]
@@ -795,7 +802,7 @@ def print_results(results):
             print("\t" + "inProgress: " + str(comp.get("inProgress")))
 
 
-def fill_missing_cmsdist_tags(results):
+def fill_missing_cmsdist_tags(results, all_cmsdist_tags):
     """
     Iterates over the IBs comparisons, if an IB doesn't have a tag for an architecture, the previous tag is
     assigned. For example, for arch slc6_amd64_gcc481
@@ -803,6 +810,18 @@ def fill_missing_cmsdist_tags(results):
     2. There is no tag for CMSSW_7_1_X_2014-10-03-0200 in cmsdist
     Then, it assumes that the tag used for CMSSW_7_1_X_2014-10-03-0200 was IB/CMSSW_7_1_X_2014-10-02-1500/slc6_amd64_gcc481
     """
+    print("ALL Tags:", all_cmsdist_tags)
+    all_tags = {}
+    for ver in all_cmsdist_tags:
+        if not "_X_" in ver:
+            continue
+        que = ver.split("_X_")[0] + "_X"
+        if not que in all_tags:
+            all_tags[que] = []
+        all_tags[que].append(ver)
+    for que in list(all_tags.keys()):
+        all_tags[que].sort()
+    print("ALL CMSDIST Tags:", all_tags)
     for rq in results:
         previous_cmsdist_tags = {}
         for comp in rq["comparisons"]:
@@ -811,10 +830,23 @@ def fill_missing_cmsdist_tags(results):
                 if current_ib_tag_arch:
                     previous_cmsdist_tags[arch] = current_ib_tag_arch
                 else:
-                    if previous_cmsdist_tags.get(arch):
-                        comp["cmsdistTags"][arch] = previous_cmsdist_tags[arch]
-                    else:
-                        comp["cmsdistTags"][arch] = "Not Found"
+                    prev_tag = previous_cmsdist_tags.get(arch, "")
+                    if not prev_tag:
+                        prev_tag = "Not Found"
+                        ver = comp.get("release_name", "")
+                        que = ""
+                        if "_X_" in ver:
+                            que = ver.split("_X_")[0] + "_X"
+                        print("Checking cmsdist for ", arch, que, ver)
+                        if que and (que in all_tags):
+                            for v in all_tags[que]:
+                                if v > ver:
+                                    break
+                                elif arch in all_cmsdist_tags[v]:
+                                    prev_tag = all_cmsdist_tags[v][arch]
+                                    print("  Possible tag", prev_tag)
+                    print("Previous tag to use ", prev_tag)
+                    comp["cmsdistTags"][arch] = prev_tag
 
 
 def get_cmsdist_merge_commits(results):
@@ -983,7 +1015,7 @@ def add_tests_to_results(
                 result["details"] = {}
                 comp["utests"].append(result)
 
-            comp["tests_archs"] = list(set(a + b + c))
+            comp["tests_archs"] = sorted(list(set(a + b + c)))
 
 
 def find_material_budget_results(comparisons, architecture):
@@ -1076,7 +1108,7 @@ def find_one_profiling_result(magic_command):
     """
     Looks for one profiling result
     """
-    command_to_execute = magic_command.replace("WORKFLOW", "13034.21")
+    command_to_execute = magic_command
     print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
     print("Ran:", out, err, ret_code, command_to_execute)
@@ -1262,8 +1294,8 @@ def find_check_crab(comparisons, architecture):
             rel_name,
             architecture,
             CHECK_CRAB_PATH,
-            'grep -h -c "FAILED" {0}/*/statusfile',
-            'grep -h -c "INPROGRESS" {0}/*/statusfile',
+            'find {0} -name statusfile | xargs -r grep -h -c "FAILED"',
+            'find {0} -name statusfile | xargs -r grep -h -c "INPROGRESS"',
         )
 
 
@@ -1385,7 +1417,7 @@ def generate_separated_json_results(results):
         file_name = rq["release_name"] + ".json"
         summary_file_name = rq["release_name"] + "_summary.txt"
         out_json = open(file_name, "w")
-        json.dump(rq, out_json, sort_keys=True, indent=4)
+        json.dump(rq, out_json, sort_keys=True, indent=2)
         out_json.close()
 
         f_summary = open(summary_file_name, "w")
@@ -1521,7 +1553,7 @@ def generate_ib_json_short_summary(results):
     short_summary["all_archs"] = ARCHITECTURES
     short_summary["prod_archs"] = get_production_archs(get_config_map_properties())
     out_json = open("LatestIBsSummary.json", "w")
-    json.dump(short_summary, out_json, sort_keys=True, indent=4)
+    json.dump(short_summary, out_json, sort_keys=True, indent=2)
     out_json.close()
 
 
@@ -1561,7 +1593,7 @@ def identify_release_groups(results):
                 group = g
                 break
         if not group:
-            group = [prefix, []]
+            group = [prefix, [prefix]]
             groups.append(group)
         if not item[0] in group[1]:
             group[1].append(item[0])
@@ -1569,7 +1601,7 @@ def identify_release_groups(results):
     structure = {"all_release_queues": [], "all_prefixes": [], "default_release": ""}
     for g in groups:
         rq = g[0]
-        structure[rq] = sorted(g[1], reverse=True)
+        structure[rq] = [g[1][0]] + sorted(g[1][1:])
         structure["all_release_queues"] = structure[rq] + structure["all_release_queues"]
         structure["all_prefixes"].append(rq)
     for rq in structure["all_prefixes"][::-1]:
@@ -1608,6 +1640,21 @@ def fix_results(results):
             if comp["release_name"] == rq["base_branch"]:
                 comp["next_ib"] = True
         rq["comparisons"].reverse()
+
+
+def get_cmssw_labels():
+    cmssw_labels = {}
+    for cmd in TYPE_COMMANDS:
+        cmssw_labels[cmd] = TYPE_COMMANDS[cmd][0]
+    for state in LABEL_TYPES:
+        label_color = LABEL_TYPES[state]
+        for cat in CMSSW_CATEGORIES:
+            cmssw_labels["%s-%s" % (cat, state)] = label_color
+        for cat in [c for c in COMMON_CATEGORIES if c not in ["code-checks"]]:
+            cmssw_labels["%s-%s" % (cat, state)] = label_color
+        for cat in EXTERNAL_CATEGORIES:
+            cmssw_labels["%s-%s" % (cat, state)] = label_color
+    return cmssw_labels
 
 
 # -----------------------------------------------------------------------------------
@@ -1649,7 +1696,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_TAGS = (
         "GIT_DIR="
         + CMSSW_REPO_LOCAL
-        + ' git log --pretty=\'"%s", "tags->,%d"\' START_TAG..END_TAG | grep -E "\\"tags->, " | grep -E "RELEASE_QUEUE"'
+        + ' git log --pretty=\'"%s", "tags->,%d"\' START_TAG..END_TAG | grep -E "\\"tags->, " | grep -E "tags->, .*RELEASE_QUEUE"'
     )
     MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = (
         "find "
@@ -1715,24 +1762,24 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_IGPROF = "test -d " + JENKINS_ARTIFACTS_DIR + "/igprof/RELEASE_NAME"
     MAGIC_COMMAND_FIND_PROFILING = "test -d " + JENKINS_ARTIFACTS_DIR + "/profiling/RELEASE_NAME"
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = (
-        "ls "
+        "ls -v "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_*.resources.json 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = (
-        "ls -d "
+        "ls -v "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/ 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME/||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/sorted_RES_CPU_step3.html 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME/||"'
     )
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3 = (
-        "ls "
+        "ls -v "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME||"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | tail -1 | sed "s|.*/RELEASE_NAME||"'
     )
     MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
-        "ls "
+        "ls -v "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$|/r-step3-WORKFLOW-hs|"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3-vtune.log 2>/dev/null | tail -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$||;s|^\\(.*\\/\\)\\(.*\\)|\\1\\2\/r-step3-\\2-hs/|"'
     )
     CHECK_HLT_PATH = (
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"
@@ -1810,7 +1857,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_ALL_TAGS = (
         "GIT_DIR="
         + CMSSW_REPO_LOCAL
-        + ' git log --pretty=\'"%s", "tags->,%d"\' END_TAG | grep -E "\\"tags->, " | grep -E "RELEASE_QUEUE"'
+        + ' git log --pretty=\'"%s", "tags->,%d"\' END_TAG | grep -E "\\"tags->, " | grep -E "tags->, .*RELEASE_QUEUE"'
     )
     # This regular expression allows to identify if a merge commit is an automatic forward port
     AUTO_FORWARD_PORT_REGEX = "^.*Merge CMSSW.+ into CMSSW.+$"
@@ -1917,7 +1964,7 @@ if __name__ == "__main__":
                     find_check_hlt(release_queue_results["comparisons"], arch)
                 if "hlt-p2-timing" in tests_to_find:
                     find_check_hlt_p2_timing(release_queue_results["comparisons"], arch)
-                if "crab" in tests_to_find:
+                if ("crab" in tests_to_find) or ("crabx" in tests_to_find):
                     find_check_crab(release_queue_results["comparisons"], arch)
                 if "static-checks" in tests_to_find:
                     find_static_results(release_queue_results["comparisons"], arch)
@@ -2004,13 +2051,14 @@ if __name__ == "__main__":
         )
         results.append(release_queue_results)
 
+    all_cmsdist_tags = execute_magic_command_get_cmsdist_tags()
     add_tests_to_results(
         results,
         execute_magic_command_find_results("utests"),
         execute_magic_command_find_results("relvals"),
         execute_magic_command_find_results("addOn"),
         execute_magic_command_find_results("builds"),
-        execute_magic_command_get_cmsdist_tags(),
+        all_cmsdist_tags,
         execute_magic_command_find_rv_exceptions_results(),  # rv_Exceptions_Results
         execute_magic_command_find_results("fwlite"),
         execute_magic_command_find_results("python3"),
@@ -2036,12 +2084,37 @@ if __name__ == "__main__":
         find_dup_dict_result(release_queue_results["comparisons"])
         find_ubsan_logs(release_queue_results["comparisons"], ubsan_data)
 
-    fill_missing_cmsdist_tags(results)
+    fill_missing_cmsdist_tags(results, all_cmsdist_tags)
     get_cmsdist_merge_commits(results)
     print_results(results)
 
     structure = identify_release_groups(results)
     fix_results(results)
+
+    merged_pr_cache = {}
+    for rx in results:
+        for res in rx["comparisons"]:
+            if not res.get("release_queue", False):
+                continue
+            rel_que = "_".join(res.get("release_queue").split("_")[:3])
+            if not rel_que in merged_pr_cache:
+                merged_pr_cache[rel_que] = {"cmsdist": {}, "cmssw": {}}
+            prs = res.get("merged_prs", [])
+            for pr in prs:
+                merged_pr_cache[rel_que]["cmssw"][pr["number"]] = get_pr_data(
+                    "cms-sw/cmssw", pr["number"], CMS_PRS
+                )
+            prs = res.get("cmsdist_merged_prs", {})
+            for arch in prs:
+                for pr in prs[arch]:
+                    merged_pr_cache[rel_que]["cmsdist"][pr["number"]] = get_pr_data(
+                        "cms-sw/cmsdist", pr["number"], CMS_PRS
+                    )
+
+    for rel_que in merged_pr_cache:
+        out_json = open("prs/%s.json" % rel_que, "w")
+        json.dump(merged_pr_cache[rel_que], out_json, sort_keys=True, indent=2)
+        out_json.close()
 
     prod_archs = get_production_archs(get_config_map_properties())
     prod_ib_index = {}
@@ -2134,9 +2207,13 @@ if __name__ == "__main__":
     generate_ib_json_short_summary(results)
 
     out_json = open("merged_prs_summary.json", "w")
-    json.dump(results, out_json, sort_keys=True, indent=4)
+    json.dump(results, out_json, sort_keys=True, indent=2)
     out_json.close()
 
     out_groups = open("structure.json", "w")
-    json.dump(structure, out_groups, sort_keys=True, indent=4)
+    json.dump(structure, out_groups, sort_keys=True, indent=2)
     out_groups.close()
+
+    out_labels = open("cmssw_labels.json", "w")
+    json.dump(get_cmssw_labels(), out_labels, sort_keys=True, indent=2)
+    out_labels.close()

@@ -12,8 +12,6 @@ try:
 except ImportError:
     monotonic = time
 
-SAMPLE_INTERVAL = 1.0
-cpu_times = {}
 job = {"exit_code": 0, "command": "true"}
 
 
@@ -21,8 +19,15 @@ def run_job(job):
     job["exit_code"] = subprocess.call(job["command"])
 
 
-def update_stats(proc):
-    global cpu_times
+# Sampling interval in seconds
+SAMPLE_INTERVAL = 1.0
+
+
+def update_stats(proc, cpu_times, commands=False):
+    try:
+        children = proc.children(recursive=True)
+    except:
+        return {}, cpu_times
     stats = {
         "rss": 0,
         "vms": 0,
@@ -35,17 +40,12 @@ def update_stats(proc):
         "processes": 0,
         "cpu": 0,
     }
-    try:
-        children = proc.children(recursive=True)
-    except:
-        return stats
-    clds = len(children)
-    if clds == 0:
-        return stats
-    stats["processes"] = clds
+    if commands:
+        stats["commands"] = []
+    stats["processes"] = len(children)
     sleep(SAMPLE_INTERVAL)
     new_cpu_times = {}
-    for cld in children:
+    for cld in [proc] + children:
         pid = cld.pid
         try:
             current_time = monotonic()
@@ -59,8 +59,23 @@ def update_stats(proc):
             else:
                 delta = new_cpu.user + new_cpu.system
                 elapsed = time() - cld.create_time()
+            pcpu = 0
             if elapsed >= 0.1:
-                stats["cpu"] += int((delta / elapsed) * 100.0)
+                pcpu = int((delta / elapsed) * 100.0)
+                stats["cpu"] += pcpu
+            if commands:
+                stats["commands"].append(
+                    {
+                        "pid": pid,
+                        "command": " ".join(cld.cmdline())[:200],
+                        "old_cpu": old_cpu,
+                        "new_cpu": new_cpu,
+                        "delta": delta,
+                        "elapsed": elapsed,
+                        "cpu": pcpu,
+                        "threads": cld.num_threads(),
+                    }
+                )
             new_cpu_times[pid] = (new_cpu, current_time)
         except:
             continue
@@ -81,8 +96,7 @@ def update_stats(proc):
                 stats[a] += getattr(mem, a)
         except:
             pass
-    cpu_times = new_cpu_times
-    return stats
+    return stats, new_cpu_times
 
 
 def monitor(stop):
@@ -107,10 +121,13 @@ def monitor(stop):
     else:
         step = stime
     data = []
-    sleep_time = 1
+    cpu_times = {}
     while not stop():
         try:
-            stats = update_stats(p)
+            stats, cpu_times = update_stats(p, cpu_times)
+            if not stats:
+                sleep(SAMPLE_INTERVAL)
+                continue
             if stats["processes"] == 0:
                 break
             stats["time"] = int(time() - stime)

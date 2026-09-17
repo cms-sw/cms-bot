@@ -90,6 +90,23 @@
       "start_date": 1377043200
     }
   ],
+  "Electricks94": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
+    }
+  ],
+  "EltonSh": [
+    {
+      "category": [
+        "alca",
+        "db"
+      ],
+      "start_date": 1781049600
+    }
+  ],
   "ErnestaP": [
     {
       "category": [
@@ -180,6 +197,14 @@
         "reconstruction"
       ],
       "start_date": 1765238400
+    }
+  ],
+  "Parsifal-2045": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "Pavlov": [
@@ -320,6 +345,14 @@
       "start_date": 1557187200
     }
   ],
+  "ahinzmann": [
+    {
+      "category": [
+        "pf"
+      ],
+      "start_date": 1772841600
+    }
+  ],
   "ahmad3213": [
     {
       "category": [
@@ -406,6 +439,14 @@
       "start_date": 1386892800
     }
   ],
+  "antonellopellecchia": [
+    {
+      "category": [
+        "gem-dpg"
+      ],
+      "start_date": 1773705600
+    }
+  ],
   "antoniovagnerini": [
     {
       "category": [
@@ -478,6 +519,7 @@
         "alca",
         "db"
       ],
+      "end_date": 1781049600,
       "start_date": 1726790400
     }
   ],
@@ -538,11 +580,20 @@
       "start_date": 1694649600
     }
   ],
+  "bdanzi": [
+    {
+      "category": [
+        "tracking-pog"
+      ],
+      "start_date": 1788480000
+    }
+  ],
   "bellan": [
     {
       "category": [
         "pf"
       ],
+      "end_date": 1772841600,
       "start_date": 1687478400
     }
   ],
@@ -553,6 +604,14 @@
       ],
       "end_date": 1458691200,
       "start_date": 1387584000
+    }
+  ],
+  "benitezj": [
+    {
+      "category": [
+        "lumi-pog"
+      ],
+      "start_date": 1775692800
     }
   ],
   "benkrikler": [
@@ -613,6 +672,14 @@
       ],
       "end_date": 1652400000,
       "start_date": 1632873600
+    }
+  ],
+  "camendola": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
     }
   ],
   "cardinia": [
@@ -760,11 +827,20 @@
       "start_date": 1413331200
     }
   ],
+  "cramonal": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
+    }
+  ],
   "cschwick": [
     {
       "category": [
         "lumi-pog"
       ],
+      "end_date": 1775692800,
       "start_date": 1632873600
     }
   ],
@@ -773,6 +849,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1789430400,
       "start_date": 1618272000
     }
   ],
@@ -977,6 +1054,14 @@
         "daq"
       ],
       "start_date": 1377734400
+    }
+  ],
+  "enibigir": [
+    {
+      "category": [
+        "xpog"
+      ],
+      "start_date": 1788998400
     }
   ],
   "epalencia": [
@@ -1200,6 +1285,7 @@
       "category": [
         "xpog"
       ],
+      "end_date": 1788998400,
       "start_date": 1716508800
     }
   ],
@@ -1274,6 +1360,14 @@
       ],
       "end_date": 1522972800,
       "start_date": 1462147200
+    }
+  ],
+  "ghyls": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "giamman": [
@@ -1533,6 +1627,7 @@
       "category": [
         "gem-dpg"
       ],
+      "end_date": 1773705600,
       "start_date": 1632873600
     }
   ],
@@ -1550,6 +1645,7 @@
       "category": [
         "gem-dpg"
       ],
+      "end_date": 1773705600,
       "start_date": 1618358400
     }
   ],
@@ -1567,7 +1663,16 @@
       "category": [
         "pf"
       ],
+      "end_date": 1772841600,
       "start_date": 1632787200
+    }
+  ],
+  "kfjack": [
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1776643200
     }
   ],
   "kirschen": [
@@ -1601,6 +1706,7 @@
       "category": [
         "lumi-pog"
       ],
+      "end_date": 1775692800,
       "start_date": 1632787200
     }
   ],
@@ -2120,7 +2226,16 @@
       "category": [
         "dqm"
       ],
+      "end_date": 1778630400,
       "start_date": 1757462400
+    }
+  ],
+  "nowaythatsok": [
+    {
+      "category": [
+        "lumi-pog"
+      ],
+      "start_date": 1775692800
     }
   ],
   "nsmith-": [
@@ -2278,6 +2393,14 @@
       "start_date": 1530748800
     }
   ],
+  "pietroGru": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
+    }
+  ],
   "pmandrik": [
     {
       "category": [
@@ -2285,6 +2408,14 @@
       ],
       "end_date": 1695772800,
       "start_date": 1631491200
+    }
+  ],
+  "pmastrap": [
+    {
+      "category": [
+        "tau-pog"
+      ],
+      "start_date": 1789430400
     }
   ],
   "pohsun": [
@@ -2396,6 +2527,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1789430400,
       "start_date": 1618272000
     }
   ],
@@ -2433,6 +2565,14 @@
       ],
       "end_date": 1726790400,
       "start_date": 1659052800
+    }
+  ],
+  "sbaldu": [
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "sbein": [
@@ -2617,6 +2757,12 @@
       ],
       "end_date": 1736208000,
       "start_date": 1662422400
+    },
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1776643200
     }
   ],
   "sscruz": [
@@ -2643,6 +2789,14 @@
       ],
       "end_date": 1759363200,
       "start_date": 1756684800
+    }
+  ],
+  "stahlleiton": [
+    {
+      "category": [
+        "pf"
+      ],
+      "start_date": 1772841600
     }
   ],
   "subansal": [
@@ -2684,6 +2838,7 @@
       "category": [
         "pf"
       ],
+      "end_date": 1772841600,
       "start_date": 1695081600
     }
   ],
@@ -2963,6 +3118,14 @@
       "start_date": 1680048000
     }
   ],
+  "waredjeb": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
+    }
+  ],
   "watson-ij": [
     {
       "category": [
@@ -2986,6 +3149,14 @@
         "ml"
       ],
       "start_date": 1722297600
+    }
+  ],
+  "yeckang": [
+    {
+      "category": [
+        "gem-dpg"
+      ],
+      "start_date": 1773705600
     }
   ],
   "yuanchao": [

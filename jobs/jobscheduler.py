@@ -367,7 +367,7 @@ if __name__ == "__main__":
                 if (opts.maxmemory > 0)
                 else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory)
             ),
-            "gpu": gpuList("cuda") + gpuList("rocm"),
+            "gpu": gpuList("cuda", opts.maxJobs) + gpuList("rocm", opts.maxJobs),
         },
         "total_groups": 0,
         "total_jobs": 0,

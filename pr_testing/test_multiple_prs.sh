@@ -47,6 +47,89 @@ function get_pr_relval_args() {
   echo "${WF_ARGS}"
 }
 
+function is_doc_file()
+{
+  local filename="$1"
+  local patterns=(
+    '\.md$'
+    '/README$'
+  )
+  local regexp
+  for regexp in "${patterns[@]}"; do
+    if [[ "$filename" =~ $regexp ]]; then
+      echo "MSG: Doc file: $filename"
+      return 0
+    fi
+  done
+  return 1
+}
+
+function should_skip_tests()
+{
+  local file="$1"
+  local filename
+  while IFS= read -r filename; do
+    if ! is_doc_file "$filename"; then
+      return 1
+    fi
+  done < "$file"
+  return 0
+}
+
+function should_enable_gpu_tests()
+{
+  local file="$1"
+  local patterns=(
+    '^([^/]+/){3}alpaka/'
+    'DataFormats/AlpakaCommon/'
+    'DataFormats/Portable/'
+    'DataFormats/PortableTestObjects/'
+    'HeterogeneousCore/Common/'
+    'HeterogeneousCore/Alpaka.*/'
+    'HeterogeneousCore/CUDA.*/'
+    'HeterogeneousCore/ROCm.*/'
+    'HeterogeneousTest/'
+    'HLTrigger/Configuration/'
+    'Configuration/PyReleaseValidation/'
+  )
+  local -a packages=()
+  local filename package regexp
+  local -A seen_packages=()
+  while IFS= read -r filename; do
+    # Ignore documentation-only changes.
+    if is_doc_file "$filename"; then
+      continue
+    fi
+    # Check the direct path patterns first.
+    for regexp in "${patterns[@]}"; do
+      if [[ "$filename" =~ $regexp ]]; then
+        echo "MSG: Possible GPU codechange: $filename"
+        return 0
+      fi
+    done
+    # Get the CMSSW package (first two path components).
+    if [[ "$filename" =~ ^([^/]+/[^/]+)/ ]]; then
+      package="${BASH_REMATCH[1]}"
+      # Avoid scanning the same package multiple times.
+      if [[ -z "${seen_packages[$package]+x}" ]]; then
+        seen_packages["$package"]=1
+        packages+=("$package")
+      fi
+    fi
+  done < "$file"
+
+  # Search all BuildFile.xml files in each affected package.
+  for package in "${packages[@]}"; do
+    while IFS= read -r -d '' buildfile; do
+      if grep -qE 'name[[:space:]]*=[[:space:]]*"(cuda|rocm|alpaka)"' "$buildfile"; then
+        echo "MSG: cuda/rocm/alapka dependency found: $buildfile"
+        return 0
+      fi
+    done < <(find "$WORKSPACE/$CMSSW_IB/src/$package" -name BuildFile.xml -type f -print0)
+  done
+  return 1
+}
+
 # Function to extract filenames by headername and append to indirectly-changed-files.txt
 function extract_filenames() {
   local headername="$1"
@@ -86,18 +169,17 @@ CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils
-source ${CMS_BOT_DIR}/cmsrep.sh
+source ${CMS_BOT_DIR}/ci-cd_config.sh
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
-[ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
-readarray -t REQUIRED_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors.txt
-readarray -t ONDEMAND_GPU_TYPES < ${CMS_BOT_DIR}/gpu_flavors_ondemand.txt
+[ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG="false"
+readarray -t REQUIRED_GPU_TYPES < <(tr -d '\r' < "${CMS_BOT_DIR}/gpu_flavors.txt" | tr '[:lower:]' '[:upper:]')
+readarray -t ONDEMAND_GPU_TYPES < <(tr -d '\r' < "${CMS_BOT_DIR}/gpu_flavors_ondemand.txt" | tr '[:lower:]' '[:upper:]')
 ALL_GPU_TYPES=( ${REQUIRED_GPU_TYPES[@]} ${ONDEMAND_GPU_TYPES[@]} )
 
-[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="THREADING HIGH_STATS NANO $(echo ${ALL_GPU_TYPES[@]} | tr '[a-z]' '[A-Z]')"
-EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | grep -v RNTUPLE | grep -v GPU | tr '\n' ' ')
+EXTRA_RELVALS_TESTS=$(echo "HIGH_STATS NANO ${EXTRA_RELVALS_TESTS} ${ALL_GPU_TYPES[*]}" | tr ' ' '\n' | grep -v THREADING | grep -v RNTUPLE | grep -v GPU | sort | grep -v '^$' | uniq | tr '\n' ' ')
 # ---
 # doc: Input variable
 # PULL_REQUESTS   # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
@@ -172,19 +254,6 @@ if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   fi
 fi
 
-IFS=',' read -ra SELECTED_GPU_TYPES <<< "$SELECTED_GPU_TYPES"
-
-for gpu_type in ${SELECTED_GPU_TYPES[@]} ; do
-  VAR_NAME="MATRIX_EXTRAS_${gpu_type}"
-  if [ -z "${!VAR_NAME}" ]; then
-    eval "$VAR_NAME=\"${MATRIX_EXTRAS_GPU}\""
-  fi
-  VAR_NAME="EXTRA_MATRIX_ARGS_${gpu_type}"
-  if [ -z "${!VAR_NAME}" ]; then
-    eval "$VAR_NAME=\"${EXTRA_MATRIX_ARGS_GPU}\""
-  fi
-done
-
 if [ "${BUILD_ONLY}" = "true" ] ; then
   DO_COMPARISON=false
 fi
@@ -213,7 +282,7 @@ fi
 
 DISABLE_CMS_DEPRECATED=false
 DISABLE_GPU_TESTS=true
-if [ $(uname -m) != "aarch64" ] ; then
+if [ $(uname -m) == "x86_64" ] ; then
   DISABLE_GPU_TESTS=false
 fi
 CMSSW_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
@@ -267,6 +336,7 @@ if [ $(echo ${UNIQ_REPO_NAMES_WITH_COUNT}  | grep -v '1 ' | wc -w ) -gt 0 ]; the
 fi
 
 # Filter PR for specific repo and then check if its PRs point to same base branch
+if [ $(echo "${UNIQ_REPOS}" | tr ' ' '\n' | sed 's|.*/||' | grep -E '^(cmsdist|pkgtools)$' | wc -l) -gt 0 ] ; then USE_IB_TAG="false"; fi
 for U_REPO in ${UNIQ_REPOS}; do
     FILTERED_PRS=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep ${U_REPO} | tr '\n' ' ' )
     MASTER_LIST=""
@@ -339,12 +409,61 @@ fi
 
 WORKFLOWS_PR_LABELS=""
 scram -a $SCRAM_ARCH project $CMSSW_IB
-if $DO_COMPARISON ; then
-  CMS_BOT_TEST_BRANCH=""
-  if [[ "$PULL_REQUEST" == cms-sw/cms-bot#* ]]; then
-    PR_METADATA_PATH=$(get_cached_GH_JSON $PULL_REQUEST)
-    CMS_BOT_TEST_BRANCH=$(${CMSBOT_PYTHON_CMD} -c "import json,sys,codecs;obj=json.load(codecs.open('${PR_METADATA_PATH}',encoding='utf-8',errors='ignore'));print(obj['head']['ref'])")
+pushd $CMSSW_IB
+  set +x
+  eval $(scram runtime -sh)
+  if $USE_IB_TAG ; then
+    git cms-init --upstream-only $CMSSW_IB
+  else
+    git cms-init --upstream-only
   fi
+  mv src src.init
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -eq 0 ] ; then
+    rsync -a src.init/ src/
+    MERGE_OK=false
+    for PR in $(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "cms-sw/cmssw#"); do
+      MERGE_OK=true
+      PR_NR=$(echo ${PR} | sed 's/.*#//')
+      if ! git cms-merge-topic --ssh -u ${PR_NR} ; then
+        MERGE_OK=false
+        break
+      fi
+    done
+    if $MERGE_OK ; then
+      (cd src && git diff --name-only $CMSSW_VERSION > $WORKSPACE/cmssw-changed-files.txt)
+      if should_enable_gpu_tests $WORKSPACE/cmssw-changed-files.txt ; then
+        SELECTED_GPU_TYPES=$(IFS=,; echo "${ALL_GPU_TYPES[*]}")
+        ENABLE_BOT_TESTS=$(echo "${ENABLE_BOT_TESTS} ${ALL_GPU_TYPES[*]}" | tr ' ' '\n' | sort | grep -v '^$' | uniq | tr '\n' ' ')
+        echo "Auto enabled GPU tests: ${SELECTED_GPU_TYPES}"
+      fi
+    fi
+    rm -rf src; mkdir src
+  fi
+  eval $(scram unset -sh)
+  set -x
+popd
+
+if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
+  if [ "$(uname -m)" = "x86_64" ] ; then
+    if [ -e $(grep 'RELEASETOP=' $CMSSW_IB/.SCRAM/${SCRAM_ARCH}/Environment  | sed 's|.*=||')/src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh ]; then
+      DO_HLT_P2_TIMING=true
+    fi
+  fi
+fi
+
+IFS=',' read -ra SELECTED_GPU_TYPES <<< "$SELECTED_GPU_TYPES"
+for gpu_type in ${SELECTED_GPU_TYPES[@]} ; do
+  VAR_NAME="MATRIX_EXTRAS_${gpu_type}"
+  if [ -z "${!VAR_NAME}" ]; then
+    eval "$VAR_NAME=\"${MATRIX_EXTRAS_GPU}\""
+  fi
+  VAR_NAME="EXTRA_MATRIX_ARGS_${gpu_type}"
+  if [ -z "${!VAR_NAME}" ]; then
+    eval "$VAR_NAME=\"${EXTRA_MATRIX_ARGS_GPU}\""
+  fi
+done
+
+if $DO_COMPARISON ; then
   mkdir $WORKSPACE/ib-baseline-tests
   pushd $WORKSPACE/ib-baseline-tests
     COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
@@ -355,12 +474,14 @@ if $DO_COMPARISON ; then
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
     echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> run-baseline-${BUILD_ID}-01.default
     echo "PRODUCTION_RELEASE=true"       >> run-baseline-${BUILD_ID}-01.default
-    if [ -n $CMS_BOT_TEST_BRANCH ]; then
-      echo "CMS_BOT_BRANCH=$CMS_BOT_TEST_BRANCH" >> run-baseline-${BUILD_ID}-01.default
-    fi
+    echo "PULL_REQUESTS=${PULL_REQUESTS}" >> run-baseline-${BUILD_ID}-01.default
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
+    echo "HLT_P2_TIMING=${DO_HLT_P2_TIMING}" >> run-baseline-${BUILD_ID}-01.default
+    if [ "${DO_HLT_P2_TIMING}" = "true" ] ; then
+      echo "HLT_P2_HOST=${HLT_P2_HOST}" >> run-baseline-${BUILD_ID}-01.default
+    fi
 
     PR_LABELS=$(curl -s https://api.github.com/repos/${PR_REPO}/issues/${PR_NUMBER}/labels | grep '"name":' | sed 's|.*: *||;s|"||g;s|-pending||;s|-approved||;s|-rejected||' | tr ',\n' '  ' | tr '[a-z-]' '[A-Z_]')
     EX_WFS=""
@@ -445,14 +566,14 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
     for PR in ${FILTERED_PRS}; do
         ERR=false
         git_clone_and_merge "$(get_cached_GH_JSON "${PR}")" || ERR=true
-	if [[ $(echo ${PR} | grep "cmsdist") ]]; then  # Check for CRAB updates to trigger unit test
-	    pushd cmsdist
-	    UPDATES=$(git diff origin/${BASE_BRANCH} --name-only)
+        if [[ $(echo ${PR} | grep "cmsdist") ]]; then  # Check for CRAB updates to trigger unit test
+            pushd cmsdist
+            UPDATES=$(git diff origin/${BASE_BRANCH} --name-only)
             if [[ $(echo ${UPDATES} | grep -E 'crab-.*(spec|file)') ]]; then
                 echo "There is a CRAB update."
-		DO_CRAB_TESTS=true
+                DO_CRAB_TESTS=true
             fi
-	    popd
+            popd
         fi
         if ${ERR} ; then
             echo "Failed to merge pull requests ${PR}." > ${RESULTS_DIR}/10-report.res
@@ -521,7 +642,6 @@ TEST_DASGOCLIENT=false
 SKIP_STATIC_CHECKS=false
 [ $(echo ",${SKIP_TESTS}," | grep ',static,' | wc -l) -gt 0 ] && SKIP_STATIC_CHECKS=true
 if ${BUILD_EXTERNAL} ; then
-    export USE_IB_TAG=false
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
     if [ ! -d "pkgtools" ] ; then
         git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
@@ -553,7 +673,7 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--builders 2  --tag ${PR_NUM}"
+    CMSBUILD_ARGS="--builders 2 --tag ${PR_NUM}"
     BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
     MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')
 
@@ -566,14 +686,17 @@ if ${BUILD_EXTERNAL} ; then
         dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
         CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
       fi
-      if [ $(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$') = "estats" ] ; then
+      if [ "$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep '^estats$')" = "estats" ] ; then
         if [ ${PKG_TOOL_VERSION} -ge 34 ] ; then
           if ${CMS_BOT_DIR}/get-external-avg-stats.py ${ARCHITECTURE} > ${WORKSPACE}/externals-resource-usage.json ; then
-            CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json --builders ${NCPU}"
+            CMSBUILD_ARGS="${CMSBUILD_ARGS} --estats ${WORKSPACE}/externals-resource-usage.json"
+            CMSBUILD_JOBS="${NCPU}"
           fi
         fi
       fi
     fi
+    CMSBUILD_OVERRIDE_ARGS=""
+    [ "${CMSBUILD_JOBS}" != "" ] && CMSBUILD_OVERRIDE_ARGS="--builders ${CMSBUILD_JOBS}"
     if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
       [ "${CMSBOT_SET_ENV_NO_PACKAGE_STORE}" = "true" ] && UPLOAD_TO_PACKAGE_STORE=false
       if $UPLOAD_TO_PACKAGE_STORE ; then
@@ -586,7 +709,7 @@ if ${BUILD_EXTERNAL} ; then
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} -i $WORKSPACE/$BUILD_DIR $REF_REPO \
-        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
+        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}") ${CMSBUILD_OVERRIDE_ARGS}"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     if [ -e cmsdist/cmssw-tool-conf.spec ] ; then
       echo "#PR ${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
@@ -641,15 +764,30 @@ if ${BUILD_EXTERNAL} ; then
       CMSSET_DEFAULT_ERR=""
       mkdir $WORKSPACE/cmsset_default
       EL_OS=$(ls $WORKSPACE/$BUILD_DIR/common/cmssw-el* | sed 's|.*/common/cmssw-el|el|' | grep -v 'el5')
-      for sh in bash sh zsh ; do
-        for os in $EL_OS ; do
-          echo "Checking cmsset_default.sh for $sh under $os" >>  $WORKSPACE/cmsset_default/run.log
-          if ! $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -e $WORKSPACE/$BUILD_DIR/cmsset_default.sh >>$WORKSPACE/cmsset_default/run.log 2>&1 ; then
+      for os in $EL_OS ; do
+        cmssw_env="$WORKSPACE/$BUILD_DIR/common/cmssw-$os"
+        env_script="$WORKSPACE/$BUILD_DIR/cmsset_default.sh"
+        env_log="$WORKSPACE/cmsset_default/run.log"
+        for sh in bash sh zsh ; do
+          echo "Checking cmsset_default.sh for $sh under $os" >> ${env_log}
+          if ! $cmssw_env -- $sh -eu $env_script >>${env_log} 2>&1 ; then
             CMSSET_DEFAULT_ERR="${CMSSET_DEFAULT_ERR} $sh:$os"
-            echo "Failed" >> $WORKSPACE/cmsset_default/run.log
-            $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -ex $WORKSPACE/$BUILD_DIR/cmsset_default.sh > $WORKSPACE/cmsset_default/${sh}-${os}.log 2>&1 || true
+            echo "Failed" >> ${env_log}
+            $cmssw_env -- $sh -ex $env_script > $WORKSPACE/cmsset_default/${sh}-${os}.log 2>&1 || true
           else
-            echo "OK" >> $WORKSPACE/cmsset_default/run.log
+            echo "OK" >> ${env_log}
+          fi
+        done
+        env_script="$WORKSPACE/$BUILD_DIR/cmsset_default.csh"
+        for sh in csh tcsh ; do
+          echo "Checking cmsset_default.csh for $sh under $os" >> ${env_log}
+          echo "source $env_script" > $WORKSPACE/cmsset_default/run.csh
+          if [ $($cmssw_env -- $sh $WORKSPACE/cmsset_default/run.csh 2>&1 | wc -l) -gt 0 ] ; then
+            CMSSET_DEFAULT_ERR="${CMSSET_DEFAULT_ERR} $sh:$os"
+            echo "Failed" >> ${env_log}
+            $cmssw_env -- $sh $WORKSPACE/cmsset_default/run.csh >$WORKSPACE/cmsset_default/${sh}-${os}.log 2>&1 || true
+          else
+            echo "OK" >> ${env_log}
           fi
         done
       done
@@ -657,9 +795,6 @@ if ${BUILD_EXTERNAL} ; then
         echo "CMSSet_Default" >> ${RESULTS_DIR}/09-failed.res
         echo 'CMSSET_DEFAULT_RESULTS;ERROR,Environment setup,See Log,cmsset_default' >> ${RESULTS_DIR}/toolconf.txt
         echo "**Failed environment setup**: \`${CMSSET_DEFAULT_ERR}\`" >> ${RESULTS_DIR}/09-report.res
-        #prepare_upload_results
-        #mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Environment setup error"
-        #exit 0
       else
         echo 'CMSSET_DEFAULT_RESULTS;OK,Environment setup,See Log,cmsset_default/run.log' >> ${RESULTS_DIR}/toolconf.txt
       fi
@@ -711,7 +846,13 @@ if ${BUILD_EXTERNAL} ; then
           MULTIARCH_OPTSX=$(echo ${MULTIARCH_OPTS} | tr ',' ' ')
           DEFAULT_TARGET=$(cmssw_default_target $CMSSW_IB)
           sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTIARCH_OPTSX}\"|" scram-buildrules/Projects/CMSSW/Self.xml
-	  sed -i -e "s|</tool>| <runtime name=\"SCRAM_TARGET\" value=\"${DEFAULT_TARGET}\"/>\n <runtime name=\"USER_TARGETS_ALL\" value=\"1\"/>\n</tool>|" scram-buildrules/Projects/CMSSW/Self.xml
+          sed -i -e "s|</tool>| <runtime name=\"SCRAM_TARGET\" value=\"${DEFAULT_TARGET}\"/>\n <runtime name=\"USER_TARGETS_ALL\" value=\"1\"/>\n</tool>|" scram-buildrules/Projects/CMSSW/Self.xml
+        fi
+        if [ -e ${WORKSPACE}/cmsdist/cmssw-gpu-backend-specific-packages.file ] ; then
+          gpu_vendors=$(grep 'define  *gpu_types ' ${WORKSPACE}/cmsdist/cmssw-gpu-backend-specific-packages.file  | sed 's|.* gpu_types  *||' | grep -v '^ *$')
+          if [ "${gpu_vendors}" != "" ] ; then
+            sed -i -e "s| SCRAM_GPU_VENDORS=.*\"| SCRAM_GPU_VENDORS=\"${gpu_vendors} cpu\"|" scram-buildrules/Projects/CMSSW/Self.xml
+          fi
         fi
         cp scram-buildrules/Projects/CMSSW/Self.xml $CMSSW_IB/config/Self.xml
       else
@@ -723,7 +864,7 @@ if ${BUILD_EXTERNAL} ; then
       fi
     fi
     rm -rf scram-buildrules
-    cd $WORKSPACE/$CMSSW_IB/src
+    cd $WORKSPACE/$CMSSW_IB
     touch $WORKSPACE/cmsswtoolconf.log
     CTOOLS=$WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected
     BTOOLS=${CTOOLS}.backup
@@ -746,23 +887,25 @@ if ${BUILD_EXTERNAL} ; then
 
     #Generate External Tools Status
     echo '<html><head><link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet"></head>' > $WORKSPACE/upload/external-tools.html
-    echo '<body><h2>External tools build Statistics</h2><br/><table class="table table-striped"><tr><td>Tool Name</td><td>#Files(new)</td><td>#Files(old)</td><td>Size(new)</td><td>Size(old)</td></tr>' >> $WORKSPACE/upload/external-tools.html
+    echo '<body><h2>External tools build Statistics</h2><br/><table class="table table-striped"><tr><td>#</td><td>Tool Name</td><td>#Files(new)</td><td>#Files(old)</td><td>Size(new)</td><td>Size(old)</td></tr>' >> $WORKSPACE/upload/external-tools.html
+    cnt=1
     for pkg in $(find ${WORKSPACE}/${BUILD_DIR}/BUILD/${ARCHITECTURE} -maxdepth 3 -mindepth 3 -type d | sed "s|$WORKSPACE/$BUILD_DIR/BUILD/||" | sort) ; do
       ltpath="${WORKSPACE}/${BUILD_DIR}/${pkg}"
       [ -d ${ltpath} ] || continue
       l_tc=$(find ${ltpath} -follow | wc -l)
       l_ts=$(du -shD ${ltpath} | awk '{print $1}')
       tdir=$(dirname $pkg)
-      rtpath=$(grep -R ${tdir} ${BTOOLS} | grep '_BASE\|CMSSW_SEARCH_PATH' | tail -1 | sed 's|.* default="||;s|".*||')
+      rtpath=$(grep -R ${tdir} ${BTOOLS} | grep '_BASE\|CMSSW_SEARCH_PATH\| path=' | tail -1 | sed -E -e 's#.* (default|path)="##;s#".*##')
       if [ "${rtpath}" = "" ] || [ ! -d "${rtpath}" ] ; then
         r_tc=0
         r_ts=0
       else
         r_tc=$(find ${rtpath} -follow | wc -l)
-        r_ts=$(du -shD ${rtpath} | awk '{print $1}')
+        r_ts=$(du -shL ${rtpath} | awk '{print $1}')
       fi
       tool=$(basename $tdir)
-      echo "<tr><td>${tool}</td><td>$l_tc</td><td>$r_tc</td><td>$l_ts</td><td>$r_ts</td></tr>" >> $WORKSPACE/upload/external-tools.html
+      echo "<tr><td>$cnt</td><td>${tool}</td><td>$l_tc</td><td>$r_tc</td><td>$l_ts</td><td>$r_ts</td></tr>" >> $WORKSPACE/upload/external-tools.html
+      let cnt=$cnt+1
     done
     echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
     echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> ${RESULTS_DIR}/toolconf.txt
@@ -790,6 +933,7 @@ if ${BUILD_EXTERNAL} ; then
           DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
         fi
       done
+      scram setup || true
       if [ "${DEP_NAMES}" != "" ] ; then
         CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
         DEP_NAMES=""
@@ -812,7 +956,7 @@ if ${BUILD_EXTERNAL} ; then
           echo "  Tool changed/updated: ${name}"
         fi
       done
-      sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
+      sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' config/Self.xml
       touch $CTOOLS/*.xml
       (scram setup && scram setup self && rm -rf $WORKSPACE/$CMSSW_IB/external && scram build -r echo_CXX) >> $WORKSPACE/scram-tool-setup.log 2>&1 || TOOL_SETUP=false
       echo "DEP_NAMES=${DEP_NAMES}"
@@ -849,14 +993,14 @@ if ${BUILD_EXTERNAL} ; then
     if [ -e $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers ] ; then
       SCRAM=scram bash -ex $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers || true
     fi
-    git cms-init --upstream-only
+    rsync -a src.init/ src/
     pushd $WORKSPACE/$CMSSW_IB/src
       if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
         git checkout $(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
         echo '/*/' >> .git/info/sparse-checkout
         git read-tree -mu HEAD
       else
-        git cms-checkout-topic --ssh $(git branch | grep  '^  *CMSSW_') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+        git cms-checkout-topic --ssh $CMSSW_BRANCH 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
         git cms-checkdeps -A -a 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
         git cms-addpkg --ssh "$CMSSW_DEP" 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
       fi
@@ -882,6 +1026,7 @@ PYTHON3_BUILD_OK=true
 RUN_TESTS=true
 
 cd $WORKSPACE/$CMSSW_IB
+[ -d src/.git ] || rsync -a src.init/ src/
 
 set +x
 eval $(scram run -sh)
@@ -907,8 +1052,6 @@ echo '{}' > $RECENT_COMMITS_FILE
 touch $WORKSPACE/changed-files
 if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
-  if $USE_IB_TAG ; then git cms-init --upstream-only $CMSSW_IB ; fi
-
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
     echo 'I will add the following pull request to the test'
@@ -933,6 +1076,10 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   fi
 
   git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
+  #Check for auto-skip tests only if there is one PR
+  if [ $(echo "${PULL_REQUESTS}" | wc -w) -eq 1 ] ; then
+    if should_skip_tests $WORKSPACE/changed-files ; then RUN_TESTS=false ; fi
+  fi
 
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
@@ -944,10 +1091,9 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
 
   if [[ "${PRODUCTION_RELEASE}" == "true" && "${PULL_REQUEST}" == *"/cmssw#"* ]]; then
     pushd ${CMSSW_BASE}
-      mv src src.tmp && mkdir src
-      cd src
+      mv src src.tmp && rsync -a src.init/ src/ && cd src
       THRDS=""
-      git cms-init --upstream-only && git checkout -b codechecks $CMSSW_IB
+      git checkout -b codechecks $CMSSW_IB
       git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NCPU}" || true
       git repack -a -d ${THRDS}
       git repack -a -d ${THRDS}
@@ -970,8 +1116,12 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
   git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 
-  if [ $DO_MB_COMPARISON -a $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
-    has_jenkins_artifacts material-budget/$CMSSW_IB/$SCRAM_ARCH/Images || DO_MB_COMPARISON=false
+  if $RUN_TESTS ; then
+    if [ "$DO_MB_COMPARISON" == "true" -a $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
+      has_jenkins_artifacts material-budget/$CMSSW_IB/$SCRAM_ARCH/Images || DO_MB_COMPARISON=false
+    else
+      DO_MB_COMPARISON=false
+    fi
   else
     DO_MB_COMPARISON=false
   fi
@@ -980,6 +1130,7 @@ elif [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
   git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 fi
+rm -rf $WORKSPACE/$CMSSW_IB/src.init
 if ! scram build -r echo_CXX > $WORKSPACE/build.log 2>&1 ; then
     echo "**ERROR**: SCRAM failed to generate build rules, there might be syntax errors in modified BuildFiles." > ${RESULTS_DIR}/10-report.res
     echo "SCRAM_BUILD_CXX;ERROR,SCRAM Build Rules,See Log,build.log" > ${RESULTS_DIR}/scramb.txt
@@ -1012,7 +1163,9 @@ echo 'test clang compilation'
 
 NEED_CLANG_TEST=false
 if cat $CONFIG_MAP | grep $CMSSW_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARCH=$ARCHITECTURE; then
-  NEED_CLANG_TEST=true
+  if $RUN_TESTS ; then
+    NEED_CLANG_TEST=true
+  fi
 fi
 
 if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_PR" != X -a "$SKIP_STATIC_CHECKS" = "false" ]; then
@@ -1049,7 +1202,7 @@ fi
 #Do QA checks
 #Code Rules
 QA_RES="NOTRUN"
-if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" -a "$SKIP_STATIC_CHECKS" = "false" ]; then # If a CMSSW specific PR was specified
+if [ "$RUN_TESTS" == "true" -a "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" -a "$SKIP_STATIC_CHECKS" = "false" ]; then # If a CMSSW specific PR was specified
   mkdir $WORKSPACE/codeRules
   cmsCodeRulesChecker.py -s $WORKSPACE/codeRules -r 1,3 || true
   QA_RES="OK"
@@ -1076,7 +1229,9 @@ fi
 DO_PYTHON3=false
 if $IS_DEV_BRANCH ; then
   if [ $(echo "${CONFIG_LINE}" | tr ';' '\n' | grep 'ADDITIONAL_TESTS=' | tr '=,' '\n\n' | grep '^python3$' | wc -l) -gt 0 ] ; then
-    DO_PYTHON3=true
+    if $RUN_TESTS ; then 
+      DO_PYTHON3=true
+    fi
   fi
 fi
 if $DO_PYTHON3 ; then
@@ -1132,16 +1287,18 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   popd
 fi
 
-scram build clean
-if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true ; fi
-[ -e $LOCALRT/src/Utilities/RelMon ] || git cms-addpkg Utilities/RelMon
-sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' $LOCALRT/src/Utilities/RelMon/python/directories2html.py || true
-grep -R -l 'To the DQM GUI' $LOCALRT/src/Utilities/RelMon | grep -v '\.pyc$' | xargs --no-run-if-empty sed -i -e '/To the DQM GUI/d' || true
+if $RUN_TESTS ; then
+  scram build clean
+  if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true ; fi
+  [ -e $LOCALRT/src/Utilities/RelMon ] || git cms-addpkg Utilities/RelMon
+  sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' $LOCALRT/src/Utilities/RelMon/python/directories2html.py || true
+  grep -R -l 'To the DQM GUI' $LOCALRT/src/Utilities/RelMon | grep -v '\.pyc$' | xargs --no-run-if-empty sed -i -e '/To the DQM GUI/d' || true
+fi
 
 ############################################
 # Force the run of DQM tests if necessary
 ############################################
-if [ "X$DQM_TESTS" = "Xtrue" ] ; then
+if [ "X$DQM_TESTS" = "Xtrue" -a "$RUN_TESTS" = "true" ] ; then
   if ls $WORKSPACE/$CMSSW_IB/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
     echo "I will make sure that DQM tests will be run"
     if ls $WORKSPACE/$CMSSW_IB/src/| grep "DQMServices"; then
@@ -1167,7 +1324,7 @@ fi
 # test header checks tests
 # ############################################
 CHK_HEADER_OK=true
-if $IS_DEV_BRANCH ; then
+if $IS_DEV_BRANCH && $RUN_TESTS; then
   if [ "X${CHECK_HEADER_TESTS}" = "Xtrue" -a -f $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.chk_headers ] ; then
     IGNORE_HDRS="%.i"
     if [ -e "$WORKSPACE/$RELEASE_FORMAT/src/TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h" ] ; then
@@ -1202,6 +1359,7 @@ fi
 ##########################################
 # Checkout full cmssw is requested
 ##########################################
+IB_RELEASE_BASE=$(grep '^RELEASETOP=' $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment | sed 's|.*=||')
 if [ "${BUILD_FULL_CMSSW}-${BUILD_EXTERNAL}" = "true-false" ] ; then
   if [ -d  $LOCALRT/src/.git ] ; then
     pushd $LOCALRT/src
@@ -1296,6 +1454,7 @@ if [ -e $WORKSPACE/deprecated-warnings.log ] ; then
   echo "**CMS deprecated warnings**: $(cat ${WORKSPACE}/deprecated-warnings.log | grep 'Wdeprecated-declarations' | wc -l) CMS deprecated warnings found, see [summary page](${PR_RESULT_URL}/deprecated-warnings.log) for details." >> ${RESULTS_DIR}/09-report.res
 fi
 
+CMSSW_CONFIG_TAG=$(cat $WORKSPACE/$CMSSW_IB/config/config_tag | grep '^V[0-9]' | cut -d- -f1-3 | sed 's|V||;s|-||g;s|^0*||')
 BUILD_LOG_RES="ERROR"
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"
@@ -1311,20 +1470,22 @@ else
     elif [ ! -d ${BUILD_LOG_DIR}/src ] ; then
       BUILD_LOG_RES="OK"
     fi
-    #Check Build Rule: Make sure nothing rebuilds after last build
-    if [ $(cat $WORKSPACE/$CMSSW_IB/config/config_tag  | sed 's|V||;s|-||g;s|^0*||') -gt 50807 ] ; then
-        scram build -f -j ${NCPU} -d  >${WORKSPACE}/scram-rebuild.log 2>&1
-        grep ' newer ' ${WORKSPACE}/scram-rebuild.log | grep -v '/cache/xlibs.backup' > ${WORKSPACE}/newer-than-target.log || true
-        if [ -s ${WORKSPACE}/newer-than-target.log ] ; then
-            echo "SCRAM_REBUILD;ERROR,Build Rules,See Log,newer-than-target.log" >> ${RESULTS_DIR}/build.txt
-        fi
-    fi
-    #Check for missing Provides
-    if ${CMS_BOT_DIR}/pr_testing/test-cmssw-provides.sh ${PKG_TOOL_BRANCH} ${CMSDIST_TAG} ${BUILD_DIR} ${WEEK_NUM} >$WORKSPACE/rpm-deps-checks.log 2>&1 ; then
-      echo "SCRAM_RPM_DEPS;OK,Package dependency,See Log,rpm-deps-checks.log" >> ${RESULTS_DIR}/build.txt
-    else
-      echo "SCRAM_RPM_DEPS;ERROR,Package dependency,See Log,rpm-deps-checks.log" >> ${RESULTS_DIR}/build.txt
-    fi
+    if $RUN_TESTS ; then
+      #Check Build Rule: Make sure nothing rebuilds after last build
+      if [ "${CMSSW_CONFIG_TAG}" -gt 50807 ] ; then
+          scram build -f -j ${NCPU} -d  >${WORKSPACE}/scram-rebuild.log 2>&1
+          grep ' newer ' ${WORKSPACE}/scram-rebuild.log | grep -v '/cache/xlibs.backup' > ${WORKSPACE}/newer-than-target.log || true
+          if [ -s ${WORKSPACE}/newer-than-target.log ] ; then
+              echo "SCRAM_REBUILD;ERROR,Build Rules,See Log,newer-than-target.log" >> ${RESULTS_DIR}/build.txt
+          fi
+      fi
+      #Check for missing Provides
+      if ${CMS_BOT_DIR}/pr_testing/test-cmssw-provides.sh ${PKG_TOOL_BRANCH} ${CMSDIST_TAG} ${BUILD_DIR} ${WEEK_NUM} >$WORKSPACE/rpm-deps-checks.log 2>&1 ; then
+        echo "SCRAM_RPM_DEPS;OK,Package dependency,See Log,rpm-deps-checks.log" >> ${RESULTS_DIR}/build.txt
+      else
+        echo "SCRAM_RPM_DEPS;ERROR,Package dependency,See Log,rpm-deps-checks.log" >> ${RESULTS_DIR}/build.txt
+      fi
+   fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_DIR}/build.txt
 
@@ -1365,8 +1526,12 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
     if $PRODUCTION_RELEASE ; then
       DO_PROFILING=true
-      PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
-      for wf in $PROFILING_WORKFLOWS;do
+      if [ "X$PROFILING_WORKFLOWS" = "X" ] ; then
+        WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
+      else
+        WORKFLOWS=$(echo $PROFILING_WORKFLOWS | tr ',' ' ')
+      fi
+      for wf in $WORKFLOWS;do
         mark_commit_status_all_prs "profiling wf $wf" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       done
     fi
@@ -1374,17 +1539,12 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ ${#SELECTED_GPU_TYPES[@]} -ne 0 -a X"${DISABLE_GPU_TESTS}" != X"true" ] ; then
     DO_GPU_TESTS=true
   fi
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
-    if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
-      if [ -e ${CMSSW_RELEASE_BASE}/src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh ]; then
-        DO_HLT_P2_TIMING=true
-        mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
-      fi
-    fi
+  if $DO_HLT_P2_TIMING ; then
+    mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_INTEGRATION$' | wc -l) -gt 0 ] ; then
     if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
-      if [ -e ${CMSSW_RELEASE_BASE}/src/HLTrigger/Configuration/scripts/hltPhase2UpgradeIntegrationTests ]; then
+      if [ -e ${IB_RELEASE_BASE}/src/HLTrigger/Configuration/scripts/hltPhase2UpgradeIntegrationTests ]; then
         DO_HLT_P2_INTEGRATION=true
         mark_commit_status_all_prs 'hlt-p2-integration' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       fi
@@ -1487,6 +1647,9 @@ echo "CONFIG_LINE=${CONFIG_LINE}" >> $WORKSPACE/test-env.txt
 echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $WORKSPACE/test-env.txt
 echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $WORKSPACE/test-env.txt
 echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
+echo "COMPARISON_RELEASE=${COMPARISON_REL}" >> $WORKSPACE/test-env.txt
+echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/test-env.txt
+
 
 # Store externals path for CRAB unit test
 if [ "X$DO_CRAB_TESTS" = Xtrue ]; then
@@ -1505,8 +1668,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.prop
   echo "DO_COMPARISON=$DO_COMPARISON" >> $WORKSPACE/run-relvals.prop
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
-  echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
-  echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
   echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> $WORKSPACE/run-relvals.prop
   WF_COMMON="-s $(get_pr_relval_args $DO_COMPARISON '')"
   [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF_COMMON="${WF_COMMON};-l ${WORKFLOWS_PR_LABELS}"
@@ -1528,7 +1689,12 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${uc_tn}$" | wc -l) -gt 0 ] ; then
       prop_file="$WORKSPACE/run-relvals-${tn}.prop"
       cp $WORKSPACE/test-env.txt ${prop_file}
-      echo "DO_COMPARISON=false" >> ${prop_file}
+      if [ "${tn}" == "rntuple" ] ; then
+        echo "DO_COMPARISON=$DO_COMPARISON" >> ${prop_file}
+        echo "REAL_ARCH=${RELVAL_REAL_ARCH}" >> ${prop_file}
+      else
+        echo "DO_COMPARISON=false" >> ${prop_file}
+      fi
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> ${prop_file}
       WF1=$(echo "${WF_COMMON}" | sed 's|;.*||')
       WF2="$(get_pr_relval_args $DO_COMPARISON _${uc_tn} | sed 's|.*;||')"
@@ -1595,15 +1761,30 @@ if ${BUILD_EXTERNAL} ; then
 fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
-  PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
-  for wf in ${PROFILING_WORKFLOWS}; do
-    cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$wf.prop
-    echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop
+  if [ "X$PROFILING_WORKFLOWS" = "X" ] ; then
+    WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
+  else
+    WORKFLOWS=$(echo ${PROFILING_WORKFLOWS} | tr ',' ' ')
+  fi
+
+  for WORKFLOW in ${WORKFLOWS}; do
+    if [ "X$PROFILING_WORKFLOWS" != "X" ] ; then
+      if has_jenkins_artifacts profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/$WORKFLOW/moduleAllocMonitor.log; then
+        echo "Profiling artifacts for workflow $WORKFLOW already exist, skipping creation of profiling properties file"
+      else
+        echo "Profiling artifacts for workflow $WORKFLOW do not exist, creating profiling properties file"
+        cp $WORKSPACE/test-env.txt $WORKSPACE/run-ib_profiling-$WORKFLOW.prop
+        echo "PROFILING_WORKFLOWS=${WORKFLOW}" >> $WORKSPACE/run-ib_profiling-$WORKFLOW.prop
+      fi 
+    fi
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$WORKFLOW.prop
+    echo "PROFILING_WORKFLOWS=${WORKFLOW}" >> $WORKSPACE/run-profiling-$WORKFLOW.prop
   done
 fi
 
 if [ "${DO_HLT_P2_TIMING}" = "true" ] ;  then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt_p2_timing.prop
+  echo "HLT_P2_HOST=${HLT_P2_HOST}" >> $WORKSPACE/run-hlt_p2_timing.prop
 fi
 
 if [ "${DO_HLT_P2_INTEGRATION}" = "true" ] ;  then

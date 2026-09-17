@@ -6,7 +6,7 @@
 # ISSUE_NUMBER: the number of the issue that triggered the build
 # DRY_RUN_PARAM: parameter that to use dry-run
 # ONLY_BUILD_TOOLCONF: if True, tells me to only build cmssw-tool-conf
-source $(dirname $0)/cmsrep.sh
+source $(dirname $0)/ci-cd_config.sh
 CMSSW_X_Y_Z=$1
 ARCHITECTURE=$2
 CMSSW_QUEUE=$3
@@ -14,12 +14,17 @@ ONLY_BUILD_TOOLCONF=$4
 ISSUE_NUMBER=$5
 DRY_RUN_PARAM=$6
 CMSDIST_HASH=$7
+CMSBUILD_BUILDER=$8
 echo DATE=`date`
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
 mkdir -p $BUILD_DIR
 BUILD_NPROC=$(nproc)
 QUEUE=$CMSSW_QUEUE
+
+CMSBUILD_OVERRIDE_ARGS=""
+[ "${CMSBUILD_BUILDER}" != "" ] && CMSBUILD_OVERRIDE_ARGS="--builders ${CMSBUILD_BUILDER}"
+DEFAULT_BUILDER=2
 
 #Workaround to fix py3-tomlkit which fails to build it if finds .git in the working directory
 if [ -d .git ] ; then mv .git backup.git ; fi
@@ -59,7 +64,8 @@ pushd $BUILD_DIR/CMSDIST
   git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE
   [ -f ${CMSBUILD_OPTS_FILE} ] && source ${CMSBUILD_OPTS_FILE}
   if [ $(echo $CMSSW_X_Y_Z | grep patch | wc -l) -eq 0 ] ; then
-    [ "${BUILD_OPTS}" = "" ]     || echo "BUILD_OPTS=\"${BUILD_OPTS}\""         >> ${CMSBUILD_OPTS_FILE}
+    XBUILD_OPTS=$(echo "${BUILD_OPTS}" | tr ',' '\n' | grep -v '^builders:' | tr '\n' ',' | sed -e 's|,$||')
+    [ "${XBUILD_OPTS}" = "" ]     || echo "BUILD_OPTS=\"${XBUILD_OPTS}\""       >> ${CMSBUILD_OPTS_FILE}
     [ "${MULTIARCH_OPTS}" = "" ] || echo "MULTIARCH_OPTS=\"${MULTIARCH_OPTS}\"" >> ${CMSBUILD_OPTS_FILE}
     if [ -e ${CMSBUILD_OPTS_FILE} ] ; then
       (git add ${CMSBUILD_OPTS_FILE} ; git commit -m 'Added build options' ${CMSBUILD_OPTS_FILE}) || true
@@ -71,7 +77,7 @@ git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOL
 echo DATE=`date`
 BRANCH_DETAILS="CMSDIST Branch: [$CMSDIST_TAG](https://github.com/cms-sw/cmsdist/commits/$CMSDIST_TAG), PKGTOOLS Branch: [$PKGTOOLS_TAG](https://github.com/cms-sw/pkgtools/commits/$PKGTOOLS_TAG)"
 WORKER="${NODE_NAME}"
-if [ "${WORKER}" = "" ] ; then WORKER=`hostname -s` ; fi
+if [ "${WORKER}" = "" ] ; then WORKER=`uname -n | cut -d. -f1` ; fi
 [ "${ISSUE_NUMBER}" = "" ] || ./report-build-release-status ${BUILD_NUMBER} $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z $POST_ACTION $DRY_RUN_PARAM -d "$BRANCH_DETAILS"
 echo DATE=`date`
 pushd $BUILD_DIR
@@ -82,7 +88,7 @@ pushd $BUILD_DIR
   fi
   sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE > $WORKSPACE/prepare-cmsdist.log 2>&1
   echo DATE=`date`
-  CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER} --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC"
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER} --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC --builders ${DEFAULT_BUILDER}"
   case `uname -s` in
     Darwin ) MD5_CMD=md5;;
     * )      MD5_CMD=md5sum;;
@@ -92,6 +98,7 @@ pushd $BUILD_DIR
   else
     CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
+  CMSBUILD_CMD="${CMSBUILD_CMD} ${CMSBUILD_OVERRIDE_ARGS}"
   if [ -f CMSDIST/fakesystem.spec ] ; then
     PYTHONPATH= $CMSBUILD_CMD -i fake             build  fakesystem
     PYTHONPATH= $CMSBUILD_CMD -i fake --sync-back upload fakesystem
@@ -103,16 +110,16 @@ pushd $BUILD_DIR
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
   [ -e CMSDIST/gcc-fixincludes.spec ] && TOOL_CONF_PACKAGES="gcc-fixincludes ${TOOL_CONF_PACKAGES}"
   EXT_FAILED=false
-  PYTHONPATH= $CMSBUILD_CMD --builders 2 build $TOOL_CONF_PACKAGES || EXT_FAILED=true
+  PYTHONPATH= $CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXT_FAILED=true
   echo DATE=`date`
   if $EXT_FAILED ; then
     BLD_PKGS=$(ls RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
-    if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --builders 2 --sync-back upload ${BLD_PKGS} ; fi
+    if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
     rm -rf  tmp
     exit 1
   fi
   if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-    PYTHONPATH= $CMSBUILD_CMD --builders 2 --sync-back upload $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`

@@ -60,6 +60,15 @@ def run_das_client(
     outfile, query, override, dasclient="das_client", options="", threshold=900, retry=5, limit=0
 ):
     sha = basename(outfile)
+    if " #DAS_EXTRA_OPTIONS# " in query:
+        query_data = query.split(" #DAS_EXTRA_OPTIONS# ", 1)
+        options = query_data[-1].strip()
+        query = query_data[0]
+        if "--limit=" in options:
+            xlimit = int(options.split("--limit=", 1)[-1].split(" ")[0])
+            options = re.sub("\s*--limit=\d+\s*", " ", options).strip()
+            slimit = limit if (limit > 0) else default_max_limit
+            limit = xlimit if (xlimit < slimit) else slimit
     field = query.split(" ", 1)[0]
     if "=" in field:
         field = field.split("=", 1)[0]
@@ -70,7 +79,7 @@ def run_das_client(
     fields = ofields[:]
     field_filter = ""
     field = fields[-1]
-    run_non_json = False
+    run_non_json = options != ""
     if not "|" in query:
         if field in ["file", "site", "dataset"]:
             field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)
@@ -276,6 +285,14 @@ if __name__ == "__main__":
         default=86400,
     )
     parser.add_option(
+        "-S",
+        "--skip-old-queries-days",
+        dest="vold_threshold",
+        help="Skip queries for which there were no results for N days. Default is 90 days",
+        type=int,
+        default=90,
+    )
+    parser.add_option(
         "-o",
         "--override",
         dest="override",
@@ -383,7 +400,7 @@ if __name__ == "__main__":
     timestramps = read_timestramps(timestramps_file)
     vold_caches = {}
     run_queries = {}
-    vold_threshold = 90
+    vold_threshold = opts.vold_threshold
     for query in query_sha:
         nquery += 1
         sha = query_sha[query]

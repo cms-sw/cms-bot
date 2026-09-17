@@ -30,6 +30,7 @@ def get_es_query(
     timestamp_field="@timestamp",
     lowercase_expanded_terms="false",
     fields=None,
+    must_fields="",
 ):
     es5_query_tmpl = """
 {
@@ -37,6 +38,7 @@ def get_es_query(
 "query": {
   "bool": {
     "must": [
+      %(must_fields)s
       {"query_string": {"query": "%(query)s"}},
       {"range": {"%(timestamp_field)s": {"gte": %(start_time)s, "lte": %(end_time)s}}}
     ]
@@ -165,7 +167,11 @@ def send_cached_payload():
     for cache_file in glob("%s/*/*.json" % es_cache_dir()):
         print("Processing: ", cache_file)
         with open(cache_file) as ref:
-            data = json.load(ref, parse_float=lambda x: str(x))
+            try:
+                data = json.load(ref, parse_float=lambda x: str(x))
+            except:
+                remove(cache_file)
+                continue
             if not send_request(
                 data["uri"],
                 payload=data["payload"],
@@ -300,6 +306,7 @@ def es_query(
     scroll=False,
     max_count=-1,
     fields=None,
+    must_fields="",
 ):
     query_str = get_es_query(
         query=query,
@@ -309,6 +316,7 @@ def es_query(
         page_size=page_size,
         timestamp_field=timestamp_field,
         fields=fields,
+        must_fields=must_fields,
     )
     if scroll:
         return get_payload_wscroll(index, query_str, max_count)

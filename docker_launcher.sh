@@ -64,22 +64,26 @@ elif [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then
   DOCKER_IMG=$DOCKER_IMG_HOST
 fi
 UNAME_M=$(uname -m)
+IMG_ARCH=${UNAME_M}
 export CMSBOT_CI_TESTS=true
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
+  xarch=""
+  if [ "${ARCHITECTURE}" != "" ] ; then
+    xarch="${ARCHITECTURE}"
+    export SCRAM_ARCH="${ARCHITECTURE}"
+  elif [ "${SCRAM_ARCH}" != "" ] ; then
+    xarch="${SCRAM_ARCH}"
+  else
+    echo "ERROR: DOCKER_IMG cmssw used without providing valid ARCHITECTURE/SCRAM_ARCH"
+    exit 1
+  fi
+  IMG_ARCH=$(echo $xarch | cut -d_ -f2)
+  [ "${IMG_ARCH}" = "amd64" ] && IMG_ARCH="x86_64"
   if [ "$DOCKER_IMG" = "cmssw" ] ; then
-    xarch=""
-    if [ "${ARCHITECTURE}" != "" ] ; then
-      xarch="${ARCHITECTURE}"
-    elif [ "${SCRAM_ARCH}" != "" ] ; then
-      xarch="${SCRAM_ARCH}"
-    else
-      echo "ERROR: DOCKER_IMG cmssw used without providing valid ARCHITECTURE/SCRAM_ARCH"
-      exit 1
-    fi
-    DOCKER_IMG=cmssw/$(echo ${xarch} | sed 's|_.*||;s|slc|el|'):${UNAME_M}
+    DOCKER_IMG=cmssw/$(echo ${xarch} | sed 's|_.*||;s|slc|el|'):${IMG_ARCH}
   elif [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
     if [ $(echo "${DOCKER_IMG}" | grep ':' | wc -l) -eq 0 ] ; then
-      export DOCKER_IMG="${DOCKER_IMG}:${UNAME_M}"
+      export DOCKER_IMG="${DOCKER_IMG}:${IMG_ARCH}"
     fi
   fi
   BUILD_BASEDIR=$(dirname $WORKSPACE)
@@ -122,8 +126,12 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   done
   HAS_DOCKER=false
   if [ "X$USE_SINGULARITY" != "Xtrue" ] ; then
+    DOCKER_CMD="docker"
     if [ $(id -Gn 2>/dev/null | grep docker | wc -l) -gt 0 ] ; then
-      HAS_DOCKER=$(docker --version >/dev/null 2>&1 && echo true || echo false)
+      HAS_DOCKER=$($DOCKER_CMD --version >/dev/null 2>&1 && echo true || echo false)
+    fi
+    if ! $HAS_DOCKER ; then
+      DOCKER_CMD="podman"
     fi
   fi
   CMD2RUN="export PATH=${XPATH}\$PATH:/usr/sbin;"
@@ -132,7 +140,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   fi
   CMD2RUN="${CMD2RUN}export X509_USER_PROXY=${X509_USER_PROXY}; if [ ! -e ${X509_USER_PROXY} ] ; then voms-proxy-init -voms cms -rfc -valid 24:00 || true ; voms-proxy-info || true; fi; echo \$HOME; cd $WORKSPACE; echo \$PATH; $@"
   if $HAS_DOCKER ; then
-    docker pull $DOCKER_IMG
+    $DOCKER_CMD pull $DOCKER_IMG
     set +x
     DOCKER_OPT="-e USER=$XUSER"
     case $XUSER in
@@ -148,11 +156,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     done
     if [ "X$KRB5CCNAME" != "X" ] ; then DOCKER_OPT="${DOCKER_OPT} -e KRB5CCNAME=$KRB5CCNAME" ; fi
     set -x
-    echo "Passing to docker the args: "$CMD2RUN
-    if [ $(docker run --help | grep '\-\-init ' | wc -l) -gt 0 ] ; then
+    echo "Passing to $DOCKER_CMD the args: "$CMD2RUN
+    if [ $($DOCKER_CMD run --help | grep '\-\-init ' | wc -l) -gt 0 ] ; then
       DOCKER_OPT="--init $DOCKER_OPT"
     fi
-    docker run --rm --net=host $DOCKER_OPT $DOCKER_IMG sh -c "$CMD2RUN"
+    $DOCKER_CMD run --rm --net=host $DOCKER_OPT $DOCKER_IMG sh -c "$CMD2RUN"
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     DOCKER_IMGX=""
@@ -216,8 +224,16 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ "${CMSCI_CONTAINER_OPTS_SCRIPT}" != "" ] ; then
       EX_OPTIONS="${EX_OPTIONS} $(${SCRIPTPATH}/${CMSCI_CONTAINER_OPTS_SCRIPT} ${CONTAINER_CMD})"
     fi
-    PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
-    #if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+    if [ "${UNAME_M}" != "${IMG_ARCH}" -a "${IMG_ARCH}" == "riscv64" ] ; then
+      export MOUNT_DIRS=$(echo $BINDPATH | tr ',' ' ')
+      pkill -9 qemu-riscv64 || true
+      source ${SCRIPTPATH}/dockerrun.sh
+      dockerrun "${precmd} $CMD2RUN" || ERR=$?
+      pkill -9 qemu-riscv64 || true
+    else
+      PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
+      #if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+    fi
     exit $ERR
   fi
 else

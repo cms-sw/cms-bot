@@ -145,9 +145,8 @@ ANNOUNCEMENT_TEMPLATE = (
     "cms-bot"
 )
 
-HN_REL_ANNOUNCE_EMAIL = "hn-cms-relAnnounce@cern.ch"
 ANNOUNCEMENT_EMAIL_SUBJECT = "{rel_type} {is_patch}Release {rel_name} Now Available "
-MAILTO_TEMPLATE = '<a href="mailto:{destinatary}?subject={sub}&amp;body={body}">here</a>'
+CMSTALK_TEMPLATE = '<a href="https://cms-talk.web.cern.ch/new-topic?category_id=157&amp;title={sub}&amp;body={body}">here</a>'
 
 # -------------------------------------------------------------------------------
 # Statuses
@@ -842,7 +841,7 @@ def generate_announcement_link(announcement, release_name):
     )
 
     msg = quote(announcement)
-    link = MAILTO_TEMPLATE.format(destinatary=HN_REL_ANNOUNCE_EMAIL, sub=subject, body=msg)
+    link = CMSTALK_TEMPLATE.format(sub=subject, body=msg)
     return link
 
 

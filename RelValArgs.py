@@ -81,9 +81,6 @@ if (
     RELVAL_KEYS["WORKFLOWS"].append([".+", GPU_RELVALS_FLAGS])
 elif ib_test_type in ["rntuple"]:
     RELVAL_KEYS["WORKFLOWS"].append([".+", RNTUPLE_RELVALS_FLAG])
-else:
-    RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", GPU_RELVALS_FLAGS])
-    RELVAL_KEYS["WORKFLOWS"].append(["_ROCM_", GPU_RELVALS_FLAGS])
 
 RELVAL_KEYS["enableIMT"].append(
     [THREADED_ROOT, "--customise FWCore/Concurrency/enableIMT.enableIMT"]

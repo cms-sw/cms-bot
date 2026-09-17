@@ -2,6 +2,7 @@
 #Shared files
 for cmsdir in "$@" ; do
   if [ $(ls ${CVMFS_DIR}/$cmsdir -d 2>/dev/null | wc -l) -eq 0 ] ; then continue ; fi
+  echo "/${cmsdir}"
   echo "/${cmsdir}/share"
   for x in cms/data-Configuration-Generator cms/data-L1Trigger-L1TMuon cms/data-GeneratorInterface-EvtGenInterface 'cms/data-MagneticField-Interpolation/*' ; do
     echo "/${cmsdir}/share/${x}"
@@ -12,6 +13,12 @@ for cmsdir in "$@" ; do
   for x in blackhat boost cuda geant4 geant4-G4EMLOW herwigpp madgraph5amcatnlo py2-pippkgs py2-pippkgs_depscipy sherpa rivet; do
     echo "/${cmsdir}/*_*_*/external/${x}/*"
   done
+
+  #actsdata
+  if [ $(ls ${CVMFS_DIR}/$cmsdir/share/external/actsdata -d 2>/dev/null | wc -l) -gt 0 ] ; then 
+    echo "/${cmsdir}/share/external/actsdata/*"
+    echo "/${cmsdir}/share/external/actsdata/*/detray_simulation/telescope/sparse_tracks/*"
+  fi
 
   #Some special directories
   for x in cms lcg lcg/root ; do

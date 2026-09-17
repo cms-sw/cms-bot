@@ -1,5 +1,17 @@
 #!/bin/bash
 
+function RunedmEventSize()
+{
+  if [ -e "${1}.edmEventSize" ] ; then
+    cp "${1}.edmEventSize" "${2}"
+  else
+    case "$1" in
+      *.root )  edmEventSize   -v "$1" > "$2" ;;
+      *.rntpl ) edmRNTupleTempStorage --average "$1" > "$2" ;;
+    esac
+  fi
+}
+
 fA=`echo $1`
 if [ ! -f "${fA}" ]; then
     echo ${fA} does not exist
@@ -33,21 +45,12 @@ fi
 echo "Checking process ${procF} ${fA} and ${fB} with useUnpacked=${useUnpacked} (if above ${absMin} or ${dptMin}%):"
 
 case `basename $fA` in
-  step*.root)
+  step*.root | step*.rntpl )
     ds=`date -u +%s.%N`
     os=os.${ds}
-    if [ -e ${fA}.edmEventSize ] ; then
-      cp ${fA}.edmEventSize ${os} &
-    else
-      edmEventSize -v ${fA} > ${os} &
-    fi
-
     ns=ns.${ds}
-    if [ -e ${fB}.edmEventSize ] ; then
-      cp ${fB}.edmEventSize ${ns} &
-    else
-      edmEventSize -v ${fB} > ${ns} &
-    fi
+    RunedmEventSize ${fA} ${os} &
+    RunedmEventSize ${fB} ${ns} &
     wait
     grep ${procF} ${os} ${ns} | sed -e "s/${os}:/os /g;s/${ns}:/ns /g" | absMin=${absMin} dptMin=${dptMin} useUnpacked=${useUnpacked} awk -f compareProducts.awk
 

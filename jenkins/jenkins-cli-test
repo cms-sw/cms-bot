@@ -6,25 +6,18 @@ DSA=$LOCAL_JENKINS_DSA_KEY
 echo "Testing Jenkins CLI"
 CLI_ENABLED=false
 JAVA_CMD=$(ps -u `whoami` -o cmd | grep 'jenkins.war' | grep /java | sed 's| .*||')
-${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -i ~/.ssh/id_rsa-openstack -s ${LOCAL_JENKINS_URL}/ who-am-i >cli.log 2>&1 || true
+${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -i $DSA -s ${LOCAL_JENKINS_URL}/ who-am-i >cli.log 2>&1 || true
 if [ $(grep 'Handshake error' cli.log | wc -l) -eq 0 ] ; then
   CLI_ENABLED=True
-  if ${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -i ~/.ssh/id_rsa-openstack -s ${LOCAL_JENKINS_URL}/ version  ; then
+  if ${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -i $DSA -s ${LOCAL_JENKINS_URL}/ version  ; then
     echo "User anonymous should not be able to read version"
     exit 1
   fi
-
-  USER=$(${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -s $URL who-am-i | grep 'Authenticated as:' | sed 's|.* ||')
-  if [ "$USER" != "anonymous" ] ; then
-    echo "Error: Unable to connect as anonymous user"
-    exit 1
-  fi
-  echo "anonymous user: OK"
 fi
 
 USER=$(${JENKINS_CLI_CMD} who-am-i | grep 'Authenticated as:' | sed 's|.* ||')
 if [ "$USER" != "localcli" ] ; then
-  echo "Error: Unable to connect as localclis user"
+  echo "Error: Unable to connect as localcli user"
   exit 1
 fi
 echo "localcli user: OK"

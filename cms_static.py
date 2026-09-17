@@ -18,6 +18,7 @@ DMWM_JENKINS_HOST = "cmsjenkins11"
 VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cmssw",
     "cmsdist",
+    "cmsdist.bits",
     "cmssdt-ib",
     "cmssdt-web",
     "cms-bot",

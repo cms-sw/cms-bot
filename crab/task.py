@@ -41,3 +41,4 @@ if "SINGULARITY_IMAGE" in os.environ and os.environ["SINGULARITY_IMAGE"] != "":
     config.Debug.extraJDL.append('+SingularityImage="%s"' % os.environ["SINGULARITY_IMAGE"])
 if "CRAB_SITE" in os.environ and os.environ["CRAB_SITE"] != "":
     config.Debug.extraJDL.append('+DESIRED_Sites="%s"' % os.environ["CRAB_SITE"])
+    config.Site.whitelist = [os.environ["CRAB_SITE"]]

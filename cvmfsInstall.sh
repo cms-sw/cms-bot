@@ -50,7 +50,7 @@ function install_package() {
   fi
 }
 
-source $(dirname $0)/cmsrep.sh
+source $(dirname $0)/ci-cd_config.sh
 CMS_BOT_DIR=$(dirname $(realpath $0))
 source ${CMS_BOT_DIR}/cvmfs_deployment/utils.sh
 CVMFS_INSTALL=false
@@ -112,7 +112,7 @@ REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -
 echo $REPOSITORIES
 $CVMFS_INSTALL && cvmfs_transaction ${CVMFS_PUBLISH_PATH}
 
-hostname > $BASEDIR/stratum0
+uname -n > $BASEDIR/stratum0
 
 #Recreate the links
 PUBLISH_CLEANUP=false
@@ -172,7 +172,7 @@ for REPOSITORY in $REPOSITORIES; do
         exit 1
       fi
       XPKGS="${XPKGS} SCRAMV1 SCRAMV2 cmssw-wm-tools cms-git-tools crab"
-      [ "${RELEASE_NAME}" != "" ] || XPKGS="${XPKGS} cmssw-tool-conf"
+      [ "${RELEASE_NAME}" != "" ] || [ "${INSTALL_PACKAGES}" != "" ] || XPKGS="${XPKGS} cmssw-tool-conf"
     elif [ $(grep "server  *${CMSREP_IB_SERVER} " $WORKDIR/common/cmspkg | wc -l) -eq 0 ] ; then
       sed -i -e "s| \-\-server *[^ ]* | --server ${CMSREP_IB_SERVER} |" $WORKDIR/common/cmspkg
     fi
@@ -247,5 +247,8 @@ ln -s $(grep "^nweek-" ${CMS_BOT_DIR}/ib-weeks | tail -1) $BASEDIR/latest
 if $CVMFS_INSTALL ; then
   # Write everything in the repository
   echo "Publishing started" `date`
+  if [ -e ${CMS_BOT_DIR}/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh ] ; then
+    ${CMS_BOT_DIR}/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh > /cvmfs/${CVMFS_REPOSITORY}/.cvmfsdirtab
+  fi
   time cvmfs_server publish
 fi

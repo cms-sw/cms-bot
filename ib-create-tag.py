@@ -151,6 +151,8 @@ if __name__ == "__main__":
             file=sys.stderr,
         )
         sys.exit(1)
+    else:
+        print("Tagged: %s => %s" % (HEAD_SHA, RELEASE_NAME), file=sys.stderr)
 
     tags = find_tags(repo, QUEUE + "_20")
     RELEASE_LIST = [

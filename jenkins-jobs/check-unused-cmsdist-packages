@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 CMS_BOT_DIR=$(dirname $0)/..
-source $CMS_BOT_DIR/cmsrep.sh
+source $CMS_BOT_DIR/ci-cd_config.sh
 RELEASE_QUEUE=$1
 ARCHITECTURE=$2
 UPLOAD_ID=$3

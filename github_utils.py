@@ -293,6 +293,20 @@ def cache_invalid_pr(pr_id, cache):
     cache["dirty"] = True
 
 
+def get_pr_data(repo_name, pr_number, cmsprs):
+    pr_md5 = md5((pr_number + "\n").encode()).hexdigest()
+    pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
+    print("Checking cached file: " + pr_cache)
+    if exists(pr_cache):
+        with open(pr_cache) as ref:
+            json_obj = json.load(ref)
+            if "labels" in json_obj:
+                json_obj["labels"] = sorted(json_obj["labels"])
+            return json_obj
+    print("  Pull request cache %s for %s#%s not found." % (pr_cache, repo_name, pr_number))
+    return {}
+
+
 def fill_notes_description(notes, repo_name, cmsprs, cache={}):
     new_notes = {}
     for log_line in notes.splitlines():
@@ -310,14 +324,10 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
             continue
         print("Checking ", pr_number, author, parent_hash)
         try:
-            pr_md5 = md5((pr_number + "\n").encode()).hexdigest()
-            pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
-            print("Checking cached file: " + pr_cache)
-            if not exists(pr_cache):
-                print("  Cache does not exists: ", pr_cache)
+            pr = get_pr_data(repo_name, pr_number, cmsprs)
+            if not pr:
                 cache_invalid_pr(pr_hash_id, cache)
                 continue
-            pr = json.load(open(pr_cache))
             if not "auther_sha" in pr:
                 print("  Invalid/Indirect PR", pr)
                 cache_invalid_pr(pr_hash_id, cache)

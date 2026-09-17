@@ -4,7 +4,7 @@
 # ---
 SCRIPTPATH="$( cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
-source ${CMS_BOT_DIR}/cmsrep.sh
+source ${CMS_BOT_DIR}/ci-cd_config.sh
 if [ -z $WORKSPACE ] ; then WORKSPACE=$(dirname ${CMS_BOT_DIR} ) ; fi
 CACHED=${WORKSPACE}/CACHED
 

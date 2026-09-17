@@ -102,9 +102,9 @@ CMSSW_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 def format(s, **kwds):
     return s % kwds
 
-
+CMS_BOT_VERSION = 1
+BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}, "version": CMS_BOT_VERSION}
 CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
-BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
@@ -223,7 +223,6 @@ TOO_MANY_FILES_WARN_THRESHOLD = 1500
 TOO_MANY_FILES_FAIL_THRESHOLD = 3001
 CHANGED_FILES_FROM_DIFF_THRESHOLD = 500
 L2_DATA = {}
-CMS_BOT_VERSION = 1
 
 logger: logging.Logger
 
@@ -362,9 +361,9 @@ def read_bot_cache(data):
     res = loads_maybe_decompress(data)
 
     cache_version = res.get("version", None)
-    if cache_version is None and "commits" in data:
+    if cache_version is None and "commits" in res:
         cache_version = 1
-    if cache_version is None and "fv" in data:
+    if cache_version is None and "fv" in res:
         cache_version = 2
 
     if cache_version is None:
@@ -401,7 +400,7 @@ def extract_bot_cache(comment_msgs):
 
     if data:
         res = read_bot_cache(data)
-        if res is not None:
+        if res is None:
             return None
         logger.trace("Loaded bot cache:\n%s", dumps(res))
         return res
@@ -1610,7 +1609,6 @@ def process_pr(
             pull_request_updated = technical_comments[0].created_at < last_commit_date
         bot_cache = extract_bot_cache(technical_comments)
         if bot_cache is None:
-
             return
 
     # Make sure bot cache has the needed keys

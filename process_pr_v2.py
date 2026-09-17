@@ -878,7 +878,8 @@ class BotCache:
     {
         "emoji": { "<comment_id>": "<reaction>" },  # Bot's reactions (source of truth)
         "fv": { "<filename>::<sha>": { "ts": ..., "cats": [...] } },  # File versions
-        "comments": { "<comment_id>": { "ts": ..., "first_line": ..., ... } }  # Processed comments
+        "comments": { "<comment_id>": { "ts": ..., "first_line": ..., ... } }  # Processed comments,
+        "version": ... # Bot version at the time of cache creation
     }
     """
 
@@ -893,6 +894,14 @@ class BotCache:
 
     # Runtime state: current file version keys (filename::sha) for this PR
     current_file_versions: List[str] = field(default_factory=list)
+
+    # Bot version this cache was created with. Defaults to the CURRENT bot
+    # version so that a brand-new cache (new PR, or a load-error fallback)
+    # is correctly stamped when it's first saved - NOT left as None (which
+    # would rely on the "fv"/"commits" key heuristics in from_dict() to be
+    # guessed correctly on the *next* load, and could silently mis-detect
+    # the version after a future cache format change).
+    version: int = field(default=CMS_BOT_VERSION)
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize cache to dictionary matching the JSON format."""
@@ -917,6 +926,7 @@ class BotCache:
                 }
                 for cid, ci in self.comments.items()
             },
+            "version": self.version
         }
 
     @classmethod
@@ -953,6 +963,19 @@ class BotCache:
                 user=ci_data.get("user"),
                 locked=ci_data.get("locked", False),
             )
+
+        # Determine cache version. Modern caches store it explicitly; older
+        # caches (predating the "version" field) are detected via a
+        # structural heuristic ("commits" key => v1, "fv" key => v2).
+        cache_version = data.get("version", None)
+
+        if cache_version is None and "commits" in data:
+            cache_version = 1
+
+        if cache_version is None and "fv" in data:
+            cache_version = 2
+
+        cache.version = cache_version or CMS_BOT_VERSION
 
         return cache
 
@@ -7091,7 +7114,26 @@ def process_pr(
     cache = load_cache_from_comments(comments_list)
 
     if cache is None:
-        return {}
+        # Cache was created by a different bot version than the one currently
+        # running (CMS_BOT_VERSION). load_cache_from_comments() has already
+        # written cms-bot.properties to restart the Jenkins job with the
+        # correct CMS_BOT_VERSION - this run must not process anything nor
+        # touch the cache (no cache write happens below this point).
+        logger.error(
+            f"Aborting: bot version mismatch for #{issue.number}, job restart requested"
+        )
+        return {
+            "pr_number": issue.number,
+            "skipped": True,
+            "reason": "bot version mismatch, restarting job",
+            "is_pr": is_pr,
+            "pr_state": None,
+            "categories": {},
+            "holds": [],
+            "labels": [],
+            "messages": [],
+            "tests_triggered": [],
+        }
 
     # Use global command registry
     command_registry = get_global_registry()

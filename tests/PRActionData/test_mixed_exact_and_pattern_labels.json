@@ -49,7 +49,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"100\":\"+1\"},\"fv\":{\"Package/Core/main.py::abc123def456\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"100\":\"+1\"},\"fv\":{\"Package/Core/main.py::abc123def456\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}},\"version\":2} -->"
       }
     }
   ]

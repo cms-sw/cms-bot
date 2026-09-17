@@ -1,6 +1,6 @@
 {
   "test_name": "test_assign_from_with_label",
-  "action_count": 2,
+  "action_count": 3,
   "actions": [
     {
       "sequence": 1,
@@ -18,6 +18,14 @@
       "details": {
         "issue_number": 27,
         "body": "New categories assigned: xpog\n\nhqucms, vlimant you have been requested to review this Pull request/Issue and eventually sign. Thanks\n<!--assign:2769330515-->"
+      }
+    },
+    {
+      "sequence": 3,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2769190932,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"2769192218\":\"+1\"},\"fv\":{},\"version\":2} -->"
       }
     }
   ]

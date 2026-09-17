@@ -60,7 +60,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 26,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"README::131bcdaf098c6224cd0a7e3771661b9ba99eaa04\":{\"cats\":[],\"ts\":\"2025-03-28T13:08:22Z\"}}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"README::131bcdaf098c6224cd0a7e3771661b9ba99eaa04\":{\"cats\":[],\"ts\":\"2025-03-28T13:08:22Z\"}},\"version\":2} -->"
       }
     }
   ]

@@ -11,6 +11,7 @@ import hashlib
 import itertools
 import json
 import logging
+import os
 import re
 import sys
 import types
@@ -294,6 +295,8 @@ RE_QUEUE = re.compile(CMSSW_RELEASE_QUEUE_PATTERN)
 TEST_VERBS = ("build", "test")
 
 CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
+
+CMS_BOT_VERSION = 2
 
 
 # GPU flavors (loaded from files)
@@ -875,7 +878,8 @@ class BotCache:
     {
         "emoji": { "<comment_id>": "<reaction>" },  # Bot's reactions (source of truth)
         "fv": { "<filename>::<sha>": { "ts": ..., "cats": [...] } },  # File versions
-        "comments": { "<comment_id>": { "ts": ..., "first_line": ..., ... } }  # Processed comments
+        "comments": { "<comment_id>": { "ts": ..., "first_line": ..., ... } }  # Processed comments,
+        "version": ... # Bot version at the time of cache creation
     }
     """
 
@@ -890,6 +894,14 @@ class BotCache:
 
     # Runtime state: current file version keys (filename::sha) for this PR
     current_file_versions: List[str] = field(default_factory=list)
+
+    # Bot version this cache was created with. Defaults to the CURRENT bot
+    # version so that a brand-new cache (new PR, or a load-error fallback)
+    # is correctly stamped when it's first saved - NOT left as None (which
+    # would rely on the "fv"/"commits" key heuristics in from_dict() to be
+    # guessed correctly on the *next* load, and could silently mis-detect
+    # the version after a future cache format change).
+    version: int = field(default=CMS_BOT_VERSION)
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize cache to dictionary matching the JSON format."""
@@ -914,6 +926,7 @@ class BotCache:
                 }
                 for cid, ci in self.comments.items()
             },
+            "version": self.version,
         }
 
     @classmethod
@@ -950,6 +963,19 @@ class BotCache:
                 user=ci_data.get("user"),
                 locked=ci_data.get("locked", False),
             )
+
+        # Determine cache version. Modern caches store it explicitly; older
+        # caches (predating the "version" field) are detected via a
+        # structural heuristic ("commits" key => v1, "fv" key => v2).
+        cache_version = data.get("version", None)
+
+        if cache_version is None and "commits" in data:
+            cache_version = 1
+
+        if cache_version is None and "fv" in data:
+            cache_version = 2
+
+        cache.version = cache_version or CMS_BOT_VERSION
 
         return cache
 
@@ -1112,7 +1138,7 @@ def decompress_cache(data: str) -> str:
     return zlib.decompress(compressed).decode("utf-8")
 
 
-def load_cache_from_comments(comments) -> BotCache:
+def load_cache_from_comments(comments) -> Optional[BotCache]:
     """
     Load bot cache from PR issue comments.
 
@@ -1155,6 +1181,23 @@ def load_cache_from_comments(comments) -> BotCache:
             data = json.loads(decompressed)
 
         logger.debug("Successfully loaded cache from comments")
+        cache_version = data.get("version", None)
+        if cache_version is None and "commits" in data:
+            cache_version = 1
+        if cache_version is None and "fv" in data:
+            cache_version = 2
+
+        if cache_version is None:
+            logger.error("Failed to determine cache version!")
+            return None
+
+        if cache_version != CMS_BOT_VERSION:
+            logger.error(
+                f"Bot version {CMS_BOT_VERSION} doesn't match bot version from cache {cache_version}, restarting job"
+            )
+            recreate_cms_bot_test_properties(cache_version)
+            return None
+
         return BotCache.from_dict(data)
 
     except Exception as e:
@@ -6496,6 +6539,23 @@ def create_cms_bot_test_properties(pr) -> None:
     logger.info(f"Created cms-bot.properties for PR #{pr.number}")
 
 
+def recreate_cms_bot_test_properties(bot_version: int = 1) -> None:
+    """
+    Create properties file to re-run cms-bot job with correct bot version
+
+    Args:
+        bot_version: Version number
+    """
+
+    params = {"CMS_BOT_VERSION": bot_version}
+
+    with open("cms-bot.properties", "w") as f:
+        for key, value in params.items():
+            f.write(f"{key}={value}\n")
+
+    logger.info(f"Created cms-bot.properties to switch to cms-bot v{params['CMS_BOT_VERSION']}")
+
+
 def create_new_data_repo_properties(issue_number: int, dry_run: bool) -> None:
     """
     Create properties file for new data repo issue.
@@ -7052,6 +7112,26 @@ def process_pr(
 
     # Load cache from comments
     cache = load_cache_from_comments(comments_list)
+
+    if cache is None:
+        # Cache was created by a different bot version than the one currently
+        # running (CMS_BOT_VERSION). load_cache_from_comments() has already
+        # written cms-bot.properties to restart the Jenkins job with the
+        # correct CMS_BOT_VERSION - this run must not process anything nor
+        # touch the cache (no cache write happens below this point).
+        logger.error(f"Aborting: bot version mismatch for #{issue.number}, job restart requested")
+        return {
+            "pr_number": issue.number,
+            "skipped": True,
+            "reason": "bot version mismatch, restarting job",
+            "is_pr": is_pr,
+            "pr_state": None,
+            "categories": {},
+            "holds": [],
+            "labels": [],
+            "messages": [],
+            "tests_triggered": [],
+        }
 
     # Use global command registry
     command_registry = get_global_registry()

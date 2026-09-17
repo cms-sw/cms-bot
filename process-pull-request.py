@@ -4,6 +4,8 @@ Returns top commit of a PR (mostly used to comments)
 """
 
 import argparse
+import importlib
+import os
 from os.path import dirname, abspath, join, exists
 from socket import setdefaulttimeout
 
@@ -81,12 +83,20 @@ def main():
         sys.path.insert(0, repo_dir)
 
     import repo_config
-    from process_pr_v2 import process_pr
 
     if not getattr(repo_config, "RUN_DEFAULT_CMS_BOT", True):
         return
     if getattr(repo_config, "REQUEST_PROCESSOR", "cms-bot") != "cms-bot":
         return
+
+    version = int(os.getenv("CMS_BOT_VERSION", 1))
+    if version != 1:
+        version_suffix = f"_v{version}"
+    else:
+        version_suffix = ""
+
+    module = importlib.import_module(f"process_pr{version_suffix}")
+    process_pr = module.process_pr
 
     gh = Github(login_or_token=get_gh_token(opts.repository), per_page=100)
     api_rate_limits(gh)

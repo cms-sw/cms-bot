@@ -103,7 +103,12 @@ def format(s, **kwds):
     return s % kwds
 
 
+CMS_BOT_VERSION = 1
+
+CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
 BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
+BOT_CACHE_TEMPLATE["version"] = CMS_BOT_VERSION
+
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
@@ -358,6 +363,24 @@ def collect_commit_cache(bot_cache):
 def read_bot_cache(data):
     logger.info("Loading bot cache")
     res = loads_maybe_decompress(data)
+
+    cache_version = res.get("version", None)
+    if cache_version is None and "commits" in res:
+        cache_version = 1
+    if cache_version is None and "fv" in res:
+        cache_version = 2
+
+    if cache_version is None:
+        logger.error("Failed to determine cache version!")
+        return None
+
+    if cache_version != CMS_BOT_VERSION:
+        logger.error(
+            f"Bot version {CMS_BOT_VERSION} doesn't match bot version from cache {cache_version}, restarting job"
+        )
+        recreate_cms_bot_test_properties(cache_version)
+        return None
+
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in res:
             res[k] = copy.deepcopy(v)
@@ -381,6 +404,8 @@ def extract_bot_cache(comment_msgs):
 
     if data:
         res = read_bot_cache(data)
+        if res is None:
+            return None
         logger.trace("Loaded bot cache:\n%s", dumps(res))
         return res
 
@@ -843,8 +868,8 @@ def parse_test_cmd(first_line: str) -> ParseResult:
         ),
     ]
 
-    t = None
-    prev_t = None
+    t = ""
+    prev_t = ""
 
     while tokens:
         prev_t = t
@@ -883,15 +908,16 @@ def parse_test_cmd(first_line: str) -> ParseResult:
     return res
 
 
-def check_test_cmd(first_line, repo, params):
+def check_test_cmd(first_line, repo):
     try:
         res = parse_test_cmd(first_line)
     except ParseError as e:
         logger.warning("Invalid build/test command: " + str(e))
-        return (False, "", "", "", False)
+        return (False, "", "", "", False, {})
 
     wfs = ""
     prs = []
+    params = {}
 
     if res.workflows:
         wfs = ",".join(set(res.workflows))
@@ -905,7 +931,7 @@ def check_test_cmd(first_line, repo, params):
     if res.addpkg:
         params["EXTRA_CMSSW_PACKAGES"] = ",".join(set(res.addpkg))
 
-    return (True, " ".join(prs), wfs, res.queue, res.verb == "build")
+    return (True, " ".join(prs), wfs, res.queue, res.verb == "build", params)
 
 
 def get_prs_list_from_string(pr_string="", repo_string=""):
@@ -1155,14 +1181,38 @@ def get_combined_status_list(gh, last_commit, repository):
     ]
 
 
+def recreate_cms_bot_test_properties(bot_version: int = 2) -> None:
+    """
+    Create properties file to re-run cms-bot job with correct bot version
+
+    Args:
+        bot_version: Version number
+    """
+
+    params = {"CMS_BOT_VERSION": bot_version}
+
+    with open("cms-bot.properties", "w") as f:
+        for key, value in params.items():
+            f.write(f"{key}={value}\n")
+
+    logger.info(f"Created cms-bot.properties to switch to cms-bot v{params['CMS_BOT_VERSION']}")
+
+
 def process_pr(
-    repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, enableTraceLog=True
+    repo_config,
+    gh,
+    repo,
+    issue,
+    dryRun,
+    cmsbuild_user=None,
+    force=False,
+    loglevel: Union[str, int] = "trace",
 ):
     global L2_DATA, create_status
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
 
-    setup_logging("trace" if enableTraceLog else "debug")
+    setup_logging(loglevel)
 
     gh_user_char = "@"
 
@@ -1267,7 +1317,7 @@ def process_pr(
     is_draft_pr = False
     build_comment = None
 
-    # Retrigger the job if PR is for cms-bot repo and author is core or externals l2
+    # Retrigger the job if PR is for cms-bot repo and author is heterogeneous, core or externals l2
     if (
         repo.full_name == "cms-sw/cms-bot"
         and os.getenv("CMS_BOT_TEST_BRANCH", "master") == "master"
@@ -1275,7 +1325,7 @@ def process_pr(
     ):
         author_ = issue.user.login
         cats = get_commenter_categories(author_, int(issue.created_at.strftime("%s")))
-        if "externals" in cats or "core" in cats:
+        if "externals" in cats or "core" in cats or "heterogeneous" in cats:
             logger.info("Testing cms-bot PR #{0}".format(issue.number))
             with open("cms-bot.properties", "w") as f:
                 f.write("CMS_BOT_TEST_BRANCH=pull/{0}/head\n".format(issue.number))
@@ -1293,7 +1343,12 @@ def process_pr(
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
-        if pr.changed_files == 0:
+        if (pr.changed_files == 0) and (
+            not any(
+                line.strip() == "<cmsbot ignore-changed-files/>"
+                for line in ensure_ascii(pr.body).split("\n")
+            )
+        ):
             logger.error("Ignoring: PR with no files changed")
             return
 
@@ -1322,9 +1377,11 @@ def process_pr(
         # signatures it requires.
         if cmssw_repo or not external_repo:
             if cmssw_repo:
-                if pr.base.ref == "master" or pr.base.ref in forward_ports_map.GIT_REPO_FWPORTS[
-                    "cmssw"
-                ].get(CMSSW_DEVEL_BRANCH, []):
+                if (
+                    pr.base.ref in CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS
+                    or pr.base.ref
+                    in forward_ports_map.GIT_REPO_FWPORTS["cmssw"].get(CMSSW_DEVEL_BRANCH, [])
+                ):
                     signing_categories.add("code-checks")
                 updateMilestone(repo, issue, pr, dryRun)
             chg_files = get_changed_files(repo, pr)
@@ -1515,6 +1572,7 @@ def process_pr(
     cmssw_prs = ""
     extra_wfs = ""
     global_test_params = {}
+    transient_test_params = {}
     assign_cats = {}
     hold = {}
     last_test_start_time = None
@@ -1554,6 +1612,8 @@ def process_pr(
         if is_draft_pr:
             pull_request_updated = technical_comments[0].created_at < last_commit_date
         bot_cache = extract_bot_cache(technical_comments)
+        if bot_cache is None:
+            return
 
     # Make sure bot cache has the needed keys
     for k, v in BOT_CACHE_TEMPLATE.items():
@@ -1879,8 +1939,9 @@ def process_pr(
             # Check if someone asked to trigger the tests
             if valid_commenter:
                 if re.match("^(" + "|".join(TEST_VERBS) + ")", first_line):
-                    ok, v2, v3, v4, v5 = check_test_cmd(first_line, repository, global_test_params)
+                    ok, v2, v3, v4, v5, v6 = check_test_cmd(first_line, repository)
                     if ok:
+                        transient_test_params = v6
                         build_comment = None
                         if v5:
                             if has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
@@ -1935,6 +1996,8 @@ def process_pr(
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
+    # merge global and transient test params
+    global_test_params.update(transient_test_params)
 
     # Check if it needs to be automatically closed.
     if mustClose:

@@ -104,8 +104,8 @@ def format(s, **kwds):
 
 
 CMS_BOT_VERSION = 1
-BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}, "version": CMS_BOT_VERSION}
 CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
+BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}, "version": CMS_BOT_VERSION}
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."

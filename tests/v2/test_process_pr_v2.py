@@ -2586,7 +2586,9 @@ class TestBotCacheVersionDetection:
     """
 
     @staticmethod
-    def _make_cache_comment(cache_data: Dict[str, Any], comment_id: int = 999999) -> Dict[str, Any]:
+    def _make_cache_comment(
+        cache_data: Dict[str, Any], comment_id: int = 999999
+    ) -> Dict[str, Any]:
         """Build a fixture comment dict wrapping a raw (uncompressed) bot cache."""
         body = f"{CACHE_COMMENT_MARKER} {json.dumps(cache_data)} {CACHE_COMMENT_END}"
         return {
@@ -3638,9 +3640,7 @@ class TestPRDescriptionParsing:
     def test_should_ignore_zero_changed_files_with_tag(self):
         """Test that <cmsbot ignore-changed-files/> tag is detected anywhere in the body."""
         assert should_ignore_zero_changed_files("<cmsbot ignore-changed-files/>") is True
-        assert (
-            should_ignore_zero_changed_files("  <cmsbot ignore-changed-files/>  ") is True
-        )
+        assert should_ignore_zero_changed_files("  <cmsbot ignore-changed-files/>  ") is True
         assert (
             should_ignore_zero_changed_files("<CMSBOT IGNORE-CHANGED-FILES/>") is True
         )  # case-insensitive
@@ -3659,9 +3659,7 @@ class TestPRDescriptionParsing:
         # Similar-looking tags should NOT match
         assert should_ignore_zero_changed_files("<cmsbot></cmsbot>") is False
         assert should_ignore_zero_changed_files("<notify></notify>") is False
-        assert (
-            should_ignore_zero_changed_files("ignore-changed-files without the tag") is False
-        )
+        assert should_ignore_zero_changed_files("ignore-changed-files without the tag") is False
 
 
 class TestPRIgnoreProcessing:
@@ -3874,9 +3872,7 @@ class TestZeroChangedFilesProcessing:
         else:
             recorder.verify()
 
-    def test_pr_with_nonzero_changed_files_not_skipped(
-        self, test_name, repo_config, record_mode
-    ):
+    def test_pr_with_nonzero_changed_files_not_skipped(self, test_name, repo_config, record_mode):
         """Sanity check: normal PRs with real changed_files count are processed as usual."""
         create_basic_pr_data(
             test_name,
@@ -8138,13 +8134,12 @@ class TestBuildTestDoesNotAffectTestParametersTracking:
         status = self._get_test_params_status(recorder)
         assert status is not None, "Expected a bot/{prId}/test_parameters status"
         assert status["details"]["state"] == "error", (
-            "test_parameters error state must not be cleared by a later "
-            "'please test' command"
+            "test_parameters error state must not be cleared by a later " "'please test' command"
         )
         description = status["details"]["description"]
-        assert description.startswith("100:"), (
-            f"Error status should still be attributed to comment 100: {description!r}"
-        )
+        assert description.startswith(
+            "100:"
+        ), f"Error status should still be attributed to comment 100: {description!r}"
         assert "ERRORS" in description
 
         if record_mode:

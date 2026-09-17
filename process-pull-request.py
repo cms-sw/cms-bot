@@ -89,7 +89,7 @@ def main():
     if getattr(repo_config, "REQUEST_PROCESSOR", "cms-bot") != "cms-bot":
         return
 
-    version = os.getenv("CMS_BOT_VERSION", 1)
+    version = int(os.getenv("CMS_BOT_VERSION", 1))
     if version != 1:
         version_suffix = f"_v{version}"
     else:

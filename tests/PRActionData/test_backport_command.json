@@ -33,7 +33,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"1001\":\"+1\"},\"fv\":{}} -->"
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"1001\":\"+1\"},\"fv\":{},\"version\":2} -->"
       }
     }
   ]

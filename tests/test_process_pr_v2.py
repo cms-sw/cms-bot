@@ -87,9 +87,13 @@ from process_pr_v2 import (
     TestCmdParseError as CmdParseError,  # Alias to avoid pytest collection warning
     TestRequest as BuildTestRequest,  # Alias to avoid pytest collection warning
     TOO_MANY_FILES_WARN_THRESHOLD,
+    CACHE_COMMENT_MARKER,
+    CACHE_COMMENT_END,
+    CMS_BOT_VERSION,
     build_test_parameters,
     check_file_count,
     create_property_file,
+    decompress_cache,
     extract_command_line,
     format_mention,
     init_l2_data,
@@ -2472,6 +2476,34 @@ class TestTestCommand:
         assert exc_info.value.args[0] == "Keyword full must be preceded by using"
 
 
+def _extract_cache_data_from_actions(recorder: "ActionRecorder") -> Dict[str, Any]:
+    """
+    Reconstruct the bot cache dict from recorded create_comment/edit_comment
+    actions, mirroring exactly what load_cache_from_comments() does when
+    reading it back: combine chunks (by sequence, i.e. creation order),
+    then try plain JSON first, falling back to zlib+base64 decompression.
+    """
+    parts = []
+    for a in recorder.actions:
+        if a["action"] not in ("create_comment", "edit_comment"):
+            continue
+        body = a["details"].get("body", "") or ""
+        if body.startswith(CACHE_COMMENT_MARKER):
+            start = len(CACHE_COMMENT_MARKER)
+            end = body.rfind(CACHE_COMMENT_END)
+            assert end > start, f"Malformed cache comment body: {body!r}"
+            parts.append((a["sequence"], body[start:end].strip()))
+
+    assert parts, "No bot cache comment was created/updated"
+    parts.sort(key=lambda x: x[0])
+    combined = "".join(p for _, p in parts)
+
+    try:
+        return json.loads(combined)
+    except json.JSONDecodeError:
+        return json.loads(decompress_cache(combined))
+
+
 class TestCacheManagement:
     """Tests for cache storage and retrieval."""
 
@@ -2507,6 +2539,205 @@ class TestCacheManagement:
         )
 
         assert result["pr_number"] == 1
+
+        # The freshly-created cache must be stamped with the current bot version
+        # (regression check: previously the version field defaulted to None and
+        # was only guessed correctly on the *next* load via a key-presence
+        # heuristic - see cms-sw/cms-bot version-detection fix).
+        cache_data = _extract_cache_data_from_actions(recorder)
+        assert "version" in cache_data
+        assert cache_data["version"] == CMS_BOT_VERSION
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+
+# =============================================================================
+# TEST: BOT CACHE VERSION DETECTION
+# =============================================================================
+
+
+class TestBotCacheVersionDetection:
+    """
+    Integration tests for load_cache_from_comments()'s version-mismatch
+    detection, exercised through the full process_pr() flow.
+
+    CMS_BOT_VERSION in process_pr_v2 is 2. When an existing bot cache comment
+    was written by a different bot version, process_pr() must:
+    - NOT process the PR/Issue at all (no labels/comments/statuses touched,
+      no cache write),
+    - return a 'skipped' result explaining why,
+    - trigger recreate_cms_bot_test_properties() with the OLD (cache) version,
+      so the Jenkins job restarts running the matching bot version.
+
+    Version is resolved from the cache dict as follows:
+    1. explicit "version" key, if present;
+    2. otherwise, a structural heuristic: "commits" key => v1, "fv" key => v2
+       (for caches written before the "version" field existed).
+    """
+
+    @staticmethod
+    def _make_cache_comment(
+        cache_data: Dict[str, Any], comment_id: int = 999999
+    ) -> Dict[str, Any]:
+        """Build a fixture comment dict wrapping a raw (uncompressed) bot cache."""
+        body = f"{CACHE_COMMENT_MARKER} {json.dumps(cache_data)} {CACHE_COMMENT_END}"
+        return {
+            "id": comment_id,
+            "body": body,
+            "user": {"login": "cmsbuild", "id": 6},
+            "created_at": FROZEN_COMMENT_TIME.isoformat(),
+        }
+
+    def _run_with_cache(self, test_name, repo_config, record_mode, cache_data):
+        """Run process_pr against a PR whose only comment is the given bot cache."""
+        create_basic_pr_data(
+            test_name,
+            files=[
+                {
+                    "filename": "Package/Core/main.py",
+                    "sha": "file_sha_123",
+                    "status": "modified",
+                }
+            ],
+            comments=[self._make_cache_comment(cache_data)],
+        )
+
+        recorder = ActionRecorder(test_name, record_mode)
+        gh = MockGithub(test_name, recorder)
+        repo = MockRepository(test_name, recorder=recorder)
+        issue = MockIssue(test_name, number=1, recorder=recorder)
+
+        restart_calls: List[int] = []
+
+        def on_recreate(bot_version, res=None):
+            restart_calls.append(bot_version)
+            return res
+
+        hooks = [
+            {
+                "module_path": "process_pr_v2",
+                "class_name": None,
+                "function_name": "recreate_cms_bot_test_properties",
+                "hook_function": on_recreate,
+                "call_original": False,
+            },
+        ]
+
+        with FunctionHook(hooks):
+            result = process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        return result, restart_calls, recorder
+
+    def _assert_restarted_with(self, result, restart_calls, recorder, expected_old_version):
+        """Assert the run was aborted and a restart was requested with expected_old_version."""
+        assert result["pr_number"] == 1
+        assert result["skipped"] is True
+        assert result["reason"] == "bot version mismatch, restarting job"
+        assert result["categories"] == {}
+        assert result["labels"] == []
+        assert result["tests_triggered"] == []
+
+        assert restart_calls == [expected_old_version], (
+            f"Expected a single restart request for bot version {expected_old_version}, "
+            f"got {restart_calls!r}"
+        )
+
+        # Nothing should have been written back - no labels, no new/updated
+        # cache comment, no bot comment of any kind.
+        mutating_actions = [
+            a["action"]
+            for a in recorder.actions
+            if a["action"]
+            in ("create_comment", "edit_comment", "add_labels", "remove_labels", "create_status")
+        ]
+        assert mutating_actions == [], (
+            f"process_pr must not touch the PR when the bot version doesn't match, "
+            f"but recorded: {mutating_actions!r}"
+        )
+
+    def _assert_processed_normally(self, result, restart_calls):
+        """Assert the run proceeded normally (no version mismatch detected)."""
+        assert result["pr_number"] == 1
+        assert result.get("skipped") is not True
+        assert restart_calls == [], f"Unexpected restart request(s): {restart_calls!r}"
+
+    # -- Explicit version field -------------------------------------------------
+
+    def test_explicit_version_1_triggers_restart(self, test_name, repo_config, record_mode):
+        """Cache explicitly marked version=1 (old bot) must trigger a restart with v1."""
+        cache_data = {"emoji": {}, "fv": {}, "comments": {}, "version": 1}
+
+        result, restart_calls, recorder = self._run_with_cache(
+            test_name, repo_config, record_mode, cache_data
+        )
+        self._assert_restarted_with(result, restart_calls, recorder, expected_old_version=1)
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_explicit_version_2_processes_normally(self, test_name, repo_config, record_mode):
+        """Cache explicitly marked version=2 (current bot) must be processed normally."""
+        cache_data = {"emoji": {}, "fv": {}, "comments": {}, "version": 2}
+
+        result, restart_calls, recorder = self._run_with_cache(
+            test_name, repo_config, record_mode, cache_data
+        )
+        self._assert_processed_normally(result, restart_calls)
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    # -- Legacy caches with no explicit "version" key (heuristic detection) -----
+
+    def test_legacy_cache_with_commits_key_detected_as_v1(
+        self, test_name, repo_config, record_mode
+    ):
+        """
+        A cache with no "version" key but a "commits" key predates the version
+        field and must be detected as v1 - triggering a restart, since the
+        current bot is v2.
+        """
+        cache_data = {"emoji": {}, "commits": {}, "comments": {}}
+        assert "version" not in cache_data
+
+        result, restart_calls, recorder = self._run_with_cache(
+            test_name, repo_config, record_mode, cache_data
+        )
+        self._assert_restarted_with(result, restart_calls, recorder, expected_old_version=1)
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_legacy_cache_with_fv_key_detected_as_v2(self, test_name, repo_config, record_mode):
+        """
+        A cache with no "version" key but an "fv" key predates the version
+        field but has the v2 structure, so it must be detected as v2 -
+        matching the current bot, processed normally with no restart.
+        """
+        cache_data = {"emoji": {}, "fv": {}, "comments": {}}
+        assert "version" not in cache_data
+
+        result, restart_calls, recorder = self._run_with_cache(
+            test_name, repo_config, record_mode, cache_data
+        )
+        self._assert_processed_normally(result, restart_calls)
 
         if record_mode:
             recorder.save()

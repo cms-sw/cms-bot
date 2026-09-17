@@ -926,7 +926,7 @@ class BotCache:
                 }
                 for cid, ci in self.comments.items()
             },
-            "version": self.version
+            "version": self.version,
         }
 
     @classmethod
@@ -7119,9 +7119,7 @@ def process_pr(
         # written cms-bot.properties to restart the Jenkins job with the
         # correct CMS_BOT_VERSION - this run must not process anything nor
         # touch the cache (no cache write happens below this point).
-        logger.error(
-            f"Aborting: bot version mismatch for #{issue.number}, job restart requested"
-        )
+        logger.error(f"Aborting: bot version mismatch for #{issue.number}, job restart requested")
         return {
             "pr_number": issue.number,
             "skipped": True,

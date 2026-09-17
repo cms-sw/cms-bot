@@ -1,5 +1,14 @@
 {
   "test_name": "test_assign_from_invalid",
-  "action_count": 0,
-  "actions": []
+  "action_count": 1,
+  "actions": [
+    {
+      "sequence": 1,
+      "action": "edit_comment",
+      "details": {
+        "comment_id": 2769190932,
+        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"2769192218\":\"+1\"},\"fv\":{},\"version\":2} -->"
+      }
+    }
+  ]
 }

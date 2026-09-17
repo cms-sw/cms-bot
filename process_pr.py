@@ -102,6 +102,7 @@ CMSSW_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 def format(s, **kwds):
     return s % kwds
 
+
 CMS_BOT_VERSION = 1
 BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}, "version": CMS_BOT_VERSION}
 CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]

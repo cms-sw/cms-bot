@@ -90,8 +90,12 @@ def main():
         return
 
     version = os.getenv("CMS_BOT_VERSION", 1)
+    if version != 1:
+        version_suffix = f"_v{version}"
+    else:
+        version_suffix = ""
 
-    module = importlib.import_module(f"process_pr_v{version}")
+    module = importlib.import_module(f"process_pr{version_suffix}")
     process_pr = module.process_pr
 
     gh = Github(login_or_token=get_gh_token(opts.repository), per_page=100)

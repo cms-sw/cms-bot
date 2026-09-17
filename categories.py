@@ -62,7 +62,7 @@ CMSSW_L2 = {
     "Dr15Jones": ["core", "visualization", "geometry"],
     "Martin-Grunewald": ["hlt"],
     "mmusich": ["hlt"],
-    "AdrianoDee": ["pdmv"],
+    "teteumac": ["pdmv"],
     "antoniovagnerini": ["pdmv"],
     "DickyChant": ["pdmv"],
     "miquork": ["pdmv", "jetmet-pog"],

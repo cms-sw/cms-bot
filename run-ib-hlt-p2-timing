@@ -13,20 +13,18 @@ RES_PREFIX=$(python3 -c 'from HLTrigger.Configuration.HLT_75e33.services.FastTim
 git cms-addpkg HLTrigger/Configuration
 cd src/HLTrigger/Configuration/python/HLT_75e33/test
 # Uncomment the following in case we have to use quick patch for patatrack-scripts
-#echo "git clone https://github.com/cms-externals/patatrack-scripts --depth 1" >> $WORKSPACE/run.sh
+echo "git clone https://github.com/cms-externals/patatrack-scripts --depth 1" >> $WORKSPACE/run.sh
 RES="passed"
 mkdir -p $WORKSPACE/upload
 timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1 || RES="failed"
 mv ${RES_PREFIX}*.json $WORKSPACE/upload || RES="failed"
 if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
   (
-    mv logs.Phase2_L1P2GT_HLT/cpu_memory.csv       $WORKSPACE/upload/cpu_memory_ph2_hlt.csv &&
-    mv logs.Phase2_L1P2GT_HLT/gpu_memory.csv       $WORKSPACE/upload/gpu_memory_ph2_hlt.csv &&
-    mv logs.Phase2_L1P2GT_HLT/gpu_usage.csv        $WORKSPACE/upload/gpu_usage_ph2_hlt.csv &&
-    mv logs.Phase2_L1P2GT_HLT_OnCPU/cpu_memory.csv $WORKSPACE/upload/cpu_memory_ph2_hlt_onCPU.csv &&
-    mv logs.NGTScouting_L1P2GT_HLT/cpu_memory.csv  $WORKSPACE/upload/cpu_memory_ph2_ngt.csv &&
-    mv logs.NGTScouting_L1P2GT_HLT/gpu_memory.csv  $WORKSPACE/upload/gpu_memory_ph2_ngt.csv &&
-    mv logs.NGTScouting_L1P2GT_HLT/gpu_usage.csv   $WORKSPACE/upload/gpu_usage_ph2_ngt.csv
+    mv logs.Phase2_L1P2GT_HLT/cpu_monitor.csv       $WORKSPACE/upload/cpu_monitor_ph2_hlt.csv &&
+    mv logs.Phase2_L1P2GT_HLT/gpu_monitor.csv       $WORKSPACE/upload/gpu_monitor_ph2_hlt.csv &&
+    mv logs.Phase2_L1P2GT_HLT_OnCPU/cpu_monitor.csv $WORKSPACE/upload/cpu_monitor_ph2_hlt_onCPU.csv &&
+    mv logs.NGTScouting_L1P2GT_HLT/cpu_monitor.csv  $WORKSPACE/upload/cpu_monitor_ph2_ngt.csv &&
+    mv logs.NGTScouting_L1P2GT_HLT/gpu_monitor.csv  $WORKSPACE/upload/gpu_monitor_ph2_ngt.csv
   ) || RES="failed"
 fi
 echo "${RES}" > $WORKSPACE/upload/status.txt

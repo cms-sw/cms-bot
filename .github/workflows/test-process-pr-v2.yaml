@@ -1,4 +1,4 @@
-name: Test changes to process_pr.py
+name: Test changes to process_pr_v2.py (V2)
 
 on:
   push:

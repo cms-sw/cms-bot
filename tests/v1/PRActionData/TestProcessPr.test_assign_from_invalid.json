@@ -1,0 +1,41 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {},
+            "emoji": {
+                "2769192218": "+1"
+            },
+            "signatures": {},
+            "version": 1
+        }
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "pending-assignment"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "core-pending",
+            "pending-signatures"
+        ]
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{},\"emoji\":{\"2769192218\":\"+1\"},\"signatures\":{},\"version\":1} -->"
+    },
+    {
+        "type": "save-bot-cache",
+        "data": {
+            "commits": {},
+            "emoji": {
+                "2769192218": "+1"
+            },
+            "signatures": {},
+            "version": 1
+        }
+    }
+]

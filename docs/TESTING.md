@@ -262,6 +262,7 @@ with `_L2_DATA` so re-recording is never needed just because of a refactor.
 | `bob_user` | `bob` | `simulation` |
 | `carol_user` | `carol` | `docs`, `testing` |
 | `dave_user` | `dave` | `orp` |
+| `eve_user` | `eve` | `visualization` |
 | `cmsbuild_user_dict` | `cmsbuild` | `tests`, `code-checks` (bot) |
 | `tester_user` | `tester` | none — add to `TRIGGER_PR_TESTS` in test |
 | `testuser` | `testuser` | none — default PR author |
@@ -318,18 +319,29 @@ Add the fixture near the others in the test file and add the user to
 ```python
 # In test file:
 @pytest.fixture
-def eve_user():
+def frank_user():
     """L2 user with 'tracking' category."""
-    return {"login": "eve", "id": 7}
+    return {"login": "frank", "id": 8}
 ```
 
 ```python
 # In setup_test_l2_data():
 user_categories = {
     ...
-    "eve": ["tracking"],
+    "frank": ["tracking"],
 }
 ```
+
+**Why this matters beyond signing:** `_L2_DATA` isn't only consulted for "can this
+user sign category X" (`get_user_l2_categories`) - it's also the *only* source for
+"who gets @-mentioned for category X" (`get_category_l2s`), used when building welcome
+messages, re-sign notifications, and the `assign` command's confirmation message. If a
+test uses `assign <category>` (or otherwise expects an L2-notification message) for a
+category with **no** mocked L2 owner in `_L2_DATA`, `get_category_l2s()` returns an
+empty list, `new_l2s` stays empty, and the whole confirmation message is silently not
+posted. If your test needs a confirmation/notification message for a category, make
+sure some user in `_L2_DATA` (or your test's own `setup_test_l2_data(...)` override)
+actually owns that category - don't rely on `CMSSW_CATEGORIES` alone.
 
 ---
 

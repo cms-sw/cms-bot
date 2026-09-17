@@ -1,7 +1,7 @@
 *.pyc
 .idea
 *.properties
-tests/Framework.py
+tests/v1/Framework.py
 venv*
 GithubCredentials.py
 .coverage

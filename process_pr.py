@@ -362,6 +362,7 @@ def collect_commit_cache(bot_cache):
 def read_bot_cache(data):
     logger.info("Loading bot cache")
     res = loads_maybe_decompress(data)
+    collect_commit_cache(res)
 
     cache_version = res.get("version", None)
     if cache_version is None and "commits" in res:
@@ -383,7 +384,7 @@ def read_bot_cache(data):
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in res:
             res[k] = copy.deepcopy(v)
-    collect_commit_cache(res)
+
     return res
 
 

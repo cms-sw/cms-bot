@@ -1,0 +1,13 @@
+[
+    {
+        "type": "edit-pr",
+        "data": {
+            "base": "master",
+            "res": null
+        }
+    },
+    {
+        "type": "create-comment",
+        "data": "@iarspider, CMSSW_14_1_X branch is closed for direct updates. cms-bot is going to move this PR to master branch.\nIn future, please use cmssw master branch to submit your changes.\n"
+    }
+]

@@ -1473,7 +1473,18 @@ def get_category_l2s(
     repo_config: types.ModuleType, category: str, timestamp: datetime
 ) -> List[str]:
     """
-    Get the L2 signers for a specific category.
+    Get the L2 signers for a specific category at a given time.
+
+    Uses the same L2 membership data source as signature authorization
+    (_L2_DATA, loaded by init_l2_data() and consulted via
+    get_user_l2_categories()) rather than reading the static CMSSW_L2
+    mapping directly. This keeps "who gets mentioned/notified for this
+    category" always consistent with "who is actually authorized to sign
+    it", and lets tests override L2 membership (via _L2_DATA) the same way
+    they do for signature checks - reading CMSSW_L2 directly bypassed that
+    entirely, both in production (it could disagree with time-based l2.json
+    data) and in tests (real CMSSW_L2 membership would leak in, regardless
+    of any test-local L2 fixture).
 
     Args:
         repo_config: Repository configuration module
@@ -1483,32 +1494,13 @@ def get_category_l2s(
     Returns:
         List of usernames who are L2 for this category
     """
-    l2s = []
-    timestamp_epoch = int(timestamp.timestamp())
+    usernames = _L2_DATA.keys() if _L2_DATA else CMSSW_L2.keys()
 
-    # Check CMSSW_L2 mapping
-    for username, cat_or_periods in CMSSW_L2.items():
-        if isinstance(cat_or_periods, str):
-            if cat_or_periods == category:
-                l2s.append(username)
-        elif isinstance(cat_or_periods, list):
-            # Check for time-based periods
-            for item in cat_or_periods:
-                if isinstance(item, dict):
-                    start = item.get("start", 0)
-                    end = item.get("end", float("inf"))
-                    if start <= timestamp_epoch <= end:
-                        cat = item.get("category", [])
-                        if isinstance(cat, str) and cat == category:
-                            l2s.append(username)
-                        elif isinstance(cat, list) and category in cat:
-                            l2s.append(username)
-                        break
-                elif item == category:
-                    l2s.append(username)
-                    break
-
-    return l2s
+    return [
+        username
+        for username in usernames
+        if category in get_user_l2_categories(repo_config, username, timestamp)
+    ]
 
 
 def get_package_category(repo_config: types.ModuleType, package: str) -> Optional[str]:

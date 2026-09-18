@@ -40,6 +40,7 @@ TRIGGER_PR_TESTS = list(
             "silviodonato",
             "slava77",
             "srimanob",
+            "AdrianoDee",
         ]
         + REQUEST_BUILD_RELEASE
         + [a for a in authors if authors[a] > 10 and not a in GITHUB_BLACKLIST_AUTHORS]

@@ -13,5 +13,7 @@ sbein:
 - fastsim
 AdrianoDee:
 - heterogeneous
+- reconstruction
+- hlt
 ckoraka:
 - heterogeneous

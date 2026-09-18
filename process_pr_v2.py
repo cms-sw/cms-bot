@@ -5384,6 +5384,15 @@ def determine_pr_state(context: PRContext) -> PRState:
 
     Note: fully-signed does NOT wait for code-checks, tests, or orp.
     Those are checked separately (code-checks for test trigger, tests+orp for merge).
+
+    IMPORTANT: "externals" (an extra-check for cmsdist/cms-data/cms-externals/
+    cms-org repos) is deliberately NOT in the skip set below, even though it's
+    also an "extra check". Unlike tests/orp/code-checks - which are tracked
+    separately via CI status or a merge-time check - "externals" has no such
+    automated tracking and must be explicitly signed (+externals/-externals)
+    like any normal L2 category, so it DOES block fully-signed. Confirmed by
+    real recorded PR data (test_cmsdist_start_tests): do not "fix" this by
+    deriving the skip set from get_signing_checks_for_pr().pre_checks/extra_checks.
     """
     # Check if already merged
     if context.pr and context.pr.merged:
@@ -5391,20 +5400,9 @@ def determine_pr_state(context: PRContext) -> PRState:
 
     category_states = compute_category_approval_states(context)
 
-    # Get required checks
-    signing_checks = context.get_signing_checks_for_pr()
-
-    # Categories to skip for fully-signed determination: pre-checks (e.g.
-    # code-checks, gates test triggering) and extra-checks (e.g. tests, orp,
-    # externals - required for merge, not for basic L2 sign-off) are checked
-    # separately, not as part of fully-signed. Derived from the actual
-    # signing checks for this repo/branch rather than hardcoded, since which
-    # categories land in pre_checks/extra_checks varies by repo type (e.g.
-    # "externals" only applies to cmsdist/cms-data/cms-externals/cms-org
-    # repos) - a hardcoded set would silently drift out of sync.
-    skip_for_fully_signed = {
-        c.lower() for c in signing_checks.pre_checks + signing_checks.extra_checks
-    }
+    # Categories to skip for fully-signed determination
+    # These are checked separately (code-checks for test trigger, tests+orp for merge)
+    skip_for_fully_signed = {"code-checks", "tests", "orp"}
 
     # Check all L2 categories (from file ownership and manual assignment)
     for cat_name, state in category_states.items():

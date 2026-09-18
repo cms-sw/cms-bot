@@ -17,4 +17,6 @@ if [ ! -f "${GPU}" ] ; then
   exit 1
 fi
 sed -e "s|@N@|$ID|;s|@IMG_DATE@|$IMG_DATE|" ${GPU} > session.yaml
-kubectl --context ngt-token create -f session.yaml
+if [ "$3" = "" ] ; then
+  kubectl --context ngt-token create -f session.yaml
+fi

@@ -11,12 +11,11 @@ import hashlib
 import itertools
 import json
 import logging
-import os
 import re
 import sys
 import types
 import zlib
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -25,7 +24,7 @@ from json import load as json_load
 from os import getenv as os_getenv
 from os.path import dirname, exists, join
 from subprocess import getstatusoutput
-from typing import Any, Dict, Generator, List, Optional, Set, Tuple, Union
+from typing import Any, Optional, Union
 
 import yaml
 from github.IssueComment import IssueComment
@@ -33,12 +32,12 @@ from github.IssueComment import IssueComment
 import forward_ports_map
 from categories import (
     CMSSW_CATEGORIES,
+    CMSSW_ISSUES_TRACKERS,
     CMSSW_L2,
     CMSSW_ORP,
-    TRIGGER_PR_TESTS,
-    CMSSW_ISSUES_TRACKERS,
-    PR_HOLD_MANAGERS,
     EXTERNAL_REPOS,
+    PR_HOLD_MANAGERS,
+    TRIGGER_PR_TESTS,
 )
 from github_utils import api_rate_limits
 
@@ -46,14 +45,14 @@ from github_utils import api_rate_limits
 try:
     from categories import CMSSW_LABELS
 except ImportError:
-    CMSSW_LABELS: Dict[str, List[Any]] = {}
+    CMSSW_LABELS: dict[str, list[Any]] = {}
 
 # Import get_dpg_pog for DPG/POG label filtering
 try:
     from categories import get_dpg_pog
 except ImportError:
 
-    def get_dpg_pog(*args) -> Dict[str, Any]:
+    def get_dpg_pog(*args) -> dict[str, Any]:
         return {}
 
 
@@ -66,14 +65,14 @@ except ImportError:
         return ""
 
 
-from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
+from releases import CMSSW_DEVEL_BRANCH, RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION
 
 # Import release management functions
 try:
     from releases import get_release_managers, is_closed_branch
 except ImportError:
 
-    def get_release_managers(*args) -> List[str]:
+    def get_release_managers(*args) -> list[str]:
         return []
 
     def is_closed_branch(*args) -> bool:
@@ -81,21 +80,21 @@ except ImportError:
 
 
 from cms_static import (
-    VALID_CMSDIST_BRANCHES,
+    BACKPORT_STR,
+    BUILD_REL,
+    CMSBOT_IGNORE_MSG,
+    CMSBOT_NO_NOTIFY_MSG,
+    CMSBOT_TECHNICAL_MSG,
+    CREATE_REPO,
+    GH_CMSDIST_REPO,
+    GH_CMSSW_ORGANIZATION,
+    GH_CMSSW_REPO,
     NEW_ISSUE_PREFIX,
     NEW_PR_PREFIX,
-    BUILD_REL,
-    GH_CMSSW_REPO,
-    GH_CMSDIST_REPO,
-    CMSBOT_IGNORE_MSG,
     VALID_CMS_SW_REPOS_FOR_TESTS,
-    CREATE_REPO,
-    CMSBOT_TECHNICAL_MSG,
-    BACKPORT_STR,
-    GH_CMSSW_ORGANIZATION,
-    CMSBOT_NO_NOTIFY_MSG,
+    VALID_CMSDIST_BRANCHES,
 )
-from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
+from githublabels import TEST_IGNORE_REASON, TYPE_COMMANDS
 from repo_config import GH_REPO_ORGANIZATION
 
 # Derived constants
@@ -191,9 +190,9 @@ APPLY_PYGITHUB_PATCHES = True
 
 if APPLY_PYGITHUB_PATCHES:
     try:
-        import github.PaginatedList
-        import github.CommitStatus
         import github.CommitCombinedStatus
+        import github.CommitStatus
+        import github.PaginatedList
 
         def _patched_statuses(self):
             """
@@ -300,7 +299,7 @@ CMS_BOT_VERSION = 2
 
 
 # GPU flavors (loaded from files)
-def _load_gpu_flavors() -> List[str]:
+def _load_gpu_flavors() -> list[str]:
     """Load GPU flavors from configuration files."""
     gpus = []
     base_dir = dirname(__file__)
@@ -315,7 +314,7 @@ def _load_gpu_flavors() -> List[str]:
 
 
 ALL_GPUS = _load_gpu_flavors()
-ALL_GPU_BRANDS = sorted(set(gpu.split("_", 1)[0] for gpu in ALL_GPUS))
+ALL_GPU_BRANDS = sorted({gpu.split("_", 1)[0] for gpu in ALL_GPUS})
 
 # Test-related patterns
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"]
@@ -324,12 +323,12 @@ EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)
     + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi_microarchs"
 )
-SKIP_TESTS = "|".join(["static", "header"])
+SKIP_TESTS = "static|header"
 ENABLE_TEST_PTRN = "enable(_tests?)?"
 
 # Multiline comment parameter mapping for 'test parameters:' command
 # Format: {key_pattern: [value_pattern, param_name, preserve_spaces?]}
-MULTILINE_COMMENTS_MAP: Dict[str, List[Any]] = {
+MULTILINE_COMMENTS_MAP: dict[str, list[Any]] = {
     f"(workflow|relval)s?({EXTRA_RELVALS_TESTS_OPTS})?": [
         rf"({WF_PATTERN})(,({WF_PATTERN}))*",
         "MATRIX_EXTRAS",
@@ -389,7 +388,7 @@ RE_IGNORE_CHANGED_FILES = re.compile(
 )
 
 # Global L2 data cache
-_L2_DATA: Dict[str, List[Dict[str, Any]]] = {}
+_L2_DATA: dict[str, list[dict[str, Any]]] = {}
 
 
 # =============================================================================
@@ -397,7 +396,7 @@ _L2_DATA: Dict[str, List[Dict[str, Any]]] = {}
 # =============================================================================
 
 
-def get_prs_list_from_string(pr_string: str, repo_string: str = "") -> List[str]:
+def get_prs_list_from_string(pr_string: str, repo_string: str = "") -> list[str]:
     """
     Parse a comma-separated PR string into a list of normalized PR references.
 
@@ -427,12 +426,12 @@ def get_prs_list_from_string(pr_string: str, repo_string: str = "") -> List[str]
     return prs
 
 
-def check_ignore_bot_tests(value: str, *args) -> Tuple[str, Optional[str]]:
+def check_ignore_bot_tests(value: str, *args) -> tuple[str, Optional[str]]:
     """Normalize IGNORE_BOT_TESTS value."""
     return value.upper().replace(" ", ""), None
 
 
-def check_enable_bot_tests(value: str, *args) -> Tuple[str, Optional[str]]:
+def check_enable_bot_tests(value: str, *args) -> tuple[str, Optional[str]]:
     """Normalize ENABLE_BOT_TESTS value, handling 'none' specially."""
     tests = value.upper().replace(" ", "")
     if "NONE" in tests:
@@ -441,8 +440,8 @@ def check_enable_bot_tests(value: str, *args) -> Tuple[str, Optional[str]]:
 
 
 def check_extra_matrix_args(
-    value: str, repo, params: Dict[str, str], key: str, param: str, *args
-) -> Tuple[str, Optional[str]]:
+    value: str, repo, params: dict[str, str], key: str, param: str, *args
+) -> tuple[str, Optional[str]]:
     """Handle EXTRA_MATRIX_ARGS with suffix based on key."""
     key_parts = key.split("_")
     if key_parts[-1] in ["input"] + EXTRA_RELVALS_TESTS:
@@ -451,16 +450,16 @@ def check_extra_matrix_args(
 
 
 def check_extra_matrix_command_args(
-    value: str, repo, params: Dict[str, str], key: str, param: str, *args
-) -> Tuple[str, Optional[str]]:
+    value: str, repo, params: dict[str, str], key: str, param: str, *args
+) -> tuple[str, Optional[str]]:
     """Handle EXTRA_MATRIX_COMMAND_ARGS with suffix based on key."""
     # Same logic as check_extra_matrix_args
     return check_extra_matrix_args(value, repo, params, key, param, *args)
 
 
 def check_matrix_extras(
-    value: str, repo, params: Dict[str, str], key: str, param: str, *args
-) -> Tuple[str, Optional[str]]:
+    value: str, repo, params: dict[str, str], key: str, param: str, *args
+) -> tuple[str, Optional[str]]:
     """Handle MATRIX_EXTRAS with suffix and sort workflows."""
     key_parts = key.split("_")
     if key_parts[-1] in EXTRA_RELVALS_TESTS:
@@ -470,15 +469,15 @@ def check_matrix_extras(
     return value, param
 
 
-def check_pull_requests(value: str, repo, *args) -> Tuple[str, Optional[str]]:
+def check_pull_requests(value: str, repo, *args) -> tuple[str, Optional[str]]:
     """Normalize PULL_REQUESTS value."""
     repo_string = repo.full_name if hasattr(repo, "full_name") else str(repo)
     return " ".join(get_prs_list_from_string(value, repo_string)), None
 
 
 def check_release_format(
-    value: str, repo, params: Dict[str, str], *args
-) -> Tuple[str, Optional[str]]:
+    value: str, repo, params: dict[str, str], *args
+) -> tuple[str, Optional[str]]:
     """Handle RELEASE_FORMAT, extracting architecture if present."""
     release_queue = value
     arch = ""
@@ -531,7 +530,7 @@ def read_repo_file(
 
 def init_l2_data(
     repo_config: types.ModuleType, cms_repo: bool = True
-) -> Dict[str, List[Dict[str, Any]]]:
+) -> dict[str, list[dict[str, Any]]]:
     """
     Initialize L2 category membership data.
 
@@ -555,7 +554,7 @@ def init_l2_data(
     if cms_repo:
         # Load default L2 data from cmssw_l2/l2.json
         default_l2_path = join(dirname(__file__), "cmssw_l2", "l2.json")
-        default_l2_data: Dict[str, List[Dict[str, Any]]] = {}
+        default_l2_data: dict[str, list[dict[str, Any]]] = {}
 
         if exists(default_l2_path):
             with open(default_l2_path, "r") as f:
@@ -566,9 +565,8 @@ def init_l2_data(
 
         # For users in CMSSW_L2, ensure their latest period has no end_date
         for user in CMSSW_L2:
-            if user in l2_data and l2_data[user]:
-                if "end_date" in l2_data[user][-1]:
-                    del l2_data[user][-1]["end_date"]
+            if l2_data.get(user) and "end_date" in l2_data[user][-1]:
+                del l2_data[user][-1]["end_date"]
     else:
         # For non-CMS repos, use static CMSSW_L2 mapping
         l2_data = {}
@@ -581,8 +579,8 @@ def init_l2_data(
 
 def get_watchers(
     context: "PRContext",
-    changed_files: List[str],
-) -> Set[str]:
+    changed_files: list[str],
+) -> set[str]:
     """
     Get watchers for the PR based on changed files and categories.
 
@@ -596,7 +594,7 @@ def get_watchers(
     Returns:
         Set of usernames who should be notified
     """
-    watchers: Set[str] = set()
+    watchers: set[str] = set()
     author = context.issue.user.login if context.issue else ""
 
     # Load file watchers from watchers.yaml
@@ -626,7 +624,7 @@ def get_watchers(
 
     # Expand watching groups
     watching_groups = read_repo_file(context.repo_config, "groups.yaml", {})
-    expanded_watchers: Set[str] = set()
+    expanded_watchers: set[str] = set()
 
     for watcher in watchers:
         if watcher in watching_groups:
@@ -647,10 +645,10 @@ def get_watchers(
 # =============================================================================
 
 # Compiled label patterns (populated by initialize_labels)
-_LABEL_PATTERNS: Dict[str, List[re.Pattern]] = {}
+_LABEL_PATTERNS: dict[str, list[re.Pattern]] = {}
 
 
-def initialize_labels(repo_config: types.ModuleType) -> Dict[str, List[re.Pattern]]:
+def initialize_labels(repo_config: types.ModuleType) -> dict[str, list[re.Pattern]]:
     """
     Initialize and compile label patterns for auto-labeling.
 
@@ -674,7 +672,7 @@ def initialize_labels(repo_config: types.ModuleType) -> Dict[str, List[re.Patter
     check_dpg_pog = getattr(repo_config, "CHECK_DPG_POG", False)
     dpg_pog = get_dpg_pog() if check_dpg_pog else {}
 
-    compiled_labels: Dict[str, List[re.Pattern]] = {}
+    compiled_labels: dict[str, list[re.Pattern]] = {}
 
     for label, patterns in CMSSW_LABELS.items():
         # Filter out labels not in DPG/POG or TYPE_COMMANDS if checking is enabled
@@ -696,7 +694,7 @@ def initialize_labels(repo_config: types.ModuleType) -> Dict[str, List[re.Patter
     return compiled_labels
 
 
-def get_labels_for_file(filename: str) -> List[str]:
+def get_labels_for_file(filename: str) -> list[str]:
     """
     Get labels that should be applied based on a filename.
 
@@ -717,7 +715,7 @@ def get_labels_for_file(filename: str) -> List[str]:
     return matching_labels
 
 
-def get_labels_for_pr(context: "PRContext") -> Set[str]:
+def get_labels_for_pr(context: "PRContext") -> set[str]:
     """
     Get all labels that should be applied to a PR based on its files.
 
@@ -727,7 +725,7 @@ def get_labels_for_pr(context: "PRContext") -> Set[str]:
     Returns:
         Set of label names to apply
     """
-    labels: Set[str] = set()
+    labels: set[str] = set()
     current_files = context.cache.current_file_versions
 
     if not current_files:
@@ -741,7 +739,7 @@ def get_labels_for_pr(context: "PRContext") -> Set[str]:
     return labels
 
 
-def add_nonblocking_labels(changed_files: List[str], pending_labels: Set[str]) -> None:
+def add_nonblocking_labels(changed_files: list[str], pending_labels: set[str]) -> None:
     """
     Add non-blocking labels based on changed files.
 
@@ -821,7 +819,7 @@ class FileVersion:
     filename: str
     blob_sha: str
     timestamp: str  # ISO format timestamp
-    categories: List[str] = field(default_factory=list)
+    categories: list[str] = field(default_factory=list)
 
     @property
     def key(self) -> str:
@@ -847,8 +845,8 @@ class CommentInfo:
     timestamp: str
     first_line: str
     ctype: Optional[str] = None
-    categories: List[str] = field(default_factory=list)
-    signed_files: List[str] = field(default_factory=list)
+    categories: list[str] = field(default_factory=list)
+    signed_files: list[str] = field(default_factory=list)
     user: Optional[str] = None
     locked: bool = False
 
@@ -884,16 +882,16 @@ class BotCache:
     """
 
     # Bot's reactions on comments (comment_id -> reaction)
-    emoji: Dict[str, str] = field(default_factory=dict)
+    emoji: dict[str, str] = field(default_factory=dict)
 
     # File versions (filename::sha -> FileVersion info)
-    file_versions: Dict[str, FileVersion] = field(default_factory=dict)
+    file_versions: dict[str, FileVersion] = field(default_factory=dict)
 
     # Processed comments (comment_id -> CommentInfo)
-    comments: Dict[str, CommentInfo] = field(default_factory=dict)
+    comments: dict[str, CommentInfo] = field(default_factory=dict)
 
     # Runtime state: current file version keys (filename::sha) for this PR
-    current_file_versions: List[str] = field(default_factory=list)
+    current_file_versions: list[str] = field(default_factory=list)
 
     # Bot version this cache was created with. Defaults to the CURRENT bot
     # version so that a brand-new cache (new PR, or a load-error fallback)
@@ -903,7 +901,7 @@ class BotCache:
     # the version after a future cache format change).
     version: int = field(default=CMS_BOT_VERSION)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize cache to dictionary matching the JSON format."""
         return {
             "emoji": self.emoji.copy(),
@@ -930,7 +928,7 @@ class BotCache:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "BotCache":
+    def from_dict(cls, data: dict[str, Any]) -> "BotCache":
         """Deserialize cache from dictionary."""
         cache = cls()
 
@@ -991,20 +989,18 @@ class BotCache:
 class TestCmdParseError(ValueError):
     """Error raised when parsing build/test command fails."""
 
-    pass
-
 
 @dataclass
 class TestCmdResult:
     """Result of parsing a build/test command."""
 
     verb: str  # 'build' or 'test'
-    workflows: List[str] = field(default_factory=list)
-    prs: List[str] = field(default_factory=list)
+    workflows: list[str] = field(default_factory=list)
+    prs: list[str] = field(default_factory=list)
     queue: str = ""
     using: bool = False
     full: str = ""
-    addpkg: List[str] = field(default_factory=list)
+    addpkg: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -1032,7 +1028,7 @@ class TestRequest:
 
     verb: str  # 'build' or 'test'
     workflows: str = ""  # Comma-separated workflow list
-    prs: List[str] = field(default_factory=list)  # Additional PRs to include
+    prs: list[str] = field(default_factory=list)  # Additional PRs to include
     queue: str = ""  # Target queue
     build_full: bool = False  # Build full CMSSW
     extra_packages: str = ""  # Extra packages to add
@@ -1169,7 +1165,16 @@ def load_cache_from_comments(comments) -> Optional[BotCache]:
     cache_parts.sort(key=lambda x: x[0])
 
     # Combine all parts
-    combined_data = "".join(part for _, part in cache_parts).removeprefix("bot cache: ")
+    combined_data = "".join(part for _, part in cache_parts)
+    # Strip legacy inline prefixes from older cache formats (mirrors v1's own
+    # REGEX_COMMITS_CACHE = r"<!-- (?:commits|bot) cache: (.*) -->"). Real,
+    # already-posted comments may carry either prefix - "commits cache: " is
+    # the older of the two, "bot cache: " the more recent, but both still
+    # occur in existing PR/Issue histories and must parse cleanly.
+    for _legacy_prefix in ("bot cache: ", "commits cache: "):
+        if combined_data.startswith(_legacy_prefix):
+            combined_data = combined_data[len(_legacy_prefix) :]
+            break
 
     try:
         # Try to parse as JSON first
@@ -1312,7 +1317,7 @@ def file_to_package(repo_config: types.ModuleType, filename: str) -> str:
     return filename
 
 
-def get_package_categories(package: str) -> List[str]:
+def get_package_categories(package: str) -> list[str]:
     """
     Get L2 categories responsible for a package.
 
@@ -1334,7 +1339,7 @@ def get_package_categories(package: str) -> List[str]:
     return categories
 
 
-def detect_new_packages(context: "PRContext") -> List[str]:
+def detect_new_packages(context: "PRContext") -> list[str]:
     """
     Detect packages that don't have a category assigned.
 
@@ -1355,7 +1360,7 @@ def detect_new_packages(context: "PRContext") -> List[str]:
 
     # Build list of all packages that have categories assigned
     # (from the values of CMSSW_CATEGORIES, not keys)
-    all_known_packages: Set[str] = set()
+    all_known_packages: set[str] = set()
     if CMSSW_CATEGORIES:
         for category_packages in CMSSW_CATEGORIES.values():
             all_known_packages.update(category_packages)
@@ -1377,7 +1382,7 @@ def detect_new_packages(context: "PRContext") -> List[str]:
 
 def get_file_l2_categories(
     repo_config: types.ModuleType, filename: str, commit_timestamp: datetime
-) -> List[str]:
+) -> list[str]:
     """
     Determine L2 categories for a file based on path and timestamp.
 
@@ -1412,7 +1417,7 @@ def get_file_l2_categories(
 
 def get_user_l2_categories(
     repo_config: types.ModuleType, username: str, timestamp: datetime
-) -> List[str]:
+) -> list[str]:
     """
     Determine which L2 categories a user belongs to at a given time.
 
@@ -1452,7 +1457,7 @@ def get_user_l2_categories(
 
         if end_date is None or ts_epoch < end_date:
             cat = period.get("category", [])
-            # Ensure we always return List[str], not List[List[str]]
+            # Ensure we always return list[str], not list[list[str]]
             if isinstance(cat, str):
                 return [cat]
             if isinstance(cat, list):
@@ -1471,7 +1476,7 @@ def get_user_l2_categories(
 
 def get_category_l2s(
     repo_config: types.ModuleType, category: str, timestamp: datetime
-) -> List[str]:
+) -> list[str]:
     """
     Get the L2 signers for a specific category at a given time.
 
@@ -1537,8 +1542,8 @@ class SigningChecks:
         extra_checks: Categories required before merging (reset on every commit)
     """
 
-    pre_checks: List[str] = field(default_factory=list)
-    extra_checks: List[str] = field(default_factory=list)
+    pre_checks: list[str] = field(default_factory=list)
+    extra_checks: list[str] = field(default_factory=list)
 
 
 def get_signing_checks(context: "PRContext") -> SigningChecks:
@@ -1570,8 +1575,8 @@ def get_signing_checks(context: "PRContext") -> SigningChecks:
     Returns:
         SigningChecks with pre_checks and extra_checks lists
     """
-    pre_checks: List[str] = []
-    extra_checks: List[str] = []
+    pre_checks: list[str] = []
+    extra_checks: list[str] = []
 
     # Use PRContext properties for repo info
     repo_name = context.repo_name
@@ -1682,7 +1687,7 @@ class CommandRegistry:
     """Registry for all bot commands with decorator support."""
 
     def __init__(self):
-        self.commands: List[Command] = []
+        self.commands: list[Command] = []
 
     def register(
         self,
@@ -1749,7 +1754,7 @@ class CommandRegistry:
 
     def find_commands(
         self, text: str, is_pr: bool = True
-    ) -> Generator[Tuple[Command, re.Match], None, None]:
+    ) -> Generator[tuple[Command, re.Match], None, None]:
         """
         Find all commands matching the given text.
 
@@ -1805,7 +1810,7 @@ def get_global_registry() -> CommandRegistry:
 # =============================================================================
 
 
-def preprocess_command(line: str, cmsbuild_user: Optional[str] = None) -> Tuple[str, bool]:
+def preprocess_command(line: str, cmsbuild_user: Optional[str] = None) -> tuple[str, bool]:
     """
     Preprocess a command line according to specification.
 
@@ -1842,7 +1847,7 @@ def preprocess_command(line: str, cmsbuild_user: Optional[str] = None) -> Tuple[
 
 def extract_command_line(
     comment_body: str, cmsbuild_user: Optional[str] = None
-) -> Tuple[Optional[str], bool]:
+) -> tuple[Optional[str], bool]:
     """
     Extract the first non-blank line from a comment for command parsing.
 
@@ -1966,42 +1971,42 @@ class PRContext:
 
     # Comments fetched once at the start of processing
     # Dict mapping comment_id -> comment object for O(1) lookups
-    comments: Dict[int, Any] = field(default_factory=dict)
+    comments: dict[int, Any] = field(default_factory=dict)
 
     # Last commit (by date) - used for timestamp comparison and status creation
     # We don't need all commits, just the latest one for reset_on_push logic
     _last_commit: Optional[Any] = field(default=None, repr=False)
 
     # Commit statuses cache for head commit (context -> status)
-    _commit_statuses: Optional[Dict[str, Any]] = field(default=None, repr=False)
+    _commit_statuses: Optional[dict[str, Any]] = field(default=None, repr=False)
 
     # Pending commit status updates - executed at end of process_pr
     # Dict mapping context_name -> (sha, state, description, target_url)
     # Using dict ensures last update wins for each context
-    pending_status_updates: Dict[str, Tuple[str, str, str, str]] = field(
+    pending_status_updates: dict[str, tuple[str, str, str, str]] = field(
         default_factory=dict, repr=False
     )
 
     # Processing state
-    messages: List[str] = field(default_factory=list)
+    messages: list[str] = field(default_factory=list)
     should_merge: bool = False
     should_reopen: bool = False  # Reopen the issue/PR
     must_close: bool = False  # PR should be closed (e.g., closed branch)
     abort_comment: Optional[Any] = None  # Comment that requested abort (None = no abort)
-    tests_to_run: List[Any] = field(default_factory=list)  # List of TestRequest objects
-    pending_reactions: Dict[int, str] = field(default_factory=dict)  # comment_id -> reaction
-    holds: List[Hold] = field(default_factory=list)  # Active holds on the PR
-    pending_labels: Set[str] = field(default_factory=set)  # Labels to add
-    pending_labels_to_remove: Set[str] = field(
+    tests_to_run: list[Any] = field(default_factory=list)  # List of TestRequest objects
+    pending_reactions: dict[int, str] = field(default_factory=dict)  # comment_id -> reaction
+    holds: list[Hold] = field(default_factory=list)  # Active holds on the PR
+    pending_labels: set[str] = field(default_factory=set)  # Labels to add
+    pending_labels_to_remove: set[str] = field(
         default_factory=set
     )  # Labels to remove (from type command)
-    signing_categories: Set[str] = field(default_factory=set)  # Categories requiring signatures
-    manually_assigned_categories: Set[str] = field(
+    signing_categories: set[str] = field(default_factory=set)  # Categories requiring signatures
+    manually_assigned_categories: set[str] = field(
         default_factory=set
     )  # Categories assigned via 'assign' command
-    packages: Set[str] = field(default_factory=set)  # Packages touched by PR
-    test_params: Dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
-    granted_test_rights: Set[str] = field(default_factory=set)  # Users granted test rights
+    packages: set[str] = field(default_factory=set)  # Packages touched by PR
+    test_params: dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
+    granted_test_rights: set[str] = field(default_factory=set)  # Users granted test rights
 
     # Test parameters status tracking
     test_params_comment_id: Optional[int] = None  # Comment ID that last set test params
@@ -2012,7 +2017,7 @@ class PRContext:
     # Only the LAST command is kept (build and test share same slot - last one wins)
     # This is because build and test write to the same properties file
     # Tuple of (comment, parsed_result) or None
-    pending_build_test_command: Optional[Tuple[Any, Any]] = None
+    pending_build_test_command: Optional[tuple[Any, Any]] = None
 
     # Code checks
     code_checks_requested: bool = False
@@ -2045,21 +2050,21 @@ class PRContext:
         self._notify_without_at = value
 
     # Message tracking (to avoid duplicate bot messages)
-    posted_messages: Set[str] = field(default_factory=set)  # Message keys already posted
+    posted_messages: set[str] = field(default_factory=set)  # Message keys already posted
 
     # Pending bot comments to post at end of processing
     # List of (message, message_key, comment_id) tuples
-    pending_bot_comments: List[Tuple[str, str, Optional[int]]] = field(default_factory=list)
+    pending_bot_comments: list[tuple[str, str, Optional[int]]] = field(default_factory=list)
 
     # Welcome message tracking
     welcome_message_posted: bool = False  # True if welcome message was posted
 
     # Watchers for this PR
-    watchers: Set[str] = field(default_factory=set)  # Users watching files/categories
+    watchers: set[str] = field(default_factory=set)  # Users watching files/categories
 
     # Changed files (cached from pr.get_files())
-    _changed_files: Optional[List[str]] = field(default=None, repr=False)
-    _pr_files_with_sha: Optional[Dict[str, str]] = field(default=None, repr=False)
+    _changed_files: Optional[list[str]] = field(default=None, repr=False)
+    _pr_files_with_sha: Optional[dict[str, str]] = field(default=None, repr=False)
 
     @property
     def repo_name(self) -> str:
@@ -2131,7 +2136,7 @@ class PRContext:
         """Get the last (most recent) commit in the PR."""
         return self._last_commit
 
-    def get_commit_statuses(self) -> Dict[str, Any]:
+    def get_commit_statuses(self) -> dict[str, Any]:
         """
         Get commit statuses for the head commit as a dict, with caching.
 
@@ -3274,7 +3279,7 @@ def handle_code_checks(context: PRContext, match: re.Match, comment: Any) -> boo
 
     # Check pending updates first (from current run)
     if status_context in context.pending_status_updates:
-        sha, state, description, target_url = context.pending_status_updates[status_context]
+        _sha, state, _description, _target_url = context.pending_status_updates[status_context]
         if state == "pending":
             logger.info(f"Ignoring code-checks from {user} - already pending in this run")
             return True
@@ -3461,7 +3466,7 @@ def handle_type(context: PRContext, match: re.Match, comment: Any) -> bool:
                 continue
 
             # Match the input against the pattern
-            if re.fullmatch(lab_info[1], type_cmd, re.I):
+            if re.fullmatch(lab_info[1], type_cmd, re.IGNORECASE):
                 label_type = lab_info[2] if len(lab_info) > 2 else "mtype"
 
                 # Determine which collection to update
@@ -3504,8 +3509,8 @@ def handle_type(context: PRContext, match: re.Match, comment: Any) -> bool:
         extra_labels["mtype"].extend(state_labels.values())
 
     # Apply additions: for each label_type, add all specified labels
-    for label_type in extra_labels:
-        for label in extra_labels[label_type]:
+    for label_type, labels_for_type in extra_labels.items():
+        for label in labels_for_type:
             # If this is a 'type' label_type (singular), remove other labels of same type
             if label_type == "type":
                 # Remove all existing 'type' label_type labels
@@ -3526,8 +3531,8 @@ def handle_type(context: PRContext, match: re.Match, comment: Any) -> bool:
             logger.info(f"Type label '{label}' ({label_type}) added by {user}")
 
     # Apply removals
-    for label_type in rem_labels:
-        for label in rem_labels[label_type]:
+    for label_type, labels_for_type in rem_labels.items():
+        for label in labels_for_type:
             context.pending_labels.discard(label)
             context.pending_labels_to_remove.add(label)
             logger.info(f"Type label '{label}' marked for removal by {user}")
@@ -3561,13 +3566,13 @@ def parse_test_cmd(first_line: str) -> TestCmdResult:
     if not tokens:
         raise TestCmdParseError("empty input")
 
-    seen: Set[re.Pattern] = set()
+    seen: set[re.Pattern] = set()
     res = TestCmdResult(verb=tokens.pop(0).lower())
 
     if res.verb not in TEST_VERBS:
         raise TestCmdParseError(f"Unknown verb: {res.verb}")
 
-    params: List[TestCmdParam] = [
+    params: list[TestCmdParam] = [
         TestCmdParam(
             keyword=r"workflows?",
             rx=RE_WF_LIST,
@@ -3625,11 +3630,10 @@ def parse_test_cmd(first_line: str) -> TestCmdResult:
 
             next_val: Any = True
 
-            if p.prev_keyword:
-                if not prev_t or not p.prev_keyword.fullmatch(prev_t):
-                    raise TestCmdParseError(
-                        f"Keyword {t} must be preceded by {p.prev_keyword.pattern}"
-                    )
+            if p.prev_keyword and (not prev_t or not p.prev_keyword.fullmatch(prev_t)):
+                raise TestCmdParseError(
+                    f"Keyword {t} must be preceded by {p.prev_keyword.pattern}"
+                )
 
             if p.rx or p.split_by:
                 try:
@@ -3658,10 +3662,10 @@ def parse_test_cmd(first_line: str) -> TestCmdResult:
 
 
 # Cache for check functions (populated on first use)
-_CHECK_FUNCTIONS: Optional[Dict[str, Callable]] = None
+_CHECK_FUNCTIONS: Optional[dict[str, Callable]] = None
 
 
-def get_check_functions() -> Dict[str, Callable]:
+def get_check_functions() -> dict[str, Callable]:
     """
     Get all check_* functions for parameter validation.
 
@@ -3679,7 +3683,7 @@ def get_check_functions() -> Dict[str, Callable]:
     return _CHECK_FUNCTIONS
 
 
-def parse_test_parameters(comment_lines: List[str], repo) -> Dict[str, str]:
+def parse_test_parameters(comment_lines: list[str], repo) -> dict[str, str]:
     """
     Parse test parameters from a multi-line comment.
 
@@ -3693,8 +3697,8 @@ def parse_test_parameters(comment_lines: List[str], repo) -> Dict[str, str]:
     Returns:
         Dict of parsed parameters, or {"errors": "..."} if parsing failed
     """
-    errors: Dict[str, List[str]] = {"format": [], "key": [], "value": []}
-    matched_params: Dict[str, str] = {}
+    errors: dict[str, list[str]] = {"format": [], "key": [], "value": []}
+    matched_params: dict[str, str] = {}
     check_functions = get_check_functions()
 
     for line in comment_lines[1:]:  # Skip first line ('test parameters')
@@ -4016,7 +4020,7 @@ def process_pending_build_test_commands(context: PRContext) -> None:
         # Check if there are tests to abort (tests must be in pending state)
         statuses = get_ci_test_statuses(context)
         has_pending_tests = False
-        for suffix, results in statuses.items():
+        for results in statuses.values():
             for result in results:
                 if result.status == "pending":
                     has_pending_tests = True
@@ -4147,7 +4151,7 @@ def has_unknown_release_error(context: PRContext) -> bool:
 
 
 def set_jenkins_status_url(
-    context: PRContext, url: str, user: str = None, timestamp: datetime = None
+    context: PRContext, url: str, user: Optional[str] = None, timestamp: Optional[datetime] = None
 ) -> bool:
     """
     Set the bot/{prId}/jenkins commit status when tests are requested.
@@ -4439,7 +4443,7 @@ def _execute_build_test_command(
 # =============================================================================
 
 
-def get_pr_files_info(pr) -> Tuple[Dict[str, str], List[str]]:
+def get_pr_files_info(pr) -> tuple[dict[str, str], list[str]]:
     """
     Get all files in the PR with their blob SHAs and changed file list.
 
@@ -4463,7 +4467,7 @@ def get_pr_files_info(pr) -> Tuple[Dict[str, str], List[str]]:
     return files, changed_files
 
 
-def get_pr_files(pr) -> Dict[str, str]:
+def get_pr_files(pr) -> dict[str, str]:
     """
     Get all files in the PR with their blob SHAs.
 
@@ -4474,7 +4478,7 @@ def get_pr_files(pr) -> Dict[str, str]:
     return files
 
 
-def get_changed_files(pr) -> List[str]:
+def get_changed_files(pr) -> list[str]:
     """
     Get list of changed file names in a PR.
 
@@ -4490,7 +4494,7 @@ def get_changed_files(pr) -> List[str]:
     return changed_files
 
 
-def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str], Set[str]]:
+def update_file_states(context: PRContext) -> tuple[set[str], set[str], set[str]]:
     """
     Update file states based on current PR state.
 
@@ -4527,7 +4531,7 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str], Set[str]
     # Get categories that were already known before this update
     # (from cached file versions)
     old_categories = set()
-    for fv_key in context.cache.file_versions.keys():
+    for fv_key in context.cache.file_versions:
         if fv_key in context.cache.file_versions:
             old_categories.update(context.cache.file_versions[fv_key].categories)
 
@@ -4564,7 +4568,7 @@ def update_file_states(context: PRContext) -> Tuple[Set[str], Set[str], Set[str]
     removed_categories = set()
 
     # Get all filenames from cached file versions
-    for fv_key in context.cache.file_versions.keys():
+    for fv_key in context.cache.file_versions:
         if "::" in fv_key:
             filename = fv_key.split("::")[0]
             old_filenames.add(filename)
@@ -4634,10 +4638,14 @@ def set_comment_reaction(
         success: True for +1 reaction, False for -1 reaction
     """
     # Don't put reactions on bot's own comments
-    if context.cmsbuild_user and hasattr(comment, "user") and comment.user:
-        if comment.user.login == context.cmsbuild_user:
-            logger.debug(f"Skipping reaction on bot's own comment {comment_id}")
-            return
+    if (
+        context.cmsbuild_user
+        and hasattr(comment, "user")
+        and comment.user
+        and comment.user.login == context.cmsbuild_user
+    ):
+        logger.debug(f"Skipping reaction on bot's own comment {comment_id}")
+        return
 
     desired_reaction = REACTION_PLUS_ONE if success else REACTION_MINUS_ONE
     opposite_reaction = REACTION_MINUS_ONE if success else REACTION_PLUS_ONE
@@ -4657,19 +4665,17 @@ def set_comment_reaction(
             # This ensures comment only has one reaction from bot
             try:
                 for reaction in comment.get_reactions():
-                    if reaction.user.login == context.cmsbuild_user:
-                        # Remove any bot reaction (cached or opposite)
-                        if reaction.content in (
-                            cached_reaction,
-                            opposite_reaction,
-                            desired_reaction,
-                        ):
-                            if reaction.content != desired_reaction:
-                                # reaction.delete()
-                                comment.delete_reaction(reaction.id)
-                                logger.debug(
-                                    f"Removed {reaction.content} reaction from comment {comment_id}"
-                                )
+                    if (
+                        reaction.user.login == context.cmsbuild_user
+                        and reaction.content
+                        in (cached_reaction, opposite_reaction, desired_reaction)
+                        and reaction.content != desired_reaction
+                    ):
+                        # reaction.delete()
+                        comment.delete_reaction(reaction.id)
+                        logger.debug(
+                            f"Removed {reaction.content} reaction from comment {comment_id}"
+                        )
             except Exception as e:
                 logger.warning(f"Failed to remove old reaction: {e}")
 
@@ -4982,7 +4988,7 @@ def process_all_comments(context: PRContext) -> None:
     """
     # Use comments from context (already fetched once)
     current_comments = context.comments
-    current_comment_ids = {str(cid) for cid in current_comments.keys()}
+    current_comment_ids = {str(cid) for cid in current_comments}
 
     # Get last commit timestamp for locking logic (only for PRs)
     last_commit_ts = get_last_commit_timestamp(context) if context.is_pr else None
@@ -5060,7 +5066,7 @@ def process_all_comments(context: PRContext) -> None:
 # =============================================================================
 
 
-def get_current_categories(context: PRContext) -> Dict[str, Set[str]]:
+def get_current_categories(context: PRContext) -> dict[str, set[str]]:
     """
     Get all categories and their associated file version keys from current PR state.
 
@@ -5073,7 +5079,7 @@ def get_current_categories(context: PRContext) -> Dict[str, Set[str]]:
     Returns:
         Dict mapping category name to set of file version keys (filename::sha)
     """
-    categories: Dict[str, Set[str]] = {}
+    categories: dict[str, set[str]] = {}
     current_files = context.cache.current_file_versions
 
     if not current_files:
@@ -5111,7 +5117,7 @@ def get_current_categories(context: PRContext) -> Dict[str, Set[str]]:
     return categories
 
 
-def get_files_for_categories(context: PRContext, categories: List[str]) -> List[str]:
+def get_files_for_categories(context: PRContext, categories: list[str]) -> list[str]:
     """
     Get current file version keys for the specified categories.
 
@@ -5126,7 +5132,7 @@ def get_files_for_categories(context: PRContext, categories: List[str]) -> List[
         List of file version keys (filename::sha) for files in those categories
     """
     all_categories = get_current_categories(context)
-    signed_files: Set[str] = set()
+    signed_files: set[str] = set()
 
     for cat in categories:
         if cat in all_categories:
@@ -5136,7 +5142,7 @@ def get_files_for_categories(context: PRContext, categories: List[str]) -> List[
 
 
 def is_signature_valid_for_category(
-    context: PRContext, comment_info: CommentInfo, category: str, current_category_files: Set[str]
+    context: PRContext, comment_info: CommentInfo, category: str, current_category_files: set[str]
 ) -> bool:
     """
     Check if a signature is still valid for a specific category.
@@ -5177,7 +5183,7 @@ def is_signature_valid_for_category(
     return True
 
 
-def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalState]:
+def compute_category_approval_states(context: PRContext) -> dict[str, ApprovalState]:
     """
     Compute approval state for each category based on signatures.
 
@@ -5193,7 +5199,7 @@ def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalSt
         Dict mapping category name to approval state
     """
     categories = get_current_categories(context)
-    category_states: Dict[str, ApprovalState] = {}
+    category_states: dict[str, ApprovalState] = {}
 
     # Get pre-checks list for special handling
     signing_checks = context.get_signing_checks_for_pr()
@@ -5214,7 +5220,7 @@ def compute_category_approval_states(context: PRContext) -> Dict[str, ApprovalSt
         approved = False
         rejected = False
 
-        for comment_id, comment_info in context.cache.comments.items():
+        for comment_info in context.cache.comments.values():
             if comment_info.ctype not in ("+1", "-1"):
                 continue
             if cat_name not in comment_info.categories:
@@ -5272,7 +5278,7 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
         if pr_id:
             jenkins_context = f"bot/{pr_id}/jenkins"
             if jenkins_context in context.pending_status_updates:
-                sha, state, description, target_url = context.pending_status_updates[
+                _sha, _state, description, _target_url = context.pending_status_updates[
                     jenkins_context
                 ]
                 # If aborted, tests are pending (not started)
@@ -5341,7 +5347,7 @@ def _get_pre_check_approval_state(context: PRContext, pre_check: str) -> Approva
     # First, check if there's a pending status update for this pre-check
     # (queued during this processing run)
     if status_context in context.pending_status_updates:
-        sha, state, description, target_url = context.pending_status_updates[status_context]
+        _sha, state, _description, _target_url = context.pending_status_updates[status_context]
         if state == "success":
             return ApprovalState.APPROVED
         elif state in ("error", "failure"):
@@ -5387,12 +5393,18 @@ def determine_pr_state(context: PRContext) -> PRState:
 
     # Get required checks
     signing_checks = context.get_signing_checks_for_pr()
-    pre_checks = signing_checks.pre_checks
-    extra_checks = signing_checks.extra_checks
 
-    # Categories to skip for fully-signed determination
-    # These are checked separately (code-checks for test trigger, tests+orp for merge)
-    skip_for_fully_signed = {"code-checks", "tests", "orp"}
+    # Categories to skip for fully-signed determination: pre-checks (e.g.
+    # code-checks, gates test triggering) and extra-checks (e.g. tests, orp,
+    # externals - required for merge, not for basic L2 sign-off) are checked
+    # separately, not as part of fully-signed. Derived from the actual
+    # signing checks for this repo/branch rather than hardcoded, since which
+    # categories land in pre_checks/extra_checks varies by repo type (e.g.
+    # "externals" only applies to cmsdist/cms-data/cms-externals/cms-org
+    # repos) - a hardcoded set would silently drift out of sync.
+    skip_for_fully_signed = {
+        c.lower() for c in signing_checks.pre_checks + signing_checks.extra_checks
+    }
 
     # Check all L2 categories (from file ownership and manual assignment)
     for cat_name, state in category_states.items():
@@ -5480,7 +5492,7 @@ class CITestResult:
     target_url: Optional[str] = None
 
 
-def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
+def get_ci_test_statuses(context: PRContext) -> dict[str, list[CITestResult]]:
     """
     Get CI test statuses from GitHub commit statuses.
 
@@ -5515,16 +5527,6 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     if not pr_id:
         return {}
 
-    # Get the head commit SHA
-    try:
-        head_sha = context.pr.head.sha
-    except AttributeError:
-        # pr.head or pr.head.sha not available
-        if context.last_commit:
-            head_sha = context.last_commit.sha
-        else:
-            return {}
-
     # Get commit statuses using cached method (returns dict of context -> status)
     status_map = context.get_commit_statuses()
     if not status_map:
@@ -5534,7 +5536,7 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     # Status context format: cms/<pr_id>/...
     pr_prefix = f"{CMS_STATUS_PREFIX}/{pr_id}/"
 
-    results: Dict[str, List[CITestResult]] = {"required": [], "optional": []}
+    results: dict[str, list[CITestResult]] = {"required": [], "optional": []}
 
     # Find all top-level test statuses (cms/<pr_id>/<arch>/<test>/required or optional)
     for ctx, status in status_map.items():
@@ -5571,7 +5573,7 @@ def get_ci_test_statuses(context: PRContext) -> Dict[str, List[CITestResult]]:
     return results
 
 
-def _compute_test_status(base_context: str, status_map: Dict[str, Any]) -> str:
+def _compute_test_status(base_context: str, status_map: dict[str, Any]) -> str:
     """
     Compute the overall status for a test by checking its sub-statuses.
 
@@ -5631,7 +5633,7 @@ def _github_state_to_status(state: str) -> str:
     return "pending"
 
 
-def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
+def check_ci_test_completion(context: PRContext) -> Optional[dict[str, str]]:
     """
     Check if CI tests have completed and return their results.
 
@@ -5647,7 +5649,7 @@ def check_ci_test_completion(context: PRContext) -> Optional[Dict[str, str]]:
     if not required_results and not optional_results:
         return None
 
-    lab_stats: Dict[str, str] = {}
+    lab_stats: dict[str, str] = {}
 
     # Check required tests
     if required_results:
@@ -5777,7 +5779,7 @@ def process_ci_test_results(context: PRContext) -> None:
                 _mark_status_as_finished(context, result.context, result.status, result.target_url)
             else:
                 logger.error("Server returned empty PR result")
-                exit(1)
+                sys.exit(1)
 
 
 def _mark_status_as_finished(
@@ -5915,7 +5917,7 @@ def generate_status_message(context: PRContext) -> str:
     return "\n".join(lines)
 
 
-def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
+def update_pr_status(context: PRContext) -> tuple[set[str], set[str]]:
     """
     Update PR/Issue labels and status based on current state.
 
@@ -5924,9 +5926,9 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
     """
     # Get current labels (old labels)
     old_labels = {label.name for label in context.issue.get_labels()}
-    new_labels: Set[str] = set()
-    labels_to_add: Set[str] = set()
-    labels_to_remove: Set[str] = set()
+    new_labels: set[str] = set()
+    labels_to_add: set[str] = set()
+    labels_to_remove: set[str] = set()
 
     # Handle PR-specific state labels
     if context.is_pr:
@@ -6088,9 +6090,12 @@ def update_pr_status(context: PRContext) -> Tuple[Set[str], Set[str]]:
 
     # Apply label changes (guarded by dry_run)
     # Batch removals into a single call
-    if (labels_to_remove or labels_to_add) and not context.dry_run:
-        if not hasattr(context.issue, "_recorder"):
-            context.issue.set_labels(*new_labels)
+    if (
+        (labels_to_remove or labels_to_add)
+        and not context.dry_run
+        and not hasattr(context.issue, "_recorder")
+    ):
+        context.issue.set_labels(*new_labels)
 
     return old_labels, new_labels
 
@@ -6209,7 +6214,7 @@ def needs_orp_review(context: PRContext, branch: str) -> bool:
     return orp_state != ApprovalState.APPROVED
 
 
-def get_linked_prs(context: PRContext) -> List[str]:
+def get_linked_prs(context: PRContext) -> list[str]:
     """Get list of linked PRs that were tested together with this PR."""
     linked = []
 
@@ -6226,7 +6231,7 @@ def get_linked_prs(context: PRContext) -> List[str]:
 
 
 def post_fully_signed_messages(
-    context: PRContext, old_labels: Set[str], new_labels: Set[str]
+    context: PRContext, old_labels: set[str], new_labels: set[str]
 ) -> None:
     """
     Post fully signed messages if PR/Issue transitions to fully signed state.
@@ -6273,7 +6278,7 @@ def post_fully_signed_messages(
 # =============================================================================
 
 
-def create_property_file(filename: str, parameters: Dict[str, Any], dry_run: bool) -> None:
+def create_property_file(filename: str, parameters: dict[str, Any], dry_run: bool) -> None:
     """
     Create a properties file with the given parameters.
 
@@ -6289,13 +6294,12 @@ def create_property_file(filename: str, parameters: Dict[str, Any], dry_run: boo
 
     logger.info(f"Creating properties file: {filename}")
     with open(filename, "w") as f:
-        for key, value in parameters.items():
-            f.write(f"{key}={value}\n")
+        f.writelines(f"{key}={value}\n" for key, value in parameters.items())
 
 
 def create_test_properties_file(
     context: PRContext,
-    parameters: Dict[str, str],
+    parameters: dict[str, str],
     abort: bool = False,
     req_type: str = "tests",
 ) -> None:
@@ -6342,7 +6346,7 @@ def create_test_properties_file(
     create_property_file(filename, parameters, context.dry_run)
 
 
-def build_test_parameters(context: PRContext, test_request: "TestRequest") -> Dict[str, str]:
+def build_test_parameters(context: PRContext, test_request: "TestRequest") -> dict[str, str]:
     """
     Build parameters dict for a test request.
 
@@ -6355,7 +6359,7 @@ def build_test_parameters(context: PRContext, test_request: "TestRequest") -> Di
     Returns:
         Dict of test parameters
     """
-    params: Dict[str, str] = {}
+    params: dict[str, str] = {}
 
     # Start with test_params from 'test parameters:' command
     params.update(context.test_params)
@@ -6525,8 +6529,7 @@ def create_cms_bot_test_properties(pr) -> None:
     }
 
     with open("cms-bot.properties", "w") as f:
-        for key, value in params.items():
-            f.write(f"{key}={value}\n")
+        f.writelines(f"{key}={value}\n" for key, value in params.items())
 
     logger.info(f"Created cms-bot.properties for PR #{pr.number}")
 
@@ -6542,8 +6545,7 @@ def recreate_cms_bot_test_properties(bot_version: int = 1) -> None:
     params = {"CMS_BOT_VERSION": bot_version}
 
     with open("cms-bot.properties", "w") as f:
-        for key, value in params.items():
-            f.write(f"{key}={value}\n")
+        f.writelines(f"{key}={value}\n" for key, value in params.items())
 
     logger.info(f"Created cms-bot.properties to switch to cms-bot v{params['CMS_BOT_VERSION']}")
 
@@ -6561,7 +6563,7 @@ def create_new_data_repo_properties(issue_number: int, dry_run: bool) -> None:
     create_property_file(filename, params, dry_run)
 
 
-def check_file_count(context: PRContext, dryRun: bool) -> Optional[Dict[str, Any]]:
+def check_file_count(context: PRContext, dryRun: bool) -> Optional[dict[str, Any]]:
     """
     Check if PR has too many files.
 
@@ -6771,7 +6773,7 @@ def _build_cmssw_welcome_message(
     new_package_msg = ""
     if "new-package" in context.signing_categories:
         # Get the list of new packages for the message
-        all_known_packages: Set[str] = set()
+        all_known_packages: set[str] = set()
         if CMSSW_CATEGORIES:
             for category_packages in CMSSW_CATEGORIES.values():
                 all_known_packages.update(category_packages)
@@ -6994,7 +6996,7 @@ def process_pr(
     cmsbuild_user: str,
     force: bool = False,
     loglevel: Union[str, int] = "INFO",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Main entry point for processing a PR or Issue.
 
@@ -7014,7 +7016,7 @@ def process_pr(
 
     if not cmsbuild_user:
         logger.error("cmsbuild_user not set, quitting")
-        exit(1)
+        sys.exit(1)
 
     setup_logging(loglevel)
 
@@ -7185,36 +7187,40 @@ def process_pr(
     # PR-specific startup processing
     if is_pr and pr:
         # Check for PRs to development branch that should go to master
-        if context.cmssw_repo and context.cms_repo and pr.base.ref == CMSSW_DEVEL_BRANCH:
-            if pr.state != "closed":
-                logger.error("This pull request must go in to master branch")
-                if not dryRun:
-                    pr.edit(base="master")
-                    msg = (
-                        f"{format_mention(context, pr.user.login)}, {CMSSW_DEVEL_BRANCH} branch is closed "
-                        "for direct updates. cms-bot is going to move this PR to master branch.\n"
-                        "In future, please use cmssw master branch to submit your changes.\n"
-                    )
-                    issue.create_comment(msg)
-                return {
-                    "pr_number": issue.number,
-                    "is_pr": is_pr,
-                    "redirected": True,
-                    "reason": f"Redirected from {CMSSW_DEVEL_BRANCH} to master",
-                    "pr_state": None,
-                    "categories": {},
-                    "holds": [],
-                    "labels": [],
-                    "messages": [],
-                    "tests_triggered": [],
-                }
+        if (
+            context.cmssw_repo
+            and context.cms_repo
+            and pr.base.ref == CMSSW_DEVEL_BRANCH
+            and pr.state != "closed"
+        ):
+            logger.error("This pull request must go in to master branch")
+            if not dryRun:
+                pr.edit(base="master")
+                msg = (
+                    f"{format_mention(context, pr.user.login)}, {CMSSW_DEVEL_BRANCH} branch is closed "
+                    "for direct updates. cms-bot is going to move this PR to master branch.\n"
+                    "In future, please use cmssw master branch to submit your changes.\n"
+                )
+                issue.create_comment(msg)
+            return {
+                "pr_number": issue.number,
+                "is_pr": is_pr,
+                "redirected": True,
+                "reason": f"Redirected from {CMSSW_DEVEL_BRANCH} to master",
+                "pr_state": None,
+                "categories": {},
+                "holds": [],
+                "labels": [],
+                "messages": [],
+                "tests_triggered": [],
+            }
 
         # Check if PR is to a closed branch
         if is_closed_branch(pr.base.ref):
             context.must_close = True
 
         # Process changes for the PR to determine required signatures
-        chg_files: List[str] = []
+        chg_files: list[str] = []
 
         # Get signing checks based on repo and branch
         signing_checks = context.get_signing_checks_for_pr()
@@ -7232,7 +7238,7 @@ def process_pr(
             api_rate_limits(gh)
             context._pr_files_with_sha = files_with_sha
             context._changed_files = chg_files
-            context.packages = set(file_to_package(repo_config, f) for f in chg_files)
+            context.packages = {file_to_package(repo_config, f) for f in chg_files}
             add_nonblocking_labels(chg_files, context.pending_labels)
             context.create_test_property = True
         else:
@@ -7251,21 +7257,20 @@ def process_pr(
                 context.create_test_property = True
 
             # Skip invalid CMSDIST branches
-            if context.cmsdist_repo:
-                if not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref):
-                    logger.error("Skipping PR as it does not belong to valid CMSDIST branch")
-                    return {
-                        "pr_number": issue.number,
-                        "is_pr": is_pr,
-                        "skipped": True,
-                        "reason": "Invalid CMSDIST branch",
-                        "pr_state": None,
-                        "categories": {},
-                        "holds": [],
-                        "labels": [],
-                        "messages": [],
-                        "tests_triggered": [],
-                    }
+            if context.cmsdist_repo and not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref):
+                logger.error("Skipping PR as it does not belong to valid CMSDIST branch")
+                return {
+                    "pr_number": issue.number,
+                    "is_pr": is_pr,
+                    "skipped": True,
+                    "reason": "Invalid CMSDIST branch",
+                    "pr_state": None,
+                    "categories": {},
+                    "holds": [],
+                    "labels": [],
+                    "messages": [],
+                    "tests_triggered": [],
+                }
 
             # Check for non-blocking labels in external repos
             try:
@@ -7281,7 +7286,7 @@ def process_pr(
         # Build package categories and update signing categories (common to all repos)
         if context.packages:
             logger.info(f"Following packages affected: {', '.join(sorted(context.packages))}")
-            pkg_categories: Set[str] = set()
+            pkg_categories: set[str] = set()
 
             for package in context.packages:
                 pkg_cats = get_package_categories(package)

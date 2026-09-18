@@ -1169,7 +1169,7 @@ def load_cache_from_comments(comments) -> Optional[BotCache]:
     cache_parts.sort(key=lambda x: x[0])
 
     # Combine all parts
-    combined_data = "".join(part for _, part in cache_parts)
+    combined_data = "".join(part for _, part in cache_parts).removeprefix("bot cache: ")
 
     try:
         # Try to parse as JSON first

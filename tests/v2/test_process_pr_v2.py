@@ -468,7 +468,7 @@ class ActionRecorder:
             raise AssertionError("\n".join(msg_parts))
 
 
-def _hook_and_call_original(hook, original_function, call_original, *argsrgs, **kwargs):
+def _hook_and_call_original(hook, original_function, call_original, *args, **kwargs):
     """
     Utility function for hooking into a function call.
 
@@ -476,20 +476,20 @@ def _hook_and_call_original(hook, original_function, call_original, *argsrgs, **
     arguments plus the result.
 
     Args:
-        hook: Hook function to call with (*argsrgs, **kwargs, res=result)
+        hook: Hook function to call with (*args, **kwargs, res=result)
         original_function: The original function being hooked
         call_original: If True, call original function and pass result to hook
-        *argsrgs, **kwargs: Arguments passed to the function
+        *args, **kwargs: Arguments passed to the function
 
     Returns:
         Result from hook function
     """
     if call_original:
-        res = original_function(*argsrgs, **kwargs)
+        res = original_function(*args, **kwargs)
     else:
         res = None
 
-    return hook(*argsrgs, **kwargs, res=res)
+    return hook(*args, **kwargs, res=res)
 
 
 class FunctionHook:
@@ -529,7 +529,7 @@ class FunctionHook:
                 - module_path: Module path (e.g., "process_pr_v2")
                 - class_name: Class name if method, None for functions
                 - function_name: Name of function/method to hook
-                - hook_function: Callable with signature (*argsrgs, **kwargs, res=result)
+                - hook_function: Callable with signature (*args, **kwargs, res=result)
                 - call_original: Whether to call original function
         """
         self.hooks = hooks
@@ -2619,7 +2619,7 @@ class TestBotCacheVersionDetection:
 
         restart_calls: List[int] = []
 
-        def on_recreate(bot_version, res=None):
+        def on_recreate(bot_version, dry_run=False, res=None):
             restart_calls.append(bot_version)
             return res
 
@@ -8425,7 +8425,7 @@ class TestValidTesterACL:
         """Test that random users are not valid testers."""
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
         monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
-        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *argsrgs: [])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: [])
 
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
@@ -8441,7 +8441,7 @@ class TestValidTesterACL:
         """Test that the repo organization is a valid tester."""
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", [])
         monkeypatch.setattr("process_pr_v2.get_release_managers", lambda x: [])
-        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *argsrgs: [])
+        monkeypatch.setattr("process_pr_v2.get_user_l2_categories", lambda *args: [])
 
         context = MagicMock(spec=PRContext)
         context.pr = MagicMock()
@@ -8474,7 +8474,7 @@ class TestCommitAndFileCountChecks:
         context.ignore_file_count = False
         context.notify_without_at = False
 
-        result = check_file_count(context, dryRun=False)
+        result = check_file_count(context)
 
         assert result is None  # Not blocked
 
@@ -8496,7 +8496,7 @@ class TestCommitAndFileCountChecks:
         context.cmsbuild_user = "cmsbuild"
         context.dry_run = True
 
-        result = check_file_count(context, dryRun=False)
+        result = check_file_count(context)
 
         assert result is not None
         assert result["blocked"] is True
@@ -8515,7 +8515,7 @@ class TestCommitAndFileCountChecks:
         context.ignore_file_count = False
         context.notify_without_at = False
 
-        result = check_file_count(context, dryRun=False)
+        result = check_file_count(context)
 
         assert result is None  # Not blocked for external repos
 

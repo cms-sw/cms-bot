@@ -1,0 +1,35 @@
+{
+  "sha": "72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
+  "node_id": "C_kwDOF83__NoAKDcyY2MwNWUxN2VlNzRlNWFjZTNjNGU1ZDVkMDY2ZGU0OWUzNjRlZGI",
+  "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
+  "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/72cc05e17ee74e5ace3c4e5d5d066de49e364edb",
+  "author": {
+    "name": "iarspider",
+    "email": "iarspider@gmail.com",
+    "date": "2025-03-20T11:21:50Z"
+  },
+  "committer": {
+    "name": "GitHub",
+    "email": "noreply@github.com",
+    "date": "2025-03-20T11:21:50Z"
+  },
+  "tree": {
+    "sha": "b173b042a5fceccbd8e4394ca40e81d0b77f1c71",
+    "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/trees/b173b042a5fceccbd8e4394ca40e81d0b77f1c71"
+  },
+  "message": "Create README",
+  "parents": [
+    {
+      "sha": "1a6eba4a2910fa7af4d98b4c35a7ae501d9a1615",
+      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/git/commits/1a6eba4a2910fa7af4d98b4c35a7ae501d9a1615",
+      "html_url": "https://github.com/iarspider-cmssw/cmssw/commit/1a6eba4a2910fa7af4d98b4c35a7ae501d9a1615"
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "reason": "valid",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJn2/pPCRC1aQ7uu5UhlAAAsA0QAELGbRa51AQsEaVAOwHDrWrj\nTlZRzgOQVelyUMMsGir7OeG6k7sFufLzuEtc7IsXMT8ITUGv/Rj5AAprWD+yeKCg\nTpWb1tLO79T5DwgaBgLFbY1YzyFT4MFThIPsxVHKHi/OjerC4NH+ygUuKse9sqNY\nSpC5mYPa3H+5sXTNAm9dApKqfO8O14UTfDbrCsHQjcdXJLY8U7EAMhxvYQlrgE8l\nSYb4UWTvVqqKViTPbU3iWFYs9AS15lhJRdFWVBf5R3RC7WcJqf+6zzAh8p/HkU6K\nWFYakvtsWLZpfKThZ4nZwSzo690t8P4fWJknGO57rHrZ7vIcJ8TbWp8ZeVD2G1Ds\nbtD/XCsfqRxoNSjfVTZU2ZN1PL/ka+LVsXcc8lRB2gI63ohczlJYpo2bkZonwfw7\nZ3rXnUZP6LxZ+/GMXLOsDhaC5HqEajjf3zMyDbJtBzr1B8w2vPFu+JXta7XabG8/\nqVmYTiFAHnK5WVSUEqhRbWBV3V1MHF8pQkNzh0nUtz/rJhWd/8magvhcVHFStUS5\n0NIS8twWjPPlfay/jGLwAbIdbfc5nk8tepDxneplHWkEd8V7OHCBKzOVi/ExHSU7\nlcZtJodOpytJzvcmOUYiZ0F9u2zC2q9WhTWR1ZXiEZu+DJ9FRMlpe3yUmBymc7zD\nboRYte8s506nAyzT+m7R\n=oHPv\n-----END PGP SIGNATURE-----\n",
+    "payload": "tree b173b042a5fceccbd8e4394ca40e81d0b77f1c71\nparent 1a6eba4a2910fa7af4d98b4c35a7ae501d9a1615\nauthor iarspider <iarspider@gmail.com> 1742469710 +0100\ncommitter GitHub <noreply@github.com> 1742469710 +0100\n\nCreate README",
+    "verified_at": "2025-03-20T11:21:53Z"
+  }
+}

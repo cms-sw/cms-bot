@@ -103,8 +103,11 @@ def format(s, **kwds):
     return s % kwds
 
 
+CMS_BOT_VERSION = 1
 CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
 BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
+BOT_CACHE_TEMPLATE["version"] = CMS_BOT_VERSION
+
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
@@ -359,10 +362,29 @@ def collect_commit_cache(bot_cache):
 def read_bot_cache(data):
     logger.info("Loading bot cache")
     res = loads_maybe_decompress(data)
+    collect_commit_cache(res)
+
+    cache_version = res.get("version", None)
+    if cache_version is None and "commits" in res:
+        cache_version = 1
+    if cache_version is None and "fv" in res:
+        cache_version = 2
+
+    if cache_version is None:
+        logger.error("Failed to determine cache version!")
+        return None
+
+    if cache_version != CMS_BOT_VERSION:
+        logger.error(
+            f"Bot version {CMS_BOT_VERSION} doesn't match bot version from cache {cache_version}, restarting job"
+        )
+        recreate_cms_bot_test_properties(cache_version)
+        return None
+
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in res:
             res[k] = copy.deepcopy(v)
-    collect_commit_cache(res)
+
     return res
 
 
@@ -382,6 +404,8 @@ def extract_bot_cache(comment_msgs):
 
     if data:
         res = read_bot_cache(data)
+        if res is None:
+            return None
         logger.trace("Loaded bot cache:\n%s", dumps(res))
         return res
 
@@ -1157,14 +1181,38 @@ def get_combined_status_list(gh, last_commit, repository):
     ]
 
 
+def recreate_cms_bot_test_properties(bot_version: int = 2) -> None:
+    """
+    Create properties file to re-run cms-bot job with correct bot version
+
+    Args:
+        bot_version: Version number
+    """
+
+    params = {"CMS_BOT_VERSION": bot_version}
+
+    with open("cms-bot.properties", "w") as f:
+        for key, value in params.items():
+            f.write(f"{key}={value}\n")
+
+    logger.info(f"Created cms-bot.properties to switch to cms-bot v{params['CMS_BOT_VERSION']}")
+
+
 def process_pr(
-    repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, enableTraceLog=True
+    repo_config,
+    gh,
+    repo,
+    issue,
+    dryRun,
+    cmsbuild_user=None,
+    force=False,
+    loglevel: Union[str, int] = "trace",
 ):
     global L2_DATA, create_status
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
 
-    setup_logging("trace" if enableTraceLog else "debug")
+    setup_logging(loglevel)
 
     gh_user_char = "@"
 
@@ -1564,6 +1612,8 @@ def process_pr(
         if is_draft_pr:
             pull_request_updated = technical_comments[0].created_at < last_commit_date
         bot_cache = extract_bot_cache(technical_comments)
+        if bot_cache is None:
+            return
 
     # Make sure bot cache has the needed keys
     for k, v in BOT_CACHE_TEMPLATE.items():

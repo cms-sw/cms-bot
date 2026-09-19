@@ -52,7 +52,7 @@ try:
     from categories import get_dpg_pog
 except ImportError:
 
-    def get_dpg_pog(*args) -> dict[str, Any]:
+    def get_dpg_pog() -> dict[str, Any]:
         return {}
 
 
@@ -61,7 +61,7 @@ try:
     from categories import external_to_package
 except ImportError:
 
-    def external_to_package(*args) -> str:
+    def external_to_package(_repo_full_name: str) -> str:
         return ""
 
 
@@ -72,10 +72,10 @@ try:
     from releases import get_release_managers, is_closed_branch
 except ImportError:
 
-    def get_release_managers(*args) -> list[str]:
+    def get_release_managers(_branch: str) -> list[str]:
         return []
 
-    def is_closed_branch(*args) -> bool:
+    def is_closed_branch(_branch: str) -> bool:
         return False
 
 
@@ -426,12 +426,12 @@ def get_prs_list_from_string(pr_string: str, repo_string: str = "") -> list[str]
     return prs
 
 
-def check_ignore_bot_tests(value: str, *args) -> tuple[str, Optional[str]]:
+def check_ignore_bot_tests(value: str, *_args) -> tuple[str, Optional[str]]:
     """Normalize IGNORE_BOT_TESTS value."""
     return value.upper().replace(" ", ""), None
 
 
-def check_enable_bot_tests(value: str, *args) -> tuple[str, Optional[str]]:
+def check_enable_bot_tests(value: str, *_args) -> tuple[str, Optional[str]]:
     """Normalize ENABLE_BOT_TESTS value, handling 'none' specially."""
     tests = value.upper().replace(" ", "")
     if "NONE" in tests:
@@ -440,7 +440,7 @@ def check_enable_bot_tests(value: str, *args) -> tuple[str, Optional[str]]:
 
 
 def check_extra_matrix_args(
-    value: str, repo, params: dict[str, str], key: str, param: str, *args
+    value: str, _repo, _params: dict[str, str], key: str, param: str
 ) -> tuple[str, Optional[str]]:
     """Handle EXTRA_MATRIX_ARGS with suffix based on key."""
     key_parts = key.split("_")
@@ -450,15 +450,15 @@ def check_extra_matrix_args(
 
 
 def check_extra_matrix_command_args(
-    value: str, repo, params: dict[str, str], key: str, param: str, *args
+    value: str, repo, params: dict[str, str], key: str, param: str
 ) -> tuple[str, Optional[str]]:
     """Handle EXTRA_MATRIX_COMMAND_ARGS with suffix based on key."""
     # Same logic as check_extra_matrix_args
-    return check_extra_matrix_args(value, repo, params, key, param, *args)
+    return check_extra_matrix_args(value, repo, params, key, param)
 
 
 def check_matrix_extras(
-    value: str, repo, params: dict[str, str], key: str, param: str, *args
+    value: str, _repo, _params: dict[str, str], key: str, param: str
 ) -> tuple[str, Optional[str]]:
     """Handle MATRIX_EXTRAS with suffix and sort workflows."""
     key_parts = key.split("_")
@@ -469,14 +469,14 @@ def check_matrix_extras(
     return value, param
 
 
-def check_pull_requests(value: str, repo, *args) -> tuple[str, Optional[str]]:
+def check_pull_requests(value: str, repo, *_args) -> tuple[str, Optional[str]]:
     """Normalize PULL_REQUESTS value."""
     repo_string = repo.full_name if hasattr(repo, "full_name") else str(repo)
     return " ".join(get_prs_list_from_string(value, repo_string)), None
 
 
 def check_release_format(
-    value: str, repo, params: dict[str, str], *args
+    value: str, _repo, params: dict[str, str], *_args
 ) -> tuple[str, Optional[str]]:
     """Handle RELEASE_FORMAT, extracting architecture if present."""
     release_queue = value
@@ -1078,7 +1078,7 @@ class CommandUser:
 
     @property
     def user_categories(self) -> list[str]:
-        return get_user_l2_categories(self.context.repo_config, self.login, self.timestamp)
+        return get_user_l2_categories(self.login, self.timestamp)
 
     @property
     def is_issue_tracker(self) -> bool:
@@ -1134,7 +1134,7 @@ def decompress_cache(data: str) -> str:
     return zlib.decompress(compressed).decode("utf-8")
 
 
-def load_cache_from_comments(comments) -> Optional[BotCache]:
+def load_cache_from_comments(comments, dry_run: bool = False) -> Optional[BotCache]:
     """
     Load bot cache from PR issue comments.
 
@@ -1145,6 +1145,7 @@ def load_cache_from_comments(comments) -> Optional[BotCache]:
 
     Args:
         comments: Iterable of comment objects from the issue/PR (list or dict.values())
+        dry_run: If True, don't write cms-bot.properties on a version mismatch
     """
     cache_parts = []
 
@@ -1200,7 +1201,7 @@ def load_cache_from_comments(comments) -> Optional[BotCache]:
             logger.error(
                 f"Bot version {CMS_BOT_VERSION} doesn't match bot version from cache {cache_version}, restarting job"
             )
-            recreate_cms_bot_test_properties(cache_version)
+            recreate_cms_bot_test_properties(cache_version, dry_run)
             return None
 
         return BotCache.from_dict(data)
@@ -1380,11 +1381,9 @@ def detect_new_packages(context: "PRContext") -> list[str]:
     return new_packages
 
 
-def get_file_l2_categories(
-    repo_config: types.ModuleType, filename: str, commit_timestamp: datetime
-) -> list[str]:
+def get_file_l2_categories(repo_config: types.ModuleType, filename: str) -> list[str]:
     """
-    Determine L2 categories for a file based on path and timestamp.
+    Determine L2 categories for a file based on its path.
 
     For CMSSW-style repos: file → package → categories (two-stage)
     For other repos: Returns empty list (relies on manual 'assign' command)
@@ -1392,10 +1391,15 @@ def get_file_l2_categories(
     The repo is considered CMSSW-style if it has a file2Package method
     or if CMSSW_CATEGORIES contains mappings.
 
+    Unlike user L2 membership (which is time-based, see get_user_l2_categories),
+    the file->category mapping itself isn't tracked over time: whatever
+    CMSSW_CATEGORIES says at the moment a file version is first seen is what
+    gets frozen into that FileVersion's categories in the bot cache - it's
+    never recomputed for that same filename::sha later.
+
     Args:
         repo_config: Repository configuration module
         filename: Path to the file
-        commit_timestamp: Timestamp of the commit
 
     Returns:
         List of L2 category names that own this file (empty if manual assignment required)
@@ -1415,16 +1419,16 @@ def get_file_l2_categories(
     return categories
 
 
-def get_user_l2_categories(
-    repo_config: types.ModuleType, username: str, timestamp: datetime
-) -> list[str]:
+def get_user_l2_categories(username: str, timestamp: datetime) -> list[str]:
     """
     Determine which L2 categories a user belongs to at a given time.
 
-    Uses the global L2 data loaded by init_l2_data().
+    Uses the global L2 data loaded by init_l2_data(). Matches v1's equivalent
+    get_commenter_categories(commenter, comment_date): no repo_config here
+    either - by the time this is called, init_l2_data() has already used it
+    once to populate the global _L2_DATA / static CMSSW_L2 fallback.
 
     Args:
-        repo_config: Repository configuration module
         username: GitHub username
         timestamp: Point in time to check membership
 
@@ -1474,9 +1478,7 @@ def get_user_l2_categories(
     return []
 
 
-def get_category_l2s(
-    repo_config: types.ModuleType, category: str, timestamp: datetime
-) -> list[str]:
+def get_category_l2s(category: str, timestamp: datetime) -> list[str]:
     """
     Get the L2 signers for a specific category at a given time.
 
@@ -1492,7 +1494,6 @@ def get_category_l2s(
     of any test-local L2 fixture).
 
     Args:
-        repo_config: Repository configuration module
         category: Category name
         timestamp: Timestamp for time-based L2 lookup
 
@@ -1504,7 +1505,7 @@ def get_category_l2s(
     return [
         username
         for username in usernames
-        if category in get_user_l2_categories(repo_config, username, timestamp)
+        if category in get_user_l2_categories(username, timestamp)
     ]
 
 
@@ -1633,23 +1634,6 @@ def get_signing_checks(context: "PRContext") -> SigningChecks:
         extra_checks.append("tests")
 
     return SigningChecks(pre_checks=pre_checks, extra_checks=extra_checks)
-
-
-def is_extra_check_category(context: "PRContext", category: str) -> bool:
-    """
-    Check if a category is an EXTRA_CHECK (or PRE_CHECK) category.
-
-    These categories reset on every commit.
-
-    Args:
-        context: PR processing context
-        category: Category name to check
-
-    Returns:
-        True if category is a PRE_CHECK or EXTRA_CHECK
-    """
-    signing_checks = context.get_signing_checks_for_pr()
-    return category in signing_checks.pre_checks or category in signing_checks.extra_checks
 
 
 # =============================================================================
@@ -1994,7 +1978,6 @@ class PRContext:
     must_close: bool = False  # PR should be closed (e.g., closed branch)
     abort_comment: Optional[Any] = None  # Comment that requested abort (None = no abort)
     tests_to_run: list[Any] = field(default_factory=list)  # List of TestRequest objects
-    pending_reactions: dict[int, str] = field(default_factory=dict)  # comment_id -> reaction
     holds: list[Hold] = field(default_factory=list)  # Active holds on the PR
     pending_labels: set[str] = field(default_factory=set)  # Labels to add
     pending_labels_to_remove: set[str] = field(
@@ -2004,6 +1987,12 @@ class PRContext:
     manually_assigned_categories: set[str] = field(
         default_factory=set
     )  # Categories assigned via 'assign' command
+
+    # Categories newly required / no longer required this run (files added/reverted),
+    # used when building the "PR updated" notification message
+    new_categories: set[str] = field(default_factory=set, repr=False)
+    removed_categories: set[str] = field(default_factory=set, repr=False)
+
     packages: set[str] = field(default_factory=set)  # Packages touched by PR
     test_params: dict[str, str] = field(default_factory=dict)  # Parameters from 'test parameters:'
     granted_test_rights: set[str] = field(default_factory=set)  # Users granted test rights
@@ -2028,7 +2017,6 @@ class PRContext:
     ignore_tests_rejected: Optional[str] = None  # Reason for ignoring test rejection
     ignore_file_count: bool = False  # Override file count warning (+file-count accepted)
     warned_too_many_files: bool = False  # Bot has already warned about files
-    blocked_by_file_count: bool = False  # PR processing blocked by file count
 
     # Backport info
     backport_of: Optional[str] = None  # PR number this is a backport of
@@ -2062,8 +2050,7 @@ class PRContext:
     # Watchers for this PR
     watchers: set[str] = field(default_factory=set)  # Users watching files/categories
 
-    # Changed files (cached from pr.get_files())
-    _changed_files: Optional[list[str]] = field(default=None, repr=False)
+    # PR files with blob SHAs (cached from pr.get_files(), see get_pr_files_with_sha())
     _pr_files_with_sha: Optional[dict[str, str]] = field(default=None, repr=False)
 
     @property
@@ -2135,6 +2122,22 @@ class PRContext:
     def last_commit(self) -> Optional[Any]:
         """Get the last (most recent) commit in the PR."""
         return self._last_commit
+
+    def get_pr_files_with_sha(self) -> dict[str, str]:
+        """
+        Get PR files mapped to their blob SHAs, with caching.
+
+        process_pr() pre-populates the cache (via get_pr_files_info(), which
+        also returns the plain changed-files list in the same API call), but
+        anything called before that - or for repos where it isn't - can still
+        get a correct answer here, fetched on demand.
+
+        Returns:
+            Dict mapping filename to blob SHA
+        """
+        if self._pr_files_with_sha is None:
+            self._pr_files_with_sha = get_pr_files(self.pr)
+        return self._pr_files_with_sha
 
     def get_commit_statuses(self) -> dict[str, Any]:
         """
@@ -2619,7 +2622,7 @@ def _handle_approval(
 
         elif category in context.signing_categories | set(signing_checks.extra_checks):
             # Regular or extra-check category - verify user belongs to it
-            user_cats = get_user_l2_categories(context.repo_config, user, timestamp)
+            user_cats = get_user_l2_categories(user, timestamp)
             if category not in user_cats:
                 logger.info(
                     f"User {user} tried to sign for category '{category}' but only has: {user_cats}"
@@ -2632,7 +2635,7 @@ def _handle_approval(
             return None
     else:
         # Generic +1/-1 applies to all user's L2 categories at that time
-        categories = get_user_l2_categories(context.repo_config, user, timestamp)
+        categories = get_user_l2_categories(user, timestamp)
 
     if not categories:
         logger.info(f"User {user} has no L2 categories to sign with")
@@ -2797,7 +2800,7 @@ def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) ->
             # Get L2s for the new categories and notify them
             new_l2s = set()
             for cat in new_categories:
-                cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+                cat_l2s = get_category_l2s(cat, timestamp)
                 new_l2s.update(cat_l2s)
 
             if new_l2s:
@@ -2869,7 +2872,7 @@ def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) ->
     pr_only=True,
     acl=lambda u: u.is_release_manager or u.is_pr_hold_manager or bool(u.user_categories),
 )
-def handle_hold(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_hold(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """
     Handle hold command - prevents automerge.
 
@@ -2882,7 +2885,7 @@ def handle_hold(context: PRContext, match: re.Match, comment: Any) -> bool:
     comment_id = comment.id
     timestamp = get_comment_timestamp(comment)
 
-    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
+    user_categories = get_user_l2_categories(user, timestamp)
 
     # Check if user is a release manager
     is_release_manager = False
@@ -2944,7 +2947,7 @@ def handle_hold(context: PRContext, match: re.Match, comment: Any) -> bool:
         u.is_orp or bool(u.user_categories) or u.is_release_manager or u.is_pr_hold_manager
     ),
 )
-def handle_unhold(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_unhold(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """
     Handle unhold command.
 
@@ -2956,7 +2959,7 @@ def handle_unhold(context: PRContext, match: re.Match, comment: Any) -> bool:
     user = comment.user.login
     timestamp = get_comment_timestamp(comment)
 
-    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
+    user_categories = get_user_l2_categories(user, timestamp)
     is_orp = "orp" in [c.lower() for c in user_categories]
 
     if is_orp:
@@ -3024,7 +3027,7 @@ def handle_unhold(context: PRContext, match: re.Match, comment: Any) -> bool:
     pr_only=True,
     acl=lambda u: u.is_release_manager or u.is_orp,
 )
-def handle_merge(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_merge(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """Handle merge command."""
     user = comment.user.login
     if not can_merge(context):
@@ -3047,7 +3050,7 @@ def handle_merge(context: PRContext, match: re.Match, comment: Any) -> bool:
     or u.is_release_manager
     or (u.is_issue_tracker and not u.context.pr),
 )
-def handle_close(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_close(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """
     Handle close command.
 
@@ -3070,7 +3073,7 @@ def handle_close(context: PRContext, match: re.Match, comment: Any) -> bool:
     or u.is_release_manager
     or (u.is_issue_tracker and not u.context.pr),
 )
-def handle_reopen(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_reopen(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """
     Handle open/reopen command.
 
@@ -3119,7 +3122,7 @@ def is_valid_tester(user: CommandUser) -> bool:
     pr_only=True,
     reset_on_push=True,
 )
-def handle_abort(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_abort(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """
     Handle abort/abort test command.
 
@@ -3145,7 +3148,7 @@ def handle_abort(context: PRContext, match: re.Match, comment: Any) -> bool:
     description="Mark PR as urgent",
     acl=lambda u: bool(u.user_categories) or u.is_release_manager or u.is_requestor,
 )
-def handle_urgent(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_urgent(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """
     Handle urgent command.
 
@@ -3218,7 +3221,7 @@ def handle_allow_test_rights(context: PRContext, match: re.Match, comment: Any) 
     user = comment.user.login
     timestamp = get_comment_timestamp(comment)
 
-    user_categories = get_user_l2_categories(context.repo_config, user, timestamp)
+    user_categories = get_user_l2_categories(user, timestamp)
 
     # Check if user is a release manager
     is_release_manager = False
@@ -3381,7 +3384,7 @@ def handle_ignore_tests_rejected(context: PRContext, match: re.Match, comment: A
     description="Ignore 'too many files' warning",
     pr_only=True,
 )
-def handle_file_count_override(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_file_count_override(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """
     Handle +file-count command.
 
@@ -3614,14 +3617,14 @@ def parse_test_cmd(first_line: str) -> TestCmdResult:
     ]
 
     t: Optional[str] = ""
-    prev_t: Optional[str] = ""
 
     while tokens:
-        prev_t = t
+        prev_t: Optional[str] = t
         t = tokens.pop(0)
 
         matched = False
         for p in params:
+            # noinspection unresolved-references
             if not p.keyword.match(t):
                 continue
 
@@ -3630,7 +3633,9 @@ def parse_test_cmd(first_line: str) -> TestCmdResult:
 
             next_val: Any = True
 
+            # noinspection unresolved-references
             if p.prev_keyword and (not prev_t or not p.prev_keyword.fullmatch(prev_t)):
+                # noinspection unresolved-references
                 raise TestCmdParseError(
                     f"Keyword {t} must be preceded by {p.prev_keyword.pattern}"
                 )
@@ -3641,6 +3646,7 @@ def parse_test_cmd(first_line: str) -> TestCmdResult:
                 except IndexError:
                     raise TestCmdParseError(f"Missing parameter for keyword {t}")
 
+                # noinspection unresolved-references
                 if p.rx and not p.rx.fullmatch(next_val):
                     raise TestCmdParseError(f"Invalid parameter for keyword {t}: {next_val!r}")
 
@@ -3778,7 +3784,7 @@ def parse_test_parameters(comment_lines: list[str], repo) -> dict[str, str]:
     description="Set test parameters (multi-line)",
     pr_only=True,
 )
-def handle_test_parameters(context: PRContext, match: re.Match, comment: Any) -> bool:
+def handle_test_parameters(context: PRContext, _match: re.Match, comment: Any) -> bool:
     """
     Handle 'test parameters:' command.
 
@@ -4478,22 +4484,6 @@ def get_pr_files(pr) -> dict[str, str]:
     return files
 
 
-def get_changed_files(pr) -> list[str]:
-    """
-    Get list of changed file names in a PR.
-
-    Includes the previous filename for renamed files.
-
-    Args:
-        pr: Pull request object
-
-    Returns:
-        List of changed file paths (including old names for renames)
-    """
-    _, changed_files = get_pr_files_info(pr)
-    return changed_files
-
-
 def update_file_states(context: PRContext) -> tuple[set[str], set[str], set[str]]:
     """
     Update file states based on current PR state.
@@ -4511,11 +4501,7 @@ def update_file_states(context: PRContext) -> tuple[set[str], set[str], set[str]
         - new_categories: Set of categories that are new (not seen before in this PR)
         - removed_categories: Set of categories that are no longer required (files reverted)
     """
-    # Use cached files if available, otherwise fetch
-    if context._pr_files_with_sha is not None:
-        current_files = context._pr_files_with_sha
-    else:
-        current_files = get_pr_files(context.pr)
+    current_files = context.get_pr_files_with_sha()
     changed_files = set()
     new_categories = set()
 
@@ -4544,9 +4530,7 @@ def update_file_states(context: PRContext) -> tuple[set[str], set[str], set[str]
 
         if fv_key not in context.cache.file_versions:
             # New file version - recalculate categories
-            categories = get_file_l2_categories(
-                context.repo_config, filename, datetime.now(tz=timezone.utc)
-            )
+            categories = get_file_l2_categories(context.repo_config, filename)
             context.cache.file_versions[fv_key] = FileVersion(
                 filename=filename,
                 blob_sha=blob_sha,
@@ -4742,7 +4726,7 @@ def get_comment_timestamp(comment) -> datetime:
 
 
 def check_command_acl(
-    context: PRContext, command: Command, user: CommandUser, timestamp: datetime
+    _context: PRContext, command: Command, user: CommandUser, _timestamp: datetime
 ) -> bool:
     """Check if user has permission to run a command."""
     if command.acl is None:
@@ -5142,7 +5126,7 @@ def get_files_for_categories(context: PRContext, categories: list[str]) -> list[
 
 
 def is_signature_valid_for_category(
-    context: PRContext, comment_info: CommentInfo, category: str, current_category_files: set[str]
+    context: PRContext, comment_info: CommentInfo, current_category_files: set[str]
 ) -> bool:
     """
     Check if a signature is still valid for a specific category.
@@ -5151,10 +5135,14 @@ def is_signature_valid_for_category(
     1. All files that were signed are still current (haven't changed)
     2. All current files in the category were covered by the signature (no new files added)
 
+    Note: the caller (compute_category_approval_states) already filters
+    comment_info to the relevant category before calling this - and
+    current_category_files is already scoped to that category - so no
+    category name is needed here.
+
     Args:
         context: PR processing context
         comment_info: The signature comment info
-        category: The category to check
         current_category_files: Current file version keys for this category
 
     Returns:
@@ -5225,7 +5213,7 @@ def compute_category_approval_states(context: PRContext) -> dict[str, ApprovalSt
                 continue
             if cat_name not in comment_info.categories:
                 continue
-            if not is_signature_valid_for_category(context, comment_info, cat_name, cat_files):
+            if not is_signature_valid_for_category(context, comment_info, cat_files):
                 continue
 
             if comment_info.ctype == "+1":
@@ -6150,7 +6138,7 @@ def get_fully_signed_message(context: PRContext) -> str:
         auto_merge_msg = (
             f"This pull request requires a new package and will not be merged. {managers_str}"
         )
-    elif needs_orp_review(context, branch):
+    elif needs_orp_review(context):
         # PR needs ORP review
         auto_merge_msg = (
             f"This pull request will now be reviewed by the release team before it's merged. "
@@ -6196,7 +6184,7 @@ def has_new_package(context: PRContext) -> bool:
     return "new-package" in context.pending_labels
 
 
-def needs_orp_review(context: PRContext, branch: str) -> bool:
+def needs_orp_review(context: PRContext) -> bool:
     """Check if PR needs ORP (Operations Review Panel) review before merge."""
     # Check if ORP is in EXTRA_CHECKS
     signing_checks = context.get_signing_checks_for_pr()
@@ -6511,7 +6499,7 @@ def create_abort_properties(context: PRContext) -> None:
     create_test_properties_file(context, params, abort=True)
 
 
-def create_cms_bot_test_properties(pr) -> None:
+def create_cms_bot_test_properties(pr, dry_run: bool = False) -> None:
     """
     Create properties file for cms-bot self-test.
 
@@ -6519,6 +6507,7 @@ def create_cms_bot_test_properties(pr) -> None:
 
     Args:
         pr: The pull request object
+        dry_run: If True, don't actually create the file
     """
     params = {
         "CMS_BOT_TEST_BRANCH": pr.head.ref,
@@ -6526,21 +6515,33 @@ def create_cms_bot_test_properties(pr) -> None:
         "CMS_BOT_TEST_PRS": f"cms-sw/cms-bot#{pr.number}",
     }
 
+    if dry_run:
+        logger.info(f"[DRY RUN] Would create cms-bot.properties for PR #{pr.number}")
+        logger.debug(f"Properties: {params}")
+        return
+
     with open("cms-bot.properties", "w") as f:
         f.writelines(f"{key}={value}\n" for key, value in params.items())
 
     logger.info(f"Created cms-bot.properties for PR #{pr.number}")
 
 
-def recreate_cms_bot_test_properties(bot_version: int = 1) -> None:
+def recreate_cms_bot_test_properties(bot_version: int = 1, dry_run: bool = False) -> None:
     """
     Create properties file to re-run cms-bot job with correct bot version
 
     Args:
         bot_version: Version number
+        dry_run: If True, don't actually create the file
     """
 
     params = {"CMS_BOT_VERSION": bot_version}
+
+    if dry_run:
+        logger.info(
+            f"[DRY RUN] Would create cms-bot.properties to switch to cms-bot v{bot_version}"
+        )
+        return
 
     with open("cms-bot.properties", "w") as f:
         f.writelines(f"{key}={value}\n" for key, value in params.items())
@@ -6561,7 +6562,7 @@ def create_new_data_repo_properties(issue_number: int, dry_run: bool) -> None:
     create_property_file(filename, params, dry_run)
 
 
-def check_file_count(context: PRContext, dryRun: bool) -> Optional[dict[str, Any]]:
+def check_file_count(context: PRContext) -> Optional[dict[str, Any]]:
     """
     Check if PR has too many files.
 
@@ -6571,9 +6572,11 @@ def check_file_count(context: PRContext, dryRun: bool) -> Optional[dict[str, Any
     3. Posts warnings if needed
     4. Returns early result dict if PR should be blocked
 
+    Note: dry-run behavior is already enforced downstream via context.dry_run
+    when comments/statuses are actually flushed, so it isn't needed here.
+
     Args:
         context: PR processing context
-        dryRun: If True, don't post comments
 
     Returns:
         Dict with block result if PR should be blocked, None otherwise
@@ -6609,7 +6612,6 @@ def check_file_count(context: PRContext, dryRun: bool) -> Optional[dict[str, Any
                 logger.warning(f"PR blocked: too many files ({file_count})")
 
             # Always block at FAIL threshold - cannot be overridden
-            context.blocked_by_file_count = True
             flush_pending_comments(context)  # Flush before early return
             flush_pending_statuses(context)
             return {
@@ -6640,7 +6642,6 @@ def check_file_count(context: PRContext, dryRun: bool) -> Optional[dict[str, Any
 
             # Block if not overridden
             if not context.ignore_file_count:
-                context.blocked_by_file_count = True
                 flush_pending_comments(context)  # Flush before early return
                 flush_pending_statuses(context)
                 return {
@@ -6698,7 +6699,7 @@ def post_welcome_message(context: PRContext) -> None:
     if context.is_pr:
         all_l2s = set()
         for cat in context.signing_categories:
-            cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+            cat_l2s = get_category_l2s(cat, timestamp)
             all_l2s.update(cat_l2s)
         l2_mentions = ", ".join(format_mention(context, l2) for l2 in sorted(all_l2s))
     else:
@@ -6718,7 +6719,7 @@ def post_welcome_message(context: PRContext) -> None:
     # CMSSW repo has more detailed welcome message for PRs
     if context.cmssw_repo and context.is_pr and context.pr:
         msg = _build_cmssw_welcome_message(
-            context, author, l2_mentions, watchers_msg, backport_msg, timestamp
+            context, author, l2_mentions, watchers_msg, backport_msg
         )
     else:
         # Simple message for non-CMSSW repos or issues
@@ -6741,7 +6742,6 @@ def _build_cmssw_welcome_message(
     l2_mentions: str,
     watchers_msg: str,
     backport_msg: str,
-    timestamp: datetime,
 ) -> str:
     """
     Build the detailed welcome message for CMSSW repo PRs.
@@ -6864,7 +6864,7 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
     pending_l2s = set()
     for cat, state in category_states.items():
         if state != ApprovalState.APPROVED:
-            cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+            cat_l2s = get_category_l2s(cat, timestamp)
             pending_l2s.update(cat_l2s)
 
     # Build resign message
@@ -6881,7 +6881,7 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
 
     # Build new categories message (similar to welcome message format)
     new_categories_msg = ""
-    new_categories = getattr(context, "_new_categories", set())
+    new_categories = context.new_categories
     if new_categories:
         # Get packages for new categories
         new_pkg_lines = []
@@ -6905,7 +6905,7 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
             # Add L2 mentions for new categories
             new_cat_l2s = set()
             for cat in new_categories:
-                cat_l2s = get_category_l2s(context.repo_config, cat, timestamp)
+                cat_l2s = get_category_l2s(cat, timestamp)
                 new_cat_l2s.update(cat_l2s)
 
             if new_cat_l2s:
@@ -6916,7 +6916,7 @@ def post_pr_updated_message(context: PRContext, new_commit_sha: str) -> None:
 
     # Build removed categories message
     removed_categories_msg = ""
-    removed_categories = getattr(context, "_removed_categories", set())
+    removed_categories = context.removed_categories
     if removed_categories:
         removed_cat_list = ", ".join(f"**{cat}**" for cat in sorted(removed_categories))
         removed_categories_msg = (
@@ -6932,7 +6932,11 @@ def check_for_new_commits(context: PRContext) -> None:
     Check if there are new commits since the last bot message.
 
     Posts a "PR updated" message if new commits are detected.
-    Also resets pre-check statuses to pending on new commits.
+
+    Note: this does NOT need to explicitly reset pre-check statuses (e.g.
+    code-checks) to pending - that's an emergent property of GitHub commit
+    statuses being scoped to a specific SHA: a new commit simply has no
+    status yet, which already reads as PENDING elsewhere in the codebase.
 
     Args:
         context: PR processing context
@@ -7103,7 +7107,7 @@ def process_pr(
             logger.warning(f"Failed to fetch head commit: {e}")
 
     # Load cache from comments
-    cache = load_cache_from_comments(comments_list)
+    cache = load_cache_from_comments(comments_list, dryRun)
 
     if cache is None:
         # Cache was created by a different bot version than the one currently
@@ -7164,11 +7168,9 @@ def process_pr(
         and pr.state != "closed"
     ):
         author = issue.user.login
-        author_categories = get_user_l2_categories(
-            repo_config, author, datetime.now(tz=timezone.utc)
-        )
+        author_categories = get_user_l2_categories(author, datetime.now(tz=timezone.utc))
         if "externals" in author_categories or "core" in author_categories:
-            create_cms_bot_test_properties(pr)
+            create_cms_bot_test_properties(pr, dryRun)
             return {
                 "pr_number": issue.number,
                 "is_pr": is_pr,
@@ -7235,7 +7237,6 @@ def process_pr(
             files_with_sha, chg_files = get_pr_files_info(pr)
             api_rate_limits(gh)
             context._pr_files_with_sha = files_with_sha
-            context._changed_files = chg_files
             context.packages = {file_to_package(repo_config, f) for f in chg_files}
             add_nonblocking_labels(chg_files, context.pending_labels)
             context.create_test_property = True
@@ -7276,7 +7277,6 @@ def process_pr(
                     files_with_sha, chg_files = get_pr_files_info(pr)
                     api_rate_limits(gh)
                     context._pr_files_with_sha = files_with_sha
-                    context._changed_files = chg_files
                     add_nonblocking_labels(chg_files, context.pending_labels)
             except (AttributeError, TypeError) as e:
                 logger.debug(f"Could not add non-blocking labels: {e}")
@@ -7315,8 +7315,8 @@ def process_pr(
             logger.info(f"Removed categories: {removed_categories}")
 
         # Store new/removed categories for use in PR updated message
-        context._new_categories = new_categories
-        context._removed_categories = removed_categories
+        context.new_categories = new_categories
+        context.removed_categories = removed_categories
 
         # Check for new commits and post update message if needed
         check_for_new_commits(context)
@@ -7335,7 +7335,7 @@ def process_pr(
 
     # Check file count (for PRs only)
     if is_pr and pr:
-        block_result = check_file_count(context, dryRun)
+        block_result = check_file_count(context)
         if block_result:
             # Save cache before returning
             save_cache_to_comments(issue, context.comments.values(), cache, dryRun)

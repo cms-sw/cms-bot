@@ -25,7 +25,8 @@ SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHost
 #Check unique slave conenction
 if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
   TARGET_HOST=$(echo $TARGET | sed 's|.*@||')
-  if [ `pgrep -f "@${TARGET_HOST} " | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
+  pgrep -af "@${TARGET_HOST}" || true
+  if [ `pgrep -f "@${TARGET_HOST}" | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
 fi
 DOCKER_IMG_HOST=$(get_env DOCKER_IMG_HOST)
 MULTI_MASTER_SLAVE=$(get_env MULTI_MASTER_SLAVE)

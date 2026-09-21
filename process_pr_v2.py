@@ -7169,7 +7169,7 @@ def process_pr(
     ):
         author = issue.user.login
         author_categories = get_user_l2_categories(author, datetime.now(tz=timezone.utc))
-        if "externals" in author_categories or "core" in author_categories:
+        if {"externals", "core", "heterogeneous"}.intersection(author_categories):
             create_cms_bot_test_properties(pr, dryRun)
             return {
                 "pr_number": issue.number,

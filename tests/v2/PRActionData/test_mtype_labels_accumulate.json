@@ -56,7 +56,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 1,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Core/main.py::file_sha_123\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}},\"version\":2} -->"
+        "body": "cms-bot internal usage<!-- bot cache: {\"comments\":{},\"emoji\":{\"100\":\"+1\",\"101\":\"+1\"},\"fv\":{\"Package/Core/main.py::file_sha_123\":{\"cats\":[\"core\"],\"ts\":\"2025-12-12T11:00:00Z\"}},\"version\":2} -->"
       }
     }
   ]

@@ -1139,9 +1139,19 @@ def load_cache_from_comments(comments, dry_run: bool = False) -> Optional[BotCac
     Load bot cache from PR issue comments.
 
     The cache is stored in comments with format:
-    '{CMSBOT_TECHNICAL_MSG}<!-- {JSON or compressed data} -->'
+    '{CMSBOT_TECHNICAL_MSG}<!-- bot cache: {JSON or compressed data} -->'
 
-    Multiple comments may be used if data is large.
+    The "bot cache: " marker text matches v1's own
+    REGEX_COMMITS_CACHE = r"<!-- (?:commits|bot) cache: (.*) -->", so v1 can
+    read (and detect the version of) caches written by this bot, and vice
+    versa - this matters for the CMS_BOT_VERSION mismatch/restart mechanism.
+
+    Multiple comments may be used if data is large; when they are, EACH
+    comment independently carries its own "<!-- bot cache: ... -->" wrapper
+    (mirroring v1's prepare_bot_cache/write_bot_cache), so the prefix must be
+    stripped from each chunk individually before concatenating them - not
+    once from the combined string, which would corrupt multi-chunk caches
+    written with an embedded "bot cache: "/"commits cache: " marker.
 
     Args:
         comments: Iterable of comment objects from the issue/PR (list or dict.values())
@@ -1156,7 +1166,14 @@ def load_cache_from_comments(comments, dry_run: bool = False) -> Optional[BotCac
             start = len(CACHE_COMMENT_MARKER)
             end = body.rfind(CACHE_COMMENT_END)
             if end > start:
-                cache_parts.append((comment.id, body[start:end].strip()))
+                part = body[start:end].strip()
+                # Strip a legacy/v1-style inline prefix from THIS chunk before
+                # it's joined with any others (see docstring above).
+                for _legacy_prefix in ("bot cache: ", "commits cache: "):
+                    if part.startswith(_legacy_prefix):
+                        part = part[len(_legacy_prefix) :]
+                        break
+                cache_parts.append((comment.id, part))
 
     if not cache_parts:
         logger.debug("No cache found in comments, starting fresh")
@@ -1165,17 +1182,8 @@ def load_cache_from_comments(comments, dry_run: bool = False) -> Optional[BotCac
     # Sort by comment ID to ensure correct order
     cache_parts.sort(key=lambda x: x[0])
 
-    # Combine all parts
+    # Combine all parts (each already stripped of its own prefix above)
     combined_data = "".join(part for _, part in cache_parts)
-    # Strip legacy inline prefixes from older cache formats (mirrors v1's own
-    # REGEX_COMMITS_CACHE = r"<!-- (?:commits|bot) cache: (.*) -->"). Real,
-    # already-posted comments may carry either prefix - "commits cache: " is
-    # the older of the two, "bot cache: " the more recent, but both still
-    # occur in existing PR/Issue histories and must parse cleanly.
-    for _legacy_prefix in ("bot cache: ", "commits cache: "):
-        if combined_data.startswith(_legacy_prefix):
-            combined_data = combined_data[len(_legacy_prefix) :]
-            break
 
     try:
         # Try to parse as JSON first
@@ -1246,7 +1254,7 @@ def save_cache_to_comments(issue, comments, cache: BotCache, dry_run: bool = Fal
 
     # Update or create comments
     for i, chunk in enumerate(chunks):
-        comment_body = f"{CACHE_COMMENT_MARKER} {chunk} {CACHE_COMMENT_END}"
+        comment_body = f"{CACHE_COMMENT_MARKER} bot cache: {chunk} {CACHE_COMMENT_END}"
 
         if i < len(existing_cache_comments):
             # Check if content actually changed

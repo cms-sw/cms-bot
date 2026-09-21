@@ -15,7 +15,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 27,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{},\"version\":2} -->"
+        "body": "cms-bot internal usage<!-- bot cache: {\"comments\":{},\"emoji\":{},\"fv\":{},\"version\":2} -->"
       }
     }
   ]

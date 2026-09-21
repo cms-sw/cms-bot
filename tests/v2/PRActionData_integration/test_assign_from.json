@@ -15,7 +15,7 @@
       "action": "edit_comment",
       "details": {
         "comment_id": 2769190932,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{},\"version\":2} -->"
+        "body": "cms-bot internal usage<!-- bot cache: {\"comments\":{},\"emoji\":{},\"fv\":{},\"version\":2} -->"
       }
     }
   ]

@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "sha": "9a83848133c1de5c6e0071f6c8ed7e527529534d",
+      "filename": "SimTracker/TrackTriggerAssociation/doc/README",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 1,
+      "changes": 3,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4/SimTracker%2FTrackTriggerAssociation%2Fdoc%2FREADME",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4/SimTracker%2FTrackTriggerAssociation%2Fdoc%2FREADME",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/SimTracker%2FTrackTriggerAssociation%2Fdoc%2FREADME?ref=5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
+      "patch": "@@ -1,3 +1,4 @@\n+123321 000\n README SimTracker/TrackTriggerAssociation\n \n S.Viret: 26/07/16\n@@ -6,4 +7,4 @@ Documentation on TrackTriggerAssociation package is available on the following T\n \n For the TTClusters: https://twiki.cern.ch/twiki/bin/viewauth/CMS/SLHCTrackerTriggerSWTools#MC_truth_for_TTCluster\n \n-For the TTStubs: https://twiki.cern.ch/twiki/bin/viewauth/CMS/SLHCTrackerTriggerSWTools#MC_truth_for_TTStub\n\\ No newline at end of file\n+For the TTStubs: https://twiki.cern.ch/twiki/bin/viewauth/CMS/SLHCTrackerTriggerSWTools#MC_truth_for_TTStub"
+    },
+    {
+      "sha": "fec8f9d86c13d6ca0ba7316317695d3df46af93d",
+      "filename": "Validation/TrackerHits/test/README",
+      "status": "modified",
+      "additions": 1,
+      "deletions": 0,
+      "changes": 1,
+      "blob_url": "https://github.com/iarspider-cmssw/cmssw/blob/5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4/Validation%2FTrackerHits%2Ftest%2FREADME",
+      "raw_url": "https://github.com/iarspider-cmssw/cmssw/raw/5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4/Validation%2FTrackerHits%2Ftest%2FREADME",
+      "contents_url": "https://api.github.com/repos/iarspider-cmssw/cmssw/contents/Validation%2FTrackerHits%2Ftest%2FREADME?ref=5a76c5bd2fc93ef87eac8a48f5fc5816b01d7fc4",
+      "patch": "@@ -1,2 +1,3 @@\n+456654 000\n cmsRun runP.cfg\n eval `scramv1 ru -csh`"
+    }
+  ]
+}

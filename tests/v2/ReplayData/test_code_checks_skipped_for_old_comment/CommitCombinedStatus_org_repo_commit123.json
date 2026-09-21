@@ -1,0 +1,12 @@
+{
+  "state": "pending",
+  "statuses": [
+    {
+      "context": "cms/1/code-checks",
+      "state": "success",
+      "description": "Success",
+      "target_url": "",
+      "updated_at": "2025-12-12 12:05:00+00:00"
+    }
+  ]
+}

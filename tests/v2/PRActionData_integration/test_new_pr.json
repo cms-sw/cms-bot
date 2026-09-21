@@ -71,7 +71,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 17,
-        "body": "cms-bot internal usage<!-- {\"comments\":{},\"emoji\":{},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::1963595dc5bad37400a61b64c43b5efbefa11b81\":{\"cats\":[\"core\"],\"ts\":\"2024-02-27T10:25:45Z\"}},\"version\":2} -->"
+        "body": "cms-bot internal usage<!-- bot cache: {\"comments\":{},\"emoji\":{},\"fv\":{\"Utilities/ReleaseScripts/test/BuildFile.xml::1963595dc5bad37400a61b64c43b5efbefa11b81\":{\"cats\":[\"core\"],\"ts\":\"2024-02-27T10:25:45Z\"}},\"version\":2} -->"
       }
     }
   ]

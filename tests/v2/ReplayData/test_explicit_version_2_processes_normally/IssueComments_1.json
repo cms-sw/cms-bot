@@ -2,7 +2,7 @@
   "comments": [
     {
       "id": 999999,
-      "body": "cms-bot internal usage<!-- {\"emoji\": {}, \"fv\": {}, \"comments\": {}, \"version\": 2} -->",
+      "body": "cms-bot internal usage<!-- bot cache: {\"emoji\": {}, \"fv\": {}, \"comments\": {}, \"version\": 2} -->",
       "user": {
         "login": "cmsbuild",
         "id": 6

@@ -2487,8 +2487,9 @@ def _extract_cache_data_from_actions(recorder: "ActionRecorder") -> Dict[str, An
     """
     Reconstruct the bot cache dict from recorded create_comment/edit_comment
     actions, mirroring exactly what load_cache_from_comments() does when
-    reading it back: combine chunks (by sequence, i.e. creation order),
-    then try plain JSON first, falling back to zlib+base64 decompression.
+    reading it back: strip the "bot cache: " marker from each chunk
+    individually, combine chunks (by sequence, i.e. creation order), then try
+    plain JSON first, falling back to zlib+base64 decompression.
     """
     parts = []
     for a in recorder.actions:
@@ -2499,7 +2500,12 @@ def _extract_cache_data_from_actions(recorder: "ActionRecorder") -> Dict[str, An
             start = len(CACHE_COMMENT_MARKER)
             end = body.rfind(CACHE_COMMENT_END)
             assert end > start, f"Malformed cache comment body: {body!r}"
-            parts.append((a["sequence"], body[start:end].strip()))
+            part = body[start:end].strip()
+            for _legacy_prefix in ("bot cache: ", "commits cache: "):
+                if part.startswith(_legacy_prefix):
+                    part = part[len(_legacy_prefix) :]
+                    break
+            parts.append((a["sequence"], part))
 
     assert parts, "No bot cache comment was created/updated"
     parts.sort(key=lambda x: x[0])
@@ -2590,7 +2596,7 @@ class TestBotCacheVersionDetection:
         cache_data: Dict[str, Any], comment_id: int = 999999
     ) -> Dict[str, Any]:
         """Build a fixture comment dict wrapping a raw (uncompressed) bot cache."""
-        body = f"{CACHE_COMMENT_MARKER} {json.dumps(cache_data)} {CACHE_COMMENT_END}"
+        body = f"{CACHE_COMMENT_MARKER} bot cache: {json.dumps(cache_data)} {CACHE_COMMENT_END}"
         return {
             "id": comment_id,
             "body": body,

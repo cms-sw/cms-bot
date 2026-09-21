@@ -1339,6 +1339,7 @@ def process_pr(
             f.write("CMS_BOT_TEST_BRANCH=sign-hashes-not-commits\n")
             f.write("FORCE_PULL_REQUEST={0}\n".format(issue.number))
             f.write("CMS_BOT_TEST_PRS={0}#{1}\n".format(repo.full_name, issue.number))
+            f.write("CMS_BOT_VERSION=2\n")
         return
 
     if issue.pull_request:

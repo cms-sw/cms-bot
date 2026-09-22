@@ -13,6 +13,7 @@ setdefaulttimeout(120)
 
 if __name__ == "__main__":
     gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+    gh.get_repo("cms-sw/cms-bot")
     print("Checking GitHub API Rate Limit")
     remaining, limit = gh.rate_limiting
     print("Remaining calls: ", remaining)

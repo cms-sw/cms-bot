@@ -86,13 +86,13 @@ if __name__ == "__main__":
     from categories import EXTERNAL_REPOS
 
     gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
-    api_rate_limits(gh)
     repos = []
     if opts.repository != "externals":
         repos.append(opts.repository)
     else:
         repos = EXTERNAL_REPOS
     err = 0
+    api_rate_limits(gh)
     for repo_name in repos:
         if not "/" in repo_name:
             user = gh.get_user(repo_name)

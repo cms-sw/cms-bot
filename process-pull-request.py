@@ -101,9 +101,8 @@ def main():
     from github import Github
 
     gh = Github(login_or_token=get_gh_token(opts.repository), per_page=100)
-    api_rate_limits(gh)
-
     repo = gh.get_repo(opts.repository)
+    api_rate_limits(gh)
     process_pr(
         repo_config,
         gh,

@@ -1769,3 +1769,15 @@ mmasciov:
 - RecoTracker
 - Validation/RecoTrack
 - HLTrigger/Configuration/python/HLT_75e33
+bfonta:
+- DataFormats/ParticleFlowReco
+- Validation/RecoParticleFlow
+- RecoParticleFlow
+- RecoTICL
+- RecoHGCal
+- RecoEgamma
+- DataFormats/ParticleFlowCandidate
+- DataFormats/ParticleFlowReco
+- CommonTools/ParticleFlow
+- Fireworks/ParticleFlow
+- DQMOffline/ParticleFlow

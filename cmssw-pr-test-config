@@ -24,7 +24,12 @@ if [ "${IS_EVOLUTION}" = "0" ]; then
   PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0
 fi
 
-if [ "$CMSSW_VER" -ge 2000 ] ; then
+if [ "$CMSSW_VER" -ge 2001 ] ; then
+  # COMMENT: excluded workflows read non-RAW files produced with CMSSW < 20_0_X
+  PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0
+  # COMMENT: use no-pileup workflow until first 20_X_Y MinBias files become available
+  PR_TEST_MATRIX_EXTRAS_GPU=38434.402,38434.403,38434.404,38434.712,38434.713,38434.7503,38434.751 #Phase2 Wfs (D128)
+elif [ "$CMSSW_VER" -ge 2000 ] ; then
   # COMMENT: excluded workflows read non-RAW files produced with CMSSW < 20_0_X
   PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0
   # COMMENT: use no-pileup workflow until first 20_X_Y MinBias files become available
@@ -54,7 +59,10 @@ if [ X"$PR_TEST_MATRIX_EXTRAS_GPU" != X"" ]; then
   done
 fi
 
-if [ "$CMSSW_VER" -ge 2000 ] ; then
+if [ "$CMSSW_VER" -ge 2001 ] ; then
+  # COMMENT: use no-pileup workflow until first 20_X_Y MinBias files become available
+  PR_TEST_MATRIX_EXTRAS_PROFILING=38434.21
+elif [ "$CMSSW_VER" -ge 2000 ] ; then
   # COMMENT: use no-pileup workflow until first 20_X_Y MinBias files become available
   PR_TEST_MATRIX_EXTRAS_PROFILING=37634.21
 elif [ "$CMSSW_VER" -ge 1601 ] ; then

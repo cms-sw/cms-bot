@@ -2,7 +2,7 @@
 TARGET=$(echo $1 | sed "s|NODE_NAME@|${NODE_NAME}@|") ; shift
 if [ $(echo ${TARGET} | grep '@' | wc -l) -eq 0 ] ; then exec $0 "${TARGET}@${NODE_NAME}" "${NODE_NAME}" "$@" ; fi
 if [ "$1" != "${NODE_NAME}" ] ; then exec $0 "${TARGET}" "${NODE_NAME}" "$@"; fi
-opts="$0 +${TARGET} +${NODE_NAME}"
+opts="$0 +${TARGET} +${NODE_NAME}( |$)"
 pgrep -af "$opts" || true
 if [ $(pgrep -f "$opts" | wc -l) -gt 2 ] ; then
   pgrep -af "$opts" | grep -v "^$$ " || true

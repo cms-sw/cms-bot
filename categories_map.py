@@ -24,6 +24,7 @@ CMSSW_CATEGORIES = {
         "Alignment/MillePedeAlignmentAlgorithm",
         "Alignment/MuonAlignment",
         "Alignment/MuonAlignmentAlgorithms",
+        "Alignment/MTDAlignment",
         "Alignment/OfflineValidation",
         "Alignment/ReferenceTrajectories",
         "Alignment/SurveyAnalysis",

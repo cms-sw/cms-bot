@@ -1513,7 +1513,12 @@ kpedro88:
 - HeterogeneousCore/SonicCore
 - HeterogeneousCore/SonicTriton
 fabiocos:
+- Alignment/CommonAlignment
+- Alignment/MTDAlignment
+- CondCore/AlignmentPlugins
+- CondCore/MTDPlugins
 - CondFormats/GeometryObjects
+- CondFormats/MTDObjects
 - Configuration
 - DataFormats/DetId
 - DataFormats/ForwardDetId
@@ -1703,6 +1708,11 @@ jlidrych:
 lenzip:
 - PhysicsTools/NanoAODTools
 martinamalberti:
+- Alignment/CommonAlignment
+- Alignment/MTDAlignment
+- CondCore/AlignmentPlugins
+- CondCore/MTDPlugins
+- CondFormats/MTDObjects
 - DataFormats/ForwardDetId
 - DataFormats/FTLDigi
 - DataFormats/FTLRecHit

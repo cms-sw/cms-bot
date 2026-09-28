@@ -12,8 +12,6 @@ RES_PREFIX=$(python3 -c 'from HLTrigger.Configuration.HLT_75e33.services.FastTim
 [ -n "${RES_PREFIX}" ] || RES_PREFIX="resources"
 git cms-addpkg HLTrigger/Configuration
 cd src/HLTrigger/Configuration/python/HLT_75e33/test
-# Uncomment the following in case we have to use quick patch for patatrack-scripts
-echo "git clone https://github.com/cms-externals/patatrack-scripts --depth 1" >> $WORKSPACE/run.sh
 RES="passed"
 mkdir -p $WORKSPACE/upload
 timeout $TIMEOUT ./runHLTTiming.sh > $WORKSPACE/upload/run.log 2>&1 || RES="failed"

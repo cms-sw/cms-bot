@@ -84,7 +84,7 @@ CMSSW_L2 = {
     "forthommel": ["reconstruction", "proton-pog"],
     "jfernan2": ["reconstruction"],
     "makortel": ["heterogeneous", "core", "visualization", "geometry"],
-    "mandrenguyen": ["reconstruction", "operations"],
+    "mandrenguyen": ["operations"],
     "mdhildreth": ["simulation", "geometry", "fastsim"],
     "mkirsano": ["generators"],
     "sensrcn": ["generators"],

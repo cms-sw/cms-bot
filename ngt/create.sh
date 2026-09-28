@@ -6,6 +6,7 @@ function usage(){
   echo "  $0 h100 01"
   exit 1
 }
+LIFETIME="7d"
 IMG_DATE="20260903"
 GPU="$1"
 ID="$2"
@@ -16,7 +17,7 @@ if [ ! -f "${GPU}" ] ; then
   echo "ERROR: No such file ${GPU}"
   exit 1
 fi
-sed -e "s|@N@|$ID|;s|@IMG_DATE@|$IMG_DATE|" ${GPU} > session.yaml
+sed -e "s|@N@|$ID|;s|@IMG_DATE@|$IMG_DATE|;s|@LIFETIME@|$LIFETIME|" ${GPU} > session.yaml
 if [ "$3" = "" ] ; then
   kubectl --context ngt-token create -f session.yaml
 fi

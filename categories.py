@@ -81,7 +81,7 @@ CMSSW_L2 = {
     "ghyls": ["heterogeneous"],  # Mario Gonzalez
     "pietroGru": ["heterogeneous"],  # Pietro Grutta
     "sbaldu": ["heterogeneous"],  # Simone Balducci
-    "forthommel": ["reconstruction"],
+    "forthommel": ["reconstruction", "proton-pog"],
     "jfernan2": ["reconstruction"],
     "makortel": ["heterogeneous", "core", "visualization", "geometry"],
     "mandrenguyen": ["reconstruction", "operations"],
@@ -156,7 +156,6 @@ CMSSW_L2 = {
     "AlexDeMoor": ["btv-pog"],
     "acalandr": ["btv-pog"],
     "AndreaBellora": ["proton-pog"],
-    "forthommel": ["proton-pog"],
     "cardinia": ["tau-pog"],
     "IzaakWN": ["tau-pog"],
     "mbluj": ["tau-pog"],

@@ -114,6 +114,13 @@
       ],
       "end_date": 1772841600,
       "start_date": 1781049600
+    },
+    {
+      "category": [
+        "alca",
+        "db"
+      ],
+      "start_date": 1784505600
     }
   ],
   "ErnestaP": [
@@ -544,6 +551,7 @@
         "alca",
         "db"
       ],
+      "end_date": 1784505600,
       "start_date": 1772841600
     }
   ],

@@ -26,6 +26,7 @@
       "category": [
         "pdmv"
       ],
+      "end_date": 1789603200,
       "start_date": 1772841600
     }
   ],
@@ -631,6 +632,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1788480000
+    },
+    {
+      "category": [
+        "tracking-pog"
+      ],
+      "start_date": 1789603200
     }
   ],
   "bellan": [
@@ -1143,6 +1150,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1788998400
+    },
+    {
+      "category": [
+        "xpog"
+      ],
+      "start_date": 1789603200
     }
   ],
   "epalencia": [
@@ -1373,6 +1386,7 @@
       "category": [
         "xpog"
       ],
+      "end_date": 1789603200,
       "start_date": 1772841600
     }
   ],
@@ -3037,6 +3051,12 @@
         "pdmv"
       ],
       "end_date": 1772841600,
+      "start_date": 1789603200
+    },
+    {
+      "category": [
+        "pdmv"
+      ],
       "start_date": 1789603200
     }
   ],

@@ -733,6 +733,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1789430400
+    },
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
     }
   ],
   "cardinia": [
@@ -887,6 +893,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1789430400
+    },
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
     }
   ],
   "cschwick": [
@@ -917,6 +929,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1789430400,
       "start_date": 1772841600
     }
   ],
@@ -2547,6 +2560,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1789430400
+    },
+    {
+      "category": [
+        "tau-pog"
+      ],
+      "start_date": 1789430400
     }
   ],
   "pohsun": [
@@ -2665,6 +2684,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1789430400,
       "start_date": 1772841600
     }
   ],
@@ -3284,6 +3304,12 @@
         "hgcal-dpg"
       ],
       "end_date": 1772841600,
+      "start_date": 1789430400
+    },
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
       "start_date": 1789430400
     }
   ],

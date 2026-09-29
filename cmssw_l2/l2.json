@@ -28,6 +28,12 @@
       ],
       "end_date": 1789603200,
       "start_date": 1772841600
+    },
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1772841600
     }
   ],
   "Alejandro1400": [
@@ -110,6 +116,7 @@
       "category": [
         "heterogeneous"
       ],
+      "end_date": 1772841600,
       "start_date": 1788220800
     }
   ],
@@ -127,6 +134,7 @@
         "alca",
         "db"
       ],
+      "end_date": 1772841600,
       "start_date": 1784505600
     }
   ],
@@ -234,6 +242,7 @@
       "category": [
         "heterogeneous"
       ],
+      "end_date": 1772841600,
       "start_date": 1788220800
     }
   ],
@@ -481,6 +490,13 @@
       "category": [
         "gem-dpg"
       ],
+      "end_date": 1772841600,
+      "start_date": 1773705600
+    },
+    {
+      "category": [
+        "gem-dpg"
+      ],
       "start_date": 1773705600
     }
   ],
@@ -566,6 +582,13 @@
       ],
       "end_date": 1784505600,
       "start_date": 1772841600
+    },
+    {
+      "category": [
+        "alca",
+        "db"
+      ],
+      "start_date": 1772841600
     }
   ],
   "barbaralvarez": [
@@ -637,6 +660,7 @@
       "category": [
         "tracking-pog"
       ],
+      "end_date": 1772841600,
       "start_date": 1789603200
     }
   ],
@@ -670,7 +694,14 @@
       "category": [
         "lumi-pog"
       ],
+      "end_date": 1772841600,
       "start_date": 1778630400
+    },
+    {
+      "category": [
+        "lumi-pog"
+      ],
+      "start_date": 1775692800
     }
   ],
   "benkrikler": [
@@ -745,6 +776,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1772841600,
       "start_date": 1789430400
     }
   ],
@@ -905,6 +937,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1772841600,
       "start_date": 1789430400
     }
   ],
@@ -922,6 +955,13 @@
       ],
       "end_date": 1778630400,
       "start_date": 1772841600
+    },
+    {
+      "category": [
+        "lumi-pog"
+      ],
+      "end_date": 1775692800,
+      "start_date": 1772841600
     }
   ],
   "cseez": [
@@ -937,6 +977,12 @@
         "hgcal-dpg"
       ],
       "end_date": 1789430400,
+      "start_date": 1772841600
+    },
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
       "start_date": 1772841600
     }
   ],
@@ -1155,6 +1201,7 @@
       "category": [
         "xpog"
       ],
+      "end_date": 1772841600,
       "start_date": 1789603200
     }
   ],
@@ -1388,6 +1435,12 @@
       ],
       "end_date": 1789603200,
       "start_date": 1772841600
+    },
+    {
+      "category": [
+        "xpog"
+      ],
+      "start_date": 1772841600
     }
   ],
   "fwyzard": [
@@ -1475,6 +1528,7 @@
       "category": [
         "heterogeneous"
       ],
+      "end_date": 1772841600,
       "start_date": 1788220800
     }
   ],
@@ -1744,6 +1798,13 @@
       ],
       "end_date": 1773705600,
       "start_date": 1772841600
+    },
+    {
+      "category": [
+        "gem-dpg"
+      ],
+      "end_date": 1773705600,
+      "start_date": 1772841600
     }
   ],
   "juska": [
@@ -1762,6 +1823,13 @@
       ],
       "end_date": 1773705600,
       "start_date": 1618358400
+    },
+    {
+      "category": [
+        "gem-dpg"
+      ],
+      "end_date": 1773705600,
+      "start_date": 1772841600
     },
     {
       "category": [
@@ -1790,6 +1858,13 @@
     }
   ],
   "kfjack": [
+    {
+      "category": [
+        "pdmv"
+      ],
+      "end_date": 1772841600,
+      "start_date": 1776643200
+    },
     {
       "category": [
         "pdmv"
@@ -1843,6 +1918,13 @@
         "lumi-pog"
       ],
       "end_date": 1778630400,
+      "start_date": 1772841600
+    },
+    {
+      "category": [
+        "lumi-pog"
+      ],
+      "end_date": 1775692800,
       "start_date": 1772841600
     }
   ],
@@ -2371,6 +2453,13 @@
       ],
       "end_date": 1778630400,
       "start_date": 1772841600
+    },
+    {
+      "category": [
+        "dqm"
+      ],
+      "end_date": 1778630400,
+      "start_date": 1772841600
     }
   ],
   "nowaythatsok": [
@@ -2385,7 +2474,14 @@
       "category": [
         "lumi-pog"
       ],
+      "end_date": 1772841600,
       "start_date": 1778630400
+    },
+    {
+      "category": [
+        "lumi-pog"
+      ],
+      "start_date": 1775692800
     }
   ],
   "nsmith-": [
@@ -2555,6 +2651,7 @@
       "category": [
         "heterogeneous"
       ],
+      "end_date": 1772841600,
       "start_date": 1788220800
     }
   ],
@@ -2579,6 +2676,7 @@
       "category": [
         "tau-pog"
       ],
+      "end_date": 1772841600,
       "start_date": 1789430400
     }
   ],
@@ -2700,6 +2798,12 @@
       ],
       "end_date": 1789430400,
       "start_date": 1772841600
+    },
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1772841600
     }
   ],
   "rseidita": [
@@ -2750,6 +2854,7 @@
       "category": [
         "heterogeneous"
       ],
+      "end_date": 1772841600,
       "start_date": 1788220800
     }
   ],
@@ -2947,6 +3052,13 @@
       "category": [
         "pdmv"
       ],
+      "end_date": 1772841600,
+      "start_date": 1776643200
+    },
+    {
+      "category": [
+        "pdmv"
+      ],
       "start_date": 1776643200
     }
   ],
@@ -3057,6 +3169,7 @@
       "category": [
         "pdmv"
       ],
+      "end_date": 1772841600,
       "start_date": 1789603200
     }
   ],
@@ -3330,6 +3443,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1772841600,
       "start_date": 1789430400
     }
   ],
@@ -3359,6 +3473,13 @@
     }
   ],
   "yeckang": [
+    {
+      "category": [
+        "gem-dpg"
+      ],
+      "end_date": 1772841600,
+      "start_date": 1773705600
+    },
     {
       "category": [
         "gem-dpg"

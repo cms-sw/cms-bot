@@ -1376,7 +1376,15 @@
       "category": [
         "proton-pog"
       ],
+      "end_date": 1790553600,
       "start_date": 1729036800
+    },
+    {
+      "category": [
+        "reconstruction",
+        "proton-pog"
+      ],
+      "start_date": 1790553600
     }
   ],
   "francescobrivio": [
@@ -2205,7 +2213,15 @@
         "operations",
         "orp"
       ],
+      "end_date": 1790553600,
       "start_date": 1720569600
+    },
+    {
+      "category": [
+        "operations",
+        "orp"
+      ],
+      "start_date": 1790553600
     }
   ],
   "mariadalfonso": [

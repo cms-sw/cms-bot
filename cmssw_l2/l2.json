@@ -104,6 +104,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "EltonSh": [
@@ -221,6 +227,12 @@
         "heterogeneous"
       ],
       "end_date": 1772841600,
+      "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
       "start_date": 1788220800
     }
   ],
@@ -1431,6 +1443,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "giamman": [
@@ -2505,6 +2523,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "pmandrik": [
@@ -2686,6 +2710,12 @@
         "heterogeneous"
       ],
       "end_date": 1772841600,
+      "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
       "start_date": 1788220800
     }
   ],

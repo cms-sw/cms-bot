@@ -344,6 +344,7 @@ CMSSW_CATEGORIES = {
         "PerfTools/Perfetto",
         "PerfTools/PeriodicAllocMonitorPreload",
         "PerfTools/ThresholdAbortAllocMonitorPreload",
+        "PerfTools/VTune",
         "Utilities/DCacheAdaptor",
         "Utilities/DavixAdaptor",
         "Utilities/General",

@@ -33,6 +33,7 @@
       "category": [
         "pdmv"
       ],
+      "end_date": 1789603200,
       "start_date": 1772841600
     }
   ],
@@ -118,6 +119,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "EltonSh": [
@@ -136,6 +143,13 @@
       ],
       "end_date": 1772841600,
       "start_date": 1784505600
+    },
+    {
+      "category": [
+        "alca",
+        "db"
+      ],
+      "start_date": 1781049600
     }
   ],
   "ErnestaP": [
@@ -243,6 +257,12 @@
         "heterogeneous"
       ],
       "end_date": 1772841600,
+      "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
       "start_date": 1788220800
     }
   ],
@@ -588,6 +608,7 @@
         "alca",
         "db"
       ],
+      "end_date": 1781049600,
       "start_date": 1772841600
     }
   ],
@@ -662,6 +683,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1789603200
+    },
+    {
+      "category": [
+        "tracking-pog"
+      ],
+      "start_date": 1788480000
     }
   ],
   "bellan": [
@@ -777,6 +804,12 @@
         "hgcal-dpg"
       ],
       "end_date": 1772841600,
+      "start_date": 1789430400
+    },
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
       "start_date": 1789430400
     }
   ],
@@ -939,6 +972,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1789430400
+    },
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
+      "start_date": 1789430400
     }
   ],
   "cschwick": [
@@ -983,6 +1022,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1789430400,
       "start_date": 1772841600
     }
   ],
@@ -1203,6 +1243,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1789603200
+    },
+    {
+      "category": [
+        "xpog"
+      ],
+      "start_date": 1788998400
     }
   ],
   "epalencia": [
@@ -1440,6 +1486,7 @@
       "category": [
         "xpog"
       ],
+      "end_date": 1788998400,
       "start_date": 1772841600
     }
   ],
@@ -1529,6 +1576,12 @@
         "heterogeneous"
       ],
       "end_date": 1772841600,
+      "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
       "start_date": 1788220800
     }
   ],
@@ -2653,6 +2706,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
+      "start_date": 1788220800
     }
   ],
   "pmandrik": [
@@ -2677,6 +2736,12 @@
         "tau-pog"
       ],
       "end_date": 1772841600,
+      "start_date": 1789430400
+    },
+    {
+      "category": [
+        "tau-pog"
+      ],
       "start_date": 1789430400
     }
   ],
@@ -2803,6 +2868,7 @@
       "category": [
         "hgcal-dpg"
       ],
+      "end_date": 1789430400,
       "start_date": 1772841600
     }
   ],
@@ -2855,6 +2921,12 @@
         "heterogeneous"
       ],
       "end_date": 1772841600,
+      "start_date": 1788220800
+    },
+    {
+      "category": [
+        "heterogeneous"
+      ],
       "start_date": 1788220800
     }
   ],
@@ -3171,6 +3243,12 @@
       ],
       "end_date": 1772841600,
       "start_date": 1789603200
+    },
+    {
+      "category": [
+        "pdmv"
+      ],
+      "start_date": 1789603200
     }
   ],
   "theofil": [
@@ -3444,6 +3522,12 @@
         "hgcal-dpg"
       ],
       "end_date": 1772841600,
+      "start_date": 1789430400
+    },
+    {
+      "category": [
+        "hgcal-dpg"
+      ],
       "start_date": 1789430400
     }
   ],

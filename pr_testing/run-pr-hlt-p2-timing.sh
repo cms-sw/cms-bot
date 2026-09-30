@@ -246,7 +246,8 @@ if [ "$CMSSW_VERSION_NUMBER" -ge 1700 ]; then
   </div></div>'
 fi
 
-cat > $JENKINS_UPLOAD_DIR/hlt-p2-timing/index.html << EOF
+if [ -d "$JENKINS_UPLOAD_DIR/hlt-p2-timing" ] ; then
+    cat > $JENKINS_UPLOAD_DIR/hlt-p2-timing/index.html << EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -327,6 +328,7 @@ ${CSV_SECTION}
 </body>
 </html>
 EOF
+fi
 
 rm -rf $WORKSPACE/json_upload $WORKSPACE/rundir
 prepare_upload_results

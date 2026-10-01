@@ -640,6 +640,10 @@ echo "COMPARISON_IB;$COMPARISON_REL" >> ${RESULTS_FILE}
 PR_EXTERNAL_REPO=""
 TEST_DASGOCLIENT=false
 SKIP_STATIC_CHECKS=false
+case $SCRAM_ARCH in 
+  *_amd64_* ) ;;
+  * ) SKIP_STATIC_CHECKS=true ;;
+esac
 [ $(echo ",${SKIP_TESTS}," | grep ',static,' | wc -l) -gt 0 ] && SKIP_STATIC_CHECKS=true
 if ${BUILD_EXTERNAL} ; then
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true

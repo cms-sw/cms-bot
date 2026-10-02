@@ -418,26 +418,33 @@ pushd $CMSSW_IB
     git cms-init --upstream-only
   fi
   mv src src.init
+  mkdir src
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -eq 0 ] ; then
-    rsync -a src.init/ src/
-    MERGE_OK=false
-    for PR in $(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "cms-sw/cmssw#"); do
-      MERGE_OK=true
-      PR_NR=$(echo ${PR} | sed 's/.*#//')
-      if ! git cms-merge-topic --ssh -u ${PR_NR} ; then
-        MERGE_OK=false
-        break
+    if [ $(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "cms-sw/cmssw#" | wc -l) -gt 0 ] ; then
+      rsync -a src.init/ src/
+      MERGE_OK=false
+      for PR in $(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "cms-sw/cmssw#" | sed 's|.*#||'); do
+        MERGE_OK=true
+        if ! git cms-merge-topic --ssh -u ${PR} ; then
+          MERGE_OK=false
+          break
+        else
+          curl -s https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/${PR}.diff | grep '^diff ' | tr ' ' '\n' | grep '^a/\|^b/' | sed 's|^a/||;s|^b/||' >> $WORKSPACE/all-cmssw-changed-files.txt || true
+        fi
+      done
+      if $MERGE_OK ; then
+        cat $WORKSPACE/all-cmssw-changed-files.txt | sort | uniq > $WORKSPACE/cmssw-changed-files.txt
+        rm -f $WORKSPACE/all-cmssw-changed-files.txt
+        echo "Changed files cms-sw/cmssw"
+        cat $WORKSPACE/cmssw-changed-files.txt
+        if should_enable_gpu_tests $WORKSPACE/cmssw-changed-files.txt ; then
+          SELECTED_GPU_TYPES=$(IFS=,; echo "${ALL_GPU_TYPES[*]}")
+          ENABLE_BOT_TESTS=$(echo "${ENABLE_BOT_TESTS} ${ALL_GPU_TYPES[*]}" | tr ' ' '\n' | sort | grep -v '^$' | uniq | tr '\n' ' ')
+          echo "Auto enabled GPU tests: ${SELECTED_GPU_TYPES}"
+        fi
       fi
-    done
-    if $MERGE_OK ; then
-      (cd src && git diff --name-only $CMSSW_VERSION > $WORKSPACE/cmssw-changed-files.txt)
-      if should_enable_gpu_tests $WORKSPACE/cmssw-changed-files.txt ; then
-        SELECTED_GPU_TYPES=$(IFS=,; echo "${ALL_GPU_TYPES[*]}")
-        ENABLE_BOT_TESTS=$(echo "${ENABLE_BOT_TESTS} ${ALL_GPU_TYPES[*]}" | tr ' ' '\n' | sort | grep -v '^$' | uniq | tr '\n' ' ')
-        echo "Auto enabled GPU tests: ${SELECTED_GPU_TYPES}"
-      fi
+      rm -rf src; mkdir src
     fi
-    rm -rf src; mkdir src
   fi
   eval $(scram unset -sh)
   set -x

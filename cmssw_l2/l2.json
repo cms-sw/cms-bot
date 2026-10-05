@@ -2233,6 +2233,14 @@
       "start_date": 1594080000
     }
   ],
+  "martatornago": [
+    {
+      "category": [
+        "ecal-dpg"
+      ],
+      "start_date": 1791158400
+    }
+  ],
   "martinamalberti": [
     {
       "category": [
@@ -2471,6 +2479,7 @@
       "category": [
         "ecal-dpg"
       ],
+      "end_date": 1791158400,
       "start_date": 1791158400
     }
   ],

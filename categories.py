@@ -113,7 +113,7 @@ CMSSW_L2 = {
     "mdelcourt": ["trk-dpg"],
     "henriettepetersen": ["trk-dpg"],
     "bmarzocc": ["ecal-dpg"],
-    "thomreis": ["ecal-dpg"],
+    "mtornago": ["ecal-dpg"],
     "wang-hui": ["hcal-dpg"],
     "jhakala": ["hcal-dpg"],
     "abdoulline": ["hcal-dpg"],

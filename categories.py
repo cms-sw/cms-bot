@@ -93,7 +93,7 @@ CMSSW_L2 = {
     "ftenchini": ["operations"],
     "BenjaminRS": ["l1"],
     "quinnanm": ["l1"],
-    "rseidita": ["dqm"],
+    "alaperto": ["dqm"],
     "ctarricone": ["dqm"],
     "smorovic": ["daq"],
     "smuzaffar": ["core"],
@@ -165,6 +165,7 @@ CMSSW_L2 = {
     "bdanzi": ["tracking-pog"],
     # PPD
     "abenecke": ["ppd"],
+    "rseidita": ["ppd"],
     "vlimant": ["ppd"],
     "gabrielmscampos": ["dqm"],
     # ML

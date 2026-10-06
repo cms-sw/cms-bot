@@ -16,6 +16,7 @@ from github_utils import (
     get_pr_commits,
     get_pr_latest_commit,
 )
+from cmsbot_versions import get_cmsbot_version
 
 setdefaulttimeout(120)
 import sys
@@ -89,7 +90,16 @@ def main():
     if getattr(repo_config, "REQUEST_PROCESSOR", "cms-bot") != "cms-bot":
         return
 
+    from github import Github
+
+    gh = Github(login_or_token=get_gh_token(opts.repository), per_page=100)
+    repo = gh.get_repo(opts.repository)
+    api_rate_limits(gh)
+    repo_issue = repo.get_issue(pr_id)
+
     version = int(os.getenv("CMS_BOT_VERSION", 1))
+    if version == 1:
+        version = get_cmsbot_version({}, repo_issue.raw_data)
     if version != 1:
         version_suffix = f"_v{version}"
     else:
@@ -97,17 +107,11 @@ def main():
 
     module = importlib.import_module(f"process_pr{version_suffix}")
     process_pr = module.process_pr
-
-    from github import Github
-
-    gh = Github(login_or_token=get_gh_token(opts.repository), per_page=100)
-    repo = gh.get_repo(opts.repository)
-    api_rate_limits(gh)
     process_pr(
         repo_config,
         gh,
         repo,
-        repo.get_issue(pr_id),
+        repo_issue,
         opts.dry_run,
         force=opts.force,
         loglevel="DEBUG" if opts.debug else "INFO",

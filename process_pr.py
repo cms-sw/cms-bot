@@ -1336,9 +1336,7 @@ def process_pr(
     if re.search("<new-?bot></new-?bot>", issue.body or ""):
         logger.info("Testing new cms-bot")
         with open("cms-bot.properties", "w") as f:
-            f.write("CMS_BOT_TEST_BRANCH=sign-hashes-not-commits\n")
             f.write("FORCE_PULL_REQUEST={0}\n".format(issue.number))
-            f.write("CMS_BOT_TEST_PRS={0}#{1}\n".format(repo.full_name, issue.number))
             f.write("CMS_BOT_VERSION=2\n")
         return
 

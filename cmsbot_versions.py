@@ -7,15 +7,15 @@ CMSBOT_V2 = {
 }
 
 
-def get_cmsbot_version(payload):
-    version = "1"
-    obj = None
-    if "issue" in payload:
-        obj = payload["issue"]
-    elif "pull_request" in payload:
-        obj = payload["pull_request"]
-    else:
-        return version
+def get_cmsbot_version(payload, obj=None):
+    version = 1
+    if obj is None:
+        if "issue" in payload:
+            obj = payload["issue"]
+        elif "pull_request" in payload:
+            obj = payload["pull_request"]
+        else:
+            return version
     user = obj.get("user", {}).get("login")
     if not user:
         return version
@@ -33,5 +33,5 @@ def get_cmsbot_version(payload):
         created_at = created_at.replace(tzinfo=timezone.utc)
     for data in user_data:
         if created_at >= data[0]:
-            return str(data[1])
+            return data[1]
     return version

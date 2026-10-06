@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 # User: [(date_after, bot_version),[(date_after, bot_version)]
 CMSBOT_V2 = {
-    "smuzaffar": [(datetime(2025, 10, 6, 0, 0, 0, tzinfo=timezone.utc), 2)],
+    "smuzaffar": [(datetime(2026, 10, 6, 0, 0, 0, tzinfo=timezone.utc), 2)],
 }
 
 

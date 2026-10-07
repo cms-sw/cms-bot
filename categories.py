@@ -114,7 +114,7 @@ CMSSW_L2 = {
     "henriettepetersen": ["trk-dpg"],
     "bmarzocc": ["ecal-dpg"],
     "martatornago": ["ecal-dpg"],
-    "wang-hui": ["hcal-dpg"],
+    "JHiltbrand": ["hcal-dpg"],
     "jhakala": ["hcal-dpg"],
     "abdoulline": ["hcal-dpg"],
     "igv4321": ["hcal-dpg"],

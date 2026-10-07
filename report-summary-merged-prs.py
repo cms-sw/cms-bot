@@ -21,7 +21,7 @@ from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
 from releases import CMSSW_DEVEL_BRANCH
 from socket import setdefaulttimeout
 
-from githublabels import LABEL_TYPES, TYPE_COMMANDS
+from githublabels import LABEL_TYPES, TYPE_COMMANDS, COMMON_LABELS
 from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, CMSSW_CATEGORIES
 
 setdefaulttimeout(120)
@@ -1654,6 +1654,12 @@ def get_cmssw_labels():
             cmssw_labels["%s-%s" % (cat, state)] = label_color
         for cat in EXTERNAL_CATEGORIES:
             cmssw_labels["%s-%s" % (cat, state)] = label_color
+    for lab in COMMON_LABELS:
+        lab_prefix = lab.split("-")[0]
+        if lab_prefix in ["tests", "fully", "pending"]:
+            continue
+        if not lab in cmssw_labels:
+            cmssw_labels[lab] = COMMON_LABELS[lab]
     return cmssw_labels
 
 

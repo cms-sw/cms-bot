@@ -5704,7 +5704,7 @@ def process_ci_test_results(context: PRContext) -> None:
     and posts +1/-1 comments based on test outcomes.
 
     Only posts results if:
-    1. "tests" category state is NOT pending (tests have completed)
+    1. The individual test status is NOT pending (that test has completed)
     2. Status description is NOT "Finished" (hasn't been processed yet)
 
     After posting, updates the status description to "Finished" to prevent
@@ -5713,9 +5713,11 @@ def process_ci_test_results(context: PRContext) -> None:
     if not context.is_pr or not context.pr:
         return
 
-    # Check if tests category is still pending - if so, nothing to report yet
-    tests_state = _get_tests_approval_state(context)
-    if tests_state == ApprovalState.PENDING:
+    # Tests failed to start (unknown release etc.) - nothing to report.
+    # NOTE: do not gate on the "tests" approval state here: it is PENDING for
+    # optional-only runs with failures, but those results still must be reported.
+    # Individual pending results are skipped in the loop below.
+    if has_unknown_release_error(context):
         return
 
     statuses = get_ci_test_statuses(context)

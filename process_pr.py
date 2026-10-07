@@ -76,7 +76,7 @@ except:  # pragma: no cover
 
 try:
     from categories import external_to_package
-except:  # pragma: no cover
+except:  # pragma: no cover testing
 
     def external_to_package(*args):
         return ""

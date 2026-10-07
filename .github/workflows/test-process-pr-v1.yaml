@@ -5,6 +5,7 @@ on:
     paths:
       - process_pr.py
       - .github/workflows/test-process-pr-v1.yaml
+      - github_utils.py
 
 jobs:
   build:

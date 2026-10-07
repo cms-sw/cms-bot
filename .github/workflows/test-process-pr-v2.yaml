@@ -6,6 +6,7 @@ on:
       - process_pr_v2.py
       - tests/test_process_pr_v2.py
       - .github/workflows/test-process-pr-v2.yaml
+      - github_utils.py
 
 jobs:
   build:

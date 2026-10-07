@@ -194,6 +194,14 @@
       "start_date": 1753747200
     }
   ],
+  "JHiltbrand": [
+    {
+      "category": [
+        "hcal-dpg"
+      ],
+      "start_date": 1791331200
+    }
+  ],
   "JanChyczynski": [
     {
       "category": [
@@ -3546,6 +3554,7 @@
       "category": [
         "hcal-dpg"
       ],
+      "end_date": 1791331200,
       "start_date": 1647216000
     }
   ],

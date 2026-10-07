@@ -429,6 +429,14 @@
       "start_date": 1748995200
     }
   ],
+  "alaperto": [
+    {
+      "category": [
+        "dqm"
+      ],
+      "start_date": 1791158400
+    }
+  ],
   "alberto-sanchez": [
     {
       "category": [
@@ -2910,7 +2918,14 @@
       "category": [
         "dqm"
       ],
+      "end_date": 1791158400,
       "start_date": 1730246400
+    },
+    {
+      "category": [
+        "ppd"
+      ],
+      "start_date": 1791158400
     }
   ],
   "rvenditti": [

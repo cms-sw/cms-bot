@@ -108,7 +108,7 @@ def check_rate_limits(msg=True, when_slow=False, prefix=""):
     )
 
 
-def api_rate_limits_repo(obj, msg=True, when_slow=False, prefix=""):
+def api_rate_limits_obj(obj, msg=True, when_slow=False, prefix=""):
     global GH_RATE_LIMIT
     GH_RATE_LIMIT = [
         int(obj.raw_headers["x-ratelimit-remaining"]),
@@ -119,14 +119,8 @@ def api_rate_limits_repo(obj, msg=True, when_slow=False, prefix=""):
 
 
 def api_rate_limits(gh, msg=True, when_slow=False, prefix=""):
-    global GH_RATE_LIMIT
     gh.get_rate_limit()
-    GH_RATE_LIMIT = [
-        int(gh.rate_limiting[0]),
-        int(gh.rate_limiting[1]),
-        int(gh.rate_limiting_resettime),
-    ]
-    check_rate_limits(msg, when_slow, prefix=prefix)
+    api_rate_limits_obj(gh, msg, when_slow, prefix=prefix)
 
 
 def get_ported_PRs(repo, src_branch, des_branch):

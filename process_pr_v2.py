@@ -5982,9 +5982,6 @@ def update_pr_status(context: PRContext) -> tuple[set[str], set[str]]:
         # signature-based label. Stale "merged" labels are removed.
         # Note: "tests-pending" and "signatures-pending" are NOT used as overall labels
         # because they conflict with category labels. Use "pending-signatures" instead.
-        if "merged" in old_labels:
-            labels_to_remove.add("merged")
-
         label_state = determine_signature_state(context)
 
         if label_state == PRState.FULLY_SIGNED:

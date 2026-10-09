@@ -5394,6 +5394,14 @@ def determine_pr_state(context: PRContext) -> PRState:
     if context.pr and context.pr.merged:
         return PRState.MERGED
 
+    return determine_signature_state(context)
+
+
+def determine_signature_state(context: PRContext) -> PRState:
+    """
+    Determine FULLY_SIGNED / SIGNATURES_PENDING from category signatures only,
+    ignoring whether the PR is merged (used for labels, like v1: no "merged" label).
+    """
     category_states = compute_category_approval_states(context)
 
     # Categories to skip for fully-signed determination
@@ -5928,8 +5936,6 @@ def update_pr_status(context: PRContext) -> tuple[set[str], set[str]]:
 
     # Handle PR-specific state labels
     if context.is_pr:
-        pr_state = determine_pr_state(context)
-
         # Handle category state labels (<cat>-pending, <cat>-approved, <cat>-rejected, <cat>-started)
         # This must come FIRST so we know what categories are pending
         category_states = compute_category_approval_states(context)
@@ -5972,26 +5978,16 @@ def update_pr_status(context: PRContext) -> tuple[set[str], set[str]]:
         # Overall state labels
         # - "pending-signatures" = any category is pending or rejected (not fully signed)
         # - "fully-signed" = all categories approved
-        # - "merged" = PR is merged
+        # Note: there is no "merged" label (v1 behaviour): a merged PR keeps its
+        # signature-based label. Stale "merged" labels are removed.
         # Note: "tests-pending" and "signatures-pending" are NOT used as overall labels
         # because they conflict with category labels. Use "pending-signatures" instead.
-        overall_state_labels = [
-            "pending-signatures",
-            "fully-signed",
-            "fully-signed-draft",
-            "merged",
-        ]
+        if "merged" in old_labels:
+            labels_to_remove.add("merged")
 
-        if pr_state == PRState.MERGED:
-            # Merged - only "merged" label
-            new_labels.add("merged")
-            if "merged" not in old_labels:
-                labels_to_add.add("merged")
-            # Remove other overall state labels
-            for label in overall_state_labels:
-                if label != "merged" and label in old_labels:
-                    labels_to_remove.add(label)
-        elif pr_state == PRState.FULLY_SIGNED:
+        label_state = determine_signature_state(context)
+
+        if label_state == PRState.FULLY_SIGNED:
             # Fully signed
             if context.is_draft:
                 new_labels.add("fully-signed-draft")
@@ -6005,18 +6001,16 @@ def update_pr_status(context: PRContext) -> tuple[set[str], set[str]]:
                     labels_to_add.add("fully-signed")
                 if "fully-signed-draft" in old_labels:
                     labels_to_remove.add("fully-signed-draft")
-            # Remove pending-signatures and merged
+            # Remove pending-signatures
             if "pending-signatures" in old_labels:
                 labels_to_remove.add("pending-signatures")
-            if "merged" in old_labels:
-                labels_to_remove.add("merged")
         else:
             # Not fully signed (SIGNATURES_PENDING)
             new_labels.add("pending-signatures")
             if "pending-signatures" not in old_labels:
                 labels_to_add.add("pending-signatures")
-            # Remove fully-signed labels and merged
-            for label in ["fully-signed", "fully-signed-draft", "merged"]:
+            # Remove fully-signed labels
+            for label in ["fully-signed", "fully-signed-draft"]:
                 if label in old_labels:
                     labels_to_remove.add(label)
 

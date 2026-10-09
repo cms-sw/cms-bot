@@ -10301,6 +10301,35 @@ class TestTestResultPostingDeduplication:
                     # Should NOT post because tests are still pending
                     mock_post.assert_not_called()
 
+    def test_posts_summary_for_failed_optional_only_tests(self):
+        """Regression: optional-only run with failure must still post the result summary.
+
+        The "tests" category stays PENDING in this case, which used to suppress
+        the summary comment.
+        """
+        from process_pr_v2 import ApprovalState, _get_tests_approval_state, process_ci_test_results
+
+        context = self._create_context_with_statuses(
+            statuses_data=[
+                (
+                    "cms/10246/el8_amd64_gcc12/optional",
+                    "failure",
+                    "Tests failed",
+                    "http://example.com/SDT/jenkins-artifacts/123",
+                ),
+            ]
+        )
+        context.ignore_tests_rejected = None
+
+        with patch("process_pr_v2.has_unknown_release_error", return_value=False):
+            assert _get_tests_approval_state(context) == ApprovalState.PENDING
+            with patch("process_pr_v2.post_bot_comment") as mock_post:
+                with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
+                    mock_fetch.return_value = (0, "Test results here")
+                    process_ci_test_results(context)
+                    mock_post.assert_called_once()
+                    assert mock_post.call_args[0][1].startswith("-1")
+
     def test_posts_when_tests_approved_and_not_finished(self):
         """Test that results are posted when tests approved and not yet finished."""
         from process_pr_v2 import process_ci_test_results

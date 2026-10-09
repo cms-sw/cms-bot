@@ -4428,6 +4428,10 @@ def _execute_build_test_command(
             extra_packages = context.test_params["EXTRA_PACKAGES"].split(",")
         # Note: build_full from command always takes precedence
 
+    # Normalize PR references (full URLs / bare #N -> ORG/REPO#N), as the Jenkins
+    # job cannot check out a PR given by a full URL.
+    prs = get_prs_list_from_string(",".join(prs), f"{context.repo_org}/{context.repo_name}")
+
     # Create test request
     request = TestRequest(
         verb=result.verb,

@@ -108,16 +108,6 @@ def check_rate_limits(msg=True, when_slow=False, prefix=""):
     )
 
 
-def api_rate_limits_repo(obj, msg=True, when_slow=False, prefix=""):
-    global GH_RATE_LIMIT
-    GH_RATE_LIMIT = [
-        int(obj.raw_headers["x-ratelimit-remaining"]),
-        int(obj.raw_headers["x-ratelimit-limit"]),
-        int(obj.raw_headers["x-ratelimit-reset"]),
-    ]
-    check_rate_limits(msg, when_slow, prefix=prefix)
-
-
 def api_rate_limits(gh, msg=True, when_slow=False, prefix=""):
     global GH_RATE_LIMIT
     GH_RATE_LIMIT = [

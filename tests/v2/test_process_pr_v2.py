@@ -3244,6 +3244,191 @@ class TestBuildTestCommandParsing:
         assert result.verb == "test"
         assert result.prs == ["cms-sw/cmssw#12345", "#67890"]
 
+    def test_get_prs_list_normalizes_full_urls(self):
+        """Full PR URLs / bare #N are converted to ORG/REPO#NUM for the Jenkins job."""
+        from process_pr_v2 import get_prs_list_from_string
+
+        assert get_prs_list_from_string(
+            "https://github.com/cms-sw/cmsdist/pull/9999,#12,cms-sw/cmssw#5", "cms-sw/cmssw"
+        ) == ["cms-sw/cmsdist#9999", "cms-sw/cmssw#12", "cms-sw/cmssw#5"]
+
+    @pytest.mark.parametrize(
+        "is_build, cmd_prs, params, expected",
+        [
+            (False, [], {}, False),  # no extra PRs
+            (False, ["cms-sw/cmsdist#1"], {}, True),  # `test with <pr>`
+            (False, [], {"PULL_REQUESTS": "cms-sw/cmsdist#1"}, True),  # test parameters
+            (True, ["cms-sw/cmsdist#1"], {}, False),  # last command is a build
+            (True, [], {"PULL_REQUESTS": "cms-sw/cmsdist#1"}, False),
+        ],
+    )
+    def test_needs_external(self, is_build, cmd_prs, params, expected):
+        """'requires-external' label rule (ported from v1)."""
+        from types import SimpleNamespace
+
+        from process_pr_v2 import needs_external
+
+        ctx = SimpleNamespace(
+            last_build_test_is_build=is_build,
+            last_build_test_prs=cmd_prs,
+            test_params=params,
+        )
+        assert needs_external(ctx) is expected
+
+    @pytest.mark.parametrize(
+        "is_pr, categories, states, expected",
+        [
+            # Issue, nothing assigned: pending-assignment, no overall label
+            (False, set(), {}, {"pending-assignment"}),
+            # Issue, category assigned, unsigned
+            (False, {"core"}, {"core": "PENDING"}, {"core-pending", "pending-signatures"}),
+            # Issue, category signed -> fully signed
+            (False, {"core"}, {"core": "APPROVED"}, {"core-approved", "fully-signed"}),
+            # PR never gets pending-assignment
+            (True, set(), {}, {"fully-signed"}),
+        ],
+    )
+    def test_issue_and_pr_state_labels(self, is_pr, categories, states, expected):
+        """Category/overall/pending-assignment labels (Issues behave like v1)."""
+        from process_pr_v2 import ApprovalState, PRState, update_pr_status
+
+        ctx = MagicMock()
+        ctx.is_pr = is_pr
+        ctx.is_draft = False
+        ctx.signing_categories = set(categories)
+        ctx.holds = []
+        ctx.pending_labels = set()
+        ctx.pending_labels_to_remove = set()
+        ctx.dry_run = True
+        ctx.issue.get_labels.return_value = []
+        approval = {c: ApprovalState[v] for c, v in states.items()}
+        signed = (
+            PRState.FULLY_SIGNED
+            if all(v == ApprovalState.APPROVED for v in approval.values())
+            else PRState.SIGNATURES_PENDING
+        )
+
+        with patch("process_pr_v2.compute_category_approval_states", return_value=approval), patch(
+            "process_pr_v2.determine_signature_state", return_value=signed
+        ), patch("process_pr_v2.get_labels_for_pr", return_value=set()), patch(
+            "process_pr_v2.needs_external", return_value=False
+        ), patch(
+            "process_pr_v2.has_compilation_warnings", return_value=False
+        ):
+            _, new_labels = update_pr_status(ctx)
+
+        assert new_labels == expected
+
+    def test_issue_signatures_without_files(self):
+        """Issues: signatures are valid without files; orp must be signed (v1)."""
+        from types import SimpleNamespace
+
+        from process_pr_v2 import (
+            ApprovalState,
+            CommentInfo,
+            PRState,
+            SigningChecks,
+            compute_category_approval_states,
+            determine_signature_state,
+        )
+
+        sig = CommentInfo(
+            timestamp="2026-01-01T00:00:00+00:00",
+            first_line="+1",
+            ctype="+1",
+            categories=["core"],
+            signed_files=[],
+            user="alice",
+        )
+        ctx = SimpleNamespace(
+            is_pr=False,
+            signing_categories={"core"},
+            cache=SimpleNamespace(comments={"1": sig}, current_file_versions=[]),
+            get_signing_checks_for_pr=lambda: SigningChecks(),
+        )
+        assert compute_category_approval_states(ctx) == {"core": ApprovalState.APPROVED}
+        assert determine_signature_state(ctx) == PRState.FULLY_SIGNED
+
+        # orp is assigned but unsigned: for issues it blocks fully-signed
+        ctx.signing_categories = {"core", "orp"}
+        assert determine_signature_state(ctx) == PRState.SIGNATURES_PENDING
+
+    def test_has_compilation_warnings(self):
+        """'compilation-warnings' comes from the latest result for the current commit (v1)."""
+        from datetime import datetime, timedelta, timezone
+        from types import SimpleNamespace
+
+        from process_pr_v2 import has_compilation_warnings
+
+        t0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+        def c(minutes, body, user="cmsbuild"):
+            return SimpleNamespace(
+                user=SimpleNamespace(login=user),
+                body=body,
+                created_at=t0 + timedelta(minutes=minutes),
+            )
+
+        def ctx(*comments):
+            return SimpleNamespace(
+                pr=SimpleNamespace(head=SimpleNamespace(sha="abc")),
+                cmsbuild_user="cmsbuild",
+                comments={i: x for i, x in enumerate(comments)},
+                last_commit=SimpleNamespace(
+                    commit=SimpleNamespace(author=SimpleNamespace(date=t0))
+                ),
+            )
+
+        warn = "+1\n\nTested at: abc\nCompilation Warnings: Yes"
+        assert has_compilation_warnings(ctx(c(1, warn)))
+        # Not from the bot, other sha, or before the last commit: ignored
+        assert not has_compilation_warnings(ctx(c(1, warn, user="someone")))
+        assert not has_compilation_warnings(ctx(c(1, warn.replace("abc", "def"))))
+        assert not has_compilation_warnings(ctx(c(-5, warn)))
+        # Latest result wins
+        assert not has_compilation_warnings(ctx(c(1, warn), c(2, "+1\n\nTested at: abc")))
+        assert not has_compilation_warnings(ctx(c(1, warn), c(2, "-1\n\nTested at: abc")))
+
+    def test_is_future_commit(self):
+        from datetime import datetime, timedelta, timezone
+        from types import SimpleNamespace
+
+        from process_pr_v2 import is_future_commit
+
+        def ctx(date):
+            return SimpleNamespace(
+                last_commit=SimpleNamespace(
+                    commit=SimpleNamespace(committer=SimpleNamespace(date=date))
+                )
+            )
+
+        # datetime.now() is frozen to FROZEN_TIME in process_pr_v2 (autouse fixture)
+        now = FROZEN_TIME
+        assert is_future_commit(ctx(now + timedelta(days=1)))
+        assert not is_future_commit(ctx(now - timedelta(days=1)))
+        assert not is_future_commit(SimpleNamespace(last_commit=None))
+
+    def test_labels_disabled_by_repo_config(self):
+        """repo_config.ADD_LABELS = False: labels are computed but never written (v1)."""
+        from process_pr_v2 import update_pr_status
+
+        ctx = MagicMock()
+        ctx.is_pr = False
+        ctx.signing_categories = set()
+        ctx.holds = []
+        ctx.pending_labels = set()
+        ctx.pending_labels_to_remove = set()
+        ctx.dry_run = False
+        ctx.repo_config.ADD_LABELS = False
+        ctx.issue.get_labels.return_value = []
+
+        with patch("process_pr_v2.compute_category_approval_states", return_value={}):
+            _, new_labels = update_pr_status(ctx)
+
+        assert "pending-assignment" in new_labels
+        ctx.issue.add_to_labels.assert_not_called()
+        ctx.issue.set_labels.assert_not_called()
+
     def test_parse_test_with_queue(self):
         """Test parsing 'test for el8_amd64_gcc12'."""
         result = parse_test_cmd("test for el8_amd64_gcc12")
@@ -3310,14 +3495,6 @@ class TestBuildTestCommandParsing:
         """Test that 'full' without 'using' raises error."""
         with pytest.raises(CmdParseError):
             parse_test_cmd("test full cmssw")
-
-    def test_get_prs_list_normalizes_full_urls(self):
-        """Full PR URLs / bare #N are converted to ORG/REPO#NUM for the Jenkins job."""
-        from process_pr_v2 import get_prs_list_from_string
-
-        assert get_prs_list_from_string(
-            "https://github.com/cms-sw/cmsdist/pull/9999,#12,cms-sw/cmssw#5", "cms-sw/cmssw"
-        ) == ["cms-sw/cmsdist#9999", "cms-sw/cmssw#12", "cms-sw/cmssw#5"]
 
 
 class TestBuildTestCommand:
@@ -6054,6 +6231,49 @@ class TestTypeCommand:
 
         assert result["pr_number"] == 1
         assert "bug-fix" in result["labels"]
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
+    def test_unmanaged_labels_are_removed(self, repo_config, record_mode, monkeypatch):
+        """Labels are recomputed from scratch: labels the bot doesn't produce are removed.
+
+        NOTE: needs recording (record_mode) like the other integration tests.
+        """
+        monkeypatch.setattr(
+            "process_pr_v2.TYPE_COMMANDS",
+            {"documentation": ["#0000ff", "doc(?:umentation)?", "mtype"]},
+        )
+        name = "test_unmanaged_labels_are_removed"
+        create_basic_pr_data(
+            name,
+            pr_number=1,
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}
+            ],
+            comments=[],
+            labels=["documentation", "some-manual-label"],  # neither produced by the bot
+        )
+
+        recorder = ActionRecorder(name, record_mode)
+        gh = MockGithub(name, recorder)
+        repo = MockRepository(name, recorder=recorder)
+        issue = MockIssue(name, number=1, recorder=recorder)
+
+        result = process_pr(
+            repo_config=repo_config,
+            gh=gh,
+            repo=repo,
+            issue=issue,
+            dryRun=False,
+            cmsbuild_user="cmsbuild",
+            loglevel="DEBUG",
+        )
+
+        assert "some-manual-label" not in result["labels"]
+        assert "documentation" not in result["labels"]
 
         if record_mode:
             recorder.save()

@@ -16,7 +16,8 @@
       "details": {
         "issue_number": 1,
         "labels": [
-          "backport"
+          "backport",
+          "pending-assignment"
         ]
       }
     },

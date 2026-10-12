@@ -3311,6 +3311,14 @@ class TestBuildTestCommandParsing:
         with pytest.raises(CmdParseError):
             parse_test_cmd("test full cmssw")
 
+    def test_get_prs_list_normalizes_full_urls(self):
+        """Full PR URLs / bare #N are converted to ORG/REPO#NUM for the Jenkins job."""
+        from process_pr_v2 import get_prs_list_from_string
+
+        assert get_prs_list_from_string(
+            "https://github.com/cms-sw/cmsdist/pull/9999,#12,cms-sw/cmssw#5", "cms-sw/cmssw"
+        ) == ["cms-sw/cmsdist#9999", "cms-sw/cmssw#12", "cms-sw/cmssw#5"]
+
 
 class TestBuildTestCommand:
     """Tests for build/test command execution."""

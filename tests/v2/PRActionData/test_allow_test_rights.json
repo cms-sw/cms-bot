@@ -1,9 +1,19 @@
 {
   "test_name": "test_allow_test_rights",
-  "action_count": 2,
+  "action_count": 3,
   "actions": [
     {
       "sequence": 1,
+      "action": "add_labels",
+      "details": {
+        "issue_number": 1,
+        "labels": [
+          "pending-assignment"
+        ]
+      }
+    },
+    {
+      "sequence": 2,
       "action": "create_comment",
       "details": {
         "issue_number": 1,
@@ -11,7 +21,7 @@
       }
     },
     {
-      "sequence": 2,
+      "sequence": 3,
       "action": "create_comment",
       "details": {
         "issue_number": 1,

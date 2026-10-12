@@ -16,6 +16,7 @@
       "details": {
         "issue_number": 1,
         "labels": [
+          "pending-assignment",
           "urgent"
         ]
       }

@@ -197,7 +197,7 @@ If a file is reverted to base, it disappears from `pr.get_files()`. On the next 
 - Its `FileVersion` entry is removed from `cache.file_versions`
 - Its categories are removed from `current_file_versions`
 - Any category no longer covered by remaining files is removed from the required set
-- Stale category labels (`<cat>-pending`, `<cat>-approved`, etc.) are removed by `update_pr_status()`
+- Stale category labels (`<cat>-pending`, `<cat>-approved`, etc.) are removed by `update_pr_status()` (labels are recomputed from scratch)
 - The PR updated message notes the removed categories
 
 ### Pre-Checks and Extra-Checks
@@ -275,14 +275,30 @@ Some functions check `pending_status_updates` first to see changes from the curr
 
 ## Label Management
 
-### Category State Labels
+### Recomputed From Scratch
 
-`update_pr_status()` maintains `<cat>-pending`, `<cat>-approved`, `<cat>-rejected`,
-and `<cat>-started` labels for each required category.
+`update_pr_status()` recomputes the full label set on every run. The target set is
+built only from state the bot derives itself:
 
-When a category is removed (e.g., because its file was reverted to base), all its state
-labels are removed automatically: the function scans existing labels for any that end with
-a state suffix but whose category is no longer in `current_categories`.
+- category state labels (`<cat>-pending|approved|rejected|started`)
+- the overall state label (table below)
+- file-based labels (`CMSSW_LABELS`)
+- `hold` (while any hold is active)
+- `pending-assignment` (Issues only, while no category has been assigned via `assign`; ported from v1)
+- `compilation-warnings` (latest bot test result for the current commit has `+1` and `Compilation Warnings: Yes`; ported from v1)
+- `requires-external` (extra PRs requested via `test with <prs>` or `test parameters: PULL_REQUESTS`, unless the last build/test command was a `build`; ported from v1)
+- labels produced by commands, collected in `pending_labels` (`type`, `urgent`,
+  `backport`, `allow-<user>`, `tests-<reason>`, ...), minus `pending_labels_to_remove`
+
+Labels to add = target − current; labels to remove = current − target. **Any label the
+bot does not produce (including labels set manually or by other tools) is removed.**
+This is safe because all comments are re-processed on every run, so `pending_labels` is
+always complete. Consequently stale category labels (e.g. when a file is reverted to
+base) and stale legacy labels (e.g. `merged`) disappear automatically.
+
+`repo_config.ADD_LABELS = False` disables label writes (labels are still computed so that
+state transitions and messages work). If the head commit is dated in the future, the bot only
+adds `future-commit` and stops processing the PR (as in v1).
 
 ### Overall State Labels
 
@@ -291,7 +307,21 @@ a state suffix but whose category is no longer in `current_categories`.
 | `pending-signatures` | Any category pending or rejected |
 | `fully-signed` | All categories approved |
 | `fully-signed-draft` | All categories approved, but PR is a draft |
-| `merged` | PR is merged |
+
+There is no `merged` label (v1 behaviour): a merged PR keeps its signature-based label.
+
+### Issues
+
+Issues use the same signing machinery as PRs, with these differences (as in v1):
+
+- Categories come only from `assign`/`unassign`; there are no files, tests, code-checks,
+  externals or ORP checks added automatically (`get_signing_checks()` is empty).
+- Signatures have no file scope and stay valid. They are recorded even if given before the
+  category is assigned (order-independent) and count once the category is assigned.
+- Labels: `<cat>-pending|approved|rejected` for assigned categories, `pending-assignment`
+  while none is assigned (no overall label then), otherwise `pending-signatures` /
+  `fully-signed`. `orp`, if assigned, must be signed (for PRs it is exempt).
+- When an Issue becomes `fully-signed`: "This issue is fully signed and ready to be closed."
 
 ## Bot Messages
 

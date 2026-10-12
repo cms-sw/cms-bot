@@ -1584,6 +1584,11 @@ def get_signing_checks(context: "PRContext") -> SigningChecks:
     Returns:
         SigningChecks with pre_checks and extra_checks lists
     """
+    # Issues have no pre/extra checks (no tests, code-checks, orp, externals):
+    # only manually assigned categories (`assign`) need signatures.
+    if not context.is_pr:
+        return SigningChecks()
+
     pre_checks: list[str] = []
     extra_checks: list[str] = []
 
@@ -2015,6 +2020,11 @@ class PRContext:
     # This is because build and test write to the same properties file
     # Tuple of (comment, parsed_result) or None
     pending_build_test_command: Optional[tuple[Any, Any]] = None
+
+    # State of the LAST valid build/test command, used for the "requires-external"
+    # label. Unlike pending_build_test_command it is NOT cleared by an abort (v1 behaviour).
+    last_build_test_is_build: bool = False
+    last_build_test_prs: list[str] = field(default_factory=list)
 
     # Code checks
     code_checks_requested: bool = False
@@ -2628,7 +2638,12 @@ def _handle_approval(
                 )
                 return False
 
-        elif category in context.signing_categories | set(signing_checks.extra_checks):
+        elif category in context.signing_categories | set(signing_checks.extra_checks) or (
+            # Issues: signatures are order-independent (v1) - a signature given before the
+            # category is assigned is recorded and counts once `assign` is processed.
+            not context.is_pr
+            and category in get_user_l2_categories(user, timestamp)
+        ):
             # Regular or extra-check category - verify user belongs to it
             user_cats = get_user_l2_categories(user, timestamp)
             if category not in user_cats:
@@ -3930,6 +3945,10 @@ def handle_build_test(context: PRContext, match: re.Match, comment: Any) -> bool
     # Cancel any pending abort command
     context.abort_comment = None
 
+    # Remember what the last command asked for (see needs_external())
+    context.last_build_test_is_build = result.verb == "build"
+    context.last_build_test_prs = list(result.prs) if result.prs else []
+
     # Store as pending build/test command (last one wins - build and test share same slot)
     if context.pending_build_test_command:
         old_comment, _ = context.pending_build_test_command
@@ -5076,6 +5095,11 @@ def get_current_categories(context: PRContext) -> dict[str, set[str]]:
         Dict mapping category name to set of file version keys (filename::sha)
     """
     categories: dict[str, set[str]] = {}
+
+    # Issues have no files: the categories are exactly the assigned ones
+    if not context.is_pr:
+        return {cat: set() for cat in context.signing_categories}
+
     current_files = context.cache.current_file_versions
 
     if not current_files:
@@ -5160,6 +5184,10 @@ def is_signature_valid_for_category(
     Returns:
         True if signature is still valid for this category, False otherwise
     """
+    if not context.is_pr:
+        # Issues have no files: a signature stays valid
+        return True
+
     if not comment_info.signed_files:
         # No files recorded - signature is invalid (legacy or error)
         return False
@@ -5207,7 +5235,7 @@ def compute_category_approval_states(context: PRContext) -> dict[str, ApprovalSt
 
     for cat_name, cat_files in categories.items():
         # Special handling for 'tests' category - determined by CI status
-        if cat_name == "tests":
+        if cat_name == "tests" and context.is_pr:
             category_states[cat_name] = _get_tests_approval_state(context)
             continue
 
@@ -5410,7 +5438,10 @@ def determine_signature_state(context: PRContext) -> PRState:
 
     # Categories to skip for fully-signed determination
     # These are checked separately (code-checks for test trigger, tests+orp for merge)
-    skip_for_fully_signed = {"code-checks", "tests", "orp"}
+    # (orp is only skipped for PRs: for issues it must be signed, as in v1)
+    skip_for_fully_signed = {"code-checks", "tests"}
+    if context.is_pr:
+        skip_for_fully_signed.add("orp")
 
     # Check all L2 categories (from file ownership and manual assignment)
     for cat_name, state in category_states.items():
@@ -5925,6 +5956,79 @@ def generate_status_message(context: PRContext) -> str:
     return "\n".join(lines)
 
 
+def labels_enabled(context: PRContext) -> bool:
+    """Whether label updates are enabled (repo_config.ADD_LABELS, default True; as in v1)."""
+    return bool(getattr(context.repo_config, "ADD_LABELS", True))
+
+
+def is_future_commit(context: PRContext) -> bool:
+    """True if the head commit is dated in the future (v1: 'future-commit' label)."""
+    if not context.last_commit:
+        return False
+    try:
+        commit_date = context.last_commit.commit.committer.date
+        return ensure_tz_aware(commit_date) > datetime.now(tz=timezone.utc)
+    except (AttributeError, TypeError):
+        # No committer date available (or not a datetime)
+        return False
+
+
+def has_compilation_warnings(context: PRContext) -> bool:
+    """
+    Whether the latest test result for the current commit reported compilation warnings.
+
+    Same rule as v1: look at the bot's result comments (first line `+1`, `-1` or
+    `I had the issue...`) posted after the last commit; results for another sha are
+    ignored (`Tested at: <sha>` line, `UNKNOWN` accepted); the last result wins and
+    sets the label only for `+1` with a `Compilation Warnings: Yes` line.
+    """
+    if not context.pr:
+        return False
+    head_sha = context.pr.head.sha
+    commit_ts = get_latest_commit_timestamp(context)
+
+    results = []
+    for comment in context.comments.values():
+        if not context.cmsbuild_user or comment.user.login != context.cmsbuild_user:
+            continue
+        ts = get_comment_timestamp(comment)
+        if commit_ts and ts < commit_ts:
+            continue
+        results.append((ts, comment))
+
+    warnings = False
+    for _ts, comment in sorted(results, key=lambda r: r[0]):
+        lines = [ln.strip() for ln in (comment.body or "").splitlines() if ln.strip()]
+        if not lines or not re.fullmatch(r"[-+]1|I had the issue.*", lines[0]):
+            continue
+        tested_at = next(
+            (ln.replace("Tested at:", "").strip() for ln in lines if ln.startswith("Tested at:")),
+            "",
+        )
+        if (
+            tested_at
+            and tested_at != head_sha
+            and tested_at != "UNKNOWN"
+            and "I had the issue " not in lines[0]
+        ):
+            continue
+        warnings = lines[0] == "+1" and any("Compilation Warnings: Yes" in ln for ln in lines)
+    return warnings
+
+
+def needs_external(context: PRContext) -> bool:
+    """
+    Whether the PR must be tested together with other PRs ("requires-external" label).
+
+    Same rule as v1: true if extra PRs are requested - either by the last
+    build/test command (`... with <prs>`) or by `test parameters: PULL_REQUESTS` -
+    unless the last command was a `build` (a build never needs the other PRs).
+    """
+    if context.last_build_test_is_build:
+        return False
+    return bool(context.last_build_test_prs or context.test_params.get("PULL_REQUESTS"))
+
+
 def update_pr_status(context: PRContext) -> tuple[set[str], set[str]]:
     """
     Update PR/Issue labels and status based on current state.
@@ -5934,137 +6038,74 @@ def update_pr_status(context: PRContext) -> tuple[set[str], set[str]]:
     """
     # Get current labels (old labels)
     old_labels = {label.name for label in context.issue.get_labels()}
+
+    # Labels are recomputed from scratch on every run: new_labels is built only
+    # from what the bot derives from the current state (files, signatures,
+    # comments/commands). Any label the bot does not produce - including labels
+    # added manually or by other tools - is removed.
     new_labels: set[str] = set()
-    labels_to_add: set[str] = set()
-    labels_to_remove: set[str] = set()
 
-    # Handle PR-specific state labels
-    if context.is_pr:
-        # Handle category state labels (<cat>-pending, <cat>-approved, <cat>-rejected, <cat>-started)
-        # This must come FIRST so we know what categories are pending
-        category_states = compute_category_approval_states(context)
-        state_suffixes = {
-            ApprovalState.PENDING: "-pending",
-            ApprovalState.APPROVED: "-approved",
-            ApprovalState.REJECTED: "-rejected",
-            ApprovalState.STARTED: "-started",
-        }
+    # Category state labels (<cat>-pending, <cat>-approved, <cat>-rejected, <cat>-started)
+    # Both PRs and Issues (Issues: assigned categories only).
+    state_suffixes = {
+        ApprovalState.PENDING: "-pending",
+        ApprovalState.APPROVED: "-approved",
+        ApprovalState.REJECTED: "-rejected",
+        ApprovalState.STARTED: "-started",
+    }
+    for cat, state in compute_category_approval_states(context).items():
+        new_labels.add(f"{cat}{state_suffixes[state]}")
 
-        # Track current categories
-        current_categories = set(category_states.keys())
-
-        # Add/update labels for current categories
-        for cat, state in category_states.items():
-            # Add current state label
-            current_state_label = f"{cat}{state_suffixes[state]}"
-            new_labels.add(current_state_label)
-            if current_state_label not in old_labels:
-                labels_to_add.add(current_state_label)
-
-            # Remove other state labels for this category
-            for other_state, suffix in state_suffixes.items():
-                if other_state != state:
-                    old_label = f"{cat}{suffix}"
-                    if old_label in old_labels:
-                        labels_to_remove.add(old_label)
-
-        # Remove labels for categories that no longer exist (files reverted)
-        # Check all old labels to see if they're category state labels for removed categories
-        for old_label in old_labels:
-            for suffix in state_suffixes.values():
-                if old_label.endswith(suffix):
-                    # Extract category name
-                    cat = old_label[: -len(suffix)]
-                    # If this category no longer exists, remove its label
-                    if cat not in current_categories:
-                        labels_to_remove.add(old_label)
-
+    if not context.is_pr and not context.signing_categories:
+        # Issue with no category assigned yet (via `assign`): waiting for assignment,
+        # and neither pending-signatures nor fully-signed (v1 behaviour)
+        new_labels.add("pending-assignment")
+    else:
         # Overall state labels
         # - "pending-signatures" = any category is pending or rejected (not fully signed)
-        # - "fully-signed" = all categories approved
+        # - "fully-signed" / "fully-signed-draft" = all categories approved
         # Note: there is no "merged" label (v1 behaviour): a merged PR keeps its
-        # signature-based label. Stale "merged" labels are removed.
+        # signature-based label.
         # Note: "tests-pending" and "signatures-pending" are NOT used as overall labels
         # because they conflict with category labels. Use "pending-signatures" instead.
-        label_state = determine_signature_state(context)
-
-        if label_state == PRState.FULLY_SIGNED:
-            # Fully signed
-            if context.is_draft:
-                new_labels.add("fully-signed-draft")
-                if "fully-signed-draft" not in old_labels:
-                    labels_to_add.add("fully-signed-draft")
-                if "fully-signed" in old_labels:
-                    labels_to_remove.add("fully-signed")
-            else:
-                new_labels.add("fully-signed")
-                if "fully-signed" not in old_labels:
-                    labels_to_add.add("fully-signed")
-                if "fully-signed-draft" in old_labels:
-                    labels_to_remove.add("fully-signed-draft")
-            # Remove pending-signatures
-            if "pending-signatures" in old_labels:
-                labels_to_remove.add("pending-signatures")
+        if determine_signature_state(context) == PRState.FULLY_SIGNED:
+            new_labels.add("fully-signed-draft" if context.is_draft else "fully-signed")
         else:
-            # Not fully signed (SIGNATURES_PENDING)
             new_labels.add("pending-signatures")
-            if "pending-signatures" not in old_labels:
-                labels_to_add.add("pending-signatures")
-            # Remove fully-signed labels
-            for label in ["fully-signed", "fully-signed-draft"]:
-                if label in old_labels:
-                    labels_to_remove.add(label)
 
-        # Add auto-labels based on file patterns
-        auto_labels = get_labels_for_pr(context)
-        for label in auto_labels:
-            new_labels.add(label)
-            if label not in old_labels:
-                labels_to_add.add(label)
+    if context.is_pr:
+        # Auto-labels based on file patterns
+        new_labels |= get_labels_for_pr(context)
 
-    # Handle type labels from 'type' command (works for both PRs and Issues)
-    # First, handle 'type' labels (only one allowed) - remove old ones
-    for label in old_labels:
-        if label in TYPE_COMMANDS:
-            label_info = TYPE_COMMANDS[label]
-            label_type = label_info[2] if len(label_info) > 2 else "mtype"
-            if label_type == "type" and label not in context.pending_labels:
-                # Check if we're adding a new 'type' label
-                adding_type_label = any(
-                    l in context.pending_labels
-                    and len(TYPE_COMMANDS.get(l, [])) > 2
-                    and TYPE_COMMANDS[l][2] == "type"
-                    for l in context.pending_labels
-                )
-                if adding_type_label:
-                    labels_to_remove.add(label)
+        if needs_external(context):
+            new_labels.add("requires-external")
 
-    # Handle hold label based on context.holds
+        if has_compilation_warnings(context):
+            new_labels.add("compilation-warnings")
+
+    # Hold label is derived from active holds
     if context.holds:
-        # There are active holds - ensure hold label is present
-        if "hold" not in old_labels and "hold" not in context.pending_labels:
-            labels_to_add.add("hold")
         new_labels.add("hold")
-    else:
-        # No active holds - remove hold label if present
-        if "hold" in old_labels:
-            labels_to_remove.add("hold")
 
-    # Add pending labels
-    for label in context.pending_labels:
-        new_labels.add(label)
-        if label not in old_labels:
-            labels_to_add.add(label)
+    # Labels produced by commands (type, urgent, backport, allow-<user>, ...) and
+    # file-based non-blocking labels. Comments are re-processed on every run, so
+    # this set is complete.
+    new_labels |= context.pending_labels
 
-    # Remove labels marked for removal via 'type -label' command
-    for label in context.pending_labels_to_remove:
-        if label in old_labels:
-            labels_to_remove.add(label)
+    # Labels explicitly removed via 'type -label'
+    new_labels -= context.pending_labels_to_remove
 
-    # Keep labels that aren't being removed
-    for label in old_labels:
-        if label not in labels_to_remove:
-            new_labels.add(label)
+    labels_to_add = new_labels - old_labels
+    labels_to_remove = old_labels - new_labels
+
+    if not labels_enabled(context):
+        # repo_config.ADD_LABELS is false: compute labels (state transitions, messages)
+        # but never write them (v1 behaviour)
+        logger.info(
+            f"Labels disabled by repo config, not updating: "
+            f"add {sorted(labels_to_add)}, remove {sorted(labels_to_remove)}"
+        )
+        return old_labels, new_labels
 
     # Log label changes
     if labels_to_add:
@@ -6247,16 +6288,8 @@ def post_fully_signed_messages(
             )
             post_bot_comment(context, message, "fully_signed_draft")
     else:
-        # Check for issue becoming fully signed
-        category_states = compute_category_approval_states(context)
-        all_approved = (
-            all(state == ApprovalState.APPROVED for state in category_states.values())
-            if category_states
-            else False
-        )
-
-        if all_approved and category_states:
-            # Check if we haven't already posted this
+        # Issue becoming fully signed
+        if "fully-signed" in new_labels and "fully-signed" not in old_labels:
             post_bot_comment(
                 context,
                 "This issue is fully signed and ready to be closed.",
@@ -7154,6 +7187,25 @@ def process_pr(
     context._last_commit = last_commit
     context.notify_without_at = notify_without_at
 
+    # A commit dated in the future cannot be ordered against comments: label and stop (v1)
+    if is_pr and is_future_commit(context):
+        logger.warning("==== Future commit found ====")
+        if not dryRun and labels_enabled(context):
+            if "future-commit" not in {label.name for label in issue.get_labels()}:
+                issue.add_to_labels("future-commit")
+        return {
+            "pr_number": issue.number,
+            "skipped": True,
+            "reason": "future commit",
+            "is_pr": is_pr,
+            "pr_state": None,
+            "categories": {},
+            "holds": [],
+            "labels": ["future-commit"],
+            "messages": [],
+            "tests_triggered": [],
+        }
+
     init_l2_data(repo_config, context.cms_repo)
 
     # Set repository info (these are stored, computed properties derive from them)
@@ -7457,7 +7509,7 @@ def process_pr(
     status_message = generate_status_message(context)
 
     # Compute category states for return value (for PRs)
-    category_states = compute_category_approval_states(context) if is_pr else {}
+    category_states = compute_category_approval_states(context)
 
     # Get check types for result
     signing_checks = context.get_signing_checks_for_pr() if is_pr else SigningChecks()

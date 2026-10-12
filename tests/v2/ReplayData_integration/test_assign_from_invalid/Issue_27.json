@@ -30,26 +30,7 @@
     "user_view_type": "public",
     "site_admin": false
   },
-  "labels": [
-    {
-      "id": 6160598842,
-      "node_id": "LA_kwDOF83__M8AAAABbzNHOg",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/pending-signatures",
-      "name": "pending-signatures",
-      "color": "ff8000",
-      "default": false,
-      "description": null
-    },
-    {
-      "id": 6160600474,
-      "node_id": "LA_kwDOF83__M8AAAABbzNNmg",
-      "url": "https://api.github.com/repos/iarspider-cmssw/cmssw/labels/core-pending",
-      "name": "core-pending",
-      "color": "fbca04",
-      "default": false,
-      "description": null
-    }
-  ],
+  "labels": [],
   "state": "open",
   "locked": false,
   "assignee": null,

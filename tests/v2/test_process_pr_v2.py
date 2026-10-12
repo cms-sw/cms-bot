@@ -3312,7 +3312,9 @@ class TestBuildTestCommandParsing:
             "process_pr_v2.determine_signature_state", return_value=signed
         ), patch("process_pr_v2.get_labels_for_pr", return_value=set()), patch(
             "process_pr_v2.needs_external", return_value=False
-        ), patch("process_pr_v2.has_compilation_warnings", return_value=False):
+        ), patch(
+            "process_pr_v2.has_compilation_warnings", return_value=False
+        ):
             _, new_labels = update_pr_status(ctx)
 
         assert new_labels == expected
@@ -6248,7 +6250,9 @@ class TestTypeCommand:
         create_basic_pr_data(
             name,
             pr_number=1,
-            files=[{"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}],
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}
+            ],
             comments=[],
             labels=["documentation", "some-manual-label"],  # neither produced by the bot
         )

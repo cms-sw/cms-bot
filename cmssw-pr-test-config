@@ -23,6 +23,7 @@ if [ "${IS_EVOLUTION}" = "0" ]; then
   # COMMENT: excluded workflows read old format file that is not supported in EVOLUTION_X branch
   PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0
 fi
+PR_TEST_MATRIX_EXTRAS=1306.0,101.0,9.0
 
 if [ "$CMSSW_VER" -ge 2000 ] ; then
   # COMMENT: excluded workflows read non-RAW files produced with CMSSW < 20_0_X

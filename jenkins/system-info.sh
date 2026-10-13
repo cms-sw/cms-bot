@@ -275,7 +275,13 @@ case ${BUILD_HOST} in
 esac
 # ~/.cache cleanup
 case ${BUILD_HOST} in
-  cmsbuild*|arm-cmsbuild* ) rm -rf ~/.cache ;;
+  cmsbuild*|arm-cmsbuild* )
+    if [ -d ~/.cache ] ; then
+      chmod -R u+w ~/.cache
+      rm -rf ~/.cache || true
+      mkdir -p ~/.cache
+    fi
+    ;;
 esac
 SLAVE_LABELS="disk-free-$(df -BG $WORKSPACE | tail -1 | awk '{print $4"-of-"$2}') ${SLAVE_LABELS}"
 echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"

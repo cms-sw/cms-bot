@@ -1,5 +1,5 @@
 /**
- * extracts metadata about jenkins jobs from jenkins and  dumps in json format
+ * Extracts metadata about Jenkins jobs and dumps it in JSON format.
  */
 
 import jenkins.*
@@ -11,26 +11,29 @@ import groovy.json.*
 def projectMap = [:]
 def viewMap = [:]
 def mainMap = [:]
+
 mainMap['projects'] = projectMap
 mainMap['views'] = viewMap
 
-Hudson.instance.getViews().each() { vIt ->
+Hudson.instance.getViews().each { vIt ->
     def viewDescription = [:]
     viewDescription['name'] = vIt.getDisplayName()
     viewDescription['view_type'] = vIt.getDescriptor().getDisplayName()
     viewDescription['description'] = vIt.getDescription()
     viewDescription['project_names'] = []
-    vIt.items.each() { pIt ->
+
+    vIt.items.each { pIt ->
         viewDescription['project_names'] << pIt.getDisplayName()
     }
+
     viewMap[vIt.getDisplayName()] = viewDescription
 }
 
-
-for (p in Jenkins.instance.getAllItems(AbstractItem.class)) {
+for (p in Jenkins.instance.getAllItems(Job.class)) {
     def projectDescription = [:]
+
     projectDescription['project_name'] = p.getDisplayName()
-    projectDescription['project_desc'] = p.description
+    projectDescription['project_desc'] = p.getDescription()
     projectDescription['upstream'] = []
     projectDescription['downstream'] = []
     projectDescription['triggers_from'] = []
@@ -39,32 +42,55 @@ for (p in Jenkins.instance.getAllItems(AbstractItem.class)) {
     projectDescription['scheduled_triggers'] = []
     projectDescription['is_disabled'] = p.isDisabled()
 
-    p.getUpstreamProjects().each { project -> projectDescription['upstream'] << project.getDisplayName() }
-    p.getDownstreamProjects().each { project -> projectDescription['downstream'] << project.getDisplayName() }
-    p.getBuildTriggerUpstreamProjects().each { project -> projectDescription['triggers_from'] << project.getDisplayName() }
+    // These methods and builders are specific to AbstractProject
+    // and are not available on Pipeline WorkflowJob instances.
+    if (p instanceof AbstractProject) {
+        p.getUpstreamProjects().each { project ->
+            projectDescription['upstream'] << project.getDisplayName()
+        }
 
-    for (b in p.builders) {
-        if (b in hudson.plugins.parameterizedtrigger.TriggerBuilder) {
-            b.configs.projects.each { project -> projectDescription['subprojects'] << project }
+        p.getDownstreamProjects().each { project ->
+            projectDescription['downstream'] << project.getDisplayName()
+        }
+
+        p.getBuildTriggerUpstreamProjects().each { project ->
+            projectDescription['triggers_from'] << project.getDisplayName()
+        }
+
+        for (b in p.builders) {
+            if (b instanceof hudson.plugins.parameterizedtrigger.TriggerBuilder) {
+                b.configs.projects.each { project ->
+                    projectDescription['subprojects'] << project
+                }
+            }
         }
     }
 
-    p.getProperties().each() { k, v ->
-        if (v instanceof hudson.model.ParametersDefinitionProperty) {
+    p.getProperties().each { k, v ->
+        if (v instanceof ParametersDefinitionProperty) {
             v.getParameterDefinitions().each { d ->
+                def defaultParameter = d.getDefaultParameterValue()
+
                 def buildParametersMap = [
-                        name: d.getName(), desciption: d.getDescription(), type: d.getType(), default_value: d.getDefaultParameterValue().getValue()
+                    name         : d.getName(),
+                    desciption   : d.getDescription(),
+                    type         : d.getType(),
+                    default_value : defaultParameter?.getValue()
                 ]
+
                 projectDescription['build_parameters'] << buildParametersMap
             }
         }
     }
-    p.getTriggers().each() { k, v ->
-        projectDescription['scheduled_triggers'] << [k.getDisplayName(), v.getSpec()]
+
+    p.getTriggers().each { k, v ->
+        projectDescription['scheduled_triggers'] <<
+            [k.getDisplayName(), v.getSpec()]
     }
 
     projectMap[p.getDisplayName()] = projectDescription
 }
+
 def json = JsonOutput.toJson(mainMap)
 def file1 = new File(args[0])
-file1.write json
+file1.write(json, 'UTF-8')

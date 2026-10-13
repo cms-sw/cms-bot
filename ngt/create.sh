@@ -7,7 +7,7 @@ function usage(){
   exit 1
 }
 LIFETIME="7d"
-IMG_DATE="20260903"
+IMG_DATE="20261012"
 GPU="$1"
 ID="$2"
 [ "$GPU" != "" ] || usage

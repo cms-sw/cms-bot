@@ -82,7 +82,6 @@ CMSSW_L2 = {
     "pietroGru": ["heterogeneous"],  # Pietro Grutta
     "sbaldu": ["heterogeneous"],  # Simone Balducci
     "forthommel": ["reconstruction", "proton-pog"],
-    "jfernan2": ["reconstruction"],
     "makortel": ["heterogeneous", "core", "visualization", "geometry"],
     "mandrenguyen": ["operations"],
     "mdhildreth": ["simulation", "geometry", "fastsim"],

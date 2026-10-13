@@ -786,6 +786,7 @@ CMSSW_CATEGORIES = {
         "GeneratorInterface/ExternalDecays",
         "GeneratorInterface/GenExtensions",
         "GeneratorInterface/GenFilters",
+        "GeneratorInterface/GenHDF5Interface",
         "GeneratorInterface/Herwig6Interface",
         "GeneratorInterface/Herwig7Interface",
         "GeneratorInterface/HiGenCommon",

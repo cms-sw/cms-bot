@@ -1791,3 +1791,19 @@ bfonta:
 - CommonTools/ParticleFlow
 - Fireworks/ParticleFlow
 - DQMOffline/ParticleFlow
+24LopezR:
+- Alignment/MTDAlignment
+- CondCore/MTDPlugins
+- CondFormats/MTDObjects
+- DataFormats/ForwardDetId
+- DataFormats/FTLDigi
+- DataFormats/FTLRecHit
+- Geometry/MTDCommonData
+- Geometry/MTDGeometryBuilder
+- Geometry/MTDNumberingBuilder
+- Geometry/MTDSimData
+- Geometry/MTDTBCommonData
+- RecoLocalFastTime
+- RecoMTD
+- SimFastTiming
+- Validation/MtdValidation

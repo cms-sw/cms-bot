@@ -248,8 +248,10 @@ def mock_cmssw_categories(monkeypatch):
         "tracking": ["Package/Tracking"],
     }
     monkeypatch.setattr("process_pr_v2.CMSSW_CATEGORIES", test_categories)
-    # Mock get_release_managers to accept any arguments
+    # Mock the list of L1 managers (release managers + ORP): the real lists must not leak
+    # into the "new PR" message. Tests needing managers patch these explicitly.
     monkeypatch.setattr("process_pr_v2.get_release_managers", lambda *args: [])
+    monkeypatch.setattr("process_pr_v2.CMSSW_ORP", ["orp_user"])
     # Mock GH_CMSSW_REPO to match our test repo name
     monkeypatch.setattr("process_pr_v2.GH_CMSSW_REPO", "cmssw")
     yield test_categories
@@ -3428,6 +3430,31 @@ class TestBuildTestCommandParsing:
         assert "pending-assignment" in new_labels
         ctx.issue.add_to_labels.assert_not_called()
         ctx.issue.set_labels.assert_not_called()
+
+    def test_release_managers_message_for_any_repo(self):
+        """The new-PR message mentions the release managers also for non-CMSSW repos (v1)."""
+        from types import SimpleNamespace
+
+        from process_pr_v2 import _build_release_managers_message
+
+        ctx = SimpleNamespace(
+            pr=SimpleNamespace(base=SimpleNamespace(ref="IB/CMSSW_16_0_X/master")),
+            cmsdist_repo=True,
+            notify_without_at=False,
+        )
+        with patch(
+            "process_pr_v2.get_release_managers",
+            side_effect=lambda branch: (
+                ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"]
+            ),
+        ):
+            msg = _build_release_managers_message(ctx)
+        assert msg == "@orp_user, @rm_a, @rm_b you are the release manager for this.\n"
+
+        with patch("process_pr_v2.get_release_managers", return_value=[]), patch(
+            "process_pr_v2.CMSSW_ORP", []
+        ):
+            assert _build_release_managers_message(ctx) == ""
 
     def test_parse_test_with_queue(self):
         """Test parsing 'test for el8_amd64_gcc12'."""
@@ -8929,6 +8956,81 @@ class TestAbortCommand:
         else:
             recorder.verify()
 
+    def test_abort_ignored_for_closed_pr(self, record_mode, monkeypatch):
+        """Same as v1: no abort property file and no Aborted status for a closed PR."""
+        monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
+
+        repo_config = create_mock_repo_config()
+        init_l2_data(repo_config)
+
+        name = "test_abort_closed_pr"
+        create_basic_pr_data(
+            name,
+            pr_number=1,
+            comments=[
+                {
+                    "id": 1001,
+                    "user": {"login": "tester"},
+                    "body": "abort",
+                    "created_at": (FROZEN_COMMENT_TIME + timedelta(minutes=5))
+                    .isoformat()
+                    .replace("+00:00", "Z"),
+                },
+            ],
+            statuses=[
+                {
+                    "context": "bot/1/jenkins",
+                    "state": "success",
+                    "description": "Tests requested by tester at {0}.".format(
+                        FROZEN_COMMENT_TIME.isoformat().replace("T", " ").replace("+00:00", " UTC")
+                    ),
+                    "target_url": "https://example.com/comment/1000",
+                },
+                {
+                    "context": "cms/1/el8_amd64_gcc12/required",
+                    "state": "pending",
+                    "description": "Tests running",
+                    "target_url": "",
+                },
+            ],
+        )
+        # Close the PR
+        for cls in ("PullRequest", "Issue"):
+            data = load_json_data(name, cls, 1)
+            data["state"] = "closed"
+            save_json_data(name, cls, 1, data)
+
+        recorder = ActionRecorder(name, record_mode)
+        gh = MockGithub(name, recorder)
+        repo = MockRepository(name, recorder=recorder)
+        issue = MockIssue(name, number=1, recorder=recorder)
+
+        with FunctionHook(recorder.property_file_hook()):
+            process_pr(
+                repo_config=repo_config,
+                gh=gh,
+                repo=repo,
+                issue=issue,
+                dryRun=False,
+                cmsbuild_user="cmsbuild",
+                loglevel="DEBUG",
+            )
+
+        prop_actions = [a for a in recorder.actions if a["action"] == "create_property_file"]
+        abort_props = [a for a in prop_actions if "abort" in a.get("details", {}).get("filename")]
+        assert len(abort_props) == 0, "Closed PR: no abort properties file (v1 behaviour)"
+        status_actions = [
+            a
+            for a in recorder.actions
+            if "Aborted" in str(a.get("details", {}).get("description", ""))
+        ]
+        assert not status_actions, "Closed PR: jenkins status must not be set to Aborted"
+
+        if record_mode:
+            recorder.save()
+        else:
+            recorder.verify()
+
     def test_abort_ignored_when_no_pending_tests(self, record_mode, monkeypatch):
         """Test that abort command is ignored when no tests are pending."""
         monkeypatch.setattr("process_pr_v2.TRIGGER_PR_TESTS", ["tester"])
@@ -10322,8 +10424,8 @@ class TestTestsApprovalLabels:
         result = _get_tests_approval_state(context)
         assert result == ApprovalState.APPROVED
 
-    def test_tests_pending_when_optional_error(self):
-        """Test that tests category stays pending (not rejected) when optional tests fail."""
+    def test_tests_rejected_when_optional_error(self):
+        """Optional-only run: a failure rejects the tests category (as in v1)."""
         from process_pr_v2 import _get_tests_approval_state, ApprovalState
 
         context = self._create_context_with_statuses(
@@ -10333,8 +10435,35 @@ class TestTestsApprovalLabels:
         )
 
         result = _get_tests_approval_state(context)
-        # Optional test failures don't cause rejection, just stay pending
+        assert result == ApprovalState.REJECTED
+
+    def test_optional_ignored_while_required_pending(self):
+        """v1: optional results are only used when there are no required tests at all."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "pending", "Running"),
+                ("cms/10246/el8_amd64_gcc13/optional", "success", "Finished"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
         assert result == ApprovalState.PENDING
+
+    def test_opt_substatus_errors_do_not_fail_test(self):
+        """v1: errors in '/opt/' sub-statuses are ignored."""
+        from process_pr_v2 import _get_tests_approval_state, ApprovalState
+
+        context = self._create_context_with_statuses(
+            [
+                ("cms/10246/el8_amd64_gcc12/required", "success", "Finished"),
+                ("cms/10246/el8_amd64_gcc12/opt/relvals", "error", "Failed"),
+            ]
+        )
+
+        result = _get_tests_approval_state(context)
+        assert result == ApprovalState.APPROVED
 
     def test_required_takes_precedence_over_optional(self):
         """Test that required test results take precedence over optional."""
@@ -10532,8 +10661,8 @@ class TestTestResultPostingDeduplication:
     def test_posts_summary_for_failed_optional_only_tests(self):
         """Regression: optional-only run with failure must still post the result summary.
 
-        The "tests" category stays PENDING in this case, which used to suppress
-        the summary comment.
+        The "tests" category is REJECTED here (v1), and for a while a non-approved
+        tests state suppressed the summary comment.
         """
         from process_pr_v2 import ApprovalState, _get_tests_approval_state, process_ci_test_results
 
@@ -10550,7 +10679,7 @@ class TestTestResultPostingDeduplication:
         context.ignore_tests_rejected = None
 
         with patch("process_pr_v2.has_unknown_release_error", return_value=False):
-            assert _get_tests_approval_state(context) == ApprovalState.PENDING
+            assert _get_tests_approval_state(context) == ApprovalState.REJECTED
             with patch("process_pr_v2.post_bot_comment") as mock_post:
                 with patch("process_pr_v2.fetch_pr_result") as mock_fetch:
                     mock_fetch.return_value = (0, "Test results here")

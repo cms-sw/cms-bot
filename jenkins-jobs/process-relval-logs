@@ -66,6 +66,8 @@ function process_dir()
     fi
     TIMEOUT=`find $dir -maxdepth 0 -mindepth 0 -type d -mmin +600 | wc -l`
     if [ -f $dir/../pyRelValMatrixLogs/run/all.pages ] || [ "X$TIMEOUT" = "X1" ] ; then
+      ZIP_DIR=true
+      if [ $(echo $dir | grep _DBG_X_ | wc -l) -gt 0 ] ; then ZIP_DIR=false; fi
       pushd $dir
         set +x
         rm -rf $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip
@@ -84,15 +86,19 @@ function process_dir()
           process_ubsan $dir &
         fi
         find . -mindepth 2 -maxdepth 2 -type d | xargs --no-run-if-empt rm -rf
-        zip -q -1 -r $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip .
-        mv $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip $dir/../pyRelValMatrixLogs.zip
+        if $ZIP_DIR ; then
+          zip -q -1 -r $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip .
+          mv $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip $dir/../pyRelValMatrixLogs.zip
+        fi
         touch $WORKSPACE/update-github-pages
         touch $dir/../pyRelValMatrixLogs/run/done
         rm -f $dir/../pyRelValMatrixLogs/run/all.done
         rm -f $dir/../pyRelValMatrixLogs/run/all.pages
         wait
       popd
-      mv $dir ${dir}.tmp
+      if $ZIP_DIR ; then
+        mv $dir ${dir}.tmp
+      fi
       echo "All workflows completed: $dir"
     fi
   fi

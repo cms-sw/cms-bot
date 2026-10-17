@@ -4039,6 +4039,13 @@ def process_pending_build_test_commands(context: PRContext) -> None:
 
     Note: build and test share same slot (last one wins) since they write to same file.
     """
+    # v1 behaviour: nothing is aborted when tests can't be triggered for this PR
+    # (e.g. closed PR) - neither the properties file nor the Aborted status.
+    if context.abort_comment and not context.create_test_property:
+        logger.info("Abort requested but tests are not enabled for this PR (e.g. closed)")
+        context.abort_comment = None
+        return
+
     # Handle abort if requested (no pending build/test command means abort won)
     if context.abort_comment:
         # Check if already aborted
@@ -5282,12 +5289,12 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
     1. If there's an unknown/release error, tests are pending (failed to start)
     2. Check pending_status_updates for jenkins status changes in current run
     3. Check jenkins status for "requested by" - if present, tests are STARTED
-    4. Check for required test statuses first
-    5. If no required tests, check optional tests
-    6. Map CI status to approval state:
+    4. Use the required tests if there are any (even if still pending), otherwise the
+       optional tests (v1 behaviour)
+    5. Map CI status to approval state:
        - All success -> APPROVED
-       - Any error (on required) -> REJECTED
-       - Any pending or no tests -> PENDING
+       - Any error (required or optional) -> REJECTED (APPROVED if failures are ignored)
+       - Any pending or no tests -> PENDING/STARTED
 
     Returns:
         ApprovalState for the tests category
@@ -5299,8 +5306,14 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
 
     lab_stats = check_ci_test_completion(context)
 
-    if not lab_stats:
-        # No test results yet - check if tests have been requested
+    # As in v1: "required" tests take precedence as soon as they exist - even while still
+    # pending - and "optional" tests are only used when there are no required tests.
+    # Both give the same result: all done and OK -> approved, any failure -> rejected.
+    state_key = "required" if get_ci_test_statuses(context).get("required") else "optional"
+    test_result = lab_stats.get(state_key) if lab_stats else None
+
+    if test_result is None:
+        # No (complete) test results yet - check if tests have been requested
         # First check pending_status_updates for changes in current run (e.g., abort)
         pr_id = context.issue.number if context.issue else None
         if pr_id:
@@ -5323,27 +5336,13 @@ def _get_tests_approval_state(context: PRContext) -> ApprovalState:
                 return ApprovalState.STARTED
         return ApprovalState.PENDING
 
-    # Check required tests first (they take precedence)
-    if "required" in lab_stats:
-        required_status = lab_stats["required"]
-        if required_status == "success":
-            return ApprovalState.APPROVED
-        elif required_status == "error":
-            # Check if test failures are being ignored
-            if context.ignore_tests_rejected:
-                return ApprovalState.APPROVED
-            return ApprovalState.REJECTED
+    if test_result == "success":
+        return ApprovalState.APPROVED
 
-    # Fall back to optional tests if no required tests
-    if "optional" in lab_stats:
-        optional_status = lab_stats["optional"]
-        if optional_status == "success":
-            return ApprovalState.APPROVED
-        # Optional test errors don't cause rejection, just stay pending
-        # (unless we want different behavior)
-        return ApprovalState.PENDING
-
-    return ApprovalState.PENDING
+    # Failed tests (required or optional, as in v1): rejected unless failures are ignored
+    if context.ignore_tests_rejected:
+        return ApprovalState.APPROVED
+    return ApprovalState.REJECTED
 
 
 def _get_pre_check_approval_state(context: PRContext, pre_check: str) -> ApprovalState:
@@ -5629,7 +5628,7 @@ def _compute_test_status(base_context: str, status_map: dict[str, Any]) -> str:
 
     for ctx, status in status_map.items():
         if ctx.startswith(prefix) or ctx == base_context:
-            sub_statuses.append(status)
+            sub_statuses.append((ctx, status))
 
     if not sub_statuses:
         # No sub-statuses, check the main status
@@ -5642,14 +5641,16 @@ def _compute_test_status(base_context: str, status_map: dict[str, Any]) -> str:
     has_pending = False
     has_error = False
 
-    for status in sub_statuses:
+    for sub_ctx, status in sub_statuses:
         state = (
             status.state.lower() if hasattr(status.state, "lower") else str(status.state).lower()
         )
         if state == "pending":
             has_pending = True
         elif state in ("error", "failure"):
-            has_error = True
+            # Errors of the optional ("/opt/") sub-tests don't fail the test (as in v1)
+            if "/opt/" not in sub_ctx:
+                has_error = True
 
     if has_pending:
         return "pending"
@@ -6762,16 +6763,46 @@ def post_welcome_message(context: PRContext) -> None:
     else:
         # Simple message for non-CMSSW repos or issues
         commands_url = "https://cms-sw.github.io/cms-bot-cmssw-issues.html"
+        # Release managers are notified for PRs of any repository (v1 behaviour)
+        release_managers_msg = (
+            _build_release_managers_message(context) if context.is_pr and context.pr else ""
+        )
         msg = (
             f"{msg_prefix} {format_mention(context, author)}.\n\n"
             f"{l2_mentions} can you please review it and eventually sign/assign? Thanks.\n"
             f"{watchers_msg}"
+            f"{release_managers_msg}"
             f"{backport_msg}"
             f'cms-bot commands are listed <a href="{commands_url}">here</a>\n'
         )
 
     post_bot_comment(context, msg, "welcome")
     context.welcome_message_posted = True
+
+
+def _build_release_managers_message(context: PRContext) -> str:
+    """
+    "<managers> you are the release manager for this." line of the new-PR message.
+
+    Used for all repositories (as in v1), not only for CMSSW. For CMSDIST the managers of
+    the base release queue are included as well. Empty if there are no managers.
+    """
+    branch = context.pr.base.ref
+    extra_rm = get_release_managers(branch)
+
+    # For CMSDIST, also get managers for the base branch
+    if context.cmsdist_repo:
+        parts = branch.split("/")
+        if len(parts) >= 2:
+            br = "_".join(parts[-1].split("_")[:3]) + "_X"
+            if br:
+                extra_rm = extra_rm + get_release_managers(br)
+
+    release_managers = list(set(extra_rm + list(CMSSW_ORP)))
+    if not release_managers:
+        return ""
+    rm_mentions = ", ".join(format_mention(context, rm) for rm in sorted(release_managers))
+    return f"{rm_mentions} you are the release manager for this.\n"
 
 
 def _build_cmssw_welcome_message(
@@ -6841,22 +6872,7 @@ def _build_cmssw_welcome_message(
             f"release cycle, please use the {base_branch} branch instead\n"
         )
 
-    # Build release managers message
-    release_managers_msg = ""
-    extra_rm = get_release_managers(branch)
-
-    # For CMSDIST, also get managers for the base branch
-    if context.cmsdist_repo:
-        parts = branch.split("/")
-        if len(parts) >= 2:
-            br = "_".join(parts[-1].split("_")[:3]) + "_X"
-            if br:
-                extra_rm = extra_rm + get_release_managers(br)
-
-    release_managers = list(set(extra_rm + list(CMSSW_ORP)))
-    if release_managers:
-        rm_mentions = ", ".join(format_mention(context, rm) for rm in sorted(release_managers))
-        release_managers_msg = f"{rm_mentions} you are the release manager for this.\n"
+    release_managers_msg = _build_release_managers_message(context)
 
     # Build the full message
     commands_url = "https://cms-sw.github.io/cms-bot-cmssw-cmds.html"

@@ -5453,6 +5453,16 @@ def determine_signature_state(context: PRContext) -> PRState:
     return PRState.FULLY_SIGNED
 
 
+def automerge_enabled(repo_config: types.ModuleType) -> bool:
+    """
+    Whether fully signed PRs are merged automatically.
+
+    As in v1 (which merges in every repository) this is on unless the repo
+    config explicitly sets AUTOMERGE = False.
+    """
+    return bool(getattr(repo_config, "AUTOMERGE", True))
+
+
 def can_merge(context: PRContext) -> bool:
     """
     Check if PR can be merged.
@@ -7458,12 +7468,14 @@ def process_pr(
         logger.info(f"PR state: {pr_state.value}")
 
         # Handle automerge
-        if getattr(repo_config, "AUTOMERGE", False) and can_merge(context):
+        if automerge_enabled(repo_config) and can_merge(context):
             context.should_merge = True
             logger.info("PR eligible for automerge")
 
         # Perform merge if requested
-        if context.should_merge:
+        if context.should_merge and pr.state != "open":
+            logger.info(f"Not merging: PR is {pr.state}")
+        elif context.should_merge:
             if dryRun:
                 logger.info("[DRY RUN] Would merge PR")
             else:

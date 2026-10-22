@@ -1496,12 +1496,6 @@ afiqaize:
 - EgammaAnalysis
 - DataFormats/EgammaCandidates
 - DataFormats/EgammaReco
-missirol:
-- .*DataFormats
-- .*L1T
-- .*HL
-- .*Trig
-- EventFilter
 sobhatta:
 - RecoEgamma
 - RecoEcal

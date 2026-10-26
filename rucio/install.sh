@@ -50,6 +50,7 @@ if [ "${RUCIO_VERSION}" = "" ] ; then
   exit 1
 fi
 
+export RUCIO_VERSION
 PY_VER=$(${PYTHON_CMD} -c 'import sys;print(sys.version_info[0])')
 export PYTHONUSERBASE="${INSTALL_DIR}/${ARCH}/py${PY_VER}/${RUCIO_VERSION}"
 if $REINSTALL ; then rm -rf ${PYTHONUSERBASE} ; fi

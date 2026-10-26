@@ -171,6 +171,8 @@ CMSSW_L2 = {
     "valsdav": ["ml", "egamma-pog"],
     "y19y19": ["ml"],
     "hjkwon260": ["ml"],
+    "masonproffitt": ["ml"],
+    "gsokmen": ["ml"],
 }
 
 # Automatically sign these categories if tests are passed

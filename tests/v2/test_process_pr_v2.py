@@ -1577,6 +1577,7 @@ def create_basic_pr_data(
     statuses: List[Dict] = None,
     login: str = "testuser",
     user: Dict[str, Any] = None,
+    head_sha: Optional[str] = None,
 ) -> None:
     """
     Create basic test data files for a PR.
@@ -1595,6 +1596,9 @@ def create_basic_pr_data(
         login: Name of Issue/PR author (default "testuser")
         user: Default user dict for comments that don't specify a user (e.g., alice_user fixture)
               If provided, comments without "user" field will use this user.
+        head_sha: Head commit SHA of the PR. Defaults to the last commit's SHA (or "abc123").
+              Must be changed when a test changes the PR's files between runs, as the bot
+              reuses its cached file list while the head SHA is unchanged.
     """
     create_test_data_directory(test_name)
 
@@ -1659,7 +1663,10 @@ def create_basic_pr_data(
         "state": "open",
         "merged": False,
         "mergeable": True,
-        "head": {"sha": commits[-1]["sha"] if commits else "abc123", "ref": "feature"},
+        "head": {
+            "sha": head_sha or (commits[-1]["sha"] if commits else "abc123"),
+            "ref": "feature",
+        },
         "base": {"sha": "base123", "ref": base_ref},
         "user": {"login": login, "id": 1},
         "files": files,
@@ -3314,9 +3321,7 @@ class TestBuildTestCommandParsing:
             "process_pr_v2.determine_signature_state", return_value=signed
         ), patch("process_pr_v2.get_labels_for_pr", return_value=set()), patch(
             "process_pr_v2.needs_external", return_value=False
-        ), patch(
-            "process_pr_v2.has_compilation_warnings", return_value=False
-        ):
+        ), patch("process_pr_v2.has_compilation_warnings", return_value=False):
             _, new_labels = update_pr_status(ctx)
 
         assert new_labels == expected
@@ -3444,10 +3449,8 @@ class TestBuildTestCommandParsing:
         )
         with patch(
             "process_pr_v2.get_release_managers",
-            side_effect=lambda branch: (
-                ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"]
-            ),
-        ):
+            side_effect=lambda branch: ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"],
+        ), patch("process_pr_v2.CMSSW_ORP", ["orp_user"]):
             msg = _build_release_managers_message(ctx)
         assert msg == "@orp_user, @rm_a, @rm_b you are the release manager for this.\n"
 
@@ -4344,6 +4347,8 @@ class TestRevertedFiles:
                 # simulation file no longer in PR - reverted to base
             ],
             comments=comment_list,  # Preserve all comments including cache
+            # Reverting a file means a new head commit (the bot caches the file list per head)
+            head_sha="abc123_reverted",
         )
 
         # Recreate mocks to pick up new file list
@@ -6277,9 +6282,7 @@ class TestTypeCommand:
         create_basic_pr_data(
             name,
             pr_number=1,
-            files=[
-                {"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}
-            ],
+            files=[{"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}],
             comments=[],
             labels=["documentation", "some-manual-label"],  # neither produced by the bot
         )
@@ -11616,3 +11619,236 @@ if __name__ == "__main__":
         clargs.append("--record-actions")
 
     pytest.main(clargs)
+
+
+# =============================================================================
+# Compact cache format / PR files snapshot
+# =============================================================================
+
+
+class _FakeCacheComment:
+    """Minimal stand-in for a GitHub issue comment holding bot cache data."""
+
+    _next_id = 1000
+
+    def __init__(self, body: str):
+        _FakeCacheComment._next_id += 1
+        self.id = _FakeCacheComment._next_id
+        self.body = body
+        self.deleted = False
+        self.edits = 0
+
+    def edit(self, body: str) -> None:
+        self.body = body
+        self.edits += 1
+
+    def delete(self) -> None:
+        self.deleted = True
+
+
+class _FakeIssue:
+    def __init__(self):
+        self.created: list = []
+
+    def create_comment(self, body: str):
+        comment = _FakeCacheComment(body)
+        self.created.append(comment)
+        return comment
+
+
+def _make_large_old_format_cache(n_files: int = 3000) -> dict:
+    """An old-format (inline 'filename::sha' keys) cache, like a real PR with many files."""
+    import hashlib
+
+    keys = []
+    for i in range(n_files):
+        name = f"grid_160812_3_5t/s{i // 100:02d}/grid.{1000 + i}.bin"
+        keys.append(f"{name}::{hashlib.sha1(name.encode()).hexdigest()}")
+    return {
+        "emoji": {"11": "+1"},
+        "fv": {k: {"ts": "2026-10-15T10:00:00Z", "cats": ["reconstruction"]} for k in keys},
+        "comments": {
+            "11": {
+                "ts": "2026-10-15T11:00:00+00:00",
+                "first_line": "+1",
+                "ctype": "+1",
+                "cats": ["reconstruction"],
+                "user": "alice",
+                "signed_files": list(keys),
+            },
+            "12": {
+                "ts": "2026-10-15T12:00:00+00:00",
+                "first_line": "+1",
+                "ctype": "+1",
+                "cats": ["proton-pog"],
+                "user": "bob",
+                "signed_files": list(keys),
+            },
+        },
+        "version": 2,
+    }
+
+
+def _old_format_cache_comments(data: dict) -> list:
+    """Store an old-format cache the way the old bot did (compress, then chunk)."""
+    payload = process_pr_v2.compress_cache(json.dumps(data, separators=(",", ":"), sort_keys=True))
+    size = process_pr_v2.BOT_CACHE_CHUNK_SIZE
+    return [
+        _FakeCacheComment(
+            f"{process_pr_v2.CACHE_COMMENT_MARKER} bot cache: {payload[i : i + size]} {process_pr_v2.CACHE_COMMENT_END}"
+        )
+        for i in range(0, len(payload), size)
+    ]
+
+
+class TestCompactCacheFormat:
+    def test_old_cache_converts_to_compact_and_back(self):
+        old = _make_large_old_format_cache(50)
+        old["fv"]["short.txt::not-a-hex-sha"] = {"ts": "t", "cats": []}
+        # Legacy v1 style keys are not file versions: they're dropped from "fv" but
+        # still understood as (opaque) entries in "signed_files"
+        legacy = "Utilities/BuildFile.xml::commit::2a9454e30606"
+        old["fv"][legacy] = {"ts": "t", "cats": ["core"]}
+        old["comments"]["11"]["signed_files"].append(legacy)
+
+        cache = process_pr_v2.BotCache.from_dict(old)
+        new = cache.to_dict()
+
+        # Compact: one key table, indexes elsewhere, no inline keys left
+        assert "fv" not in new and new["fmt"] == process_pr_v2.CACHE_FORMAT
+        assert len(new["keys"]) == len(old["fv"])  # legacy key is only used by signed_files
+        assert all(isinstance(i, int) for i in new["comments"]["11"]["signed_files"])
+        assert legacy in json.dumps(new)
+        assert len(json.dumps(new)) < len(json.dumps(old)) / 2
+
+        # ...and reading it back gives exactly the same cache
+        again = process_pr_v2.BotCache.from_dict(json.loads(json.dumps(new)))
+        assert again.file_versions == cache.file_versions
+        assert again.comments == cache.comments
+        assert again.emoji == cache.emoji
+        assert again.version == 2
+        assert legacy not in again.file_versions
+        assert legacy in again.comments["11"].signed_files
+        assert again.file_versions["short.txt::not-a-hex-sha"].blob_sha == "not-a-hex-sha"
+        # Converting is stable
+        assert again.to_dict() == new
+
+    def test_unused_keys_are_dropped_on_save(self):
+        old = _make_large_old_format_cache(10)
+        cache = process_pr_v2.BotCache.from_dict(old)
+        dropped = next(iter(cache.file_versions))
+        del cache.file_versions[dropped]
+        for ci in cache.comments.values():
+            ci.signed_files = [k for k in ci.signed_files if k != dropped]
+        assert len(cache.to_dict()["keys"]) == 9
+
+    def test_files_snapshot_round_trip(self):
+        cache = process_pr_v2.BotCache()
+        cache.files_snapshot = process_pr_v2.PRFilesSnapshot(
+            head_sha="h" * 40,
+            base_ref="master",
+            files={"A/B/c.cc": "1" * 40, "A/B/d.cc": "2" * 40},
+            extra_names=["A/B/old_name.cc"],
+        )
+        loaded = process_pr_v2.BotCache.from_dict(json.loads(json.dumps(cache.to_dict())))
+        assert loaded.files_snapshot == cache.files_snapshot
+        assert loaded.files_snapshot.changed_files() == ["A/B/c.cc", "A/B/d.cc", "A/B/old_name.cc"]
+
+    def test_large_old_cache_is_rewritten_with_fewer_comments(self):
+        old = _make_large_old_format_cache(3000)
+        existing = _old_format_cache_comments(old)
+        assert len(existing) >= 5, "test cache should need several comments in the old format"
+
+        cache = process_pr_v2.load_cache_from_comments(existing)
+        assert cache is not None and len(cache.file_versions) == 3000
+
+        issue = _FakeIssue()
+        process_pr_v2.save_cache_to_comments(issue, existing, cache)
+
+        alive = [c for c in existing if not c.deleted] + issue.created
+        assert issue.created == [], "no new comments are needed, existing ones are reused"
+        assert len(alive) < len(existing)
+        assert [c for c in existing if c.deleted] == existing[len(alive) :]
+
+        # What remains loads back to the same data
+        reloaded = process_pr_v2.load_cache_from_comments(alive)
+        assert reloaded.file_versions == cache.file_versions
+        assert reloaded.comments == cache.comments
+
+        # A second save is a no-op
+        edits = [c.edits for c in alive]
+        process_pr_v2.save_cache_to_comments(_FakeIssue(), alive, reloaded)
+        assert [c.edits for c in alive] == edits
+
+
+class TestPRFilesSnapshot:
+    @staticmethod
+    def _pr(head="h1", base="master", files=None):
+        pr = MagicMock()
+        pr.head.sha = head
+        pr.base.ref = base
+        files = files or [("A/B/x.cc", "s1", None), ("A/B/y.cc", "s2", "A/B/old.cc"), ("A/B/z.cc", None, None)]
+        pr.get_files.return_value = [
+            MagicMock(filename=n, sha=s, previous_filename=prev) for n, s, prev in files
+        ]
+        return pr
+
+    @staticmethod
+    def _ctx(pr, cache):
+        return types.SimpleNamespace(pr=pr, cache=cache)
+
+    def test_fetches_once_then_uses_snapshot(self):
+        cache = process_pr_v2.BotCache()
+        pr = self._pr()
+        first = process_pr_v2.load_pr_files_info(self._ctx(pr, cache))
+        assert pr.get_files.call_count == 1
+        assert first[0] == {"A/B/x.cc": "s1", "A/B/y.cc": "s2"}
+        assert sorted(first[1]) == ["A/B/old.cc", "A/B/x.cc", "A/B/y.cc", "A/B/z.cc"]
+
+        # Survives a save/load cycle in the PR comments
+        cache = process_pr_v2.BotCache.from_dict(json.loads(json.dumps(cache.to_dict())))
+        pr2 = self._pr()
+        second = process_pr_v2.load_pr_files_info(self._ctx(pr2, cache))
+        assert pr2.get_files.call_count == 0
+        assert second[0] == first[0] and sorted(second[1]) == sorted(first[1])
+
+    @pytest.mark.parametrize("head,base", [("h2", "master"), ("h1", "release")])
+    def test_refetches_when_head_or_base_changes(self, head, base):
+        cache = process_pr_v2.BotCache()
+        process_pr_v2.load_pr_files_info(self._ctx(self._pr(), cache))
+        pr = self._pr(head=head, base=base, files=[("A/B/new.cc", "s9", None)])
+        files, chg = process_pr_v2.load_pr_files_info(self._ctx(pr, cache))
+        assert pr.get_files.call_count == 1
+        assert files == {"A/B/new.cc": "s9"} and chg == ["A/B/new.cc"]
+        assert cache.files_snapshot.head_sha == head
+        assert cache.files_snapshot.base_ref == base
+
+    def test_old_cache_without_snapshot_fetches(self):
+        cache = process_pr_v2.BotCache.from_dict(_make_large_old_format_cache(3))
+        pr = self._pr()
+        process_pr_v2.load_pr_files_info(self._ctx(pr, cache))
+        assert pr.get_files.call_count == 1
+        assert cache.files_snapshot is not None
+
+
+class TestAutomergeEnabled:
+    def test_enabled_by_default_like_v1(self):
+        assert process_pr_v2.automerge_enabled(types.ModuleType("repo_config")) is True
+
+    def test_repo_config_can_disable(self):
+        cfg = types.ModuleType("repo_config")
+        cfg.AUTOMERGE = False
+        assert process_pr_v2.automerge_enabled(cfg) is False
+        cfg.AUTOMERGE = True
+        assert process_pr_v2.automerge_enabled(cfg) is True
+
+
+class TestPRFilesSnapshotUncacheableNames:
+    def test_names_with_double_colon_are_not_cached(self):
+        cache = process_pr_v2.BotCache()
+        pr = TestPRFilesSnapshot._pr(files=[("A/B/we::ird.cc", "s1", None)])
+        ctx = types.SimpleNamespace(pr=pr, cache=cache)
+        process_pr_v2.load_pr_files_info(ctx)
+        assert cache.files_snapshot is None
+        process_pr_v2.load_pr_files_info(ctx)
+        assert pr.get_files.call_count == 2

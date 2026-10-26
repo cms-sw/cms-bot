@@ -296,6 +296,8 @@ TEST_VERBS = ("build", "test")
 CMSSW_BRANCHES_FOR_AUTO_CODE_CHECKS = ["master", "CMSSW_17_0_X"]
 
 CMS_BOT_VERSION = 2
+# Layout of the cache payload: 1 = inline "filename::sha" keys, 2 = key table + indexes
+CACHE_FORMAT = 2
 
 
 # GPU flavors (loaded from files)
@@ -868,6 +870,67 @@ class Hold:
 
 
 @dataclass
+class PRFilesSnapshot:
+    """
+    The PR's file list as of a given head commit / base branch.
+
+    The file list (names, blob SHAs, renames) is a pure function of the head
+    commit and the base branch, so as long as both are unchanged the list is
+    too, and pr.get_files() (one API call per page of files) can be skipped.
+
+    Attributes:
+        head_sha: Head commit SHA the list was taken at
+        base_ref: Base branch name the list was taken against
+        files: filename -> blob SHA for files that have a blob (as get_pr_files_info)
+        extra_names: changed names that are not in `files` (deleted files and
+            the previous names of renamed files)
+    """
+
+    head_sha: str
+    base_ref: str
+    files: dict[str, str] = field(default_factory=dict)
+    extra_names: list[str] = field(default_factory=list)
+
+    def changed_files(self) -> list[str]:
+        """Changed file names, as get_pr_files_info() returns them."""
+        return list(self.files) + list(self.extra_names)
+
+
+_HEX_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+def _encode_sha(sha: str) -> str:
+    """Hex blob SHA (40 chars) -> base64 of the raw 20 bytes (28 chars)."""
+    if _HEX_SHA_RE.match(sha):
+        return base64.b64encode(bytes.fromhex(sha)).decode("ascii")
+    return sha  # not a normal git SHA (e.g. in tests): keep as is
+
+
+def _decode_sha(enc: str) -> str:
+    # A base64 encoded 20 byte value is always 28 chars ending in "=" - which
+    # a hex SHA (or any sensible SHA-like string) never is.
+    if len(enc) == 28 and enc.endswith("="):
+        try:
+            return base64.b64decode(enc.encode("ascii")).hex()
+        except Exception:
+            pass
+    return enc
+
+
+def _split_fv_key(key: str) -> Optional[tuple[str, str]]:
+    """
+    Split "filename::sha" into (filename, sha).
+
+    Returns None for anything else - notably the legacy v1 "filename::commit::sha"
+    keys, which must not be taken for file versions (as they never were).
+    """
+    parts = key.split("::")
+    if len(parts) != 2:
+        return None
+    return parts[0], parts[1]
+
+
+@dataclass
 class BotCache:
     """
     Cache stored in PR comments to avoid repeated API calls.
@@ -875,8 +938,10 @@ class BotCache:
     Structure matches the JSON format:
     {
         "emoji": { "<comment_id>": "<reaction>" },  # Bot's reactions (source of truth)
-        "fv": { "<filename>::<sha>": { "ts": ..., "cats": [...] } },  # File versions
-        "comments": { "<comment_id>": { "ts": ..., "first_line": ..., ... } }  # Processed comments,
+        "keys": [ "<filename>::<base64 sha>", ... ],  # each file version key, once
+        "fvx": [ [<key index>, "<ts>", [cats]], ... ],  # File versions
+        "comments": { "<comment_id>": { "ts": ..., "signed_files": [<key index>], ... } },
+        "pf": { "head": ..., "base": ..., "cur": [<key index>], "extra": [...] },  # PR files snapshot
         "version": ... # Bot version at the time of cache creation
     }
     """
@@ -893,6 +958,10 @@ class BotCache:
     # Runtime state: current file version keys (filename::sha) for this PR
     current_file_versions: list[str] = field(default_factory=list)
 
+    # PR file list snapshot (see PRFilesSnapshot): lets us skip pr.get_files()
+    # when neither the head commit nor the base branch changed since it was taken.
+    files_snapshot: Optional["PRFilesSnapshot"] = None
+
     # Bot version this cache was created with. Defaults to the CURRENT bot
     # version so that a brand-new cache (new PR, or a load-error fallback)
     # is correctly stamped when it's first saved - NOT left as None (which
@@ -902,23 +971,47 @@ class BotCache:
     version: int = field(default=CMS_BOT_VERSION)
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize cache to dictionary matching the JSON format."""
-        return {
+        """
+        Serialize cache to a dictionary (compact format, "fmt": 2).
+
+        The long "filename::sha" keys would otherwise be repeated for every
+        file version, for every comment that signed it, and in the file list
+        snapshot. Instead each distinct key is stored once in "keys" (SHAs
+        as base64 of the raw bytes) and referenced everywhere else by its
+        index. The table is rebuilt from the keys actually in use on every
+        save, so it never has holes or stale entries.
+        """
+        used: set[str] = set(self.file_versions)
+        for ci in self.comments.values():
+            used.update(ci.signed_files)
+        snap = self.files_snapshot
+        if snap:
+            used.update(f"{name}::{sha}" for name, sha in snap.files.items())
+        keys = sorted(used)
+        index = {k: i for i, k in enumerate(keys)}
+
+        def enc_key(k: str) -> str:
+            parts = _split_fv_key(k)
+            return f"{parts[0]}::{_encode_sha(parts[1])}" if parts else k
+
+        data: dict[str, Any] = {
             "emoji": self.emoji.copy(),
-            "fv": {
-                key: {
-                    "ts": fv.timestamp,
-                    "cats": fv.categories,
-                }
-                for key, fv in self.file_versions.items()
-            },
+            "fmt": CACHE_FORMAT,
+            "keys": [enc_key(k) for k in keys],
+            "fvx": [
+                [index[key], fv.timestamp, fv.categories] for key, fv in self.file_versions.items()
+            ],
             "comments": {
                 cid: {
                     "ts": ci.timestamp,
                     "first_line": ci.first_line,
                     **({"ctype": ci.ctype} if ci.ctype else {}),
                     **({"cats": ci.categories} if ci.categories else {}),
-                    **({"signed_files": ci.signed_files} if ci.signed_files else {}),
+                    **(
+                        {"signed_files": [index[k] for k in ci.signed_files]}
+                        if ci.signed_files
+                        else {}
+                    ),
                     **({"user": ci.user} if ci.user else {}),
                     **({"locked": ci.locked} if ci.locked else {}),
                 }
@@ -926,40 +1019,82 @@ class BotCache:
             },
             "version": self.version,
         }
+        if snap:
+            data["pf"] = {
+                "head": snap.head_sha,
+                "base": snap.base_ref,
+                "cur": [index[f"{name}::{sha}"] for name, sha in snap.files.items()],
+                "extra": list(snap.extra_names),
+            }
+        return data
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "BotCache":
-        """Deserialize cache from dictionary."""
+        """
+        Deserialize cache from dictionary.
+
+        Reads both the compact format ("fmt": 2, see to_dict()) and the older
+        format with inline "filename::sha" keys ("fv" dict and string lists
+        in "signed_files"); it is always written back in the compact format.
+        """
         cache = cls()
 
         # Load emoji (reactions)
         cache.emoji = {str(k): v for k, v in data.get("emoji", {}).items()}
 
-        # Load file versions
-        for key, fv_data in data.get("fv", {}).items():
-            parts = key.split("::")
-            if len(parts) == 2:
-                filename, blob_sha = parts
+        compact = "keys" in data
+        keys: list[str] = []
+        if compact:
+            for enc in data["keys"]:
+                parts = _split_fv_key(enc)
+                keys.append(f"{parts[0]}::{_decode_sha(parts[1])}" if parts else enc)
+
+        def add_fv(key: str, ts: str, cats: list[str]) -> None:
+            parts = _split_fv_key(key)
+            if parts:
                 cache.file_versions[key] = FileVersion(
-                    filename=filename,
-                    blob_sha=blob_sha,
-                    timestamp=fv_data.get("ts", ""),
-                    categories=fv_data.get("cats", []),
+                    filename=parts[0], blob_sha=parts[1], timestamp=ts, categories=cats
                 )
+
+        # Load file versions
+        if compact:
+            for idx, ts, cats in data.get("fvx", []):
+                add_fv(keys[idx], ts, cats)
+        else:
+            for key, fv_data in data.get("fv", {}).items():
+                add_fv(key, fv_data.get("ts", ""), fv_data.get("cats", []))
 
         # Note: current_file_versions is NOT loaded from cache
         # It's rebuilt from PR files every run by update_file_states()
 
         # Load comments
         for cid, ci_data in data.get("comments", {}).items():
+            signed = ci_data.get("signed_files", [])
+            if compact:
+                signed = [keys[i] for i in signed]
             cache.comments[str(cid)] = CommentInfo(
                 timestamp=ci_data.get("ts", ""),
                 first_line=ci_data.get("first_line", ""),
                 ctype=ci_data.get("ctype"),
                 categories=ci_data.get("cats", []),
-                signed_files=ci_data.get("signed_files", []),
+                signed_files=signed,
                 user=ci_data.get("user"),
                 locked=ci_data.get("locked", False),
+            )
+
+        # PR file list snapshot (compact format only)
+        pf = data.get("pf")
+        if compact and pf:
+            files: dict[str, str] = {}
+            for i in pf.get("cur", []):
+                parts = _split_fv_key(keys[i])
+                if parts:
+                    files[parts[0]] = parts[1]
+            cache.files_snapshot = PRFilesSnapshot(
+                head_sha=pf.get("head", ""),
+                base_ref=pf.get("base", ""),
+                files=files,
+                extra_names=list(pf.get("extra", [])),
             )
 
         # Determine cache version. Modern caches store it explicitly; older
@@ -2154,7 +2289,7 @@ class PRContext:
             Dict mapping filename to blob SHA
         """
         if self._pr_files_with_sha is None:
-            self._pr_files_with_sha = get_pr_files(self.pr)
+            self._pr_files_with_sha = load_pr_files_info(self)[0]
         return self._pr_files_with_sha
 
     def get_commit_statuses(self) -> dict[str, Any]:
@@ -4509,6 +4644,33 @@ def get_pr_files_info(pr) -> tuple[dict[str, str], list[str]]:
         if f.previous_filename:
             changed_files.append(f.previous_filename)
     return files, changed_files
+
+
+def load_pr_files_info(context: "PRContext") -> tuple[dict[str, str], list[str]]:
+    """
+    Get the PR's files (filename -> blob SHA) and changed file names, using
+    the snapshot in the bot cache when the head commit and base branch are
+    unchanged since it was taken, so that pr.get_files() is only called after
+    a push or a retarget. Otherwise fetches the files and refreshes the snapshot.
+    """
+    pr = context.pr
+    head_sha = getattr(getattr(pr, "head", None), "sha", None)
+    base_ref = getattr(getattr(pr, "base", None), "ref", None)
+    can_cache = isinstance(head_sha, str) and isinstance(base_ref, str)
+
+    snap = context.cache.files_snapshot
+    if can_cache and snap and snap.head_sha == head_sha and snap.base_ref == base_ref:
+        logger.debug(f"PR files unchanged since {head_sha[:8]}, using cached file list")
+        return dict(snap.files), snap.changed_files()
+
+    files_with_sha, chg_files = get_pr_files_info(pr)
+    # A name containing "::" can't be stored as a "filename::sha" key
+    if can_cache and not any("::" in name for name in files_with_sha):
+        extra = [f for f in dict.fromkeys(chg_files) if f not in files_with_sha]
+        context.cache.files_snapshot = PRFilesSnapshot(
+            head_sha=head_sha, base_ref=base_ref, files=dict(files_with_sha), extra_names=extra
+        )
+    return files_with_sha, chg_files
 
 
 def get_pr_files(pr) -> dict[str, str]:
@@ -7317,7 +7479,7 @@ def process_pr(
                 update_milestone(repo, issue, pr, dryRun)
 
             # Fetch PR files once and cache both formats
-            files_with_sha, chg_files = get_pr_files_info(pr)
+            files_with_sha, chg_files = load_pr_files_info(context)
             api_rate_limits(gh)
             context._pr_files_with_sha = files_with_sha
             context.packages = {file_to_package(repo_config, f) for f in chg_files}
@@ -7357,7 +7519,7 @@ def process_pr(
             # Check for non-blocking labels in external repos
             try:
                 if getattr(repo_config, "NONBLOCKING_LABELS", False):
-                    files_with_sha, chg_files = get_pr_files_info(pr)
+                    files_with_sha, chg_files = load_pr_files_info(context)
                     api_rate_limits(gh)
                     context._pr_files_with_sha = files_with_sha
                     add_nonblocking_labels(chg_files, context.pending_labels)

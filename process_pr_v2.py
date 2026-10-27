@@ -6934,14 +6934,27 @@ def post_welcome_message(context: PRContext) -> None:
         )
     else:
         # Simple message for non-CMSSW repos or issues
-        commands_url = "https://cms-sw.github.io/cms-bot-cmssw-issues.html"
+        # PRs link to the PR commands page, issues to the issue commands page (as in v1)
+        commands_url = (
+            "https://cms-sw.github.io/cms-bot-cmssw-cmds.html"
+            if context.is_pr
+            else "https://cms-sw.github.io/cms-bot-cmssw-issues.html"
+        )
         # Release managers are notified for PRs of any repository (v1 behaviour)
         release_managers_msg = (
             _build_release_managers_message(context) if context.is_pr and context.pr else ""
         )
+        if context.is_pr:
+            # v1: "... for branch <base>." / "review it and eventually sign?"
+            branch = context.pr.base.ref
+            intro = f"{msg_prefix} {format_mention(context, author)} for branch {branch}.\n\n"
+            ask = "sign"
+        else:
+            intro = f"{msg_prefix} {format_mention(context, author)}.\n\n"
+            ask = "sign/assign"
         msg = (
-            f"{msg_prefix} {format_mention(context, author)}.\n\n"
-            f"{l2_mentions} can you please review it and eventually sign/assign? Thanks.\n"
+            f"{intro}"
+            f"{l2_mentions} can you please review it and eventually {ask}? Thanks.\n"
             f"{watchers_msg}"
             f"{release_managers_msg}"
             f"{backport_msg}"

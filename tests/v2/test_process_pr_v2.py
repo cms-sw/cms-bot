@@ -3321,9 +3321,7 @@ class TestBuildTestCommandParsing:
             "process_pr_v2.determine_signature_state", return_value=signed
         ), patch("process_pr_v2.get_labels_for_pr", return_value=set()), patch(
             "process_pr_v2.needs_external", return_value=False
-        ), patch(
-            "process_pr_v2.has_compilation_warnings", return_value=False
-        ):
+        ), patch("process_pr_v2.has_compilation_warnings", return_value=False):
             _, new_labels = update_pr_status(ctx)
 
         assert new_labels == expected
@@ -3451,9 +3449,7 @@ class TestBuildTestCommandParsing:
         )
         with patch(
             "process_pr_v2.get_release_managers",
-            side_effect=lambda branch: (
-                ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"]
-            ),
+            side_effect=lambda branch: ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"],
         ), patch("process_pr_v2.CMSSW_ORP", ["orp_user"]):
             msg = _build_release_managers_message(ctx)
         assert msg == "@orp_user, @rm_a, @rm_b you are the release manager for this.\n"
@@ -3462,6 +3458,42 @@ class TestBuildTestCommandParsing:
             "process_pr_v2.CMSSW_ORP", []
         ):
             assert _build_release_managers_message(ctx) == ""
+
+    @pytest.mark.parametrize(
+        "is_pr,page", [(True, "cms-bot-cmssw-cmds.html"), (False, "cms-bot-cmssw-issues.html")]
+    )
+    def test_generic_welcome_message_commands_link(self, is_pr, page):
+        """PRs link to the PR commands page, issues to the issues commands page (v1)."""
+        from types import SimpleNamespace
+
+        posted = []
+        ctx = SimpleNamespace(
+            is_draft=False,
+            is_pr=is_pr,
+            pr=SimpleNamespace(base=SimpleNamespace(ref="main")) if is_pr else None,
+            issue=SimpleNamespace(user=SimpleNamespace(login="testuser")),
+            cmssw_repo=False,
+            notify_without_at=False,
+            signing_categories=set(),
+            watchers=set(),
+            backport_of=None,
+            welcome_message_posted=False,
+        )
+        with patch("process_pr_v2.has_bot_comment", return_value=False), patch(
+            "process_pr_v2.post_bot_comment", side_effect=lambda c, m, k: posted.append(m)
+        ), patch("process_pr_v2._build_release_managers_message", return_value=""), patch(
+            "process_pr_v2.format_mention", side_effect=lambda c, u: "@" + u
+        ), patch("process_pr_v2.CMSSW_ISSUES_TRACKERS", ["tracker_user"]):
+            process_pr_v2.post_welcome_message(ctx)
+        assert len(posted) == 1
+        assert f'<a href="https://cms-sw.github.io/{page}">here</a>' in posted[0]
+        if is_pr:
+            assert "@testuser for branch main.\n\n" in posted[0]
+            assert "eventually sign? Thanks." in posted[0]
+        else:
+            assert "@testuser.\n\n" in posted[0]
+            assert "@tracker_user can you please" in posted[0]
+            assert "eventually sign/assign? Thanks." in posted[0]
 
     def test_parse_test_with_queue(self):
         """Test parsing 'test for el8_amd64_gcc12'."""
@@ -6286,9 +6318,7 @@ class TestTypeCommand:
         create_basic_pr_data(
             name,
             pr_number=1,
-            files=[
-                {"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}
-            ],
+            files=[{"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}],
             comments=[],
             labels=["documentation", "some-manual-label"],  # neither produced by the bot
         )
@@ -11793,11 +11823,7 @@ class TestPRFilesSnapshot:
         pr = MagicMock()
         pr.head.sha = head
         pr.base.ref = base
-        files = files or [
-            ("A/B/x.cc", "s1", None),
-            ("A/B/y.cc", "s2", "A/B/old.cc"),
-            ("A/B/z.cc", None, None),
-        ]
+        files = files or [("A/B/x.cc", "s1", None), ("A/B/y.cc", "s2", "A/B/old.cc"), ("A/B/z.cc", None, None)]
         pr.get_files.return_value = [
             MagicMock(filename=n, sha=s, previous_filename=prev) for n, s, prev in files
         ]

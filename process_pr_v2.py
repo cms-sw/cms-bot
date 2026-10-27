@@ -319,7 +319,7 @@ ALL_GPUS = _load_gpu_flavors()
 ALL_GPU_BRANDS = sorted({gpu.split("_", 1)[0] for gpu in ALL_GPUS})
 
 # Test-related patterns
-EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano"]
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano", "rntuple"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)

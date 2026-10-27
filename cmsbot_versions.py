@@ -25,7 +25,7 @@ def get_cmsbot_version(payload, obj=None):
                 obj = get_issue(payload["name"], cxt[1])
             except Exception as e:
                 print("ERR:", e)
-            return version
+                return version
         else:
             return version
     user = obj.get("user", {}).get("login")

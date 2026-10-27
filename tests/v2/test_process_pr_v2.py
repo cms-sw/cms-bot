@@ -7557,6 +7557,22 @@ class TestTestParametersCommand:
         assert result["EXTRA_MATRIX_ARGS_RNTUPLE"] == "-j 4"
         assert result["ENABLE_BOT_TESTS"] == "GPU,RNTUPLE"
 
+    def test_parse_test_parameters_error_wording(self):
+        """Errors name the unknown keys, and the key=value of invalid values."""
+        mock_repo = MagicMock()
+        mock_repo.full_name = "cms-sw/cmssw"
+        lines = [
+            "test parameters:",
+            "- no_such_key = 1",
+            "- enable = not_a_test",
+            "- workflows = 1.0",
+            "- not a setting",
+        ]
+        result = parse_test_parameters(lines, mock_repo)
+        assert result == {
+            "errors": "ERRORS: format:'not a setting'; key:no_such_key; value:enable=not_a_test"
+        }
+
     def test_parse_test_parameters_empty(self):
         """Test parsting empty parameters."""
         lines = [

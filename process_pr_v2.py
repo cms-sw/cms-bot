@@ -3900,7 +3900,7 @@ def parse_test_parameters(comment_lines: list[str], repo) -> dict[str, str]:
 
             # Validate value against pattern
             if not re.fullmatch(value_pattern, value, re.IGNORECASE):
-                errors["value"].append(key)
+                errors["value"].append(f"{key}={value}")
                 matched = True
                 break
 
@@ -3927,7 +3927,9 @@ def parse_test_parameters(comment_lines: list[str], repo) -> dict[str, str]:
     error_parts = []
     for error_type in sorted(errors.keys()):
         if errors[error_type]:
-            error_parts.append(f"{error_type}:{','.join(errors[error_type])}")
+            # "key:" lists the unknown keys; "value:" lists the offending "key=value" settings
+            separator = ", " if error_type == "value" else ","
+            error_parts.append(f"{error_type}:{separator.join(errors[error_type])}")
 
     if error_parts:
         return {"errors": "ERRORS: " + "; ".join(error_parts)}

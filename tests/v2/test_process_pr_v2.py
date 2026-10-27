@@ -3321,7 +3321,9 @@ class TestBuildTestCommandParsing:
             "process_pr_v2.determine_signature_state", return_value=signed
         ), patch("process_pr_v2.get_labels_for_pr", return_value=set()), patch(
             "process_pr_v2.needs_external", return_value=False
-        ), patch("process_pr_v2.has_compilation_warnings", return_value=False):
+        ), patch(
+            "process_pr_v2.has_compilation_warnings", return_value=False
+        ):
             _, new_labels = update_pr_status(ctx)
 
         assert new_labels == expected
@@ -3449,7 +3451,9 @@ class TestBuildTestCommandParsing:
         )
         with patch(
             "process_pr_v2.get_release_managers",
-            side_effect=lambda branch: ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"],
+            side_effect=lambda branch: (
+                ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"]
+            ),
         ), patch("process_pr_v2.CMSSW_ORP", ["orp_user"]):
             msg = _build_release_managers_message(ctx)
         assert msg == "@orp_user, @rm_a, @rm_b you are the release manager for this.\n"
@@ -3483,7 +3487,9 @@ class TestBuildTestCommandParsing:
             "process_pr_v2.post_bot_comment", side_effect=lambda c, m, k: posted.append(m)
         ), patch("process_pr_v2._build_release_managers_message", return_value=""), patch(
             "process_pr_v2.format_mention", side_effect=lambda c, u: "@" + u
-        ), patch("process_pr_v2.CMSSW_ISSUES_TRACKERS", ["tracker_user"]):
+        ), patch(
+            "process_pr_v2.CMSSW_ISSUES_TRACKERS", ["tracker_user"]
+        ):
             process_pr_v2.post_welcome_message(ctx)
         assert len(posted) == 1
         assert f'<a href="https://cms-sw.github.io/{page}">here</a>' in posted[0]
@@ -6318,7 +6324,9 @@ class TestTypeCommand:
         create_basic_pr_data(
             name,
             pr_number=1,
-            files=[{"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}],
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}
+            ],
             comments=[],
             labels=["documentation", "some-manual-label"],  # neither produced by the bot
         )
@@ -11823,7 +11831,11 @@ class TestPRFilesSnapshot:
         pr = MagicMock()
         pr.head.sha = head
         pr.base.ref = base
-        files = files or [("A/B/x.cc", "s1", None), ("A/B/y.cc", "s2", "A/B/old.cc"), ("A/B/z.cc", None, None)]
+        files = files or [
+            ("A/B/x.cc", "s1", None),
+            ("A/B/y.cc", "s2", "A/B/old.cc"),
+            ("A/B/z.cc", None, None),
+        ]
         pr.get_files.return_value = [
             MagicMock(filename=n, sha=s, previous_filename=prev) for n, s, prev in files
         ]

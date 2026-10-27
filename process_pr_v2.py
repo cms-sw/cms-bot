@@ -4663,6 +4663,15 @@ def load_pr_files_info(context: "PRContext") -> tuple[dict[str, str], list[str]]
         logger.debug(f"PR files unchanged since {head_sha[:8]}, using cached file list")
         return dict(snap.files), snap.changed_files()
 
+    if not can_cache:
+        reason = "head SHA / base ref not available"
+    elif snap is None:
+        reason = "no file list in the bot cache yet"
+    elif snap.head_sha != head_sha:
+        reason = f"head changed ({snap.head_sha[:8]} -> {head_sha[:8]})"
+    else:
+        reason = f"base changed ({snap.base_ref} -> {base_ref})"
+    logger.info(f"Fetching PR files: {reason}")
     files_with_sha, chg_files = get_pr_files_info(pr)
     # A name containing "::" can't be stored as a "filename::sha" key
     if can_cache and not any("::" in name for name in files_with_sha):

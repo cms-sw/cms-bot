@@ -35,7 +35,7 @@
       "action": "create_comment",
       "details": {
         "issue_number": 30,
-        "body": "cms-bot internal usage<!-- bot cache: {\"comments\":{},\"emoji\":{},\"fv\":{},\"version\":2} -->"
+        "body": "cms-bot internal usage<!-- bot cache: {\"comments\":{},\"emoji\":{},\"fmt\":2,\"fvx\":[],\"keys\":[],\"version\":2} -->"
       }
     }
   ]

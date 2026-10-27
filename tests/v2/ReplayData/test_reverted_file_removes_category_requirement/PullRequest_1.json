@@ -7,7 +7,7 @@
   "merged": false,
   "mergeable": true,
   "head": {
-    "sha": "commit123",
+    "sha": "abc123_reverted",
     "ref": "feature"
   },
   "base": {

@@ -1,5 +1,6 @@
 # Use cms-bot process_pr version v2 for the followinf github users
 from datetime import datetime, timezone
+import re
 
 # User: [(date_after, bot_version),[(date_after, bot_version)]
 CMSBOT_V2 = {
@@ -14,6 +15,12 @@ def get_cmsbot_version(payload, obj=None):
             obj = payload["issue"]
         elif "pull_request" in payload:
             obj = payload["pull_request"]
+        elif ("context" in payload) and ("name" in payload):
+            cxt = payload["context"].split("/")
+            if (len(cxt)<2) or (cxt[0] not in ["bot", "cms"]) or (not re.match('^[1-9][0-9]*$', cxt[1])):
+                return version
+            from github_utils import get_issue
+            return get_cmsbot_version({}, get_issue(payload["name"], cxt[1]))
         else:
             return version
     user = obj.get("user", {}).get("login")

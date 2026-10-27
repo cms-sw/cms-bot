@@ -159,7 +159,6 @@ CMSSW_L2 = {
     "IzaakWN": ["tau-pog"],
     "mbluj": ["tau-pog"],
     "pmastrap": ["tau-pog"],
-    "mmasciov": ["tracking-pog"],
     "elusian": ["tracking-pog"],
     "bdanzi": ["tracking-pog"],
     # PPD

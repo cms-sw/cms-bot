@@ -17,10 +17,15 @@ def get_cmsbot_version(payload, obj=None):
             obj = payload["pull_request"]
         elif ("context" in payload) and ("name" in payload):
             cxt = payload["context"].split("/")
+            print("Context:", cxt)
             if (len(cxt)<2) or (cxt[0] not in ["bot", "cms"]) or (not re.match('^[1-9][0-9]*$', cxt[1])):
                 return version
             from github_utils import get_issue
-            return get_cmsbot_version({}, get_issue(payload["name"], cxt[1]))
+            try:
+                obj = get_issue(payload["name"], cxt[1])
+            except Exception as e:
+                print("ERR:", e)
+            return version
         else:
             return version
     user = obj.get("user", {}).get("login")

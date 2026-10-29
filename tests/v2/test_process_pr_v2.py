@@ -3321,7 +3321,9 @@ class TestBuildTestCommandParsing:
             "process_pr_v2.determine_signature_state", return_value=signed
         ), patch("process_pr_v2.get_labels_for_pr", return_value=set()), patch(
             "process_pr_v2.needs_external", return_value=False
-        ), patch("process_pr_v2.has_compilation_warnings", return_value=False):
+        ), patch(
+            "process_pr_v2.has_compilation_warnings", return_value=False
+        ):
             _, new_labels = update_pr_status(ctx)
 
         assert new_labels == expected
@@ -3449,7 +3451,9 @@ class TestBuildTestCommandParsing:
         )
         with patch(
             "process_pr_v2.get_release_managers",
-            side_effect=lambda branch: ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"],
+            side_effect=lambda branch: (
+                ["rm_b"] if branch == "IB/CMSSW_16_0_X/master" else ["rm_a"]
+            ),
         ), patch("process_pr_v2.CMSSW_ORP", ["orp_user"]):
             msg = _build_release_managers_message(ctx)
         assert msg == "@orp_user, @rm_a, @rm_b you are the release manager for this.\n"
@@ -3483,7 +3487,9 @@ class TestBuildTestCommandParsing:
             "process_pr_v2.post_bot_comment", side_effect=lambda c, m, k: posted.append(m)
         ), patch("process_pr_v2._build_release_managers_message", return_value=""), patch(
             "process_pr_v2.format_mention", side_effect=lambda c, u: "@" + u
-        ), patch("process_pr_v2.CMSSW_ISSUES_TRACKERS", ["tracker_user"]):
+        ), patch(
+            "process_pr_v2.CMSSW_ISSUES_TRACKERS", ["tracker_user"]
+        ):
             process_pr_v2.post_welcome_message(ctx)
         assert len(posted) == 1
         assert f'<a href="https://cms-sw.github.io/{page}">here</a>' in posted[0]
@@ -6318,7 +6324,9 @@ class TestTypeCommand:
         create_basic_pr_data(
             name,
             pr_number=1,
-            files=[{"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}],
+            files=[
+                {"filename": "Package/Core/main.py", "sha": "file_sha_123", "status": "modified"}
+            ],
             comments=[],
             labels=["documentation", "some-manual-label"],  # neither produced by the bot
         )
@@ -7515,6 +7523,41 @@ class TestTestDeduplication:
 # =============================================================================
 # TEST: TEST PARAMETERS COMMAND
 # =============================================================================
+
+
+class TestLegacyCategories:
+    """repo_config.LEGACY_CATEGORIES: a category is ignored for PRs created after its date (v1)."""
+
+    @staticmethod
+    def _config(**legacy):
+        cfg = types.ModuleType("repo_config")
+        cfg.LEGACY_CATEGORIES = legacy
+        return cfg
+
+    def test_legacy_categories_at(self):
+        cfg = self._config(upgrade=datetime(2025, 10, 10, tzinfo=timezone.utc))
+        before = datetime(2025, 10, 9, 23, 0, tzinfo=timezone.utc)
+        after = datetime(2025, 10, 10, 0, 1, tzinfo=timezone.utc)
+        assert process_pr_v2.legacy_categories_at(cfg, before) == set()
+        assert process_pr_v2.legacy_categories_at(cfg, after) == {"upgrade"}
+        # PyGithub may return naive (UTC) datetimes
+        assert process_pr_v2.legacy_categories_at(cfg, after.replace(tzinfo=None)) == {"upgrade"}
+        assert process_pr_v2.legacy_categories_at(cfg, None) == set()
+        assert process_pr_v2.legacy_categories_at(types.ModuleType("c"), after) == set()
+
+    def test_legacy_category_is_not_used_for_new_prs(self):
+        cfg = self._config(upgrade=datetime(2025, 10, 10, tzinfo=timezone.utc))
+        try:
+            process_pr_v2.set_legacy_categories(cfg, datetime(2026, 1, 1, tzinfo=timezone.utc))
+            assert "upgrade" not in process_pr_v2.get_cmssw_categories()
+            assert process_pr_v2.get_package_categories("Package/Upgrade") == []
+            assert process_pr_v2.get_package_categories("Package/Core") == ["core"]
+            # ... but PRs created before that date still need it
+            process_pr_v2.set_legacy_categories(cfg, datetime(2025, 1, 1, tzinfo=timezone.utc))
+            assert "upgrade" in process_pr_v2.get_cmssw_categories()
+            assert process_pr_v2.get_package_categories("Package/Upgrade") == ["upgrade"]
+        finally:
+            process_pr_v2.set_legacy_categories(types.ModuleType("c"), None)
 
 
 class TestTestParametersCommand:
@@ -11858,7 +11901,11 @@ class TestPRFilesSnapshot:
         pr = MagicMock()
         pr.head.sha = head
         pr.base.ref = base
-        files = files or [("A/B/x.cc", "s1", None), ("A/B/y.cc", "s2", "A/B/old.cc"), ("A/B/z.cc", None, None)]
+        files = files or [
+            ("A/B/x.cc", "s1", None),
+            ("A/B/y.cc", "s2", "A/B/old.cc"),
+            ("A/B/z.cc", None, None),
+        ]
         pr.get_files.return_value = [
             MagicMock(filename=n, sha=s, previous_filename=prev) for n, s, prev in files
         ]

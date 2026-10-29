@@ -18,9 +18,14 @@ def get_cmsbot_version(payload, obj=None):
         elif ("context" in payload) and ("name" in payload):
             cxt = payload["context"].split("/")
             print("Context:", cxt)
-            if (len(cxt)<2) or (cxt[0] not in ["bot", "cms"]) or (not re.match('^[1-9][0-9]*$', cxt[1])):
+            if (
+                (len(cxt) < 2)
+                or (cxt[0] not in ["bot", "cms"])
+                or (not re.match("^[1-9][0-9]*$", cxt[1]))
+            ):
                 return version
             from github_utils import get_issue
+
             try:
                 obj = get_issue(payload["name"], cxt[1])
             except Exception as e:

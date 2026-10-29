@@ -47,7 +47,7 @@ def process(line, count):
         print("Processed entries", count)
     if not send_payload("apache-cmssdt-" + week, "access_log", id, dumps(payload)):
         return False
-    #if payload["request"].startswith("/SDT/releases.map?release="):
+    # if payload["request"].startswith("/SDT/releases.map?release="):
     #    xpayload = dict(item.split("=") for item in payload["request"].split("?", 1)[1].split("&"))
     #    for x in ["@timestamp", "ip"]:
     #        xpayload[x] = payload[x]

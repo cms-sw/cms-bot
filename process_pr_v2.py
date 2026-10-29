@@ -1461,6 +1461,45 @@ def file_to_package(repo_config: types.ModuleType, filename: str) -> str:
     return filename
 
 
+# Categories that are legacy for the PR/issue being processed (see set_legacy_categories()).
+_LEGACY_CATEGORIES_IN_EFFECT: set[str] = set()
+
+
+def legacy_categories_at(repo_config: types.ModuleType, created_at: Any) -> set[str]:
+    """
+    Categories that were already legacy when the PR/issue was created.
+
+    repo_config.LEGACY_CATEGORIES maps a category name to the datetime from which it is
+    legacy. Only PRs/issues created after that moment are affected (as in v1): older ones
+    keep requiring signatures for the category.
+    """
+    legacy = getattr(repo_config, "LEGACY_CATEGORIES", None) or {}
+    if not legacy or created_at is None:
+        return set()
+    try:
+        created = ensure_tz_aware(created_at)
+        return {cat for cat, since in legacy.items() if created > ensure_tz_aware(since)}
+    except (AttributeError, TypeError):
+        return set()
+
+
+def set_legacy_categories(repo_config: types.ModuleType, created_at: Any) -> None:
+    """Select the legacy categories to ignore while processing the current PR/issue."""
+    global _LEGACY_CATEGORIES_IN_EFFECT
+    _LEGACY_CATEGORIES_IN_EFFECT = legacy_categories_at(repo_config, created_at)
+    for cat in sorted(_LEGACY_CATEGORIES_IN_EFFECT):
+        logger.info(f"Ignoring legacy category {cat}")
+
+
+def get_cmssw_categories() -> dict[str, list[str]]:
+    """CMSSW_CATEGORIES (category -> packages) without the legacy categories."""
+    return {
+        cat: packages
+        for cat, packages in CMSSW_CATEGORIES.items()
+        if cat not in _LEGACY_CATEGORIES_IN_EFFECT
+    }
+
+
 def get_package_categories(package: str) -> list[str]:
     """
     Get L2 categories responsible for a package.
@@ -1476,7 +1515,7 @@ def get_package_categories(package: str) -> list[str]:
     # CMSSW_CATEGORIES maps category -> list of packages
     # We need to invert this to find categories for a package
     categories = []
-    for category, packages in CMSSW_CATEGORIES.items():
+    for category, packages in get_cmssw_categories().items():
         if package in packages:
             categories.append(category)
 
@@ -1505,9 +1544,8 @@ def detect_new_packages(context: "PRContext") -> list[str]:
     # Build list of all packages that have categories assigned
     # (from the values of CMSSW_CATEGORIES, not keys)
     all_known_packages: set[str] = set()
-    if CMSSW_CATEGORIES:
-        for category_packages in CMSSW_CATEGORIES.values():
-            all_known_packages.update(category_packages)
+    for category_packages in get_cmssw_categories().values():
+        all_known_packages.update(category_packages)
 
     # Find packages without categories
     new_packages = []
@@ -1549,7 +1587,7 @@ def get_file_l2_categories(repo_config: types.ModuleType, filename: str) -> list
     """
     # Check if this repo uses automatic category assignment
     has_file2package = hasattr(repo_config, "file2Package")
-    has_category_mappings = bool(CMSSW_CATEGORIES)
+    has_category_mappings = bool(get_cmssw_categories())
 
     if not has_file2package and not has_category_mappings:
         # This repo relies on manual assignment via 'assign' command
@@ -2914,7 +2952,7 @@ def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) ->
     # Process direct categories - validate against CMSSW_CATEGORIES
     # If not a valid category, try as a package name
     for cat in direct_categories:
-        if cat in CMSSW_CATEGORIES:
+        if cat in get_cmssw_categories():
             if cat not in categories:
                 categories.append(cat)
         else:
@@ -2979,7 +3017,7 @@ def handle_assign_unassign(context: PRContext, match: re.Match, comment: Any) ->
         # Also check direct_categories that were mapped via get_package_category
         all_packages = packages.copy()
         for item in direct_categories:
-            if item not in CMSSW_CATEGORIES:
+            if item not in get_cmssw_categories():
                 # This was treated as a package name
                 all_packages.append(item)
 
@@ -7037,9 +7075,8 @@ def _build_cmssw_welcome_message(
     if "new-package" in context.signing_categories:
         # Get the list of new packages for the message
         all_known_packages: set[str] = set()
-        if CMSSW_CATEGORIES:
-            for category_packages in CMSSW_CATEGORIES.values():
-                all_known_packages.update(category_packages)
+        for category_packages in get_cmssw_categories().values():
+            all_known_packages.update(category_packages)
 
         new_packages = [
             pkg
@@ -7398,6 +7435,9 @@ def process_pr(
     )
     context._last_commit = last_commit
     context.notify_without_at = notify_without_at
+
+    # Categories that became legacy before this PR/issue was created are not required (v1)
+    set_legacy_categories(repo_config, getattr(issue, "created_at", None))
 
     # A commit dated in the future cannot be ordered against comments: label and stop (v1)
     if is_pr and is_future_commit(context):

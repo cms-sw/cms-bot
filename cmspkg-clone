@@ -7,9 +7,9 @@ function cleanup_arch(){
   echo "  Checking architecture ${arch}" >${log}.tmp
   find ${arch_dir} -mindepth 3 -maxdepth 3 -name '*.rpm' -type f > ${rpms}
   RPM_CNT=$(cat ${rpms} | wc -l)
-  echo "  Found RPMS: $RPM_CNT" >>${log}.tmp
+  echo "    Found RPMS: $RPM_CNT" >>${log}.tmp
   if [ $RPM_CNT -eq 0 ] ; then
-    echo "  Empty architecture $arch" >>${log}.tmp
+    echo "    Empty architecture $arch" >>${log}.tmp
     rm -rf ${arch_dir}
   else
     DEL_FILES=0
@@ -19,12 +19,12 @@ function cleanup_arch(){
       echo  "    Remove($DEL_FILES): $rpm" >>${log}.tmp
       rm -f "$rpm"
     done
-    echo "  Deleted obsolete files: ${arch}: $DEL_FILES" >>${log}.tmp
+    echo "    Deleted obsolete files: ${arch}: $DEL_FILES" >>${log}.tmp
     if [ $DEL_FILES -gt 0 ] ; then
-      echo "    Cleaning up empty directories" >>${log}.tmp
+      echo "      Cleaning up empty directories" >>${log}.tmp
       for depth in 2 1 ; do
         for dir in $(find ${arch_dir} -mindepth ${depth} -maxdepth ${depth} -type d -empty) ; do
-          echo "    Deleting empty store: $dir" >>${log}.tmp
+          echo "      Deleting empty store: $dir" >>${log}.tmp
           rm -rf $dir
         done
       done
@@ -40,6 +40,7 @@ function cleanup_log(){
     rm $log
   done
 }
+
 function cleanup_unused(){
   if [ "${CMSPKG_DELETE_UNUSED}" != "false" ] ; then
     mkdir -p out
@@ -59,26 +60,37 @@ function cmspkg_run(){
   curl -L -s "http://cmsrep.cern.ch/cgi-bin/$1" | grep 'href=' | sed "s|.*/cgi-bin/$1/||;s|'.*||" | grep -v '^$' | grep "^$2$" | sort | tr '\n' ' '
 }
 
+function delete_repo() {
+  delete_it=1
+  if [ $(echo $1 | grep -E "^${KEEP_REPO}$" | wc -l) -eq 0 ] ; then
+    delete_it=0
+  elif [ "${EXCLUDE_REPO}" != "" ] ; then
+    [ $(echo $1 | grep -E "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] && delete_it=0
+  fi
+  return $delete_it
+}
+
 echo "============================================="
 date
 echo "============================================="
 [ "$1" = "" ] && exit 1
 CLONE_DIR=$1
 mkdir -p $CLONE_DIR
-pushd $CLONE_DIR
+pushd $CLONE_DIR >/dev/null
   if [ ! -d cmspkg ] ; then
     git clone https://github.com/cms-sw/cmspkg.git
   fi
-  pushd cmspkg
+  pushd cmspkg >/dev/null
     git pull --rebase
-  popd
-popd
+  popd >/dev/null
+popd >/dev/null
 
 mdir=$(echo $CLONE_DIR | cut -d/ -f1,2)
 df -h $mdir
 mkdir -p $CLONE_DIR/cmssw $CLONE_DIR/cmssw/repos/.obj_store/RPMS
-[ "${KEEP_REPO}" != "" ] || KEEP_REPO=".*"
+[ "${KEEP_REPO}" != "" ] || export KEEP_REPO=".*"
 echo "Backing up repos which match: ${KEEP_REPO}"
+echo "Exclude repo filter: \"${EXCLUDE_REPO}\""
 if [ "X${REPOSITORY}" = "X" ] ; then
   echo "Starting cleanup process ..."
   REPOSITORY=$(cmspkg_run repos '.*')
@@ -88,9 +100,10 @@ if [ "X${REPOSITORY}" = "X" ] ; then
     if [ -d $CLONE_DIR/cmssw/repos ] ; then
       for repo_dir in $(find $CLONE_DIR/cmssw/repos -mindepth 1 -maxdepth 1 -type d | grep -v '/\.obj_store') ; do
         repo=$(basename $repo_dir)
-        if [ $(echo $repo | grep -E "^${KEEP_REPO}$" | wc -l) -eq 0 ] ; then
+        echo "Working on $repo ..."
+        if delete_repo $repo ; then
           if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
-            echo "Deleting excluded repository $repo"
+            echo "  Deleting excluded repository $repo"
             rm -rf $CLONE_DIR/cmssw/repos/$repo
           fi
           continue
@@ -126,7 +139,7 @@ echo "Starting backup process ...."
 TOTAL_REPOS=0
 ERR=0
 for repo in $(echo ${REPOSITORY} | tr ' ' '\n') ; do
-  if [ $(echo $repo | grep -E "^${KEEP_REPO}$" | wc -l) -eq 0 ] ; then
+  if delete_repo $repo ; then
     if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
       echo "Deleting excluded repository $repo"
       rm -rf $CLONE_DIR/cmssw/repos/$repo

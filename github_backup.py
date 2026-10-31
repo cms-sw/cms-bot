@@ -259,7 +259,7 @@ for org in orgs:
                     dump(repo, obj)
                 print("  Backed up", repo_name)
                 getstatusoutput(
-                    "find %s -mindepth 1 -maxdepth 1 -name 'repo.*' | sort |  head -n -100 | xargs rm -rf"
+                    "find %s -mindepth 1 -maxdepth 1 -name 'repo.*' | sort |  head -n -30 | xargs rm -rf"
                     % repo_dir
                 )
             else:

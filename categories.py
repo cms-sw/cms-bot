@@ -75,6 +75,8 @@ CMSSW_L2 = {
     "davidlange6": ["operations"],
     "emeschi": ["daq"],
     "enibigir": ["xpog"],
+    "ram1123": ["xpog"],
+    "vepadulano": ["xpog"],
     "Electricks94": ["heterogeneous"],  # Markus Holzer
     "Parsifal-2045": ["heterogeneous"],  # Luca Ferragina
     "fwyzard": ["heterogeneous"],  # Andrea Bocci

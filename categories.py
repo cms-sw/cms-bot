@@ -77,6 +77,7 @@ CMSSW_L2 = {
     "enibigir": ["xpog"],
     "ram1123": ["xpog"],
     "vepadulano": ["xpog"],
+    "alexstrel": ["heterogeneous"],  # Alexei Strelchenko
     "Electricks94": ["heterogeneous"],  # Markus Holzer
     "Parsifal-2045": ["heterogeneous"],  # Luca Ferragina
     "fwyzard": ["heterogeneous"],  # Andrea Bocci

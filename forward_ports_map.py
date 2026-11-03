@@ -117,9 +117,6 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_0_X/master"].append("IB/CMSSW_15_0_X/cs
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_1_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_15_1_X/master"].append("IB/CMSSW_15_1_X/cs9")
 
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_17_0_X/master"] = []
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_17_0_X/master"].append("IB/CMSSW_17_0_X/g4")
-
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_17_1_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_17_1_X/master"].append("IB/CMSSW_17_1_X/g4")
 

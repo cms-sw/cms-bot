@@ -12,6 +12,7 @@ ARRAY=(
     "cms-externals/tensorflow:tensorflow-sources"
     "cms-externals/HLS_arbitrary_Precision_Types:hls"
     "cms-sw/cmssw-config:coral"
+    "cms-externals/herwig:herwig7"
     "cms-externals/dxr:py3-dxr"
     )
 

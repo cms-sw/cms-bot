@@ -799,8 +799,6 @@ def main():
         shutil.copy(catalog, cms_conf_dir)
         if driver_catelog != catalog:
             shutil.copy(driver_catelog, cms_conf_dir)
-            with open(os.path.join(cms_conf_dir, "args.txt"), "w") as ref:
-                ref.write(f" -D {args.driver}")
 
         # Clean up the temporary directory
         shutil.rmtree(temp_dir)

@@ -210,6 +210,13 @@ def movetree(src, dst, overwrite=False):
 # Download a JSON catalog from any URL supported by urllib ('http://...', 'https://...', 'file:...', etc.)
 # and deserialise it into a python dictionary.
 def download_catalog(url, download_dir):
+    catalog_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), url.rsplit("/")[-1])
+    if not os.path.exists(catalog_file):
+        return http_download_catalog(url, download_dir)
+    shutil.copy(catalog_file, download_dir)
+    return catalog_file
+
+def http_download_catalog(url, download_dir):
     # Open the JSON catalog URL
     try:
         request = urllib.request.urlopen(url)
@@ -232,7 +239,6 @@ def download_catalog(url, download_dir):
     urllib.request.urlretrieve(url, json_file)
 
     return json_file
-
 
 # Parse a catalog and return the list of components available for the given architecture.
 def parse_catalog(json_file, driver_json_file, os_arch):
@@ -791,6 +797,10 @@ def main():
         cms_conf_dir = os.path.join(install_dir, ".cms")
         os.makedirs(cms_conf_dir, exist_ok=True)
         shutil.copy(catalog, cms_conf_dir)
+        if driver_catelog != catalog:
+            shutil.copy(driver_catelog, cms_conf_dir)
+            with open(os.path.join(cms_conf_dir, "args.txt"), "w") as ref:
+                ref.write(f" -D {args.driver}")
 
         # Clean up the temporary directory
         shutil.rmtree(temp_dir)

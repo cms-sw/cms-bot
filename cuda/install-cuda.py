@@ -235,13 +235,22 @@ def download_catalog(url, download_dir):
 
 
 # Parse a catalog and return the list of components available for the given architecture.
-def parse_catalog(json_file, os_arch):
+def parse_catalog(json_file, driver_json_file, os_arch):
     # Load and deserialise the JSON catalog
     try:
         catalog = json.load(open(json_file, "r"))
     except json.decoder.JSONDecodeError as e:
         error(f"the catalog at is not a valid JSON file")
         raise e
+
+    # Load and deserialise the Driver JSON catalog
+    if driver_json_file != json_file:
+        try:
+            driver_catalog = json.load(open(driver_json_file, "r"))
+            catalog["nvidia_driver"] = driver_catalog["nvidia_driver"]
+        except json.decoder.JSONDecodeError as e:
+            error(f"the driver catalog at is not a valid JSON file")
+            raise e
 
     # Skip the 'release_date' and other non-package entries, and the components
     # that are not available for the given architecture.
@@ -331,8 +340,8 @@ def unpack_package(package, local_dir):
     package_name = os.path.basename(package)
     package_name = removesuffix(package_name, ".tar", ".tgz", ".gz", ".bz2", ".xz")
     archive_dir = os.path.join(local_dir, package_name)
-    for info in archive:
-        if not os.path.normpath(os.path.join(local_dir, info.name)).startswith(archive_dir):
+    for xinfo in archive:
+        if not os.path.normpath(os.path.join(local_dir, xinfo.name)).startswith(archive_dir):
             raise RuntimeError(
                 f"the package {package} contents are not in the expected directory."
             )
@@ -520,7 +529,9 @@ def main():
     global verbose
 
     # Base URL for the NVIDIA JSON catalogs and the redistributable software components
-    base_url = "https://developer.download.nvidia.com/compute/cuda/redist/"
+    base_nvidia_url = "https://developer.download.nvidia.com/compute"
+    base_url = f"{base_nvidia_url}/cuda/redist/"
+    driver_base =  f"{base_nvidia_url}/nvidia-driver/redist/"
 
     # Packages that should _not_ be unpacked and installed
     blacklist = ["fabricmanager", "libnvidia_nscq"]
@@ -538,6 +549,14 @@ def main():
         help="Version to download, unpack and install, e.g. 11.7.1 or 12.0.0",
     )
 
+    # Cuda Driver version
+    parser.add_argument(
+        "-D",
+        "--driver",
+        metavar="VERSION",
+        default=None,
+        help="Provide the cuda driver version to be installed with this cuda toolkit",
+    )
     # Possible architectures for the NVIDIA redistributables: 'x86_64', 'ppc64le', 'sbsa' (aarch64 server), 'aarch64' (aarch64 embedded)
     # We supporty only aarch server, so we use 'aarch64' to select 'sbsa'
     parser.add_argument(
@@ -650,7 +669,7 @@ def main():
             base = os.path.dirname(arg)
         else:
             version = arg
-            url = f"https://developer.download.nvidia.com/compute/cuda/redist/redistrib_{version}.json"
+            url = f"{base_url}/redistrib_{version}.json"
             base = args.base_url
         if not base.endswith("/"):
             base += "/"
@@ -687,7 +706,12 @@ def main():
 
         info(f"downloading CUDA {version} catalog from {url}")
         catalog = download_catalog(url, download_dir)
-        components = parse_catalog(catalog, os_arch)
+        driver_catelog = catalog
+        if args.driver:
+            driver_catelog = download_catalog(f"{driver_base}/redistrib_{args.driver}.json", download_dir)
+        components = parse_catalog(catalog, driver_catelog, os_arch)
+        if not [True for com in components if com.key == "nvidia_driver"]:
+            raise RuntimeError(f"Error: This cuda version requires a dedicated driver version, please re-run using -D|--driver <version>")
 
         # Version-dependent rules for Nsight Compute and Nsight Systems
         cuda_major, cuda_minor, cuda_point = version.split(".")
@@ -752,8 +776,9 @@ def main():
             if component.key not in packages:
                 continue
 
+            pkg_base = driver_base if (component.key == 'nvidia_driver' and args.driver) else base
             # Download the package to a temporary directory
-            package = download_package(base, download_dir, component)
+            package = download_package(pkg_base, download_dir, component)
 
             # Unpack the package to a subdirectory of the temporary directory
             archive_dir = unpack_package(package, temp_dir)

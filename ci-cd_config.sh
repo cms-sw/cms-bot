@@ -25,6 +25,7 @@ function cmsbuild_args()
         system:* )     arg="${arg} --use-system-tools=$(echo $x | sed 's|^system:||;s|:|,|g')" ;;
         microarchs:* ) arg="${arg} --vectorization=$(echo $x    | sed 's|^microarchs:||;s|:|,|g')" ;;
         builders:* )   arg="${arg} --builders=$(echo $x         | sed 's|^builders:||;s|:|,|g')" ;;
+        gpg)           arg="${arg} --gpg-signature" ;;
         * ) BLD_OPTS="${BLD_OPTS},$x" ;;
       esac
     done

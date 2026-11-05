@@ -19,6 +19,7 @@ def check_value(key, value):
                 seen.append(iname)
             if item in [
                 "estats",
+                "gpg",
                 "frame_pointer",
                 "no-biglib",
                 "no-lto",

@@ -230,6 +230,7 @@
                     "fatal: fetch-pack",
                     "transfer closed with outstanding read data remaining",
                     "fatal: unable to access 'https://github\\.com",
+                    "HTTP Error 500: Internal Server Error",
                     "fatal: Could not read from remote repository"
                 ],
                 "action": "retryLate",

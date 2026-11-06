@@ -2160,6 +2160,7 @@ class PRContext:
     # Processing state
     messages: list[str] = field(default_factory=list)
     should_merge: bool = False
+    merged: bool = False  # the PR was actually merged by this run
     should_reopen: bool = False  # Reopen the issue/PR
     must_close: bool = False  # PR should be closed (e.g., closed branch)
     abort_comment: Optional[Any] = None  # Comment that requested abort (None = no abort)
@@ -5664,6 +5665,43 @@ def determine_signature_state(context: PRContext) -> PRState:
     return PRState.FULLY_SIGNED
 
 
+def is_merge_conflict_error(error: Exception) -> bool:
+    """
+    Whether a failed pr.merge() was refused because of merge conflicts.
+
+    GitHub answers HTTP 405 {"message": "Pull Request has merge conflicts", ...}, which
+    PyGithub raises as a GithubException (status / data attributes).
+    """
+    if getattr(error, "status", None) != 405:
+        return False
+    data = getattr(error, "data", None)
+    message = data.get("message", "") if isinstance(data, dict) else str(data or "")
+    return "conflict" in message.lower()
+
+
+def handle_merge_conflict(context: PRContext) -> None:
+    """
+    The PR is ready to be merged but has merge conflicts: ask the author to resolve them.
+
+    This is not an error of the bot. The bot tries again whenever it processes the PR
+    after the conflict was resolved; post_bot_comment() posts the message only once per head commit.
+    """
+    logger.warning(f"PR #{context.issue.number} has merge conflicts, not merged")
+    context.messages.append("Not merged: the pull request has merge conflicts")
+    sha = getattr(context.last_commit, "sha", None)
+    comment_id = deterministic_hash(sha) if isinstance(sha, str) else None
+    base = context.pr.base.ref if context.pr else "the base branch"
+    author = context.issue.user.login
+    post_bot_comment(
+        context,
+        f"{format_mention(context, author)} this pull request is ready to be merged, but it has "
+        f"merge conflicts. Please resolve them (e.g. by rebasing or merging {base}) so that it "
+        "can be merged.",
+        "merge_conflict",
+        comment_id,
+    )
+
+
 def automerge_enabled(repo_config: types.ModuleType) -> bool:
     """
     Whether fully signed PRs are merged automatically.
@@ -7707,10 +7745,14 @@ def process_pr(
             else:
                 try:
                     pr.merge()
+                    context.merged = True
                     logger.info("PR merged successfully")
                 except Exception as e:
-                    logger.error(f"Failed to merge PR: {e}")
-                    context.messages.append(f"Merge failed: {e}")
+                    if is_merge_conflict_error(e):
+                        handle_merge_conflict(context)
+                    else:
+                        logger.error(f"Failed to merge PR: {e}")
+                        context.messages.append(f"Merge failed: {e}")
 
         # Handle abort tests
         if context.abort_comment and context.create_test_property:
@@ -7805,7 +7847,7 @@ def process_pr(
             }
             for t in context.tests_to_run
         ],
-        "merged": context.should_merge and not dryRun,
+        "merged": context.merged,
     }
 
 

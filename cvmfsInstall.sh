@@ -52,6 +52,7 @@ function install_package() {
 
 source $(dirname $0)/ci-cd_config.sh
 CMS_BOT_DIR=$(dirname $(realpath $0))
+export PKG_GPGHOME=$CMS_BOT_DIR/gpg
 source ${CMS_BOT_DIR}/cvmfs_deployment/utils.sh
 CVMFS_INSTALL=false
 [ "${BASEDIR}" != "" ] || BASEDIR="${CVMFS_BASEDIR}"

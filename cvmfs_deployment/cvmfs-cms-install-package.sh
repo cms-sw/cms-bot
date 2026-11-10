@@ -16,6 +16,7 @@ fi
 
 #make sure area is bootstraped
 CMS_BOT_DIR=$(dirname $(dirname $(realpath $0)))
+export PKG_GPGHOME=$CMS_BOT_DIR/gpg
 ${CMS_BOT_DIR}/cvmfs_deployment/bootstrap_dir_for_arch.sh ${INSTALL_PATH} ${SCRAM_ARCH} ${RPMS_REPO}
 
 export SCRAM_ARCH

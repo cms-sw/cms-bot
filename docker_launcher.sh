@@ -66,6 +66,7 @@ fi
 UNAME_M=$(uname -m)
 IMG_ARCH=${UNAME_M}
 export CMSBOT_CI_TESTS=true
+export PKG_GPGHOME=${SCRIPTPATH}/gpg
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   xarch=""
   if [ "${ARCHITECTURE}" != "" ] ; then

@@ -16319,6 +16319,15 @@
                   "prodarch": 1
                 }
               ]
+            },
+            {
+              "label": "CMSSW_12_4_26_patch1",
+              "architectures": [
+                {
+                  "architecture": "el8_amd64_gcc10",
+                  "prodarch": 1
+                }
+              ]
             }
           ],
           "CMSSW_12_5": [

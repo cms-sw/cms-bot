@@ -30069,6 +30069,15 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_13_0_25_patch1",
+              "architectures": [
+                {
+                  "architecture": "slc7_amd64_gcc11",
+                  "prodarch": 0
+                }
+              ]
             }
           ],
           "CMSSW_13_1": [

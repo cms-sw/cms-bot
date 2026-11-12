@@ -164,7 +164,7 @@ EXTRA_RELVALS_TESTS = ["threading", "gpu", "high_stats", "nano", "rntuple"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = (
     "|".join(EXTRA_RELVALS_TESTS)
-    + "|hlt_p2_integration|hlt_p2_timing|profiling|none|multi_microarchs"
+    + "|hlt_p2_integration|hlt_p2_timing|l1t_dpg|profiling|none|multi_microarchs"
 )
 SKIP_TESTS = "|".join(["static", "header"])
 ENABLE_TEST_PTRN = "enable(_tests?)?"

@@ -216,6 +216,7 @@ def download_catalog(url, download_dir):
     shutil.copy(catalog_file, download_dir)
     return catalog_file
 
+
 def http_download_catalog(url, download_dir):
     # Open the JSON catalog URL
     try:
@@ -239,6 +240,7 @@ def http_download_catalog(url, download_dir):
     urllib.request.urlretrieve(url, json_file)
 
     return json_file
+
 
 # Parse a catalog and return the list of components available for the given architecture.
 def parse_catalog(json_file, driver_json_file, os_arch):
@@ -537,7 +539,7 @@ def main():
     # Base URL for the NVIDIA JSON catalogs and the redistributable software components
     base_nvidia_url = "https://developer.download.nvidia.com/compute"
     base_url = f"{base_nvidia_url}/cuda/redist/"
-    driver_base =  f"{base_nvidia_url}/nvidia-driver/redist/"
+    driver_base = f"{base_nvidia_url}/nvidia-driver/redist/"
 
     # Packages that should _not_ be unpacked and installed
     blacklist = ["fabricmanager", "libnvidia_nscq"]
@@ -714,10 +716,14 @@ def main():
         catalog = download_catalog(url, download_dir)
         driver_catelog = catalog
         if args.driver:
-            driver_catelog = download_catalog(f"{driver_base}/redistrib_{args.driver}.json", download_dir)
+            driver_catelog = download_catalog(
+                f"{driver_base}/redistrib_{args.driver}.json", download_dir
+            )
         components = parse_catalog(catalog, driver_catelog, os_arch)
         if not [True for com in components if com.key == "nvidia_driver"]:
-            raise RuntimeError(f"Error: This cuda version requires a dedicated driver version, please re-run using -D|--driver <version>")
+            raise RuntimeError(
+                f"Error: This cuda version requires a dedicated driver version, please re-run using -D|--driver <version>"
+            )
 
         # Version-dependent rules for Nsight Compute and Nsight Systems
         cuda_major, cuda_minor, cuda_point = version.split(".")
@@ -782,7 +788,7 @@ def main():
             if component.key not in packages:
                 continue
 
-            pkg_base = driver_base if (component.key == 'nvidia_driver' and args.driver) else base
+            pkg_base = driver_base if (component.key == "nvidia_driver" and args.driver) else base
             # Download the package to a temporary directory
             package = download_package(pkg_base, download_dir, component)
 

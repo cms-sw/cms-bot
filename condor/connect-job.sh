@@ -101,7 +101,9 @@ while true ; do
   sleep $CHK_GAP
   SSH_JOBS=0
   if [ "${JENKINS_AUTO_DELETE}" != "true" ] ; then
-    source $WORKSPACE/cache/cms-bot/condor/autoload.sh || true
+    if [ "${ENABLE_AUTO_LOAD}" = "true" ] ; then
+      source $WORKSPACE/cache/cms-bot/condor/autoload.sh || true
+    fi
   else
     SSH_JOBS=$(ls -d ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* 2>/dev/null | wc -l)
   fi

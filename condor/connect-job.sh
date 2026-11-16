@@ -14,6 +14,7 @@ function jenkins_data()
 }
 
 env
+touch log.job
 ls -la
 if [ "${_CONDOR_JOB_AD}" != "" ] ; then
   [ -e ${_CONDOR_JOB_AD} ] && cat ${_CONDOR_JOB_AD}
@@ -39,7 +40,7 @@ fi
 export WORKSPACE=${_CONDOR_SCRATCH_DIR}/jenkins
 rm -rf ${WORKSPACE}
 mkdir -p $WORKSPACE/cache $WORKSPACE/workspace ${WORKSPACE}/tmp
-git clone --depth 1 https://github.com/cms-sw/cms-bot $WORKSPACE/cache/cms-bot
+git clone --depth 1 https://github.com/cms-sw/cms-bot $WORKSPACE/cache/cms-bot >log.job 2>&1
 mv slave.jar ${WORKSPACE}/
 AFS_HOME=/afs/cern.ch/user/${USER::1}/${USER}
 for x in .netrc tnsnames.ora .cms_cond/db.key ; do
@@ -49,7 +50,7 @@ for x in .netrc tnsnames.ora .cms_cond/db.key ; do
   cp -p ${AFS_HOME}/$x $x || true
 done
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${WORKSPACE}/slave.jar | sed 's| .*||')
-$WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}"
+$WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}" >>log.job 2>&1
 
 SLAVE_LABELS=$($WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}" | grep '^DATA_SLAVE_LABELS=' | sed 's|^DATA_SLAVE_LABELS=|condor |')
 xcore=${JENKINS_AGENT_CORES}
@@ -72,11 +73,11 @@ JENKINS_PAYLOAD='{"jenkins_url":"@JENKINS_CALLBACK@","signature":"'${SIGNATURE}'
 CURL_OPTS='-s -k -f --retry 3 --retry-delay 5 --max-time 30 -X POST'
 if [ ! -f ${LOCAL_DATA}/online ] ; then
   SEND_DATA=$(jenkins_data online)
-  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}" >>log.job 2>&1
   touch ${LOCAL_DATA}/online
 else
   SEND_DATA=$(jenkins_data reconfigure)
-  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}" >>log.job 2>&1
 fi
 
 REQUEST_MAXRUNTIME=$(grep '^ *MaxRuntime *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g')
@@ -114,9 +115,9 @@ while true ; do
   CHECK_JOB=$CTIME
   if [ ${SSH_JOBS} -gt 0 ] ; then
     JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-true"
-    echo "Jenkins Slave has been conencted: $(date)"
+    echo "Jenkins Slave has been conencted: $(date)" >>log.job 2>&1
   elif [ "${JENKINS_JOB_STATE}" = "true-true" ] ; then
-    echo "Jenkins Slave has been disconencted: $(date)"
+    echo "Jenkins Slave has been disconencted: $(date)" >>log.job 2>&1
     break
   fi
   if [ "${JENKINS_DEBUG}" = "true" ] ; then
@@ -127,27 +128,27 @@ while true ; do
   if [ $CTIME -gt ${FORCE_EXIT_AT} ] ; then
     break
   elif [ $CTIME -gt ${OFFLINE_NOTICE_TIME} -a "$FORCE_EXIT" = "false" ] ; then
-    echo "Sending going to Offline notification"
+    echo "Sending going to Offline notification" >>log.job 2>&1
     FORCE_EXIT=true
     set_jenkins_callback
     SEND_DATA=$(jenkins_data offline)
-    curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+    curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}" >>log.job 2>&1
     touch ${LOCAL_DATA}/offline
   fi
   let JOB_GAP=$CTIME-$KERBEROS_REFRESH
   if [ $JOB_GAP -gt 21600 ] ; then
-    echo "Refreshing kerberose token"
+    echo "Refreshing kerberose token" >>log.job 2>&1
     kinit -R || true
     KERBEROS_REFRESH=$CTIME
   fi
 done
 if $CHECK_RUN ; then touch ${WORKSPACE}/.auto-stop ; wait ; fi
-echo "Going to shutdown."
+echo "Going to shutdown." >>log.job 2>&1
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set -x ; fi
 rm -rf ${WORKSPACE}
 if [ ! -f ${WORKSPACE}/.shut-down ] ; then
   set_jenkins_callback
   SEND_DATA=$(jenkins_data shutdown)
-  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}" >>log.job 2>&1
 fi
 rm -rf ${WORKSPACE}

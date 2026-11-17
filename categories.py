@@ -115,6 +115,7 @@ CMSSW_L2 = {
     # dpgs
     "mdelcourt": ["trk-dpg"],
     "henriettepetersen": ["trk-dpg"],
+    "boudoul": ["trk-dpg"],
     "bmarzocc": ["ecal-dpg"],
     "martatornago": ["ecal-dpg"],
     "JHiltbrand": ["hcal-dpg"],

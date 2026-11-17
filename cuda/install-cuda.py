@@ -91,7 +91,7 @@ class Component:
         component = catalog[key]
         self.name = component["name"]
         self.version = component["version"]
-        self.license = component["license"]
+        self.license = component.get("license", "unknow")
 
         # Extract the architecture-specific information about the package
         if os_arch not in component:

@@ -86,6 +86,8 @@ function process_dir()
           process_ubsan $dir &
         fi
         find . -mindepth 2 -maxdepth 2 -type d | xargs --no-run-if-empt rm -rf
+        # test-log problems for the IB chatbot: writes ../pyRelValMatrixLogs-scan.json.gz (DBG skipped for now); never fails this job
+        python3 ${TEST_LOG_SCAN} relval $dir || true
         if $ZIP_DIR ; then
           zip -q -1 -r $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip .
           mv $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip $dir/../pyRelValMatrixLogs.zip
@@ -107,6 +109,7 @@ function process_dir()
 
 rm -f $WORKSPACE/update-github-pages
 cd $(dirname $(dirname $0))
+TEST_LOG_SCAN=$(pwd)/ib_test_log_problems.py
 for d in 6 8 ; do
   for dir in `find /data/sdt/buildlogs -maxdepth $d -mindepth $d -name pyRelValPartialLogs -type d | xargs --no-run-if-empty  ls -rtd` ; do
     echo "Working on $dir"

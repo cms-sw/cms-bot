@@ -11,6 +11,12 @@ from cmsutils import cmsswIB2Week
 from logreaderUtils import transform_and_write_config_file, add_exception_to_config, ResultTypeEnum
 import traceback
 
+try:
+    from ib_test_log_problems import scan_unit_test_dir, scan_addon_dir
+except Exception as e:
+    print("ERROR: test-log scanner not available:", e)
+    scan_unit_test_dir = scan_addon_dir = None
+
 
 def sha1hexdigest(data):
     return sha1(data.encode()).hexdigest()
@@ -247,6 +253,11 @@ for dep in ["6", "8"]:
                 err, utlogs = run_cmd(
                     "cd %s; rm -rf UT; mkdir UT; cd UT; unzip ../unitTestLogs.zip" % utdir
                 )
+                if scan_unit_test_dir:
+                    try:
+                        scan_unit_test_dir(utdir + "/UT", zip_path=logFile)
+                    except Exception as e:
+                        print("ERROR: test-log scan", logFile, e)
                 err, utlogs = run_cmd("find %s/UT -name 'unitTest.log' -type f" % utdir)
                 if not err:
                     for utlog in utlogs.split("\n"):
@@ -270,6 +281,11 @@ for logFile in logs:
             err, utlogs = run_cmd(
                 "cd %s; rm -rf AO; mkdir AO; cd AO; unzip ../addOnTests.zip" % utdir
             )
+            if scan_addon_dir:
+                try:
+                    scan_addon_dir(utdir + "/AO", zip_path=logFile)
+                except Exception as e:
+                    print("ERROR: test-log scan", logFile, e)
             err, utlogs = run_cmd("find %s/AO -name '*.log' -type f" % utdir)
             if not err:
                 for utlog in utlogs.split("\n"):

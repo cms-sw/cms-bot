@@ -300,63 +300,6 @@ class ReleaseProductsDump(IBThreadBase):
 # ================================================================================
 
 
-class BuildFileDependencyCheck(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=None):
-        IBThreadBase.__init__(self, deps)
-        self.startDir = startDirIn
-        self.logger = Logger
-        return
-
-    def run(self):
-        IBThreadBase.run(self)
-        logDir = os.path.join(self.startDir, "logs", os.environ["SCRAM_ARCH"])
-        if not os.path.exists(logDir):
-            os.makedirs(logDir)
-        dverrFileName = os.path.join(logDir, "depsViolations.err")
-
-        depDir = os.path.join(self.startDir, "etc/dependencies")
-        if not os.path.exists(depDir):
-            os.makedirs(depDir)
-        depFile = os.path.join(depDir, "depsViolations.txt")
-
-        cmd = (
-            "cd "
-            + self.startDir
-            + "; ReleaseDepsChecks.pl --detail > "
-            + depFile
-            + "  2> "
-            + dverrFileName
-        )
-        ret = runCmd(cmd)
-        if ret != 0:
-            print("ERROR when running BuildFileDependencyCheck: cmd returned " + str(ret))
-
-        cmd = (
-            "cd " + self.startDir + "; " + scriptPath + "/splitDepViolationLog.py --log " + depFile
-        )
-        ret = runCmd(cmd)
-        if ret != 0:
-            print("ERROR when running BuildFileDependencyCheck: cmd returned " + str(ret))
-
-        bdir = os.path.join(depDir, "depViolationLogs")
-        import fnmatch
-
-        for root, dirnames, filenames in os.walk(bdir):
-            for filename in fnmatch.filter(filenames, "depViolation.log"):
-                pkg = "/".join(root.replace(bdir, "").split("/")[1:3])
-                log = os.path.join(bdir, pkg, "log.txt")
-                runCmd("touch " + log + "; cat " + os.path.join(root, filename) + " >> " + log)
-
-        self.logger.updateLogFile(self.startDir + "/depViolationSummary.pkl", "testLogs")
-        self.logger.updateLogFile(dverrFileName, "logs/" + os.environ["SCRAM_ARCH"])
-        self.logger.updateLogFile(depFile, "etc/dependencies/")
-        self.logger.updateLogFile(bdir, "etc/dependencies/")
-        return
-
-
-# ================================================================================
-
-
 class CodeRulesChecker(IBThreadBase):
     def __init__(self, startDirIn, Logger, deps=None):
         IBThreadBase.__init__(self, deps)
@@ -427,10 +370,6 @@ class ReleaseTester(object):
         if not only or "dirsize" in only:
             print("\n" + 80 * "-" + " dirsize \n")
             self.threadList["dirsize"] = self.runDirSize()
-
-        if not only or "depViolation" in only:
-            print("\n" + 80 * "-" + " depViolation \n")
-            self.threadList["depViolation"] = self.runBuildFileDeps()
 
         if not only or "relProducts" in only:
             print("\n" + 80 * "-" + " relProducts \n")
@@ -576,19 +515,6 @@ class ReleaseTester(object):
             thrd.start()
         except Exception as e:
             print("ERROR during ReleaseProducts : caught exception: " + str(e))
-        return thrd
-
-    # --------------------------------------------------------------------------------
-    def runBuildFileDeps(self, deps=None):
-        if deps is None:
-            deps = []
-        print("runTests> Going to run BuildFileDeps ... ")
-        thrd = None
-        try:
-            thrd = BuildFileDependencyCheck(self.cmsswBuildDir, self.logger, deps)
-            thrd.start()
-        except Exception as e:
-            print("ERROR during RBuildFileDeps : caught exception: " + str(e))
         return thrd
 
 

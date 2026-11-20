@@ -221,6 +221,7 @@ DO_DAS_QUERY=false
 DO_CRAB_TESTS=false
 DO_HLT_P2_TIMING=false
 DO_HLT_P2_INTEGRATION=false
+DO_L1T_DPG=false
 ENABLE_MEMORY_PROFILE=false
 [ "${UPLOAD_TO_PACKAGE_STORE}" != "" ] || UPLOAD_TO_PACKAGE_STORE=true
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
@@ -1561,6 +1562,14 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
       fi
     fi
   fi
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^L1T_DPG$' | wc -l) -gt 0 ] ; then
+    #The L1T DPG GitLab pipeline builds the PR branch itself, so it needs a cmssw PR
+    if [ $(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '^cms-sw/cmssw#' | wc -l) -gt 0 ] ; then
+      DO_L1T_DPG=true
+      #Context is under opt/ so that a failure does not reject the PR tests
+      mark_commit_status_all_prs 'opt/l1t-dpg' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    fi
+  fi
 else
   DO_TESTS=false
   DO_SHORT_MATRIX=false
@@ -1568,6 +1577,7 @@ else
   DO_CRAB_TESTS=false
   DO_HLT_P2_TIMING=false
   DO_HLT_P2_INTEGRATION=false
+  DO_L1T_DPG=false
 fi
 
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
@@ -1800,6 +1810,10 @@ fi
 
 if [ "${DO_HLT_P2_INTEGRATION}" = "true" ] ;  then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt_p2_integration.prop
+fi
+
+if [ "${DO_L1T_DPG}" = "true" ] ;  then
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-l1t_dpg.prop
 fi
 
 rm -f $WORKSPACE/test-env.txt

@@ -67,7 +67,7 @@ if [ "${DISABLE_DEBUG}" = "true" ] ; then
   perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' cmsdist/coral.spec cmsdist/cmssw.spec
 fi
 type="toolconf"
-[ $(echo "$cmsBuild" | grep ' \-\-build' |wc -1) -eq 0 ] && cmsBuild="$cmsBuild --builder 3"
+[ $(echo "$cmsBuild" | grep ' \-\-build' |wc -l) -eq 0 ] && cmsBuild="$cmsBuild --builder 3"
 $cmsBuild -i ${type} build cmssw-tool-conf || touch err.txt | tee -a upload/${type}-build.log
 get_logs ${type}
 if [ -f err.txt ] ; then

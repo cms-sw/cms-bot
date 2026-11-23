@@ -341,6 +341,11 @@ class PyRelValsThread(object):
         outFile.close()
 
     def parseLog(self):
+        try:
+            from ib_test_log_problems import write_relval_step_scan
+        except Exception as e:
+            print("ERROR: test-log scanner not available:", e)
+            write_relval_step_scan = None
         logData = {}
         logRE = re.compile("^.*/([1-9][0-9]*(\\.[0-9]+|))_[^/]+/step([0-9]+)_.*\\.log$")
         max_steps = 0
@@ -384,6 +389,11 @@ class PyRelValsThread(object):
                     except:
                         os.remove(json_cache)
                 if not cache_ok:
+                    if write_relval_step_scan:
+                        try:
+                            write_relval_step_scan(logFile)
+                        except Exception as e:
+                            print("ERROR: test-log scan", logFile, e)
                     try:
                         es_parse_log(logFile)
                     except Exception as e:

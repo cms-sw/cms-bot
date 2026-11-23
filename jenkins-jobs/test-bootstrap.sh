@@ -67,18 +67,19 @@ if [ "${DISABLE_DEBUG}" = "true" ] ; then
   perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' cmsdist/coral.spec cmsdist/cmssw.spec
 fi
 type="toolconf"
-$cmsBuild -i ${type} --builder 3  build cmssw-tool-conf || touch err.txt | tee -a upload/${type}-build.log
+[ $(echo "$cmsBuild" | grep ' \-\-build' |wc -l) -eq 0 ] && cmsBuild="$cmsBuild --builder 3"
+$cmsBuild -i ${type} build cmssw-tool-conf || touch err.txt | tee -a upload/${type}-build.log
 get_logs ${type}
 if [ -f err.txt ] ; then
   check_missing_provides upload/${type}-build.log
   BLD_PKGS=$(ls ${type}/RPMS/${ARCH}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then
-    $cmsBuild -i ${type} --builder 3  --sync-back upload ${BLD_PKGS} | tee -a upload/${type}-upload.log
+    $cmsBuild -i ${type} --sync-back upload ${BLD_PKGS} | tee -a upload/${type}-upload.log
   fi
   rm -rf ${type}
   exit 1
 fi
-$cmsBuild -i ${type} --builder 3 --sync-back upload cmssw-tool-conf | tee -a upload/${type}-upload.log
+$cmsBuild -i ${type} --sync-back upload cmssw-tool-conf | tee -a upload/${type}-upload.log
 rm -rf ${type}
 
 if [ "$CMSSW_VERSION" != "" ] ; then

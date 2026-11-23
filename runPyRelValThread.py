@@ -1,4 +1,11 @@
-#! /usr/bin/env python
+#!/bin/bash
+
+""":"
+python_cmd="python3"
+python -V >/dev/null 2>&1 && python_cmd="python"
+exec ${python_cmd} $0 ${1+"$@"}
+"""
+
 from __future__ import print_function
 import os, glob, re, shutil, time, threading
 from cmsutils import doCmd
@@ -335,7 +342,7 @@ class PyRelValsThread(object):
 
     def parseLog(self):
         logData = {}
-        logRE = re.compile("^.*/([1-9][0-9]*(\\.[0-9]+|))_[^/]+/step([1-9])_.*\\.log$")
+        logRE = re.compile("^.*/([1-9][0-9]*(\\.[0-9]+|))_[^/]+/step([0-9]+)_.*\\.log$")
         max_steps = 0
         for logFile in glob.glob(self.basedir + "/[1-9]*/step[0-9]*.log"):
             m = logRE.match(logFile)

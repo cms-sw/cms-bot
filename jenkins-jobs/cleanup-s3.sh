@@ -25,7 +25,7 @@ for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3b
     AGE="Unknown"
     DEL_IT=false
     rpm=$(echo ${url}| sed 's|.*/||')
-    if [ $(grep "/${rpm}.sig" sig.txt |wc -l) -eq 0] ; then echo "====> ERROR: Missing store/${arch}/${rpm}.sig"; fi
+    if [ $(grep "/${rpm}.sig" sig.txt | wc -l) -eq 0 ] ; then echo "====> ERROR: Missing store/${arch}/${rpm}.sig"; fi
     if grep -q "/${rpm}" keep_files.txt ; then
       AGE="MetaData"
     elif [[ "$date" > "$threshold" ]] ; then

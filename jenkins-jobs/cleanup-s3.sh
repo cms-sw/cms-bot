@@ -8,6 +8,7 @@ fi
 days_to_keep="$2"
 [ "$2" == "" ] && days_to_keep=60
 threshold=$(date -d "$days_to_keep days ago" '+%Y-%m-%d')
+sig_threshold=$(date -d "2 days ago" '+%Y-%m-%d')
 del=0
 MAX_JOBS=8
 
@@ -24,6 +25,7 @@ for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3b
     AGE="Unknown"
     DEL_IT=false
     rpm=$(echo ${url}| sed 's|.*/||')
+    if [ $(grep "/${rpm}.sig" sig.txt |wc -l) -eq 0] ; then echo "====> ERROR: Missing store/${arch}/${rpm}.sig"; fi
     if grep -q "/${rpm}" keep_files.txt ; then
       AGE="MetaData"
     elif [[ "$date" > "$threshold" ]] ; then
@@ -50,13 +52,14 @@ for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3b
     fi
   done < files.txt
   echo "Architecture $arch: ${kept}/${adel} active/deleted"
-  for rpm in $(cat sig.txt | sed 's|.*/||;s|\.sig$||') ; do
+  while read -r date time size url; do
     if [ $(grep "/${rpm}$" files.txt | wc -l) -eq 0 ] ; then
+      if [[ "$date" > "${sig_threshold}" ]] ; then continue ; fi
       while [ $(jobs -p | wc -l) -ge ${MAX_JOBS} ]; do sleep 0.1 ; done
       echo "Del: ${arch}/${rpm}.sig"
       $s3cmd rm ${s3bucket}/store/${arch}/${rpm}.sig &
     fi
-  done
+  done < sig.txt
 done
 wait
 echo "Deleted $del files"

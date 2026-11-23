@@ -14,7 +14,10 @@ MAX_JOBS=8
 $s3cmd ls -r ${s3bucket}/.meta_data/store/ > keep_files.txt
 for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3bucket}/store/||;s|/*$||" | sort) ; do
   echo "Working on $arch"
-  $s3cmd ls ${s3bucket}/store/${arch}/ | sort > files.txt
+  $s3cmd ls ${s3bucket}/store/${arch}/ | sort > all_files.txt
+  cat all_files.txt | grep -v '\.sig$' > files.txt
+  cat all_files.txt | grep    '\.sig$' > sig.txt
+  rm all_files.txt
   adel=0
   kept=0
   while read -r date time size url; do
@@ -39,6 +42,7 @@ for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3b
       while [ $(jobs -p | wc -l) -ge ${MAX_JOBS} ]; do sleep 0.2 ; done
       echo "$rpm ($AGE)"
       $s3cmd rm ${s3bucket}/store/${arch}/${rpm} &
+      $s3cmd rm ${s3bucket}/store/${arch}/${rpm}.sig &
       let del=$del+1
       let adel=$adel+1
     else
@@ -46,6 +50,13 @@ for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3b
     fi
   done < files.txt
   echo "Architecture $arch: ${kept}/${adel} active/deleted"
+  for rpm in $(cat sig.txt | sed 's|.*/||;s|\.sig$||') ; do
+    if [ $(grep "/${rpm}$" files.txt | wc -l) -eq 0 ] ; then
+      while [ $(jobs -p | wc -l) -ge ${MAX_JOBS} ]; do sleep 0.1 ; done
+      echo "Del: ${arch}/${rpm}.sig"
+      $s3cmd rm ${s3bucket}/store/${arch}/${rpm}.sig &
+    fi
+  done
 done
 wait
 echo "Deleted $del files"

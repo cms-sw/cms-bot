@@ -33605,6 +33605,15 @@
                   "prodarch": 0
                 }
               ]
+            },
+            {
+              "label": "CMSSW_16_1_4",
+              "architectures": [
+                {
+                  "architecture": "el8_aarch64_gcc13",
+                  "prodarch": 0
+                }
+              ]
             }
           ],
           "CMSSW_20_0": [

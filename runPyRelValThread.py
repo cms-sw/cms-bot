@@ -403,6 +403,8 @@ class PyRelValsThread(object):
                     jfile.close()
                     transform_and_write_config_file(log_reader_config_path, config_list)
                     log_processed += 1
+                if step == 0:
+                    continue
                 logData[wf]["events"][index] = data[0]
                 logData[wf]["failed"][index] = data[2]
                 logData[wf]["warning"][index] = data[1]

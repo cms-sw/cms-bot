@@ -115,6 +115,7 @@ done
 
 #cleanup cms-jenkins-artifacts
 JENKINS_ARTIFACTS=/data/sdt/SDT/cms-jenkins-artifacts
+DIRS_PROCESSED=""
 DAYS_TO_KEEP=14
 JOBS_TO_KEEP=30
 for dir in EcalLaserValidation/HLT_EcalLaserValidation  EcalLaserValidation/L1T_EcalLaserValidation  EcalLaserValidation/RECO_EcalPulseShapeValidation  EcalLaserValidation/TPG_EcalLaserValidation HcalConditionsAutomatization/ConditionsValidation ; do
@@ -127,7 +128,7 @@ for dir in EcalLaserValidation/HLT_EcalLaserValidation  EcalLaserValidation/L1T_
     fi
   done
 done
-for dir in $(ls -d ${JENKINS_ARTIFACTS}/run-*-push-tests | sed "s|${JENKINS_ARTIFACTS}/||') ; do
+for dir in $(ls -d ${JENKINS_ARTIFACTS}/run-*-push-tests | sed "s|${JENKINS_ARTIFACTS}/||") ; do
   DIRS_PROCESSED="${DIRS_PROCESSED} cms/${DIRS_PROCESSED}"
   cd ${JENKINS_ARTIFACTS}/$dir
   for d in $(ls -rt | head -n -$JOBS_TO_KEEP) ; do
@@ -137,7 +138,7 @@ for dir in $(ls -d ${JENKINS_ARTIFACTS}/run-*-push-tests | sed "s|${JENKINS_ARTI
   done
 done
 
-for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 2 -type d | sed s|^${JENKINS_ARTIFACTS}/|cms/|'`; do
+for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 2 -type d | sed "s|^${JENKINS_ARTIFACTS}/|cms/|"`; do
   if [ "X`echo ${DIRS_PROCESSED} | grep ${dir}`" = "X" ] ; then
     NEW_DIRS="${NEW_DIRS} ${dir}"
   fi

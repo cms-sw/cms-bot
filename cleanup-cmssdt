@@ -20,21 +20,19 @@ for dir in pull-request-integration ; do
   cd ${JENKINS_ARTIFACTS}/$dir
   find . -maxdepth 3 -mindepth 3 -name '.keep' -type f | sed 's|^./||;s|/.*||' | xargs -i --no-run-if-empty touch "./{}"
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
-  touch ${JENKINS_ARTIFACTS}/.timestamp.txt
   for run in `ls -d *`; do
-    touch -r $run ${JENKINS_ARTIFACTS}/.timestamp.txt
-    ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
-    touch -r ${JENKINS_ARTIFACTS}/.timestamp.txt $run
-    ls -ld $run
+    if [ $(ls $run | wc -l) -gt $RUNS_TO_KEEP ] ; then
+      ls -d $run/* | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+      touch -r $(ls -d $run/* | sort -n | tail -1) $run
+    fi
   done
-  rm -f ${JENKINS_ARTIFACTS}/.timestamp.txt
   for dir in $(ls -rtd PR-*/* | head -n -${ROOT_FILES_TO_KEEP}) ; do
     find $dir -mindepth 3 -maxdepth 3 -name '*.root' | xargs -i --no-run-if-empty $DRY_RUN rm -f "{}"
   done
 done
 
 JOBS_TO_KEEP=100
-RUNS_TO_KEEP=1
+RUNS_TO_KEEP=2
 #Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
 EXTRA_RELVAL_TESTS=$(PYTHONPATH=${CMS_BOT_DIR}:${PYTHONPATH} python3 -c 'from process_pr import EXTRA_RELVALS_TESTS;print(" ".join([x.upper().replace("-","_") for x in EXTRA_RELVALS_TESTS if x]))')
 EXTRA_RELVAL_TESTS="${EXTRA_RELVAL_TESTS} $(ls -d $JENKINS_ARTIFACTS/baseLineComparisonsNVIDIA_* $JENKINS_ARTIFACTS/baseLineComparisonsAMD_* | sed 's|.*/baseLineComparisons||')"
@@ -45,7 +43,10 @@ for type in "" ${EXTRA_RELVAL_TESTS} ; do
   cd ${JENKINS_ARTIFACTS}/$dir
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
   for run in `ls -d *`; do
-    ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+    if [ $(ls $run | wc -l) -gt $RUNS_TO_KEEP ] ; then
+      ls -d $run/* | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+      touch -r $(ls -d $run/* | sort -n | tail -1) $run
+    fi
   done
 done
 

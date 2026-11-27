@@ -11,6 +11,7 @@ JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
 CVMFS_JENKINS_ARTIFACTS=/cvmfs/cms-ib.cern.ch/jenkins-artifacts
 DIRS_PROCESSED=""
 JOBS_TO_KEEP=100
+let ROOT_FILES_TO_KEEP=${JOBS_TO_KEEP}/2
 RUNS_TO_KEEP=4
 #Keep $JOBS_TO_KEEP of these
 for dir in pull-request-integration ; do
@@ -21,6 +22,9 @@ for dir in pull-request-integration ; do
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+  done
+  for dir in $(ls -rt | head -n -${ROOT_FILES_TO_KEEP}) ; do
+    find $dir -mindepth 4 -maxdepth 4 -name '*.root' | xargs -i --no-run-if-empty $DRY_RUN rm -f "{}"
   done
 done
 

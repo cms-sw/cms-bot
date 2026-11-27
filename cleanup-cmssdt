@@ -19,6 +19,7 @@ for dir in pull-request-integration ; do
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
   find . -maxdepth 3 -mindepth 3 -name '.keep' -type f | sed 's|^./||;s|/.*||' | xargs -i --no-run-if-empty touch "./{}"
+  ls -rt | head -n -$JOBS_TO_KEEP | wc -l
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
   for run in `ls -d *`; do
     if [ $(ls $run | wc -l) -gt $RUNS_TO_KEEP ] ; then
@@ -41,6 +42,7 @@ for type in "" ${EXTRA_RELVAL_TESTS} ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
+  ls -rt | head -n -$JOBS_TO_KEEP | wc -l
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
   for run in `ls -d *`; do
     if [ $(ls $run | wc -l) -gt $RUNS_TO_KEEP ] ; then
@@ -55,6 +57,7 @@ for dir in hlt-p2-timing ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
+  ls -rt | head -n -$JOBS_TO_KEEP | wc -l
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
@@ -63,6 +66,7 @@ for dir in material-budget-ref ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
+  ls -rt | head -n -$JOBS_TO_KEEP | wc -l
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 

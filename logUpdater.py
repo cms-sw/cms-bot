@@ -198,7 +198,7 @@ class LogUpdater(object):
             return (1, str(e))
 
     def copy2RemoteHost(self, src, des, host):
-        cmd = "scp " + self.ssh_opt + " -r " + src + " " + host + ":" + des
+        cmd = "rsync -av --links -e 'ssh " + self.ssh_opt + "' " + src + " " + host + ":" + des
         try:
             if self.dryRun:
                 print("CMD>>", cmd)

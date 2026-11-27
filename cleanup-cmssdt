@@ -20,9 +20,18 @@ for dir in pull-request-integration ; do
   cd ${JENKINS_ARTIFACTS}/$dir
   find . -maxdepth 3 -mindepth 3 -name '.keep' -type f | sed 's|^./||;s|/.*||' | xargs -i --no-run-if-empty touch "./{}"
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  touch ${JENKINS_ARTIFACTS}/.timestamp.txt
   for run in `ls -d *`; do
+    touch -r $run ${JENKINS_ARTIFACTS}/.timestamp.txt
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+    if [ $(ls $run |wc -l) -gt 0 ] ; then
+      touch -r ${JENKINS_ARTIFACTS}/.timestamp.txt $run
+      ls -l $run
+    else
+      rm -rf $run
+    fi
   done
+  rm -f ${JENKINS_ARTIFACTS}/.timestamp.txt
   for dir in $(ls -rtd PR-*/* | head -n -${ROOT_FILES_TO_KEEP}) ; do
     find $dir -mindepth 3 -maxdepth 3 -name '*.root' | xargs -i --no-run-if-empty $DRY_RUN rm -f "{}"
   done

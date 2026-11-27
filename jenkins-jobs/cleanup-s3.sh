@@ -11,7 +11,7 @@ threshold=$(date -d "$days_to_keep days ago" '+%Y-%m-%d')
 sig_threshold=$(date -d "2 days ago" '+%Y-%m-%d')
 del=0
 MAX_JOBS=8
-
+ERR=0
 $s3cmd ls -r ${s3bucket}/.meta_data/store/ > keep_files.txt
 for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3bucket}/store/||;s|/*$||" | sort) ; do
   echo "Working on $arch"
@@ -25,7 +25,10 @@ for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3b
     AGE="Unknown"
     DEL_IT=false
     rpm=$(echo ${url}| sed 's|.*/||')
-    if [ $(grep "/${rpm}.sig" sig.txt | wc -l) -eq 0 ] ; then echo "====> ERROR: Missing store/${arch}/${rpm}.sig"; fi
+    if [ $(grep "/${rpm}.sig" sig.txt | wc -l) -eq 0 ] ; then
+      echo "====> ERROR: Missing store/${arch}/${rpm}.sig"
+      ERR=1
+    fi
     if grep -q "/${rpm}" keep_files.txt ; then
       AGE="MetaData"
     elif [[ "$date" > "$threshold" ]] ; then
@@ -63,3 +66,4 @@ for arch in $($s3cmd ls ${s3bucket}/store/ | grep '^\s\s*DIR\s' | sed "s|.*${s3b
 done
 wait
 echo "Deleted $del files"
+exit $ERR

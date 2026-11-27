@@ -38027,6 +38027,18 @@
                 }
               ]
             }
+          ],
+          "CMSSW_17_1": [
+            {
+              "label": "CMSSW_17_1_0_pre1",
+              "architectures": [
+                {
+                  "architecture": "el9_amd64_gcc13",
+                  "prodarch": 0,
+                  "default_micro_arch": "x86-64-v3"
+                }
+              ]
+            }
           ]
         },
         "Geant4102": {

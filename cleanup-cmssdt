@@ -10,9 +10,9 @@ fi
 JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
 CVMFS_JENKINS_ARTIFACTS=/cvmfs/cms-ib.cern.ch/jenkins-artifacts
 DIRS_PROCESSED=""
-JOBS_TO_KEEP=100
-ROOT_FILES_TO_KEEP=50
-RUNS_TO_KEEP=4
+JOBS_TO_KEEP=200
+ROOT_FILES_TO_KEEP=100
+RUNS_TO_KEEP=5
 #Keep $JOBS_TO_KEEP of these
 for dir in pull-request-integration ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
@@ -23,11 +23,12 @@ for dir in pull-request-integration ; do
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
   done
-  for dir in $(ls -rt | head -n -${ROOT_FILES_TO_KEEP}) ; do
-    find $dir -mindepth 4 -maxdepth 4 -name '*.root' | xargs -i --no-run-if-empty $DRY_RUN rm -f "{}"
+  for dir in $(ls -rtd PR-*/* | head -n -${ROOT_FILES_TO_KEEP}) ; do
+    find $dir -mindepth 3 -maxdepth 3 -name '*.root' | xargs -i --no-run-if-empty $DRY_RUN rm -f "{}"
   done
 done
 
+JOBS_TO_KEEP=200
 RUNS_TO_KEEP=1
 #Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
 EXTRA_RELVAL_TESTS=$(PYTHONPATH=${CMS_BOT_DIR}:${PYTHONPATH} python3 -c 'from process_pr import EXTRA_RELVALS_TESTS;print(" ".join([x.upper().replace("-","_") for x in EXTRA_RELVALS_TESTS if x]))')

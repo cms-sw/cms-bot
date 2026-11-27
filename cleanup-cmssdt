@@ -68,10 +68,19 @@ done
 
 #Keep the following for 8 days
 DAYS_TO_KEEP=8
-DIRS="lizard flawfinder invalid-includes cmssw-afs-eos-comparison ubsan_logs ib-run-crab"
+DIRS="lizard flawfinder invalid-includes ubsan_logs ib-run-crab"
 DIRS="${DIRS} check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests profiling igprof"
-DIRS="${DIRS} iwyu material-budget das_query build-any-ib check-unused-cmsdist-packages class_versions"
-DIRS="${DIRS} test-os-alma8 test-os-cs8 test-os-ubi8 test-os-lxplus8 test-os-rhel8 test-os-rocky8 test-os-el8 cms-containers-run-cmssw-test"
+DIRS="${DIRS} iwyu material-budget class_versions"
+for dir in ${DIRS}; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  find ${JENKINS_ARTIFACTS}/${dir} -mindepth 1 -maxdepth 1 -mtime +${DAYS_TO_KEEP} | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+done
+
+DAYS_TO_KEEP=2
+DIRS="das_query build-any-ib"
+DIRS="${DIRS} cms-containers-run-cmssw-test check-unused-cmsdist-packages cmssw-afs-eos-comparison"
+DIRS="${DIRS} test-os-alma8 test-os-cs8 test-os-ubi8 test-os-lxplus8 test-os-rhel8 test-os-rocky8 test-os-el8"
 for dir in ${DIRS}; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
@@ -144,7 +153,7 @@ for dir in $(ls -d ${JENKINS_ARTIFACTS}/run-*-push-tests | sed "s|${JENKINS_ARTI
   done
 done
 
-for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 2 -type d | sed "s|^${JENKINS_ARTIFACTS}/|cms/|"`; do
+for dir in `find ${JENKINS_ARTIFACTS} -mindepth 2 -maxdepth 2 -type d | sed "s|^${JENKINS_ARTIFACTS}/|cms/|;s|/PUSH-\d*$||"`; do
   if [ "X`echo ${DIRS_PROCESSED} | grep ${dir}`" = "X" ] ; then
     NEW_DIRS="${NEW_DIRS} ${dir}"
   fi

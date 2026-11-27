@@ -26,7 +26,7 @@ for dir in pull-request-integration ; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
     if [ $(ls $run |wc -l) -gt 0 ] ; then
       touch -r ${JENKINS_ARTIFACTS}/.timestamp.txt $run
-      ls -l $run
+      ls -ld $run
     else
       rm -rf $run
     fi

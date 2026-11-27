@@ -128,8 +128,8 @@ for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 1 -type d | sed 's|.
   if [ -d ${JENKINS_ARTIFACTS}/${dir} ] ; then
     du -sh ${JENKINS_ARTIFACTS}/${dir}
   fi
-  if [ "X`echo ${DIRS_PROCESSED} | grep cms/${dir}`" = "X" ] ; then
-    NEW_DIRS="${NEW_DIRS} cms/${dir}"
+  if [ "X`echo ${DIRS_PROCESSED} | grep ${dir}`" = "X" ] ; then
+    NEW_DIRS="${NEW_DIRS} ${dir}"
   fi
 done
 

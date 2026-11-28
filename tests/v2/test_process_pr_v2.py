@@ -7560,6 +7560,60 @@ class TestLegacyCategories:
             process_pr_v2.set_legacy_categories(types.ModuleType("c"), None)
 
 
+class TestMergeConflict:
+    """A merge refused by GitHub because of conflicts is reported, not treated as a bot error."""
+
+    class _GithubError(Exception):
+        def __init__(self, status, data):
+            super().__init__(f"{status} {data}")
+            self.status = status
+            self.data = data
+
+    def test_is_merge_conflict_error(self):
+        conflict = self._GithubError(
+            405,
+            {
+                "message": "Pull Request has merge conflicts",
+                "documentation_url": "https://docs.github.com/rest/pulls/pulls#merge-a-pull-request",
+                "status": "405",
+            },
+        )
+        assert process_pr_v2.is_merge_conflict_error(conflict)
+        # other refusals / errors are not conflicts
+        assert not process_pr_v2.is_merge_conflict_error(
+            self._GithubError(
+                405, {"message": "Base branch was modified. Review and try the merge again."}
+            )
+        )
+        assert not process_pr_v2.is_merge_conflict_error(
+            self._GithubError(500, {"message": "conflicts"})
+        )
+        assert not process_pr_v2.is_merge_conflict_error(RuntimeError("merge conflicts"))
+
+    def test_handle_merge_conflict_asks_author_once_per_commit(self):
+        from types import SimpleNamespace
+
+        ctx = SimpleNamespace(
+            issue=SimpleNamespace(number=7, user=SimpleNamespace(login="author")),
+            pr=SimpleNamespace(base=SimpleNamespace(ref="master")),
+            last_commit=SimpleNamespace(sha="a" * 40),
+            notify_without_at=False,
+            messages=[],
+        )
+        posted = []
+        with patch(
+            "process_pr_v2.post_bot_comment",
+            side_effect=lambda c, msg, key, cid=None: posted.append((msg, key, cid)),
+        ):
+            process_pr_v2.handle_merge_conflict(ctx)
+        assert len(posted) == 1
+        msg, key, cid = posted[0]
+        assert key == "merge_conflict"
+        assert cid == process_pr_v2.deterministic_hash("a" * 40)
+        assert msg.startswith("@author ") and "merge conflicts" in msg and "master" in msg
+        assert ctx.messages == ["Not merged: the pull request has merge conflicts"]
+
+
 class TestTestParametersCommand:
     """Tests for the 'test parameters:' multiline command."""
 
